@@ -464,6 +464,9 @@ router
 	})
 	.put(async (req, res, next) => {
 		try {
+			// Mutating global NyxGuard settings requires manage permission.
+			await res.locals.access.can("proxy_hosts:update");
+
 			const body = req.body ?? {};
 			const data = await validator(
 				{
@@ -694,6 +697,8 @@ router
 	})
 	.post(async (req, res, next) => {
 		try {
+			await res.locals.access.can("proxy_hosts:update");
+
 			const body = req.body ?? {};
 			const data = await validator(
 				{
@@ -733,6 +738,8 @@ router
 	.all(jwtdecode())
 	.put(async (req, res, next) => {
 		try {
+			await res.locals.access.can("proxy_hosts:update");
+
 			const body = req.body ?? {};
 			const data = await validator(
 				{
@@ -775,6 +782,8 @@ router
 	})
 	.delete(async (req, res, next) => {
 		try {
+			await res.locals.access.can("proxy_hosts:update");
+
 			const data = await validator(
 				{
 					required: ["rule_id"],
@@ -812,6 +821,8 @@ router
 	})
 	.post(async (req, res, next) => {
 		try {
+			await res.locals.access.can("proxy_hosts:update");
+
 			const body = req.body ?? {};
 			const data = await validator(
 				{
@@ -851,6 +862,8 @@ router
 	.all(jwtdecode())
 	.put(async (req, res, next) => {
 		try {
+			await res.locals.access.can("proxy_hosts:update");
+
 			const body = req.body ?? {};
 			const data = await validator(
 				{
@@ -893,6 +906,8 @@ router
 	})
 	.delete(async (req, res, next) => {
 		try {
+			await res.locals.access.can("proxy_hosts:update");
+
 			const data = await validator(
 				{
 					required: ["rule_id"],
@@ -950,6 +965,8 @@ router
 	})
 	.post(async (req, res, next) => {
 		try {
+			await res.locals.access.can("proxy_hosts:update");
+
 			if (!res.locals.access?.token?.getUserId?.()) {
 				throw new errs.PermissionError("Login required");
 			}
@@ -1003,6 +1020,8 @@ router
 	.all(jwtdecode())
 	.post(async (req, res, next) => {
 		try {
+			await res.locals.access.can("proxy_hosts:update");
+
 			if (!res.locals.access?.token?.getUserId?.()) {
 				throw new errs.PermissionError("Login required");
 			}
@@ -1040,6 +1059,8 @@ router
 	})
 	.delete(async (_req, res, next) => {
 		try {
+			await res.locals.access.can("proxy_hosts:update");
+
 			if (!res.locals.access?.token?.getUserId?.()) {
 				throw new errs.PermissionError("Login required");
 			}

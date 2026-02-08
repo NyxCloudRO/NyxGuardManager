@@ -3,6 +3,7 @@ import { Field, Form, Formik } from "formik";
 import { useState } from "react";
 import { Alert } from "react-bootstrap";
 import Modal from "react-bootstrap/Modal";
+import { setPermissions, type UserPermissions } from "src/api/backend";
 import { Button, Loading } from "src/components";
 import { useSetUser, useUser } from "src/hooks";
 import { intl, T } from "src/locale";
@@ -23,11 +24,45 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 	const [errorMsg, setErrorMsg] = useState<string | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
+	const isNyxAgentUser = (p?: UserPermissions | null) => {
+		if (!p) return false;
+		return (
+			p.visibility === "all" &&
+			p.proxyHosts === "view" &&
+			p.redirectionHosts === "view" &&
+			p.deadHosts === "view" &&
+			p.streams === "view" &&
+			p.accessLists === "view" &&
+			p.certificates === "view"
+		);
+	};
+
+	const NYX_AGENT_PERMS: UserPermissions = {
+		visibility: "all",
+		proxyHosts: "view",
+		redirectionHosts: "view",
+		deadHosts: "view",
+		streams: "view",
+		accessLists: "view",
+		certificates: "view",
+	};
+
+	const STANDARD_USER_PERMS: UserPermissions = {
+		visibility: "user",
+		proxyHosts: "manage",
+		redirectionHosts: "manage",
+		deadHosts: "manage",
+		streams: "manage",
+		accessLists: "manage",
+		certificates: "manage",
+	};
+
 	const onSubmit = async (values: any, { setSubmitting }: any) => {
 		if (isSubmitting) return;
 		setIsSubmitting(true);
 		setErrorMsg(null);
 
+		const wantNyxAgent = !!values.isNyxAgent;
 		const { ...payload } = {
 			id: id === "new" ? undefined : id,
 			roles: [],
@@ -44,12 +79,28 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 
 		// this isn't a real field, just for the form
 		delete payload.isAdmin;
+		delete payload.isNyxAgent;
 
 		setUser(payload, {
 			onError: (err: any) => setErrorMsg(err.message),
-			onSuccess: () => {
-				showObjectSuccess("user", "saved");
-				remove();
+			onSuccess: async (saved: any) => {
+				try {
+					// Apply NyxAgent permissions after saving (API doesn't accept permissions in /users payload).
+					// NyxAgent is "monitor only": view access across all resources + visibility=all.
+					if (data?.id !== currentUser?.id && !payload.roles?.includes?.("admin")) {
+						const wasNyxAgent = isNyxAgentUser(data?.permissions);
+						if (wantNyxAgent) {
+							await setPermissions(saved.id, NYX_AGENT_PERMS);
+						} else if (wasNyxAgent) {
+							// If unchecking NyxAgent, revert to default standard-user permissions.
+							await setPermissions(saved.id, STANDARD_USER_PERMS);
+						}
+					}
+					showObjectSuccess("user", "saved");
+					remove();
+				} catch (err: any) {
+					setErrorMsg(err?.message || "Unable to apply NyxAgent permissions.");
+				}
 			},
 			onSettled: () => {
 				setIsSubmitting(false);
@@ -74,12 +125,13 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 							nickname: data?.nickname,
 							email: data?.email,
 							isAdmin: data?.roles?.includes("admin"),
+							isNyxAgent: !data?.roles?.includes("admin") && isNyxAgentUser(data?.permissions),
 							isDisabled: data?.isDisabled,
 						} as any
 					}
 					onSubmit={onSubmit}
 				>
-					{() => (
+					{({ values, setFieldValue }) => (
 						<Form>
 							<Modal.Header closeButton>
 								<Modal.Title>
@@ -189,6 +241,36 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 																		id="isAdmin"
 																		className="form-check-input"
 																		type="checkbox"
+																		onChange={(e) => {
+																			const checked = e.target.checked;
+																			setFieldValue("isAdmin", checked);
+																			if (checked) setFieldValue("isNyxAgent", false);
+																		}}
+																	/>
+																</label>
+															)}
+														</Field>
+													</span>
+												</label>
+											</div>
+											<div>
+												<label className="row" htmlFor="isNyxAgent">
+													<span className="col">NyxAgent (Monitoring only)</span>
+													<span className="col-auto">
+														<Field name="isNyxAgent" type="checkbox">
+															{({ field }: any) => (
+																<label className="form-check form-check-single form-switch">
+																	<input
+																		{...field}
+																		id="isNyxAgent"
+																		className="form-check-input"
+																		type="checkbox"
+																		disabled={!!values.isAdmin}
+																		onChange={(e) => {
+																			const checked = e.target.checked;
+																			setFieldValue("isNyxAgent", checked);
+																			if (checked) setFieldValue("isAdmin", false);
+																		}}
 																	/>
 																</label>
 															)}

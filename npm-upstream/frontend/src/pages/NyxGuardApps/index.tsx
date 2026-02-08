@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import cn from "classnames";
+import { HasPermission } from "src/components";
 import { getNyxGuardApps, updateNyxGuardApp } from "src/api/backend";
+import { MANAGE, PROXY_HOSTS } from "src/modules/Permissions";
 import styles from "./index.module.css";
 
 const NyxGuardApps = () => {
@@ -75,53 +77,55 @@ const NyxGuardApps = () => {
 										<span className={isProtected ? styles.badge : styles.badgeMuted}>
 											{isProtected ? "Protected" : "Monitoring"}
 										</span>
-										<button
-											className={styles.toggle}
-											type="button"
-											disabled={toggle.isPending}
-											onClick={() =>
-												toggle.mutate({
-													id: app.id,
-													wafEnabled: !isProtected,
-													botDefenseEnabled: botEnabled,
-													ddosEnabled,
-												})
-											}
-										>
-											{isProtected ? "Disable WAF" : "Enable WAF"}
-										</button>
-										<button
-											className={cn(styles.toggle, { [styles.toggleDisabled]: !isProtected })}
-											type="button"
-											disabled={!isProtected || toggle.isPending}
-											title={!isProtected ? "Enable WAF first" : "Toggle Bot Defence"}
-											onClick={() =>
-												toggle.mutate({
-													id: app.id,
-													wafEnabled: true,
-													botDefenseEnabled: !botEnabled,
-													ddosEnabled,
-												})
-											}
-										>
-											{botEnabled ? "Disable Bot Defence" : "Enable Bot Defence"}
-										</button>
-										<button
-											className={cn(styles.toggle, { [styles.toggleDisabled]: !isProtected })}
-											type="button"
-											disabled={!isProtected || toggle.isPending}
-											title={!isProtected ? "Enable WAF first" : "Toggle DDoS Shield"}
-											onClick={() =>
-												toggle.mutate({
-													id: app.id,
-													wafEnabled: true,
-													botDefenseEnabled: botEnabled,
-													ddosEnabled: !ddosEnabled,
-												})
-											}
-										>
-											{ddosEnabled ? "Disable DDoS" : "Enable DDoS"}
-										</button>
+										<HasPermission section={PROXY_HOSTS} permission={MANAGE} hideError>
+											<button
+												className={styles.toggle}
+												type="button"
+												disabled={toggle.isPending}
+												onClick={() =>
+													toggle.mutate({
+														id: app.id,
+														wafEnabled: !isProtected,
+														botDefenseEnabled: botEnabled,
+														ddosEnabled,
+													})
+												}
+											>
+												{isProtected ? "Disable WAF" : "Enable WAF"}
+											</button>
+											<button
+												className={cn(styles.toggle, { [styles.toggleDisabled]: !isProtected })}
+												type="button"
+												disabled={!isProtected || toggle.isPending}
+												title={!isProtected ? "Enable WAF first" : "Toggle Bot Defence"}
+												onClick={() =>
+													toggle.mutate({
+														id: app.id,
+														wafEnabled: true,
+														botDefenseEnabled: !botEnabled,
+														ddosEnabled,
+													})
+												}
+											>
+												{botEnabled ? "Disable Bot Defence" : "Enable Bot Defence"}
+											</button>
+											<button
+												className={cn(styles.toggle, { [styles.toggleDisabled]: !isProtected })}
+												type="button"
+												disabled={!isProtected || toggle.isPending}
+												title={!isProtected ? "Enable WAF first" : "Toggle DDoS Shield"}
+												onClick={() =>
+													toggle.mutate({
+														id: app.id,
+														wafEnabled: true,
+														botDefenseEnabled: botEnabled,
+														ddosEnabled: !ddosEnabled,
+													})
+												}
+											>
+												{ddosEnabled ? "Disable DDoS" : "Enable DDoS"}
+											</button>
+										</HasPermission>
 									</div>
 								</div>
 							);
