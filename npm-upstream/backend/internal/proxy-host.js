@@ -226,13 +226,9 @@ const internalProxyHost = {
 				}
 
 				// Add domain_names to the data in case it isn't there, so that the audit log renders correctly. The order is important here.
-				thisData = _.assign(
-					{},
-					{
-						domain_names: row.domain_names,
-					},
-					data,
-				);
+				// NOTE: Use thisData (not the original `data`) so we don't accidentally drop
+				// computed fields like advanced_config/meta updates (NyxGuard toggles).
+				thisData = _.assign({}, { domain_names: row.domain_names }, thisData);
 
 				thisData = internalHost.cleanSslHstsData(thisData, row);
 
