@@ -33,9 +33,17 @@ Admin UI: `http://<server-ip>:81/`
   - Country allow/deny by ISO code (MD / FR / GB, etc), optional expiry
 
 ### GeoIP Country (Optional)
-To show country codes consistently (even when not behind Cloudflare), install a local GeoLite2 Country DB:
-- Upload `GeoLite2-Country.mmdb` in **NyxGuard -> IPs & Locations**
-- Or configure MaxMind auto-update (AccountID + LicenseKey) in the same page
+NyxGuard can show the **country code** for each IP (RO/FR/GB/etc). For accurate results you need a GeoIP database (MaxMind GeoLite2).
+
+How to get the file (free):
+1. Create a free MaxMind account.
+2. In MaxMind, enable GeoLite2 downloads (this creates a License Key).
+3. Download the database: **GeoLite2 Country** in `.mmdb` format.
+4. Upload it in the UI: **NyxGuard -> IPs & Locations -> GeoIP DB -> Upload**.
+
+Alternative (recommended): auto-update
+- In **NyxGuard -> IPs & Locations**, enter your MaxMind `AccountID` + `LicenseKey` and save.
+- NyxGuard will keep the GeoLite2 databases updated automatically.
 
 ## Install (Production Test)
 
