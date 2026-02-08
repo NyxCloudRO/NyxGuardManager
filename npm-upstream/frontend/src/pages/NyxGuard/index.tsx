@@ -7,11 +7,19 @@ import styles from "./index.module.css";
 const NyxGuard = () => {
 	const qc = useQueryClient();
 	const [windowMinutes, setWindowMinutes] = useState(1440);
+	const [trafficWindowMinutes, setTrafficWindowMinutes] = useState(5);
+	const trafficLimit = useMemo(() => (trafficWindowMinutes >= 1440 ? 500 : 50), [trafficWindowMinutes]);
 
 	const summary = useQuery({
 		queryKey: ["nyxguard", "summary", windowMinutes],
 		queryFn: () => getNyxGuardSummary(windowMinutes, 50),
 		refetchInterval: windowMinutes <= 60 ? 5000 : 60000,
+	});
+
+	const trafficSummary = useQuery({
+		queryKey: ["nyxguard", "summary", "recent", trafficWindowMinutes, trafficLimit],
+		queryFn: () => getNyxGuardSummary(trafficWindowMinutes, trafficLimit),
+		refetchInterval: trafficWindowMinutes <= 15 ? 3000 : 15000,
 	});
 
 	const settings = useQuery({
@@ -157,14 +165,65 @@ const NyxGuard = () => {
 								<p className={styles.sectionText}>Requests per minute with burst detection.</p>
 							</div>
 							<div className={styles.pillRow}>
-								<span className={styles.pill}>Realtime</span>
-								<span className={styles.pill}>Last 15m</span>
-								<span className={styles.pill}>Last 24h</span>
+								<button
+									type="button"
+									className={trafficWindowMinutes === 5 ? styles.windowActive : styles.window}
+									onClick={() => setTrafficWindowMinutes(5)}
+								>
+									Realtime
+								</button>
+								<button
+									type="button"
+									className={trafficWindowMinutes === 15 ? styles.windowActive : styles.window}
+									onClick={() => setTrafficWindowMinutes(15)}
+								>
+									Last 15m
+								</button>
+								<button
+									type="button"
+									className={trafficWindowMinutes === 1440 ? styles.windowActive : styles.window}
+									onClick={() => setTrafficWindowMinutes(1440)}
+								>
+									Last 24h
+								</button>
 							</div>
 						</div>
-						<div className={styles.sparklinePlaceholder}>
-							Live traffic will appear when the stream is connected.
-						</div>
+						{trafficSummary.isLoading ? (
+							<div className={styles.sparklinePlaceholder}>Loading…</div>
+						) : trafficSummary.isError ? (
+							<div className={styles.sparklinePlaceholder}>Unable to load traffic (API error).</div>
+						) : trafficSummary.data?.recent?.length ? (
+							<div style={{ marginTop: 16, overflowX: "auto", maxHeight: 360 }}>
+								<table className="table table-sm table-vcenter">
+									<thead>
+										<tr>
+											<th>Time</th>
+											<th>Host</th>
+											<th>Request</th>
+											<th className="text-end">Status</th>
+											<th>IP</th>
+										</tr>
+									</thead>
+									<tbody>
+										{trafficSummary.data.recent.slice(0, trafficWindowMinutes >= 1440 ? 200 : 25).map((r) => (
+											<tr key={`${r.ts}-${r.ip}-${r.host}-${r.uri}`}>
+												<td className="text-secondary text-nowrap">{new Date(r.ts).toLocaleTimeString()}</td>
+												<td className="text-nowrap">{r.host}</td>
+												<td className="text-truncate" style={{ maxWidth: 520 }}>
+													<span className="text-secondary">{r.method}</span> {r.uri}
+												</td>
+												<td className="text-end text-nowrap">{r.status ?? "-"}</td>
+												<td className="text-nowrap text-secondary">{r.ip}</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+						) : (
+							<div className={styles.sparklinePlaceholder}>
+								No recent traffic found in the last {trafficWindowMinutes === 1440 ? "24 hours" : `${trafficWindowMinutes} minutes`}.
+							</div>
+						)}
 					</div>
 					<div className={styles.sections}>
 						<div className={styles.sectionCard}>
