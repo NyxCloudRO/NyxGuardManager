@@ -7,6 +7,8 @@ export interface NyxGuardAppItem {
 	forwardHost: string | null;
 	forwardPort: number | null;
 	wafEnabled: boolean;
+	botDefenseEnabled: boolean;
+	ddosEnabled: boolean;
 }
 
 export interface NyxGuardAppsResponse {
@@ -16,4 +18,3 @@ export interface NyxGuardAppsResponse {
 export async function getNyxGuardApps(): Promise<NyxGuardAppsResponse> {
 	return get({ url: "nyxguard/apps" });
 }
-

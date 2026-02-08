@@ -52,6 +52,8 @@
 .actions {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .toggle {
@@ -63,4 +65,9 @@
   letter-spacing: 0.06em;
   background: rgba(255, 255, 255, 0.06);
   color: inherit;
+}
+
+.toggleDisabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }

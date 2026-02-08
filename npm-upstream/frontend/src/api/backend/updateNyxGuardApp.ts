@@ -3,9 +3,16 @@ import { put } from "./base";
 export interface UpdateNyxGuardAppResponse {
 	id: number;
 	wafEnabled: boolean;
+	botDefenseEnabled: boolean;
+	ddosEnabled: boolean;
 }
 
-export async function updateNyxGuardApp(hostId: number, wafEnabled: boolean): Promise<UpdateNyxGuardAppResponse> {
-	return put({ url: `nyxguard/apps/${hostId}`, data: { wafEnabled } });
+export interface UpdateNyxGuardAppRequest {
+	wafEnabled: boolean;
+	botDefenseEnabled?: boolean;
+	ddosEnabled?: boolean;
 }
 
+export async function updateNyxGuardApp(hostId: number, patch: UpdateNyxGuardAppRequest): Promise<UpdateNyxGuardAppResponse> {
+	return put({ url: `nyxguard/apps/${hostId}`, data: patch });
+}

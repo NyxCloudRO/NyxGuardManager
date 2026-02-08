@@ -616,10 +616,20 @@ router
 			await internalNyxGuard.nginx.ensureFiles();
 
 			const row = await internalProxyHost.get(res.locals.access, { id: Number.parseInt(data.host_id, 10) });
-			const bot = !!data.wafEnabled && !!data.botDefenseEnabled;
-			const ddos = !!data.wafEnabled && !!data.ddosEnabled;
+			const currentWaf = internalNyxGuard.waf.isEnabledInAdvancedConfig(row.advanced_config);
+			const currentBot = internalNyxGuard.botDefense.isEnabledInAdvancedConfig(row.advanced_config);
+			const currentDdos = internalNyxGuard.ddos.isEnabledInAdvancedConfig(row.advanced_config);
 
-			let nextAdvanced = internalNyxGuard.waf.applyAdvancedConfig(row.advanced_config, data.wafEnabled);
+			// Treat missing fields as "keep current value" so UI updates don't accidentally
+			// reset other per-app toggles.
+			const nextWaf = data.wafEnabled;
+			const nextBotInput = typeof data.botDefenseEnabled === "boolean" ? data.botDefenseEnabled : currentBot;
+			const nextDdosInput = typeof data.ddosEnabled === "boolean" ? data.ddosEnabled : currentDdos;
+
+			const bot = !!nextWaf && !!nextBotInput;
+			const ddos = !!nextWaf && !!nextDdosInput;
+
+			let nextAdvanced = internalNyxGuard.waf.applyAdvancedConfig(row.advanced_config, nextWaf);
 			nextAdvanced = internalNyxGuard.botDefense.applyAdvancedConfig(nextAdvanced, bot);
 			nextAdvanced = internalNyxGuard.ddos.applyAdvancedConfig(nextAdvanced, ddos);
 
@@ -646,7 +656,7 @@ router
 				advanced_config: nextAdvanced,
 				meta: {
 					...(row.meta ?? {}),
-					nyxguardWafEnabled: !!data.wafEnabled,
+					nyxguardWafEnabled: !!nextWaf,
 					nyxguardBotDefenseEnabled: bot,
 					nyxguardDdosEnabled: ddos,
 				},

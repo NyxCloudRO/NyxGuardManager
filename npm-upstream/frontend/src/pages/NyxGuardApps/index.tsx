@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import cn from "classnames";
 import { getNyxGuardApps, updateNyxGuardApp } from "src/api/backend";
 import styles from "./index.module.css";
 
@@ -10,7 +11,12 @@ const NyxGuardApps = () => {
 		refetchInterval: 15000,
 	});
 	const toggle = useMutation({
-		mutationFn: (args: { id: number; wafEnabled: boolean }) => updateNyxGuardApp(args.id, args.wafEnabled),
+		mutationFn: (args: { id: number; wafEnabled: boolean; botDefenseEnabled?: boolean; ddosEnabled?: boolean }) =>
+			updateNyxGuardApp(args.id, {
+				wafEnabled: args.wafEnabled,
+				botDefenseEnabled: args.botDefenseEnabled,
+				ddosEnabled: args.ddosEnabled,
+			}),
 		onSuccess: () => qc.invalidateQueries({ queryKey: ["nyxguard", "apps"] }),
 	});
 
@@ -32,6 +38,8 @@ const NyxGuardApps = () => {
 						(apps.data?.items ?? []).map((app) => {
 							const name = app.domains?.[0] ?? `Proxy Host #${app.id}`;
 							const isProtected = app.wafEnabled;
+							const botEnabled = app.botDefenseEnabled;
+							const ddosEnabled = app.ddosEnabled;
 							return (
 								<div key={app.id} className={styles.row}>
 									<span>{name}</span>
@@ -43,9 +51,48 @@ const NyxGuardApps = () => {
 											className={styles.toggle}
 											type="button"
 											disabled={toggle.isPending}
-											onClick={() => toggle.mutate({ id: app.id, wafEnabled: !isProtected })}
+											onClick={() =>
+												toggle.mutate({
+													id: app.id,
+													wafEnabled: !isProtected,
+													botDefenseEnabled: botEnabled,
+													ddosEnabled,
+												})
+											}
 										>
 											{isProtected ? "Disable WAF" : "Enable WAF"}
+										</button>
+										<button
+											className={cn(styles.toggle, { [styles.toggleDisabled]: !isProtected })}
+											type="button"
+											disabled={!isProtected || toggle.isPending}
+											title={!isProtected ? "Enable WAF first" : "Toggle Bot Defence"}
+											onClick={() =>
+												toggle.mutate({
+													id: app.id,
+													wafEnabled: true,
+													botDefenseEnabled: !botEnabled,
+													ddosEnabled,
+												})
+											}
+										>
+											{botEnabled ? "Disable Bot Defence" : "Enable Bot Defence"}
+										</button>
+										<button
+											className={cn(styles.toggle, { [styles.toggleDisabled]: !isProtected })}
+											type="button"
+											disabled={!isProtected || toggle.isPending}
+											title={!isProtected ? "Enable WAF first" : "Toggle DDoS Shield"}
+											onClick={() =>
+												toggle.mutate({
+													id: app.id,
+													wafEnabled: true,
+													botDefenseEnabled: botEnabled,
+													ddosEnabled: !ddosEnabled,
+												})
+											}
+										>
+											{ddosEnabled ? "Disable DDoS" : "Enable DDoS"}
 										</button>
 									</div>
 								</div>
