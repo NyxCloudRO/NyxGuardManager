@@ -60,6 +60,9 @@ const useSetProxyHost = () => {
 			queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
 			queryClient.invalidateQueries({ queryKey: ["host-report"] });
 			queryClient.invalidateQueries({ queryKey: ["certificates"] });
+			// Keep NyxGuard views in sync when proxy host advanced_config/meta changes.
+			queryClient.invalidateQueries({ queryKey: ["nyxguard", "apps"] });
+			queryClient.invalidateQueries({ queryKey: ["nyxguard", "apps", "summary"] });
 		},
 	});
 };

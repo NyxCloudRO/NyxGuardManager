@@ -17,7 +17,35 @@ const NyxGuardApps = () => {
 				botDefenseEnabled: args.botDefenseEnabled,
 				ddosEnabled: args.ddosEnabled,
 			}),
-		onSuccess: () => qc.invalidateQueries({ queryKey: ["nyxguard", "apps"] }),
+		onMutate: (args) => {
+			const prev = qc.getQueryData<any>(["nyxguard", "apps"]);
+			qc.setQueryData(["nyxguard", "apps"], (old: any) => {
+				if (!old?.items) return old;
+				return {
+					...old,
+					items: old.items.map((it: any) =>
+						it.id === args.id
+							? {
+									...it,
+									wafEnabled: args.wafEnabled,
+									botDefenseEnabled:
+										typeof args.botDefenseEnabled === "boolean" ? args.botDefenseEnabled : it.botDefenseEnabled,
+									ddosEnabled: typeof args.ddosEnabled === "boolean" ? args.ddosEnabled : it.ddosEnabled,
+								}
+							: it,
+					),
+				};
+			});
+			return () => qc.setQueryData(["nyxguard", "apps"], prev);
+		},
+		onError: (_err, _args, rollback: any) => rollback?.(),
+		onSuccess: async (_data, args) => {
+			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps"] });
+			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps", "summary"] });
+			// Keep the Proxy Host modal/details in sync without a full page refresh.
+			await qc.invalidateQueries({ queryKey: ["proxy-host", args.id] });
+			await qc.invalidateQueries({ queryKey: ["proxy-hosts"] });
+		},
 	});
 
 	return (
