@@ -1,0 +1,28 @@
+/// <reference types="cypress" />
+
+describe('Basic API checks', () => {
+	it('Should return a valid health payload', () => {
+		cy.task('backendApiGet', {
+			path: '/api/',
+		}).then((data) => {
+			// Check the swagger schema:
+			cy.validateSwaggerSchema('get', 200, '/', data);
+		});
+	});
+
+	it('Should return a valid schema payload', () => {
+		cy.task('backendApiGet', {
+			path: `/api/schema?ts=${Date.now()}`,
+		}).then((data) => {
+			expect(data.openapi).to.be.equal('3.1.0');
+		});
+	});
+
+	it('Should return a valid payload for version check', () => {
+		cy.task('backendApiGet', {
+			path: `/api/version/check?ts=${Date.now()}`,
+		}).then((data) => {
+			cy.validateSwaggerSchema('get', 200, '/version/check', data);
+		});
+	});
+});

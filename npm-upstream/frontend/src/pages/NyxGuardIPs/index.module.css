@@ -1,0 +1,127 @@
+.page {
+  min-height: calc(100vh - 120px);
+  padding: 40px 0 60px;
+  color: #f6f4ff;
+  background: radial-gradient(120% 120% at 10% 10%, #2b6bff 0%, #1b2a6b 40%, #5b1d84 70%, #d1178a 100%);
+}
+
+.card {
+  border-radius: 18px;
+  padding: 28px;
+  background: rgba(9, 12, 38, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 60px rgba(8, 6, 26, 0.4);
+}
+
+.headerRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.windowButtons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.window,
+.windowActive {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+}
+
+.windowActive {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.applyBtn {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+}
+
+.applyBtn:disabled {
+  opacity: 0.55;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 30px;
+}
+
+.subtitle {
+  margin: 0 0 18px;
+  opacity: 0.85;
+}
+
+.table {
+  display: grid;
+  gap: 10px;
+}
+
+.header,
+.row {
+  display: grid;
+  grid-template-columns: 1.4fr 0.7fr 0.7fr 0.7fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.header {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.row {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(12, 16, 46, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 14px;
+}
+
+.badgeAllow,
+.badgeDeny {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  justify-self: start;
+}
+
+.badgeAllow {
+  background: rgba(69, 210, 132, 0.2);
+  border: 1px solid rgba(69, 210, 132, 0.4);
+}
+
+.badgeDeny {
+  background: rgba(255, 92, 146, 0.2);
+  border: 1px solid rgba(255, 92, 146, 0.4);
+}
+
+.emptyState {
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(12, 16, 46, 0.7);
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  font-size: 13px;
+  opacity: 0.85;
+}

@@ -1,0 +1,66 @@
+.page {
+  min-height: calc(100vh - 120px);
+  padding: 40px 0 60px;
+  color: #f6f4ff;
+  background: radial-gradient(120% 120% at 10% 10%, #2b6bff 0%, #1b2a6b 40%, #5b1d84 70%, #d1178a 100%);
+}
+
+.card {
+  border-radius: 18px;
+  padding: 28px;
+  background: rgba(9, 12, 38, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 60px rgba(8, 6, 26, 0.4);
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 30px;
+}
+
+.subtitle {
+  margin: 0 0 18px;
+  opacity: 0.85;
+}
+
+.row {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(12, 16, 46, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(90, 152, 255, 0.2);
+  border: 1px solid rgba(90, 152, 255, 0.4);
+}
+
+.badgeMuted {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.toggle {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+}

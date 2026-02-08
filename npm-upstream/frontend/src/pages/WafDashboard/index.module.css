@@ -1,0 +1,38 @@
+.wrapper {
+  min-height: 40vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.panel {
+  width: 100%;
+  max-width: 980px;
+  border-radius: 18px;
+  padding: 48px 40px;
+  color: #f7f7fb;
+  background: radial-gradient(120% 120% at 10% 10%, #2b6bff 0%, #1b2a6b 40%, #5b1d84 70%, #d1178a 100%);
+  box-shadow: 0 24px 60px rgba(19, 18, 36, 0.45);
+}
+
+.title {
+  margin: 0 0 12px;
+  font-size: 32px;
+  letter-spacing: 0.3px;
+}
+
+.subtitle {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .panel {
+    padding: 36px 28px;
+  }
+
+  .title {
+    font-size: 26px;
+  }
+}

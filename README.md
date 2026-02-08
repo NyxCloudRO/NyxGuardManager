@@ -1,0 +1,79 @@
+# NyxGuard Manager (v2.0.0)
+
+NyxGuard Manager is a self-hosted reverse proxy manager with an integrated WAF-style security layer (NyxGuard).
+
+Admin UI: `http://<server-ip>:81/`
+
+## Support
+<a href="https://buymeacoffee.com/nyxmael" target="_blank" rel="noopener noreferrer">
+  <img src="assets/buy-me-a-pizza.svg" alt="Buy me a pizza" height="54" />
+</a>
+
+## What You Get
+
+### Core Proxy Manager
+- Proxy Hosts, Redirection Hosts, Streams, and 404 Hosts
+- Let’s Encrypt certificates (HTTP-01 and DNS providers)
+- Access Lists, Users, Audit Logs, Settings
+
+### NyxGuard (Security Layer)
+- Per-app protection toggles (Proxy Host modal):
+  - Enable WAF
+  - Enable Bot Defence
+  - Enable DDoS Shield
+- Global feature toggles (NyxGuard page):
+  - Bot Defence (master)
+  - DDoS Shield (master)
+- Live status pills on NyxGuard dashboard when features are enabled
+- Live traffic view + active hosts summary
+- IPs & Locations with time windows (15m / 1h / 1d / 7d)
+- Log retention selector (30 / 60 / 90 / 180 days)
+- Rules (Allow / Deny):
+  - IP / CIDR allow/deny, optional expiry (1 / 7 / 30 / 60 / 90 / 180 days)
+  - Country allow/deny by ISO code (MD / FR / GB, etc), optional expiry
+
+### GeoIP Country (Optional)
+To show country codes consistently (even when not behind Cloudflare), install a local GeoLite2 Country DB:
+- Upload `GeoLite2-Country.mmdb` in **NyxGuard -> IPs & Locations**
+- Or configure MaxMind auto-update (AccountID + LicenseKey) in the same page
+
+## Install (Production Test)
+
+This repo is not published as a prebuilt image on Docker Hub. The install builds the image locally.
+
+## Supported Distributions
+- Ubuntu 24.xx (tested)
+- Other distributions: not fully tested yet. We plan to validate and add them over time.
+
+Run as root on Ubuntu/Debian:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | bash
+```
+
+After install:
+- Open `http://<server-ip>:81/`
+- Complete the setup wizard / create admin user
+
+## Quick Health Checks
+
+```bash
+curl -I http://127.0.0.1:81/
+curl -fsS http://127.0.0.1:81/api/ | jq
+docker ps
+docker logs --tail=100 nyxguard-manager
+```
+
+## Notes
+- Let’s Encrypt HTTP certificates require inbound `80/tcp` from the public internet to your server.
+- DNS challenge certificates require the matching DNS provider credentials.
+- “Protected Apps” are proxy hosts with WAF enabled.
+
+## Private Repo Installs
+The curl installer clones this repo. If the repo is private, `git clone` will require authentication (SSH key or HTTPS token).
+
+## About Me
+I created NyxGuard Manager to run a practical, self-hosted reverse proxy manager with security controls (WAF, bot defense, DDoS shielding, geo/IP insights) that are tightly integrated with proxy hosts, easy to toggle per-app, and observable in real time.
+
+## License / Attribution
+NyxGuard Manager is built on top of an upstream proxy-manager codebase and includes substantial modifications and new NyxGuard features.

@@ -1,0 +1,144 @@
+.page {
+  min-height: calc(100vh - 120px);
+  padding: 40px 0 60px;
+  color: #f6f4ff;
+  background: radial-gradient(120% 120% at 10% 10%, #2b6bff 0%, #1b2a6b 40%, #5b1d84 70%, #d1178a 100%);
+}
+
+.card {
+  border-radius: 18px;
+  padding: 28px;
+  background: rgba(9, 12, 38, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 60px rgba(8, 6, 26, 0.4);
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 30px;
+}
+
+.subtitle {
+  margin: 0 0 18px;
+  opacity: 0.85;
+}
+
+.builder {
+  display: grid;
+  gap: 16px;
+}
+
+.label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+  margin-bottom: 6px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 12px;
+}
+
+.pillActive {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  font-size: 12px;
+}
+
+.pillBtn,
+.pillActiveBtn {
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: inherit;
+}
+
+.pillActiveBtn {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.input {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(12, 16, 46, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 14px;
+  color: #f6f4ff;
+}
+
+.rulesList {
+  margin-top: 22px;
+}
+
+.emptyState {
+  padding: 14px 12px;
+  border-radius: 14px;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  background: rgba(10, 10, 20, 0.22);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.badgeAllow,
+.badgeDeny {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.badgeAllow {
+  background: rgba(35, 196, 131, 0.12);
+  border-color: rgba(35, 196, 131, 0.3);
+}
+
+.badgeDeny {
+  background: rgba(255, 92, 92, 0.12);
+  border-color: rgba(255, 92, 92, 0.3);
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.primary,
+.ghost {
+  border: 1px solid transparent;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: transparent;
+  color: inherit;
+}
+
+.primary {
+  background: linear-gradient(120deg, rgba(45, 110, 255, 0.95), rgba(209, 23, 138, 0.95));
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.ghost {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+}

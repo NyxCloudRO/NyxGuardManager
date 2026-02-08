@@ -1,0 +1,25 @@
+.wrapper {
+  /* Avoid forcing extra vertical space; the header already consumes height. */
+  padding: 20px 0 24px;
+  background: radial-gradient(120% 120% at 10% 10%, #2b6bff 0%, #1b2a6b 40%, #5b1d84 70%, #d1178a 100%);
+}
+
+.cards {
+  margin-top: 0;
+}
+
+.cards :global(.card) {
+  background: rgba(11, 14, 40, 0.75);
+  color: #f7f7fb;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cards :global(.card .text-muted) {
+  color: rgba(247, 247, 251, 0.7) !important;
+}
+
+@media (max-width: 768px) {
+  .wrapper {
+    padding: 16px 0 20px;
+  }
+}

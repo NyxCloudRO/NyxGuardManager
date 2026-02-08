@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="NyxGuard">
+	<defs>
+		<linearGradient id="ng" x1="10" y1="10" x2="54" y2="54" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#4b8bff" />
+			<stop offset="1" stop-color="#d1178a" />
+		</linearGradient>
+	</defs>
+	<circle cx="32" cy="32" r="30" fill="url(#ng)" />
+	<!-- Shield -->
+	<path
+		d="M32 14c8 5 14 5 18 6v14c0 12-8.4 20.6-18 22c-9.6-1.4-18-10-18-22V20c4-1 10-1 18-6z"
+		fill="#ffffff"
+		opacity="0.95"
+	/>
+	<!-- N mark -->
+	<path
+		d="M24 42V22h4.6l10.8 14.8V22H44v20h-4.6L28.6 27.2V42H24z"
+		fill="#0b1029"
+	/>
+</svg>
+

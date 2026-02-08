@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+	<!-- Safari pinned tab uses the mask-icon + color from index.html -->
+	<path d="M32 14c8 5 14 5 18 6v14c0 12-8.4 20.6-18 22c-9.6-1.4-18-10-18-22V20c4-1 10-1 18-6z" />
+	<path d="M24 42V22h4.6l10.8 14.8V22H44v20h-4.6L28.6 27.2V42H24z" />
+</svg>
+

@@ -1,0 +1,46 @@
+.brand {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 0.35rem 0.6rem;
+	border-radius: 999px;
+	/* High-contrast pill so the brand reads on the blue/purple background */
+	background: rgba(0, 0, 0, 0.45);
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	backdrop-filter: blur(10px);
+}
+
+.brandControls {
+	display: flex;
+	justify-content: center;
+	gap: 0.4rem;
+	margin: -0.75rem 0 1rem;
+}
+
+.brandIcon {
+	width: 42px;
+	height: 42px;
+	filter: drop-shadow(0 10px 22px rgba(43, 107, 255, 0.35));
+}
+
+.brandText {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.3rem;
+	white-space: nowrap;
+	line-height: 1.05;
+}
+
+.brandWordPrimary,
+.brandWordSecondary {
+	font-weight: 800;
+	font-size: 1.1rem;
+	color: rgba(255, 255, 255, 0.96);
+	letter-spacing: 0.02em;
+}
+
+/* Improve legibility of gradient text on busy backgrounds */
+.brandWordPrimary,
+.brandWordSecondary {
+	text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+}
