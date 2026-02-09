@@ -285,11 +285,34 @@
 .ruleItem {
   display: flex;
   justify-content: space-between;
+  gap: 12px;
   padding: 10px 12px;
   border-radius: 12px;
   background: rgba(12, 16, 46, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 14px;
+}
+
+.controlLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 180px;
+  flex-wrap: wrap;
+}
+
+.controlActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.miniButton {
+  padding: 8px 12px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
 }
 
 .ruleTag {

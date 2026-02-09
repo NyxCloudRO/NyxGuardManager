@@ -614,20 +614,21 @@ const NyxGuard = () => {
 							</p>
 							<div className={styles.ruleList}>
 								<div className={styles.ruleItem}>
-									<span>WAF Protection</span>
-									<div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+									<div className={styles.controlLabel}>
+										<span>WAF Protection</span>
 										<span className={wafProtectedEnabled ? styles.badgeActive : styles.badgeMuted}>
 											{wafProtectedEnabled ? (wafAllEnabled ? "ON" : "PARTIAL") : "OFF"}
 										</span>
 										<span className={styles.ruleTag} title="Protected apps / total apps">
 											{appsOverview.protectedCount.toLocaleString()}/{appsOverview.totalApps.toLocaleString()}
 										</span>
+									</div>
+									<div className={styles.controlActions}>
 										<button
 											type="button"
-											className={styles.primaryButton}
+											className={`${styles.primaryButton} ${styles.miniButton}`}
 											disabled={toggleWafAll.isPending || appsOverview.totalApps === 0}
 											onClick={() => toggleWafAll.mutate(!wafAllEnabled)}
-											style={{ padding: "8px 12px", fontSize: 12 }}
 											title={
 												appsOverview.totalApps === 0
 													? "No apps found"
@@ -639,57 +640,56 @@ const NyxGuard = () => {
 											{wafAllEnabled ? "Disable All" : "Enable All"}
 										</button>
 										<Link
-											className={styles.ghostButton}
+											className={`${styles.ghostButton} ${styles.miniButton}`}
 											to="/nyxguard/apps"
-											style={{ padding: "8px 12px", fontSize: 12 }}
 										>
 											Manage Apps
 										</Link>
 									</div>
 								</div>
 								<div className={styles.ruleItem}>
-									<span>Bot Defense</span>
-									<div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+									<div className={styles.controlLabel}>
+										<span>Bot Defense</span>
 										<span className={botDefenseEnabled ? styles.badgeActive : styles.badgeMuted}>
 											{botDefenseEnabled ? "ON" : "OFF"}
 										</span>
+									</div>
+									<div className={styles.controlActions}>
 										<button
 											type="button"
-											className={styles.primaryButton}
+											className={`${styles.primaryButton} ${styles.miniButton}`}
 											disabled={saveSettings.isPending}
 											onClick={() => saveSettings.mutate({ botDefenseEnabled: !botDefenseEnabled })}
-											style={{ padding: "8px 12px", fontSize: 12 }}
 										>
 											{botDefenseEnabled ? "Disable" : "Enable"}
 										</button>
 										<Link
-											className={styles.ghostButton}
+											className={`${styles.ghostButton} ${styles.miniButton}`}
 											to="/nyxguard/bot"
-											style={{ padding: "8px 12px", fontSize: 12 }}
 										>
 											Bot Settings
 										</Link>
 									</div>
 								</div>
 								<div className={styles.ruleItem}>
-									<span>DDoS Shield</span>
-									<div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+									<div className={styles.controlLabel}>
+										<span>DDoS Shield</span>
 										<span className={ddosEnabled ? styles.badgeActive : styles.badgeMuted}>
 											{ddosEnabled ? "ON" : "OFF"}
 										</span>
+									</div>
+									<div className={styles.controlActions}>
 										<button
 											type="button"
-											className={styles.primaryButton}
+											className={`${styles.primaryButton} ${styles.miniButton}`}
 											disabled={saveSettings.isPending}
 											onClick={() => saveSettings.mutate({ ddosEnabled: !ddosEnabled })}
-											style={{ padding: "8px 12px", fontSize: 12 }}
 										>
 											{ddosEnabled ? "Disable" : "Activate"}
 										</button>
 										<Link
-											className={styles.ghostButton}
+											className={`${styles.ghostButton} ${styles.miniButton}`}
 											to="/nyxguard/ddos"
-											style={{ padding: "8px 12px", fontSize: 12 }}
 										>
 											DDoS Settings
 										</Link>
