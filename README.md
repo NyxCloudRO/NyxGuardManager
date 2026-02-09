@@ -56,6 +56,23 @@ This repo is not published as a prebuilt image on Docker Hub. The install builds
 - Ubuntu 24.xx (tested)
 - Other distributions: not fully tested yet. We plan to validate and add them over time.
 
+## Hardware Requirements (Guidelines)
+
+Actual resource usage depends heavily on traffic volume, number of protected apps, and log retention.
+
+- Minimum (small install / short retention):
+  - 2 vCPU
+  - 4 GB RAM
+  - 25 GB disk
+- Recommended (multiple apps / longer retention):
+  - 4 vCPU
+  - 8 GB RAM
+  - 80 GB disk
+
+Notes:
+- Prefer SSD storage (log-heavy workloads are disk I/O sensitive).
+- If you plan 60-180 days retention and/or high traffic, allocate more disk.
+
 Run as root on Ubuntu/Debian:
 
 ```bash
