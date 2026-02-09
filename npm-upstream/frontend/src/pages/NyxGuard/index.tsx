@@ -629,9 +629,6 @@ const NyxGuard = () => {
 										>
 											{wafProtectedEnabled ? (wafAllEnabled ? "ON" : "PARTIAL") : "OFF"}
 										</span>
-										<span className={styles.ruleTag} title="Protected apps / total apps">
-											{appsOverview.protectedCount.toLocaleString()}/{appsOverview.totalApps.toLocaleString()}
-										</span>
 									</div>
 									<div className={styles.controlActions}>
 										<button
