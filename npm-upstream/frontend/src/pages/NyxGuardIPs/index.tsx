@@ -13,7 +13,7 @@ import type { NyxGuardSettings } from "src/api/backend";
 import styles from "./index.module.css";
 
 const NyxGuardIPs = () => {
-	const [windowMinutes, setWindowMinutes] = useState(1440);
+	const [windowMinutes, setWindowMinutes] = useState(15);
 	const qc = useQueryClient();
 	const [retentionDraft, setRetentionDraft] = useState<30 | 60 | 90 | 180>(60);
 	const [geoipFile, setGeoipFile] = useState<File | null>(null);
@@ -189,7 +189,7 @@ const NyxGuardIPs = () => {
 							</button>
 							<button
 								type="button"
-								className={styles.window}
+								className={`${styles.window} ${styles.exportButton}`}
 								disabled={!ips.data?.items?.length || ips.isLoading}
 								onClick={exportIpsJson}
 								title={ips.data?.items?.length ? "Download current table as JSON" : "No data to export"}

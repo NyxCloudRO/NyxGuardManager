@@ -44,6 +44,20 @@
   border-color: rgba(255, 255, 255, 0.28);
 }
 
+.exportButton {
+  background: linear-gradient(120deg, rgba(37, 99, 235, 0.28), rgba(219, 39, 119, 0.22));
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.exportButton:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.exportButton:disabled {
+  opacity: 0.55;
+  filter: none;
+}
+
 .applyBtn {
   border: 1px solid rgba(255, 255, 255, 0.18);
   padding: 8px 14px;
