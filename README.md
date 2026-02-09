@@ -1,9 +1,6 @@
 <p align="center">
   <img src="assets/nyxguard-wordmark.svg" alt="NyxGuard Manager" width="900" />
 </p>
-<p align="center">
-  <img src="assets/nyxguard-cover.svg" alt="NyxGuard Manager Cover" width="900" />
-</p>
 
 NyxGuard Manager is a self-hosted reverse proxy manager with an integrated WAF-style security layer (NyxGuard).
 
