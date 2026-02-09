@@ -68,16 +68,29 @@ router.get("/avatar/:user_id", async (req, res, next) => {
  * GET /api
  */
 router.get("/", async (_, res /*, next*/) => {
-	const version = pjson.version.split("-").shift().split(".");
+	// Prefer embedded build metadata (from Docker build args) when available.
+	// Fallback to package.json version for local/dev runs.
+	const buildVersionRaw = (process.env.NPM_BUILD_VERSION || pjson.version || "").toString();
+	const buildVersion = buildVersionRaw.replace(/^v/i, "").split("-").shift();
+	const versionParts = buildVersion.split(".");
 	const setup = await isSetup();
+
+	const major = Number.parseInt(versionParts[0] || "0", 10);
+	const minor = Number.parseInt(versionParts[1] || "0", 10);
+	const revision = Number.parseInt(versionParts[2] || "0", 10);
 
 	res.status(200).send({
 		status: "OK",
 		setup,
 		version: {
-			major: Number.parseInt(version.shift(), 10),
-			minor: Number.parseInt(version.shift(), 10),
-			revision: Number.parseInt(version.shift(), 10),
+			major,
+			minor,
+			revision,
+		},
+		build: {
+			version: buildVersion || null,
+			commit: process.env.NPM_BUILD_COMMIT || null,
+			date: process.env.NPM_BUILD_DATE || null,
 		},
 	});
 });

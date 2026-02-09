@@ -1,9 +1,16 @@
 import type { AppVersion, User } from "./models";
 
+export interface BuildInfo {
+	version: string | null;
+	commit: string | null;
+	date: string | null;
+}
+
 export interface HealthResponse {
 	status: string;
 	version: AppVersion;
 	setup: boolean;
+	build?: BuildInfo;
 }
 
 export interface TokenResponse {

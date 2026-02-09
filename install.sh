@@ -210,8 +210,18 @@ ensure_image() {
     cd "${INSTALL_DIR}/npm-upstream"
     ./scripts/ci/frontend-build
 
+    local build_commit build_date
+    build_commit="$(git -C "${INSTALL_DIR}" rev-parse --short HEAD 2>/dev/null || true)"
+    build_date="$(date -u '+%Y-%m-%d')"
+
     echo "Building Docker image ${IMAGE_REPO}:${version}..."
-    docker build -t "${IMAGE_REPO}:${version}" -f docker/Dockerfile .
+    docker build \
+      --build-arg BUILD_VERSION="${version}" \
+      --build-arg BUILD_COMMIT="${build_commit:-unknown}" \
+      --build-arg BUILD_DATE="${build_date}" \
+      -t "${IMAGE_REPO}:${version}" \
+      -f docker/Dockerfile \
+      .
   else
     echo "Pulling Docker image ${IMAGE_REPO}:${version}..."
     docker pull "${IMAGE_REPO}:${version}"

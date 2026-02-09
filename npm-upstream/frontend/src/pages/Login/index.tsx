@@ -174,8 +174,23 @@ export default function Login() {
 		if (!health.data) {
 			return "";
 		}
+		const build = health.data.build;
 		const v = health.data.version;
-		return `v${v.major}.${v.minor}.${v.revision}`;
+
+		const version =
+			build?.version ||
+			(v && Number.isFinite(v.major) && Number.isFinite(v.minor) && Number.isFinite(v.revision)
+				? `${v.major}.${v.minor}.${v.revision}`
+				: "");
+
+		const parts: string[] = [];
+		if (version) {
+			parts.push(`v${version}`);
+		}
+		if (build?.date) {
+			parts.push(build.date.split(" ")[0]);
+		}
+		return parts.join(" · ");
 	};
 
 	return (
