@@ -622,39 +622,20 @@ const NyxGuard = () => {
 									No IP rules yet. Add an IP/CIDR rule to apply enforcement.
 								</div>
 							) : (
-								<>
-									<div className={styles.ruleList}>
-										<div className={styles.ruleItem}>
-											<span>Active IP Rules</span>
-											<span className={styles.ruleTag}>{ipRulesOverview.activeRules.toLocaleString()}</span>
-										</div>
-										<div className={styles.ruleItem}>
-											<span>Allow</span>
-											<span className={styles.ruleTag}>{ipRulesOverview.allowCount.toLocaleString()}</span>
-										</div>
-										<div className={styles.ruleItem}>
-											<span>Deny</span>
-											<span className={styles.ruleTag}>{ipRulesOverview.denyCount.toLocaleString()}</span>
-										</div>
+								<div className={styles.ruleList}>
+									<div className={styles.ruleItem}>
+										<span>Active IP Rules</span>
+										<span className={styles.ruleTag}>{ipRulesOverview.activeRules.toLocaleString()}</span>
 									</div>
-									{ipRulesOverview.preview.length ? (
-										<div className={styles.ruleList}>
-											{ipRulesOverview.preview.map((r) => (
-												<div key={r.id} className={styles.ruleItem}>
-													<span title={r.ipCidr}>
-														{r.ipCidr}
-														<span style={{ opacity: 0.7 }}>
-															{r.expiresOn ? ` (expires ${new Date(r.expiresOn).toLocaleDateString()})` : ""}
-														</span>
-													</span>
-													<span className={r.action === "deny" ? styles.badgeDeny : styles.badgeAllow}>
-														{r.action.toUpperCase()}
-													</span>
-												</div>
-											))}
-										</div>
-									) : null}
-								</>
+									<div className={styles.ruleItem}>
+										<span>Allow</span>
+										<span className={styles.ruleTag}>{ipRulesOverview.allowCount.toLocaleString()}</span>
+									</div>
+									<div className={styles.ruleItem}>
+										<span>Deny</span>
+										<span className={styles.ruleTag}>{ipRulesOverview.denyCount.toLocaleString()}</span>
+									</div>
+								</div>
 							)}
 							<div className={styles.actionRow}>
 								<Link className={styles.primaryButton} to="/nyxguard/rules?type=ip">
@@ -679,39 +660,20 @@ const NyxGuard = () => {
 									No country rules yet. Create your first rule to apply enforcement.
 								</div>
 							) : (
-								<>
-									<div className={styles.ruleList}>
-										<div className={styles.ruleItem}>
-											<span>Active Country Rules</span>
-											<span className={styles.ruleTag}>{countryRulesOverview.activeRules.toLocaleString()}</span>
-										</div>
-										<div className={styles.ruleItem}>
-											<span>Allow</span>
-											<span className={styles.ruleTag}>{countryRulesOverview.allowCount.toLocaleString()}</span>
-										</div>
-										<div className={styles.ruleItem}>
-											<span>Deny</span>
-											<span className={styles.ruleTag}>{countryRulesOverview.denyCount.toLocaleString()}</span>
-										</div>
+								<div className={styles.ruleList}>
+									<div className={styles.ruleItem}>
+										<span>Active Country Rules</span>
+										<span className={styles.ruleTag}>{countryRulesOverview.activeRules.toLocaleString()}</span>
 									</div>
-									{countryRulesOverview.preview.length ? (
-										<div className={styles.ruleList}>
-											{countryRulesOverview.preview.map((r) => (
-												<div key={r.id} className={styles.ruleItem}>
-													<span>
-														{r.countryCode || "??"}
-														<span style={{ opacity: 0.7 }}>
-															{r.expiresOn ? ` (expires ${new Date(r.expiresOn).toLocaleDateString()})` : ""}
-														</span>
-													</span>
-													<span className={r.action === "deny" ? styles.badgeDeny : styles.badgeAllow}>
-														{r.action.toUpperCase()}
-													</span>
-												</div>
-											))}
-										</div>
-									) : null}
-								</>
+									<div className={styles.ruleItem}>
+										<span>Allow</span>
+										<span className={styles.ruleTag}>{countryRulesOverview.allowCount.toLocaleString()}</span>
+									</div>
+									<div className={styles.ruleItem}>
+										<span>Deny</span>
+										<span className={styles.ruleTag}>{countryRulesOverview.denyCount.toLocaleString()}</span>
+									</div>
+								</div>
 							)}
 							<div className={styles.actionRow}>
 								<Link className={styles.primaryButton} to="/nyxguard/rules?type=country">
