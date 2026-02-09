@@ -24,3 +24,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 - Initial NyxGuard Manager v2.0.0 release.
 
+<!-- NyxGuard Manager v2.0.1 -->

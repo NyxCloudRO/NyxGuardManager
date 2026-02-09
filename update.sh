@@ -50,7 +50,8 @@ update_repo() {
 build_image() {
   cd "${INSTALL_DIR}"
   local version
-  version="$(cat .version 2>/dev/null || true)"
+  # Only read the first line so we can include comments/metadata below it.
+  version="$(head -n 1 .version 2>/dev/null || true)"
   if [[ -z "${version}" ]]; then
     version="unknown"
   fi
@@ -91,4 +92,3 @@ main() {
 }
 
 main "$@"
-

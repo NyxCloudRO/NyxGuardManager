@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# NyxGuard Manager v2.0.1
 set -euo pipefail
 
 REPO_URL="${REPO_URL:-https://github.com/NyxCloudRO/NyxGuardManager.git}"

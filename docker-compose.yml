@@ -47,3 +47,5 @@ volumes:
   nyxguard_data:
   nyxguard_letsencrypt:
   nyxguard_db:
+
+# NyxGuard Manager v2.0.1
