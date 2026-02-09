@@ -589,9 +589,27 @@ const NyxGuard = () => {
 						<div className={styles.sectionCard}>
 							<h3 className={styles.sectionTitle}>Defense Controls</h3>
 							<p className={styles.sectionText}>
-								Bot defense and DDoS shield toggles (applies to protected apps).
+								WAF app protection, bot defense, and DDoS shield controls.
 							</p>
 							<div className={styles.ruleList}>
+								<div className={styles.ruleItem}>
+									<span>WAF Protection</span>
+									<div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+										<span className={wafProtectedEnabled ? styles.badgeActive : styles.badgeMuted}>
+											{wafProtectedEnabled ? "ON" : "OFF"}
+										</span>
+										<span className={styles.ruleTag} title="Protected apps / total apps">
+											{appsOverview.protectedCount.toLocaleString()}/{appsOverview.totalApps.toLocaleString()}
+										</span>
+										<Link
+											className={styles.ghostButton}
+											to="/nyxguard/apps"
+											style={{ padding: "8px 12px", fontSize: 12 }}
+										>
+											Manage Apps
+										</Link>
+									</div>
+								</div>
 								<div className={styles.ruleItem}>
 									<span>Bot Defense</span>
 									<div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
@@ -607,6 +625,13 @@ const NyxGuard = () => {
 										>
 											{botDefenseEnabled ? "Disable" : "Enable"}
 										</button>
+										<Link
+											className={styles.ghostButton}
+											to="/nyxguard/bot"
+											style={{ padding: "8px 12px", fontSize: 12 }}
+										>
+											Bot Settings
+										</Link>
 									</div>
 								</div>
 								<div className={styles.ruleItem}>
@@ -624,13 +649,17 @@ const NyxGuard = () => {
 										>
 											{ddosEnabled ? "Disable" : "Activate"}
 										</button>
+										<Link
+											className={styles.ghostButton}
+											to="/nyxguard/ddos"
+											style={{ padding: "8px 12px", fontSize: 12 }}
+										>
+											DDoS Settings
+										</Link>
 									</div>
 								</div>
 							</div>
 							<div className={styles.actionRow}>
-								<Link className={styles.ghostButton} to="/nyxguard/apps">
-									Protected Apps
-								</Link>
 								<Link className={styles.ghostButton} to="/nyxguard/traffic">
 									View Live Traffic
 								</Link>
