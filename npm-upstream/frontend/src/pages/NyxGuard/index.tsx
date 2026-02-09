@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import {
 	getNyxGuardApps,
 	getNyxGuardAppsSummary,
+	getNyxGuardCountryRules,
 	getNyxGuardIps,
 	getNyxGuardSettings,
 	getNyxGuardSummary,
@@ -51,6 +52,12 @@ const NyxGuard = () => {
 		queryKey: ["nyxguard", "ips", "insights", windowMinutes],
 		queryFn: () => getNyxGuardIps(windowMinutes, windowMinutes >= 10080 ? 400 : 200),
 		refetchInterval: windowMinutes <= 60 ? 15000 : 60000,
+	});
+
+	const countryRules = useQuery({
+		queryKey: ["nyxguard", "rules", "country", "summary"],
+		queryFn: () => getNyxGuardCountryRules(),
+		refetchInterval: 15000,
 	});
 
 	const saveSettings = useMutation({
@@ -147,6 +154,38 @@ const NyxGuard = () => {
 
 		return { totalApps, protectedCount, monitoringCount, preview };
 	}, [apps.data?.items, appsSummary.data?.protectedCount, appsSummary.data?.totalApps]);
+
+	const countryRulesOverview = useMemo(() => {
+		const items = countryRules.data?.items ?? [];
+		const now = Date.now();
+		const isExpired = (expiresOn: string | null) => {
+			if (!expiresOn) return false;
+			const t = Date.parse(expiresOn);
+			return Number.isFinite(t) ? t <= now : false;
+		};
+
+		const active = items.filter((r) => r.enabled && !isExpired(r.expiresOn));
+		const allow = active.filter((r) => r.action === "allow");
+		const deny = active.filter((r) => r.action === "deny");
+
+		const preview = [...active]
+			.sort((a, b) => Number(b.id) - Number(a.id))
+			.slice(0, 5)
+			.map((r) => ({
+				id: r.id,
+				action: r.action,
+				countryCode: (r.countryCode ?? "").toUpperCase(),
+				expiresOn: r.expiresOn,
+			}));
+
+		return {
+			totalRules: items.length,
+			activeRules: active.length,
+			allowCount: allow.length,
+			denyCount: deny.length,
+			preview,
+		};
+	}, [countryRules.data?.items]);
 
 	const windowLabel = useMemo(() => {
 		if (windowMinutes === 15) return "Last 15m";
@@ -399,9 +438,49 @@ const NyxGuard = () => {
 							<p className={styles.sectionText}>
 								Allow or deny by country. Changes apply instantly to protected apps.
 							</p>
-							<div className={styles.emptyState}>
-								No country rules yet. Create your first rule to apply enforcement.
-							</div>
+							{countryRules.isLoading ? (
+								<div className={styles.emptyState}>Loading country rules…</div>
+							) : countryRules.isError ? (
+								<div className={styles.emptyState}>Unable to load country rules (API error).</div>
+							) : countryRulesOverview.totalRules === 0 ? (
+								<div className={styles.emptyState}>
+									No country rules yet. Create your first rule to apply enforcement.
+								</div>
+							) : (
+								<>
+									<div className={styles.ruleList}>
+										<div className={styles.ruleItem}>
+											<span>Active Country Rules</span>
+											<span className={styles.ruleTag}>{countryRulesOverview.activeRules.toLocaleString()}</span>
+										</div>
+										<div className={styles.ruleItem}>
+											<span>Allow</span>
+											<span className={styles.ruleTag}>{countryRulesOverview.allowCount.toLocaleString()}</span>
+										</div>
+										<div className={styles.ruleItem}>
+											<span>Deny</span>
+											<span className={styles.ruleTag}>{countryRulesOverview.denyCount.toLocaleString()}</span>
+										</div>
+									</div>
+									{countryRulesOverview.preview.length ? (
+										<div className={styles.ruleList}>
+											{countryRulesOverview.preview.map((r) => (
+												<div key={r.id} className={styles.ruleItem}>
+													<span>
+														{r.countryCode || "??"}
+														<span style={{ opacity: 0.7 }}>
+															{r.expiresOn ? ` (expires ${new Date(r.expiresOn).toLocaleDateString()})` : ""}
+														</span>
+													</span>
+													<span className={r.action === "deny" ? styles.badgeDeny : styles.badgeAllow}>
+														{r.action.toUpperCase()}
+													</span>
+												</div>
+											))}
+										</div>
+									) : null}
+								</>
+							)}
 							<div className={styles.actionRow}>
 								<Link className={styles.primaryButton} to="/nyxguard/rules">
 									Add Country Rule
