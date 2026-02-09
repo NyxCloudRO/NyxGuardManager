@@ -9,8 +9,9 @@ import {
 	getNyxGuardIpRules,
 	getNyxGuardSettings,
 	getNyxGuardSummary,
-	updateNyxGuardSettings,
 	updateNyxGuardAppsWaf,
+	updateNyxGuardAppsBot,
+	updateNyxGuardAppsDdos,
 } from "src/api/backend";
 import { showError, showSuccess } from "src/notifications";
 import styles from "./index.module.css";
@@ -69,12 +70,6 @@ const NyxGuard = () => {
 		refetchInterval: 15000,
 	});
 
-	const saveSettings = useMutation({
-		mutationFn: (patch: { botDefenseEnabled?: boolean; ddosEnabled?: boolean; logRetentionDays?: 30 | 60 | 90 }) =>
-			updateNyxGuardSettings(patch),
-		onSuccess: () => qc.invalidateQueries({ queryKey: ["nyxguard", "settings"] }),
-	});
-
 	const toggleWafAll = useMutation({
 		mutationFn: (enabled: boolean) => updateNyxGuardAppsWaf(enabled),
 		onSuccess: async (res, enabled) => {
@@ -88,6 +83,46 @@ const NyxGuard = () => {
 		},
 		onError: (err: any) => {
 			const msg = err instanceof Error ? err.message : "Failed to update WAF for all apps.";
+			showError(msg);
+		},
+	});
+
+	const toggleBotAll = useMutation({
+		mutationFn: (enabled: boolean) => updateNyxGuardAppsBot(enabled),
+		onSuccess: async (res: any, enabled) => {
+			const updated = typeof res?.updated === "number" ? res.updated : 0;
+			const skipped = typeof res?.skipped === "number" ? res.skipped : 0;
+			showSuccess(
+				enabled
+					? `Enabled Bot Defense for ${updated.toLocaleString()} app(s)${skipped ? ` (skipped ${skipped.toLocaleString()} monitoring-only).` : "."}`
+					: `Disabled Bot Defense for ${updated.toLocaleString()} app(s).`,
+			);
+			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps"] });
+			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps", "summary"] });
+			await qc.invalidateQueries({ queryKey: ["nyxguard", "settings"] });
+		},
+		onError: (err: any) => {
+			const msg = err instanceof Error ? err.message : "Failed to update Bot Defense for all apps.";
+			showError(msg);
+		},
+	});
+
+	const toggleDdosAll = useMutation({
+		mutationFn: (enabled: boolean) => updateNyxGuardAppsDdos(enabled),
+		onSuccess: async (res: any, enabled) => {
+			const updated = typeof res?.updated === "number" ? res.updated : 0;
+			const skipped = typeof res?.skipped === "number" ? res.skipped : 0;
+			showSuccess(
+				enabled
+					? `Enabled DDoS Shield for ${updated.toLocaleString()} app(s)${skipped ? ` (skipped ${skipped.toLocaleString()} monitoring-only).` : "."}`
+					: `Disabled DDoS Shield for ${updated.toLocaleString()} app(s).`,
+			);
+			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps"] });
+			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps", "summary"] });
+			await qc.invalidateQueries({ queryKey: ["nyxguard", "settings"] });
+		},
+		onError: (err: any) => {
+			const msg = err instanceof Error ? err.message : "Failed to update DDoS Shield for all apps.";
 			showError(msg);
 		},
 	});
@@ -713,10 +748,15 @@ const NyxGuard = () => {
 										<button
 											type="button"
 											className={`${styles.primaryButton} ${styles.miniButton}`}
-											disabled={saveSettings.isPending}
-											onClick={() => saveSettings.mutate({ botDefenseEnabled: !botDefenseEnabled })}
+											disabled={toggleBotAll.isPending}
+											onClick={() => toggleBotAll.mutate(!botDefenseEnabled)}
+											title={
+												botDefenseEnabled
+													? "Disable Bot Defense for all protected apps"
+													: "Enable Bot Defense for all protected apps"
+											}
 										>
-											{botDefenseEnabled ? "Disable" : "Enable"}
+											{botDefenseEnabled ? "All Off" : "All On"}
 										</button>
 										<Link className={`${styles.ghostButton} ${styles.miniButton}`} to="/nyxguard/bot">
 											Bot Settings
@@ -734,10 +774,15 @@ const NyxGuard = () => {
 										<button
 											type="button"
 											className={`${styles.primaryButton} ${styles.miniButton}`}
-											disabled={saveSettings.isPending}
-											onClick={() => saveSettings.mutate({ ddosEnabled: !ddosEnabled })}
+											disabled={toggleDdosAll.isPending}
+											onClick={() => toggleDdosAll.mutate(!ddosEnabled)}
+											title={
+												ddosEnabled
+													? "Disable DDoS Shield for all protected apps"
+													: "Enable DDoS Shield for all protected apps"
+											}
 										>
-											{ddosEnabled ? "Disable" : "Activate"}
+											{ddosEnabled ? "All Off" : "All On"}
 										</button>
 										<Link className={`${styles.ghostButton} ${styles.miniButton}`} to="/nyxguard/ddos">
 											DDoS Settings

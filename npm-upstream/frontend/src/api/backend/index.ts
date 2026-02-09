@@ -34,6 +34,8 @@ export * from "./getNyxGuardApps";
 export * from "./getNyxGuardAppsSummary";
 export * from "./updateNyxGuardApp";
 export * from "./updateNyxGuardAppsWaf";
+export * from "./updateNyxGuardAppsBot";
+export * from "./updateNyxGuardAppsDdos";
 export * from "./getNyxGuardIpRules";
 export * from "./createNyxGuardIpRule";
 export * from "./updateNyxGuardIpRule";

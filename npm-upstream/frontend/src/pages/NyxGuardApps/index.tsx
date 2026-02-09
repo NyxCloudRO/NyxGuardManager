@@ -30,9 +30,17 @@ const NyxGuardApps = () => {
 							? {
 									...it,
 									wafEnabled: args.wafEnabled,
-									botDefenseEnabled:
-										typeof args.botDefenseEnabled === "boolean" ? args.botDefenseEnabled : it.botDefenseEnabled,
-									ddosEnabled: typeof args.ddosEnabled === "boolean" ? args.ddosEnabled : it.ddosEnabled,
+									// Disabling WAF implicitly disables per-app Bot/DDoS includes.
+									botDefenseEnabled: args.wafEnabled
+										? typeof args.botDefenseEnabled === "boolean"
+											? args.botDefenseEnabled
+											: it.botDefenseEnabled
+										: false,
+									ddosEnabled: args.wafEnabled
+										? typeof args.ddosEnabled === "boolean"
+											? args.ddosEnabled
+											: it.ddosEnabled
+										: false,
 								}
 							: it,
 					),
@@ -86,8 +94,6 @@ const NyxGuardApps = () => {
 													toggle.mutate({
 														id: app.id,
 														wafEnabled: !isProtected,
-														botDefenseEnabled: botEnabled,
-														ddosEnabled,
 													})
 												}
 											>
@@ -103,7 +109,6 @@ const NyxGuardApps = () => {
 														id: app.id,
 														wafEnabled: true,
 														botDefenseEnabled: !botEnabled,
-														ddosEnabled,
 													})
 												}
 											>
@@ -118,7 +123,6 @@ const NyxGuardApps = () => {
 													toggle.mutate({
 														id: app.id,
 														wafEnabled: true,
-														botDefenseEnabled: botEnabled,
 														ddosEnabled: !ddosEnabled,
 													})
 												}

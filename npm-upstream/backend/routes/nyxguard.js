@@ -673,6 +673,161 @@ router
 		}
 	});
 
+/**
+ * Bulk toggle Bot Defense on all *protected* apps visible to the caller.
+ * (Apps must have WAF enabled to apply.)
+ *
+ * PUT /api/nyxguard/apps/bot { enabled: boolean }
+ */
+router
+	.route("/apps/bot")
+	.options((_, res) => res.sendStatus(204))
+	.all(jwtdecode())
+	.put(async (req, res, next) => {
+		try {
+			await res.locals.access.can("proxy_hosts:update");
+
+			const body = req.body ?? {};
+			const data = await validator(
+				{
+					required: ["enabled"],
+					additionalProperties: false,
+					properties: {
+						enabled: { type: "boolean" },
+					},
+				},
+				{
+					enabled: body.enabled,
+				},
+			);
+
+			await internalNyxGuard.nginx.ensureFiles();
+
+			// Global toggle controls content of the include file; per-app include enables it per app.
+			await internalNyxGuard.settings.update(db(), { botDefenseEnabled: data.enabled });
+
+			const rows = await internalProxyHost.getAll(res.locals.access, null, null);
+
+			let updated = 0;
+			let skipped = 0;
+
+			for (const r of rows) {
+				const currentWaf = internalNyxGuard.waf.isEnabledInAdvancedConfig(r.advanced_config);
+				const currentBot = internalNyxGuard.botDefense.isEnabledInAdvancedConfig(r.advanced_config);
+
+				if (data.enabled && !currentWaf) {
+					skipped += 1;
+					continue;
+				}
+
+				const targetBot = data.enabled ? !!currentWaf : false;
+				if (currentBot === targetBot) continue;
+
+				let nextAdvanced = internalNyxGuard.botDefense.applyAdvancedConfig(r.advanced_config, targetBot);
+				// Never keep Bot Defense enabled without WAF.
+				if (!currentWaf) {
+					nextAdvanced = internalNyxGuard.botDefense.applyAdvancedConfig(nextAdvanced, false);
+				}
+
+				await internalProxyHost.update(res.locals.access, {
+					id: r.id,
+					advanced_config: nextAdvanced,
+					meta: {
+						...(r.meta ?? {}),
+						nyxguardWafEnabled: !!currentWaf,
+						nyxguardBotDefenseEnabled: internalNyxGuard.botDefense.isEnabledInAdvancedConfig(nextAdvanced),
+						nyxguardDdosEnabled: internalNyxGuard.ddos.isEnabledInAdvancedConfig(nextAdvanced),
+					},
+				});
+
+				updated += 1;
+			}
+
+			await internalNyxGuard.nginx.apply(db());
+			res.status(200).send({ updated, skipped });
+		} catch (err) {
+			debug(logger, `PUT /api/nyxguard/apps/bot: ${err}`);
+			next(err);
+		}
+	});
+
+/**
+ * Bulk toggle DDoS Shield on all *protected* apps visible to the caller.
+ * (Apps must have WAF enabled to apply.)
+ *
+ * PUT /api/nyxguard/apps/ddos { enabled: boolean }
+ */
+router
+	.route("/apps/ddos")
+	.options((_, res) => res.sendStatus(204))
+	.all(jwtdecode())
+	.put(async (req, res, next) => {
+		try {
+			await res.locals.access.can("proxy_hosts:update");
+
+			const body = req.body ?? {};
+			const data = await validator(
+				{
+					required: ["enabled"],
+					additionalProperties: false,
+					properties: {
+						enabled: { type: "boolean" },
+					},
+				},
+				{
+					enabled: body.enabled,
+				},
+			);
+
+			await internalNyxGuard.nginx.ensureFiles();
+
+			await internalNyxGuard.settings.update(db(), { ddosEnabled: data.enabled });
+
+			const rows = await internalProxyHost.getAll(res.locals.access, null, null);
+
+			let updated = 0;
+			let skipped = 0;
+
+			for (const r of rows) {
+				const currentWaf = internalNyxGuard.waf.isEnabledInAdvancedConfig(r.advanced_config);
+				const currentDdos = internalNyxGuard.ddos.isEnabledInAdvancedConfig(r.advanced_config);
+
+				if (data.enabled && !currentWaf) {
+					skipped += 1;
+					continue;
+				}
+
+				const targetDdos = data.enabled ? !!currentWaf : false;
+				if (currentDdos === targetDdos) continue;
+
+				let nextAdvanced = internalNyxGuard.ddos.applyAdvancedConfig(r.advanced_config, targetDdos);
+				// Never keep DDoS Shield enabled without WAF.
+				if (!currentWaf) {
+					nextAdvanced = internalNyxGuard.ddos.applyAdvancedConfig(nextAdvanced, false);
+				}
+
+				await internalProxyHost.update(res.locals.access, {
+					id: r.id,
+					advanced_config: nextAdvanced,
+					meta: {
+						...(r.meta ?? {}),
+						nyxguardWafEnabled: !!currentWaf,
+						nyxguardBotDefenseEnabled: internalNyxGuard.botDefense.isEnabledInAdvancedConfig(nextAdvanced),
+						nyxguardDdosEnabled: internalNyxGuard.ddos.isEnabledInAdvancedConfig(nextAdvanced),
+					},
+				});
+
+				updated += 1;
+			}
+
+			await internalNyxGuard.nginx.apply(db());
+			res.status(200).send({ updated, skipped });
+		} catch (err) {
+			debug(logger, `PUT /api/nyxguard/apps/ddos: ${err}`);
+			next(err);
+		}
+	});
+
 router
 	.route("/apps/:host_id")
 	.options((_, res) => res.sendStatus(204))
@@ -711,8 +866,21 @@ router
 			// Treat missing fields as "keep current value" so UI updates don't accidentally
 			// reset other per-app toggles.
 			const nextWaf = data.wafEnabled;
-			const nextBotInput = typeof data.botDefenseEnabled === "boolean" ? data.botDefenseEnabled : currentBot;
-			const nextDdosInput = typeof data.ddosEnabled === "boolean" ? data.ddosEnabled : currentDdos;
+			// When enabling WAF for the first time on an app, default Bot/DDoS to the global settings
+			// if the caller didn't explicitly pass values.
+			const globalSettings = await internalNyxGuard.settings.get(db());
+			const nextBotInput =
+				typeof data.botDefenseEnabled === "boolean"
+					? data.botDefenseEnabled
+					: !currentWaf && nextWaf
+						? globalSettings.botDefenseEnabled
+						: currentBot;
+			const nextDdosInput =
+				typeof data.ddosEnabled === "boolean"
+					? data.ddosEnabled
+					: !currentWaf && nextWaf
+						? globalSettings.ddosEnabled
+						: currentDdos;
 
 			const bot = !!nextWaf && !!nextBotInput;
 			const ddos = !!nextWaf && !!nextDdosInput;
