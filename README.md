@@ -54,7 +54,44 @@ Alternative (recommended): auto-update
 
 ## Install (Production Test)
 
-This repo is not published as a prebuilt image on Docker Hub. The install builds the image locally.
+NyxGuard Manager is published as a prebuilt Docker image on Docker Hub (`nyxmael/nyxguardmanager`).
+
+### Install Via curl (Recommended)
+
+Run as root on Ubuntu/Debian:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | bash
+```
+
+By default the installer pulls `nyxmael/nyxguardmanager:<version>` and starts the stack with Docker Compose.
+
+Optional:
+- Build locally instead of pulling: `BUILD_LOCAL=true`
+- Use a different image/repo: `IMAGE_REPO=youruser/nyxguardmanager`
+
+### Install Via Docker (Compose)
+
+1. Create an install directory:
+
+```bash
+sudo mkdir -p /opt/nyxguardmanager
+cd /opt/nyxguardmanager
+```
+
+2. Download the compose file and create `.env`:
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/docker-compose.yml
+curl -fsSLO https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/.env.example
+cp .env.example .env
+```
+
+3. Edit `.env` (set strong passwords for `DB_MYSQL_PASSWORD` and `MYSQL_ROOT_PASSWORD`), then start:
+
+```bash
+docker compose --env-file .env up -d
+```
 
 ## Supported Distributions
 - Ubuntu 24.xx (tested)
@@ -78,19 +115,17 @@ Notes:
 - Prefer SSD storage (log-heavy workloads are disk I/O sensitive).
 - If you plan 60-180 days retention and/or high traffic, allocate more disk.
 
-Run as root on Ubuntu/Debian:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | bash
-```
-
 ## Update (In-Place)
 
-If you already installed NyxGuard Manager and want the latest code + a rebuilt local image without wiping your config:
+If you already installed NyxGuard Manager and want the latest code + a pulled (or locally built) image without wiping your config:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | sudo bash
 ```
+
+Optional:
+- Build locally instead of pulling: `BUILD_LOCAL=true`
+- Use a different image/repo: `IMAGE_REPO=youruser/nyxguardmanager`
 
 After install:
 - Open `http://<server-ip>:81/`
