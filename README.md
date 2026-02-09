@@ -108,19 +108,41 @@ Notes:
 
 ## Update (In-Place)
 
-If you already installed NyxGuard Manager and want the latest code + a pulled (or locally built) image without wiping your config:
+Use this if you already have NyxGuard Manager running and want to update without wiping config/data.
+
+### Update Via curl (Installed In /opt/nyxguardmanager)
+
+This is the default path when you installed via `install.sh`.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | sudo bash
 ```
 
-Optional:
+Optional environment variables:
+- Pull from a different repo: `IMAGE_REPO=youruser/nyxguardmanager`
 - Build locally instead of pulling: `BUILD_LOCAL=true`
-- Use a different image/repo: `IMAGE_REPO=youruser/nyxguardmanager`
 
-After install:
-- Open `http://<server-ip>:81/`
-- Complete the setup wizard / create admin user
+Example:
+
+```bash
+IMAGE_REPO=nyxmael/nyxguardmanager BUILD_LOCAL=false \
+  curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | sudo bash
+```
+
+### Update Via Docker Compose (Manual Installs)
+
+If you installed by downloading `docker-compose.yml` yourself:
+
+```bash
+cd /opt/nyxguardmanager
+docker compose pull
+docker compose --env-file .env up -d
+```
+
+### Notes
+
+- Your data is stored in Docker volumes, so updates should not wipe config/certs/DB unless you delete volumes.
+- If you previously migrated volumes (via `NYXGUARD_*_VOLUME` in `.env`), keep those values unchanged.
 
 ## Quick Health Checks
 
