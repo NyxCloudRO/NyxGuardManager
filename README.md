@@ -38,7 +38,7 @@ See [CHANGELOG.md](CHANGELOG.md).
 ### GeoIP Country (Optional)
 NyxGuard can show the **country code** for each IP (RO/FR/GB/etc). For accurate results you need a GeoIP database (MaxMind GeoLite2).
 
-<!-- NyxGuard Manager v2.0.1 -->
+<!-- NyxGuard Manager v2.0.1 (stamp 2026-02-09T08:27:06Z) -->
 
 How to get the file (free):
 1. Create a free MaxMind account.
