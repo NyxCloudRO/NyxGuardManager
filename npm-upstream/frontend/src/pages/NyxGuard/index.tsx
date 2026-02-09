@@ -22,6 +22,22 @@ const NyxGuard = () => {
 	const [trafficWindowMinutes, setTrafficWindowMinutes] = useState(5);
 	const trafficLimit = useMemo(() => (trafficWindowMinutes >= 1440 ? 500 : 50), [trafficWindowMinutes]);
 
+	const exportDecisionEvents = () => {
+		const recent = trafficSummary.data?.recent ?? [];
+		if (!recent.length) return;
+
+		const ts = new Date().toISOString().replace(/[:.]/g, "-");
+		const blob = new Blob([JSON.stringify(recent, null, 2)], { type: "application/json" });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement("a");
+		a.href = url;
+		a.download = `nyxguard-events-${ts}.json`;
+		document.body.appendChild(a);
+		a.click();
+		a.remove();
+		setTimeout(() => URL.revokeObjectURL(url), 1000);
+	};
+
 	const summary = useQuery({
 		queryKey: ["nyxguard", "summary", windowMinutes],
 		queryFn: () => getNyxGuardSummary(windowMinutes, 50),
@@ -814,18 +830,77 @@ const NyxGuard = () => {
 						<div className={styles.sectionCard}>
 							<h3 className={styles.sectionTitle}>Decision Stream</h3>
 							<p className={styles.sectionText}>
-								Live allow/deny stream with geo and rule matches.
+								Live allow/deny stream with geo (from access logs).
 							</p>
-							<div className={styles.emptyState}>
-								Decision stream will appear when live traffic is connected.
+							<div className={styles.windowButtons} style={{ marginTop: 14 }}>
+								<button
+									type="button"
+									className={trafficWindowMinutes === 5 ? styles.windowActive : styles.window}
+									onClick={() => setTrafficWindowMinutes(5)}
+								>
+									Realtime
+								</button>
+								<button
+									type="button"
+									className={trafficWindowMinutes === 15 ? styles.windowActive : styles.window}
+									onClick={() => setTrafficWindowMinutes(15)}
+								>
+									Last 15m
+								</button>
+								<button
+									type="button"
+									className={trafficWindowMinutes === 1440 ? styles.windowActive : styles.window}
+									onClick={() => setTrafficWindowMinutes(1440)}
+								>
+									Last 24h
+								</button>
 							</div>
+							{trafficSummary.isLoading ? (
+								<div className={styles.emptyState}>Loading decision stream…</div>
+							) : trafficSummary.isError ? (
+								<div className={styles.emptyState}>Unable to load decision stream (API error).</div>
+							) : trafficSummary.data?.recent?.length ? (
+								<div className={styles.decisionStream}>
+									{trafficSummary.data.recent.slice(0, 10).map((r) => {
+										const status = typeof r.status === "number" ? r.status : null;
+										const isBlocked = typeof status === "number" ? status >= 400 : false;
+										const t = new Date(r.ts);
+										const country = r.country ? ` (${r.country})` : "";
+										return (
+											<div key={`${r.ts}-${r.ip}-${r.host}-${r.uri}`} className={styles.decisionRow}>
+												<div className={styles.decisionTime}>{t.toLocaleTimeString()}</div>
+												<div className={isBlocked ? styles.badgeDeny : styles.badgeAllow}>{isBlocked ? "DENY" : "ALLOW"}</div>
+												<div className={styles.decisionReq} title={`${r.host} ${r.method} ${r.uri}`}>
+													<span style={{ opacity: 0.75 }}>{r.host}</span> <span style={{ opacity: 0.6 }}>{r.method}</span>{" "}
+													{r.uri}
+												</div>
+												<div className={styles.decisionIp} title={`${r.ip}${country}`}>
+													{r.ip}
+													{country}
+												</div>
+											</div>
+										);
+									})}
+								</div>
+							) : (
+								<div className={styles.emptyState}>
+									No recent traffic found in the last {trafficWindowMinutes === 1440 ? "24 hours" : `${trafficWindowMinutes} minutes`}. If
+									you are sure there is traffic, confirm the NyxGuard access logs are present under `/data/logs` (or set `NYXGUARD_LOG_DIR`).
+								</div>
+							)}
 							<div className={styles.actionRow}>
 								<Link className={styles.primaryButton} to="/nyxguard/traffic">
 									View Live Stream
 								</Link>
-								<Link className={styles.ghostButton} to="/nyxguard/traffic">
+								<button
+									type="button"
+									className={styles.ghostButton}
+									onClick={exportDecisionEvents}
+									disabled={!trafficSummary.data?.recent?.length}
+									title={trafficSummary.data?.recent?.length ? "Download current events as JSON" : "No events to export"}
+								>
 									Export Events
-								</Link>
+								</button>
 							</div>
 						</div>
 					</div>

@@ -17,6 +17,7 @@ export interface NyxGuardSummaryRecent {
 	scheme: string;
 	status: number | null;
 	ip: string;
+	country?: string | null;
 }
 
 export interface NyxGuardSummary {

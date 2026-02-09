@@ -284,6 +284,7 @@ async function buildSummary({ minutes, limit }) {
 		scheme: e.scheme,
 		status: e.status,
 		ip: e.ip,
+		country: e.country ?? null,
 	}));
 
 	const hosts = [...perHost.entries()]

@@ -519,6 +519,58 @@
   opacity: 0.85;
 }
 
+.decisionStream {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.decisionRow {
+  display: grid;
+  grid-template-columns: 86px 76px 1fr 132px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(12, 16, 46, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 13px;
+}
+
+.decisionTime {
+  opacity: 0.75;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.decisionReq {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.decisionIp {
+  opacity: 0.78;
+  white-space: nowrap;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 768px) {
+  .decisionRow {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .decisionIp {
+    text-align: left;
+  }
+}
+
 .emptyState {
   margin-top: 14px;
   padding: 14px 16px;

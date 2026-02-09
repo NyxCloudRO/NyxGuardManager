@@ -59,6 +59,7 @@ const NyxGuardTraffic = () => {
 										<th>Request</th>
 										<th className="text-end">Status</th>
 										<th>IP</th>
+										<th>Country</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -71,6 +72,7 @@ const NyxGuardTraffic = () => {
 											</td>
 											<td className="text-end text-nowrap">{r.status ?? "-"}</td>
 											<td className="text-nowrap text-secondary">{r.ip}</td>
+											<td className="text-nowrap text-secondary">{r.country ?? "-"}</td>
 										</tr>
 									))}
 								</tbody>
