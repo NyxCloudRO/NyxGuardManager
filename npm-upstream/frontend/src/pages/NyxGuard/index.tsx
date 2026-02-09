@@ -488,9 +488,6 @@ const NyxGuard = () => {
 								<Link className={styles.primaryButton} to="/nyxguard/ips">
 									Inspect IPs
 								</Link>
-								<Link className={styles.ghostButton} to="/nyxguard/ips">
-									Export List
-								</Link>
 							</div>
 						</div>
 						<div className={styles.sectionCard}>
