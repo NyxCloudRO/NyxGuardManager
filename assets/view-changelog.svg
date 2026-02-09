@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="120" viewBox="0 0 520 120" role="img" aria-label="View Changelog">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#db2777"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="520" height="120" rx="20" fill="url(#g)" filter="url(#shadow)"/>
+
+  <!-- Document / changelog icon -->
+  <g transform="translate(22 20)">
+    <circle cx="40" cy="40" r="40" fill="#111827" opacity="0.18"/>
+    <path d="M30 18h28l12 12v34c0 6-4 10-10 10H30c-6 0-10-4-10-10V28c0-6 4-10 10-10z" fill="#fff" opacity="0.94"/>
+    <path d="M58 18v10c0 2 2 4 4 4h10" fill="none" stroke="#111827" stroke-width="4" opacity="0.18"/>
+    <path d="M30 40h34" stroke="#111827" stroke-width="5" stroke-linecap="round" opacity="0.22"/>
+    <path d="M30 54h30" stroke="#111827" stroke-width="5" stroke-linecap="round" opacity="0.22"/>
+    <path d="M30 68h26" stroke="#111827" stroke-width="5" stroke-linecap="round" opacity="0.22"/>
+    <circle cx="34" cy="88" r="3" fill="#22c55e" opacity="0.95"/>
+    <path d="M42 88h22" stroke="#111827" stroke-width="5" stroke-linecap="round" opacity="0.22"/>
+  </g>
+
+  <g font-family="ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="800">
+    <text
+      x="112"
+      y="62"
+      font-size="34"
+      fill="#ffffff"
+      dominant-baseline="middle"
+      lengthAdjust="spacingAndGlyphs"
+      textLength="360"
+    >View Changelog</text>
+  </g>
+</svg>
+

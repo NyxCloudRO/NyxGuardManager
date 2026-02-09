@@ -5,7 +5,9 @@ NyxGuard Manager is a self-hosted reverse proxy manager with an integrated WAF-s
 Admin UI: `http://<server-ip>:81/`
 
 ## Changelog
-See [CHANGELOG.md](CHANGELOG.md).
+<a href="CHANGELOG.md">
+  <img src="assets/view-changelog.svg" alt="View Changelog" height="48" />
+</a>
 
 ## Support
 <a href="https://buymeacoffee.com/nyxmael" target="_blank" rel="noopener noreferrer">
