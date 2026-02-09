@@ -1,0 +1,18 @@
+[Unit]
+Description=NyxGuard Manager (Docker Compose)
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/ubuntu/NyxGuardManager/upstream
+ExecStart=/usr/bin/docker compose --env-file /home/ubuntu/NyxGuardManager/upstream/.env up -d --remove-orphans
+ExecStop=/usr/bin/docker compose --env-file /home/ubuntu/NyxGuardManager/upstream/.env down
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

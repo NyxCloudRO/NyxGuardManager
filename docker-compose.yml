@@ -44,8 +44,19 @@ services:
       - /etc/localtime:/etc/localtime:ro
 
 volumes:
+  # Named volumes (persist across container re-creates/reboots).
+  # Optional migration: point these at existing volumes via .env, e.g.
+  # NYXGUARD_DATA_VOLUME=npm2dev_core_data
+  # NYXGUARD_LETSENCRYPT_VOLUME=npm2dev_le_data
+  # NYXGUARD_DB_VOLUME=npm2dev_db_data
   nyxguard_data:
+    name: "${NYXGUARD_DATA_VOLUME:-nyxguard_data}"
+    external: "${NYXGUARD_DATA_EXTERNAL:-false}"
   nyxguard_letsencrypt:
+    name: "${NYXGUARD_LETSENCRYPT_VOLUME:-nyxguard_letsencrypt}"
+    external: "${NYXGUARD_LETSENCRYPT_EXTERNAL:-false}"
   nyxguard_db:
+    name: "${NYXGUARD_DB_VOLUME:-nyxguard_db}"
+    external: "${NYXGUARD_DB_EXTERNAL:-false}"
 
 # NyxGuard Manager v2.0.1 (stamp 2026-02-09T08:27:06Z)

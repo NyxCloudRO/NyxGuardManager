@@ -104,6 +104,16 @@ docker ps
 docker logs --tail=100 nyxguard-manager
 ```
 
+## Start On Boot (systemd)
+
+If you run the stack with Docker Compose, you can enable the included systemd unit:
+
+```bash
+sudo install -m 0644 systemd/nyxguardmanager.service /etc/systemd/system/nyxguardmanager.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now nyxguardmanager.service
+```
+
 ## Notes
 - Let’s Encrypt HTTP certificates require inbound `80/tcp` from the public internet to your server.
 - DNS challenge certificates require the matching DNS provider credentials.

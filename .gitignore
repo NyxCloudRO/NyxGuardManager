@@ -4,6 +4,7 @@
 .qodo
 ._*
 .vscode
+.env
 certbot-help.txt
 test/node_modules
 */node_modules
