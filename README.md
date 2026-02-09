@@ -27,19 +27,32 @@
 - Rules: allow/deny by IP/CIDR or Country (ISO), optional expiry 1 / 7 / 30 / 60 / 90 / 180 days
 
 ### GeoIP Country (Optional)
-NyxGuard can show the **country code** for each IP (RO/FR/GB/etc). For accurate results you need a GeoIP database (MaxMind GeoLite2).
+NyxGuard can show the **country code** for each IP (RO/FR/GB/etc). For accurate results you need a local GeoIP database.
+
+Supported providers:
+- **MaxMind GeoLite2 Country** (`.mmdb`) (free)
+- **IP2Location Country** (`.mmdb`) (Lite/paid)
+
+Resolution order:
+1. Cloudflare header (`CF-IPCountry`) if you are behind Cloudflare
+2. MaxMind GeoLite2 (if installed)
+3. IP2Location (if installed)
 
 <!-- NyxGuard Manager v2.0.1 (stamp 2026-02-09T08:27:06Z) -->
 
-Option A (manual upload):
+Option A (manual upload, MaxMind GeoLite2):
 1. Create a free MaxMind account.
 2. Enable GeoLite2 downloads (this creates a License Key).
 3. Download **GeoLite2 Country** (`.mmdb`).
-4. Upload in the UI: **NyxGuard -> IPs & Locations -> GeoIP DB -> Upload**.
+4. Upload in the UI: **NyxGuard -> IPs & Locations -> GeoIP DB** (select `MaxMind GeoLite2`) -> **Upload**.
 
 Option B (recommended, auto-update):
 1. In **NyxGuard -> IPs & Locations**, enter your MaxMind `AccountID` and `LicenseKey` and save.
 2. NyxGuard will keep the GeoLite2 database updated automatically.
+
+Option C (manual upload, IP2Location):
+1. Download an IP2Location **Country** database in `.mmdb` format (Lite or paid).
+2. Upload in the UI: **NyxGuard -> IPs & Locations -> GeoIP DB** (select `IP2Location (.mmdb)`) -> **Upload**.
 
 ## Install (Production Test)
 
