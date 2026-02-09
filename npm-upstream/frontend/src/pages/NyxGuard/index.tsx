@@ -1,7 +1,14 @@
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { getNyxGuardAppsSummary, getNyxGuardSettings, getNyxGuardSummary, updateNyxGuardSettings } from "src/api/backend";
+import {
+	getNyxGuardApps,
+	getNyxGuardAppsSummary,
+	getNyxGuardIps,
+	getNyxGuardSettings,
+	getNyxGuardSummary,
+	updateNyxGuardSettings,
+} from "src/api/backend";
 import styles from "./index.module.css";
 
 const NyxGuard = () => {
@@ -34,6 +41,18 @@ const NyxGuard = () => {
 		refetchInterval: 15000,
 	});
 
+	const apps = useQuery({
+		queryKey: ["nyxguard", "apps"],
+		queryFn: () => getNyxGuardApps(),
+		refetchInterval: 15000,
+	});
+
+	const ips = useQuery({
+		queryKey: ["nyxguard", "ips", "insights", windowMinutes],
+		queryFn: () => getNyxGuardIps(windowMinutes, windowMinutes >= 10080 ? 400 : 200),
+		refetchInterval: windowMinutes <= 60 ? 15000 : 60000,
+	});
+
 	const saveSettings = useMutation({
 		mutationFn: (patch: { botDefenseEnabled?: boolean; ddosEnabled?: boolean; logRetentionDays?: 30 | 60 | 90 }) =>
 			updateNyxGuardSettings(patch),
@@ -49,6 +68,85 @@ const NyxGuard = () => {
 	const botDefenseEnabled = settings.data?.botDefenseEnabled ?? false;
 	const ddosEnabled = settings.data?.ddosEnabled ?? false;
 	const wafProtectedEnabled = (appsSummary.data?.protectedCount ?? 0) > 0;
+
+	const ipInsights = useMemo(() => {
+		const items = ips.data?.items ?? [];
+		if (!items.length) {
+			return {
+				totalUniqueIps: 0,
+				totalRequests: 0,
+				totalBlocked: 0,
+				blockedRate: 0,
+				topCountries: [] as Array<{
+					country: string;
+					ips: number;
+					requests: number;
+					blocked: number;
+				}>,
+				topBlockedIps: [] as Array<{ ip: string; blocked: number; requests: number; country: string | null }>,
+			};
+		}
+
+		let totalRequests = 0;
+		let totalBlocked = 0;
+
+		const byCountry = new Map<
+			string,
+			{ country: string; ips: number; requests: number; blocked: number }
+		>();
+
+		for (const it of items) {
+			totalRequests += it.requests ?? 0;
+			totalBlocked += it.blocked ?? 0;
+
+			const countryKey = (it.country ?? "Unknown").toUpperCase();
+			const cur = byCountry.get(countryKey) ?? {
+				country: countryKey === "UNKNOWN" ? "Unknown" : countryKey,
+				ips: 0,
+				requests: 0,
+				blocked: 0,
+			};
+			cur.ips += 1;
+			cur.requests += it.requests ?? 0;
+			cur.blocked += it.blocked ?? 0;
+			byCountry.set(countryKey, cur);
+		}
+
+		const topCountries = Array.from(byCountry.values())
+			.sort((a, b) => (b.requests - a.requests) || (b.blocked - a.blocked) || (b.ips - a.ips))
+			.slice(0, 5);
+
+		const topBlockedIps = [...items]
+			.sort((a, b) => (b.blocked - a.blocked) || (b.requests - a.requests))
+			.slice(0, 3)
+			.map((it) => ({ ip: it.ip, blocked: it.blocked, requests: it.requests, country: it.country }));
+
+		return {
+			totalUniqueIps: items.length,
+			totalRequests,
+			totalBlocked,
+			blockedRate: totalRequests > 0 ? totalBlocked / totalRequests : 0,
+			topCountries,
+			topBlockedIps,
+		};
+	}, [ips.data?.items]);
+
+	const appsOverview = useMemo(() => {
+		const items = apps.data?.items ?? [];
+		const totalApps = typeof appsSummary.data?.totalApps === "number" ? appsSummary.data.totalApps : items.length;
+		const protectedCount =
+			typeof appsSummary.data?.protectedCount === "number"
+				? appsSummary.data.protectedCount
+				: items.filter((it) => !!it.wafEnabled).length;
+		const monitoringCount = Math.max(0, totalApps - protectedCount);
+
+		const preview = items.slice(0, 5).map((app) => {
+			const name = app.domains?.[0] ?? `Proxy Host #${app.id}`;
+			return { id: app.id, name, wafEnabled: !!app.wafEnabled };
+		});
+
+		return { totalApps, protectedCount, monitoringCount, preview };
+	}, [apps.data?.items, appsSummary.data?.protectedCount, appsSummary.data?.totalApps]);
 
 	const windowLabel = useMemo(() => {
 		if (windowMinutes === 15) return "Last 15m";
@@ -225,15 +323,68 @@ const NyxGuard = () => {
 							</div>
 						)}
 					</div>
-					<div className={styles.sections}>
+						<div className={styles.sections}>
 						<div className={styles.sectionCard}>
 							<h3 className={styles.sectionTitle}>IP Intelligence</h3>
 							<p className={styles.sectionText}>
 								Full visibility into IP reputation, ASN, country, and decisions.
 							</p>
-							<div className={styles.emptyState}>
-								IP insights will appear once traffic ingestion is enabled.
-							</div>
+							{ips.isLoading ? (
+								<div className={styles.emptyState}>Loading IP insights…</div>
+							) : ips.isError ? (
+								<div className={styles.emptyState}>Unable to load IP insights (API error).</div>
+							) : ipInsights.totalUniqueIps === 0 ? (
+								<div className={styles.emptyState}>
+									No IP activity found in {windowLabel}. Once requests hit your protected apps, insights will appear here.
+								</div>
+							) : (
+								<>
+									<div className={styles.ruleList}>
+										<div className={styles.ruleItem}>
+											<span>Unique IPs ({windowLabel})</span>
+											<span className={styles.ruleTag}>{ipInsights.totalUniqueIps.toLocaleString()}</span>
+										</div>
+										<div className={styles.ruleItem}>
+											<span>Total Requests ({windowLabel})</span>
+											<span className={styles.ruleTag}>{ipInsights.totalRequests.toLocaleString()}</span>
+										</div>
+										<div className={styles.ruleItem}>
+											<span>Blocked Rate ({windowLabel})</span>
+											<span className={styles.ruleTag}>{(ipInsights.blockedRate * 100).toFixed(1)}%</span>
+										</div>
+									</div>
+									<div className={styles.table}>
+										<div className={styles.tableHeader}>
+											<div>Country</div>
+											<div className="text-end">IPs</div>
+											<div className="text-end">Requests</div>
+											<div className="text-end">Blocked</div>
+										</div>
+										{ipInsights.topCountries.map((c) => (
+											<div key={c.country} className={styles.tableRow}>
+												<div>{c.country}</div>
+												<div className="text-end">{c.ips.toLocaleString()}</div>
+												<div className="text-end">{c.requests.toLocaleString()}</div>
+												<div className="text-end">{c.blocked.toLocaleString()}</div>
+											</div>
+										))}
+									</div>
+									{ipInsights.topBlockedIps.length ? (
+										<div className={styles.ruleList}>
+											{ipInsights.topBlockedIps.map((it) => (
+												<div key={it.ip} className={styles.ruleItem}>
+													<span title={it.ip}>
+														{it.ip} {it.country ? `(${it.country})` : ""}
+													</span>
+													<span className={styles.ruleTag}>
+														{it.blocked.toLocaleString()} blocked
+													</span>
+												</div>
+											))}
+										</div>
+									) : null}
+								</>
+							)}
 							<div className={styles.actionRow}>
 								<Link className={styles.primaryButton} to="/nyxguard/ips">
 									Inspect IPs
@@ -320,9 +471,44 @@ const NyxGuard = () => {
 							<p className={styles.sectionText}>
 								Protect proxy hosts with profiles, policies, and rule packs.
 							</p>
-							<div className={styles.emptyState}>
-								No apps are connected yet. Add an app to begin protection.
-							</div>
+							{appsSummary.isLoading && apps.isLoading ? (
+								<div className={styles.emptyState}>Loading apps…</div>
+							) : appsSummary.isError || apps.isError ? (
+								<div className={styles.emptyState}>Unable to load apps overview (API error).</div>
+							) : appsOverview.totalApps === 0 ? (
+								<div className={styles.emptyState}>
+									No apps are connected yet. Add a proxy host to begin protection.
+								</div>
+							) : (
+								<>
+									<div className={styles.ruleList}>
+										<div className={styles.ruleItem}>
+											<span>Connected Apps</span>
+											<span className={styles.ruleTag}>{appsOverview.totalApps.toLocaleString()}</span>
+										</div>
+										<div className={styles.ruleItem}>
+											<span>Protected (WAF)</span>
+											<span className={styles.ruleTag}>{appsOverview.protectedCount.toLocaleString()}</span>
+										</div>
+										<div className={styles.ruleItem}>
+											<span>Monitoring Only</span>
+											<span className={styles.ruleTag}>{appsOverview.monitoringCount.toLocaleString()}</span>
+										</div>
+									</div>
+									{appsOverview.preview.length ? (
+										<div className={styles.appList}>
+											{appsOverview.preview.map((app) => (
+												<div key={app.id} className={styles.appRow}>
+													<span>{app.name}</span>
+													<span className={app.wafEnabled ? styles.badgeActive : styles.badgeMuted}>
+														{app.wafEnabled ? "Protected" : "Monitoring"}
+													</span>
+												</div>
+											))}
+										</div>
+									) : null}
+								</>
+							)}
 							<div className={styles.actionRow}>
 								<Link className={styles.primaryButton} to="/nyxguard/apps">
 									Add App
