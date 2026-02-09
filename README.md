@@ -16,41 +16,32 @@ Admin UI: `http://<server-ip>:81/`
 
 ## What You Get
 
-### Core Proxy Manager
-- Proxy Hosts, Redirection Hosts, Streams, and 404 Hosts
-- Let’s Encrypt certificates (HTTP-01 and DNS providers)
+### Reverse Proxy Manager
+- Proxy Hosts (HTTP), Redirection Hosts, Streams (TCP/UDP), 404 Hosts
+- Let’s Encrypt certificates: HTTP-01 and DNS providers
 - Access Lists, Users, Audit Logs, Settings
 
-### NyxGuard (Security Layer)
-- Per-app protection toggles (Proxy Host modal):
-  - Enable WAF
-  - Enable Bot Defence
-  - Enable DDoS Shield
-- Global feature toggles (NyxGuard page):
-  - Bot Defence (master)
-  - DDoS Shield (master)
-- Live status pills on NyxGuard dashboard when features are enabled
-- Live traffic view + active hosts summary
-- IPs & Locations with time windows (15m / 1h / 1d / 7d)
-- Log retention selector (30 / 60 / 90 / 180 days)
-- Rules (Allow / Deny):
-  - IP / CIDR allow/deny, optional expiry (1 / 7 / 30 / 60 / 90 / 180 days)
-  - Country allow/deny by ISO code (MD / FR / GB, etc), optional expiry
+### NyxGuard Security Layer
+- Per-proxy toggles: WAF, Bot Defence, DDoS Shield
+- Global toggles: Bot Defence (master), DDoS Shield (master)
+- Dashboard: live status pills, live traffic view, active hosts summary
+- IPs & Locations: 15m / 1h / 1d / 7d windows, retention 30 / 60 / 90 / 180 days
+- Rules: allow/deny by IP/CIDR or Country (ISO), optional expiry 1 / 7 / 30 / 60 / 90 / 180 days
 
 ### GeoIP Country (Optional)
 NyxGuard can show the **country code** for each IP (RO/FR/GB/etc). For accurate results you need a GeoIP database (MaxMind GeoLite2).
 
 <!-- NyxGuard Manager v2.0.1 (stamp 2026-02-09T08:27:06Z) -->
 
-How to get the file (free):
+Option A (manual upload):
 1. Create a free MaxMind account.
-2. In MaxMind, enable GeoLite2 downloads (this creates a License Key).
-3. Download the database: **GeoLite2 Country** in `.mmdb` format.
-4. Upload it in the UI: **NyxGuard -> IPs & Locations -> GeoIP DB -> Upload**.
+2. Enable GeoLite2 downloads (this creates a License Key).
+3. Download **GeoLite2 Country** (`.mmdb`).
+4. Upload in the UI: **NyxGuard -> IPs & Locations -> GeoIP DB -> Upload**.
 
-Alternative (recommended): auto-update
-- In **NyxGuard -> IPs & Locations**, enter your MaxMind `AccountID` + `LicenseKey` and save.
-- NyxGuard will keep the GeoLite2 databases updated automatically.
+Option B (recommended, auto-update):
+1. In **NyxGuard -> IPs & Locations**, enter your MaxMind `AccountID` and `LicenseKey` and save.
+2. NyxGuard will keep the GeoLite2 database updated automatically.
 
 ## Install (Production Test)
 
