@@ -14,6 +14,14 @@ const omissions = () => {
 
 const DEFAULT_AVATAR = gravatar.url("admin@example.com", { default: "mm" });
 
+function isGravatarAvatar(url) {
+	return typeof url === "string" && url.includes("gravatar.com/avatar/");
+}
+
+function isCustomAvatar(url) {
+	return typeof url === "string" && (url.startsWith("/api/avatar/") || url.startsWith("/avatar/"));
+}
+
 const internalUser = {
 	/**
 	 * Create a user can happen unauthenticated only once and only when no active users exist.
@@ -118,7 +126,12 @@ const internalUser = {
 					);
 				}
 
-				data.avatar = gravatar.url(data.email || user.email, { default: "mm" });
+				// Preserve a user's custom uploaded avatar. If they are using gravatar, keep it in sync with email.
+				if (!isCustomAvatar(user.avatar) && (user.avatar === "" || isGravatarAvatar(user.avatar))) {
+					data.avatar = gravatar.url(data.email || user.email, { default: "mm" });
+				} else {
+					delete data.avatar;
+				}
 				return userModel.query().patchAndFetchById(user.id, data).then(utils.omitRow(omissions()));
 			})
 			.then(() => {
@@ -137,6 +150,49 @@ const internalUser = {
 						return user;
 					});
 			});
+	},
+
+	/**
+	 * Set a custom avatar URL (used for uploaded profile pictures).
+	 *
+	 * @param {Access} access
+	 * @param {{id: number, avatar: string}} data
+	 * @returns {Promise}
+	 */
+	setAvatar: async (access, data) => {
+		await access.can("users:update", data.id);
+		const user = await internalUser.get(access, { id: data.id });
+		await userModel.query().patchAndFetchById(user.id, { avatar: data.avatar }).then(utils.omitRow(omissions()));
+		const updated = await internalUser.get(access, { id: user.id });
+		await internalAuditLog.add(access, {
+			action: "updated",
+			object_type: "user",
+			object_id: updated.id,
+			meta: { id: updated.id, avatar: updated.avatar },
+		});
+		return updated;
+	},
+
+	/**
+	 * Clear a custom avatar and revert to gravatar for the user's email.
+	 *
+	 * @param {Access} access
+	 * @param {{id: number}} data
+	 * @returns {Promise}
+	 */
+	clearAvatar: async (access, data) => {
+		await access.can("users:update", data.id);
+		const user = await internalUser.get(access, { id: data.id });
+		const avatar = gravatar.url(user.email, { default: "mm" });
+		await userModel.query().patchAndFetchById(user.id, { avatar }).then(utils.omitRow(omissions()));
+		const updated = await internalUser.get(access, { id: user.id });
+		await internalAuditLog.add(access, {
+			action: "updated",
+			object_type: "user",
+			object_id: updated.id,
+			meta: { id: updated.id, avatar: updated.avatar },
+		});
+		return updated;
 	},
 
 	/**

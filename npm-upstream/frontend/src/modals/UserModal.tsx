@@ -1,14 +1,15 @@
 import EasyModal, { type InnerModalProps } from "ez-modal-react";
 import { Field, Form, Formik } from "formik";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert } from "react-bootstrap";
 import Modal from "react-bootstrap/Modal";
-import { setPermissions, type UserPermissions } from "src/api/backend";
+import { clearUserAvatar, setPermissions, type UserPermissions, uploadUserAvatar } from "src/api/backend";
 import { Button, Loading } from "src/components";
 import { useSetUser, useUser } from "src/hooks";
 import { intl, T } from "src/locale";
 import { validateEmail, validateString } from "src/modules/Validations";
-import { showObjectSuccess } from "src/notifications";
+import { showError, showObjectSuccess, showSuccess } from "src/notifications";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const showUserModal = (id: number | "me" | "new") => {
 	EasyModal.show(UserModal, { id });
@@ -21,8 +22,68 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 	const { data, isLoading, error } = useUser(id);
 	const { data: currentUser, isLoading: currentIsLoading } = useUser("me");
 	const { mutate: setUser } = useSetUser();
+	const qc = useQueryClient();
 	const [errorMsg, setErrorMsg] = useState<string | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [avatarFile, setAvatarFile] = useState<File | null>(null);
+	const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
+	const isCustomAvatar = useMemo(() => {
+		const a = data?.avatar || "";
+		return a.startsWith("/api/avatar/") || a.startsWith("/avatar/");
+	}, [data?.avatar]);
+
+	useEffect(() => {
+		if (!avatarFile) {
+			setAvatarPreview(null);
+			return;
+		}
+		const u = URL.createObjectURL(avatarFile);
+		setAvatarPreview(u);
+		return () => URL.revokeObjectURL(u);
+	}, [avatarFile]);
+
+	const avatarUpload = useMutation({
+		mutationFn: async (file: File) => {
+			if (!data?.id) throw new Error("User must be saved before uploading an avatar.");
+			return uploadUserAvatar(data.id, file);
+		},
+		onSuccess: async (updated) => {
+			setAvatarFile(null);
+			setAvatarPreview(null);
+			qc.setQueryData(["user", id], updated);
+			if (updated.id === currentUser?.id) {
+				qc.setQueryData(["user", "me"], updated);
+			}
+			await qc.invalidateQueries({ queryKey: ["users"] });
+			await qc.invalidateQueries({ queryKey: ["audit-logs"] });
+			showSuccess("Profile picture updated.");
+		},
+		onError: (err: any) => {
+			showError(err instanceof Error ? err.message : "Failed to upload profile picture.");
+		},
+	});
+
+	const avatarClear = useMutation({
+		mutationFn: async () => {
+			if (!data?.id) throw new Error("User must be saved first.");
+			return clearUserAvatar(data.id);
+		},
+		onSuccess: async (updated) => {
+			setAvatarFile(null);
+			setAvatarPreview(null);
+			qc.setQueryData(["user", id], updated);
+			if (updated.id === currentUser?.id) {
+				qc.setQueryData(["user", "me"], updated);
+			}
+			await qc.invalidateQueries({ queryKey: ["users"] });
+			await qc.invalidateQueries({ queryKey: ["audit-logs"] });
+			showSuccess("Profile picture removed.");
+		},
+		onError: (err: any) => {
+			showError(err instanceof Error ? err.message : "Failed to remove profile picture.");
+		},
+	});
 
 	const isNyxAgentUser = (p?: UserPermissions | null) => {
 		if (!p) return false;
@@ -142,6 +203,51 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 								<Alert variant="danger" show={!!errorMsg} onClose={() => setErrorMsg(null)} dismissible>
 									{errorMsg}
 								</Alert>
+								<div className="d-flex align-items-center gap-3 mb-3 flex-wrap">
+									<span
+										className="avatar avatar-xl"
+										style={{
+											backgroundImage: `url(${avatarPreview || data.avatar || "/images/default-avatar.jpg"})`,
+										}}
+									/>
+									<div className="flex-grow-1" style={{ minWidth: 260 }}>
+										<div className="text-secondary text-uppercase" style={{ fontSize: 11, letterSpacing: "0.08em" }}>
+											Profile Picture
+										</div>
+										<div className="d-flex align-items-center gap-2 mt-2 flex-wrap">
+											<input
+												type="file"
+												accept="image/png,image/jpeg,image/webp"
+												onChange={(e) => setAvatarFile(e.target.files?.[0] ?? null)}
+												className="form-control form-control-sm"
+												style={{ width: 320 }}
+												disabled={!data.id || avatarUpload.isPending || avatarClear.isPending}
+											/>
+											<Button
+												size="sm"
+												className="btn-orange"
+												disabled={!data.id || !avatarFile || avatarUpload.isPending || avatarClear.isPending}
+												isLoading={avatarUpload.isPending}
+												onClick={() => avatarFile && avatarUpload.mutate(avatarFile)}
+											>
+												Upload
+											</Button>
+											{isCustomAvatar ? (
+												<Button
+													size="sm"
+													disabled={!data.id || avatarUpload.isPending || avatarClear.isPending}
+													isLoading={avatarClear.isPending}
+													onClick={() => avatarClear.mutate()}
+												>
+													Remove
+												</Button>
+											) : null}
+										</div>
+										<div className="text-secondary mt-2" style={{ fontSize: 12, opacity: 0.85 }}>
+											PNG/JPEG/WebP, max 2MB.
+										</div>
+									</div>
+								</div>
 								<div className="row">
 									<div className="col-lg-6">
 										<div className="mb-3">

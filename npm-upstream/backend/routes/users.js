@@ -1,4 +1,6 @@
 import express from "express";
+import fs from "node:fs/promises";
+import path from "node:path";
 import internal2FA from "../internal/2fa.js";
 import internalUser from "../internal/user.js";
 import Access from "../lib/access.js";
@@ -17,6 +19,14 @@ const router = express.Router({
 	strict: true,
 	mergeParams: true,
 });
+
+const AVATAR_DIR = process.env.NYXGUARD_AVATAR_DIR || "/data/avatars";
+const AVATAR_MAX_BYTES = 2 * 1024 * 1024; // 2 MiB
+const AVATAR_MIME_TO_EXT = {
+	"image/png": "png",
+	"image/jpeg": "jpg",
+	"image/webp": "webp",
+};
 
 /**
  * /api/users
@@ -222,6 +232,105 @@ router
 				id: req.params.user_id,
 			});
 			res.status(200).send(result);
+		} catch (err) {
+			debug(logger, `${req.method.toUpperCase()} ${req.path}: ${err}`);
+			next(err);
+		}
+	});
+
+/**
+ * User avatar (uploaded profile picture)
+ *
+ * POST /api/users/:user_id/avatar
+ * DELETE /api/users/:user_id/avatar
+ */
+router
+	.route("/:user_id/avatar")
+	.options((_, res) => res.sendStatus(204))
+	.all(jwtdecode())
+	.all(userIdFromMe)
+	.post(async (req, res, next) => {
+		try {
+			const id = Number.parseInt(String(req.params.user_id), 10);
+			if (Number.isNaN(id) || id <= 0) {
+				throw new errs.ValidationError("Invalid user id");
+			}
+
+			if (!req.files) {
+				res.status(400).send({ error: "No files were uploaded" });
+				return;
+			}
+
+			const file = req.files.avatar ?? req.files.file ?? Object.values(req.files)[0];
+			if (!file) {
+				res.status(400).send({ error: "Missing avatar file (field name: avatar)" });
+				return;
+			}
+
+			// express-fileupload can return arrays; handle both.
+			const f = Array.isArray(file) ? file[0] : file;
+			const mime = String(f.mimetype ?? "").toLowerCase();
+			const ext = AVATAR_MIME_TO_EXT[mime];
+			if (!ext) {
+				res.status(400).send({ error: "Avatar must be a PNG, JPEG, or WebP image" });
+				return;
+			}
+
+			const size = Number.parseInt(String(f.size ?? f.data?.length ?? 0), 10) || 0;
+			if (size <= 0) {
+				res.status(400).send({ error: "Invalid avatar file" });
+				return;
+			}
+			if (size > AVATAR_MAX_BYTES) {
+				res.status(400).send({ error: "Avatar too large (max 2MB)" });
+				return;
+			}
+
+			await res.locals.access.can("users:update", id);
+
+			await fs.mkdir(AVATAR_DIR, { recursive: true });
+
+			// Remove any existing avatar files for the user so we keep only one.
+			for (const oldExt of ["png", "jpg", "jpeg", "webp"]) {
+				try {
+					await fs.unlink(path.join(AVATAR_DIR, `user-${id}.${oldExt}`));
+				} catch {
+					// ignore
+				}
+			}
+
+			const finalPath = path.join(AVATAR_DIR, `user-${id}.${ext}`);
+			const tmp = path.join(AVATAR_DIR, `.upload.user-${id}.${process.pid}.tmp`);
+			await fs.writeFile(tmp, f.data);
+			await fs.rename(tmp, finalPath);
+
+			const avatarUrl = `/api/avatar/${id}?v=${Date.now()}`;
+			const updated = await internalUser.setAvatar(res.locals.access, { id, avatar: avatarUrl });
+			res.status(200).send(updated);
+		} catch (err) {
+			debug(logger, `${req.method.toUpperCase()} ${req.path}: ${err}`);
+			next(err);
+		}
+	})
+	.delete(async (req, res, next) => {
+		try {
+			const id = Number.parseInt(String(req.params.user_id), 10);
+			if (Number.isNaN(id) || id <= 0) {
+				throw new errs.ValidationError("Invalid user id");
+			}
+
+			await res.locals.access.can("users:update", id);
+
+			for (const oldExt of ["png", "jpg", "jpeg", "webp"]) {
+				try {
+					await fs.unlink(path.join(AVATAR_DIR, `user-${id}.${oldExt}`));
+				} catch {
+					// ignore
+				}
+			}
+
+			const updated = await internalUser.clearAvatar(res.locals.access, { id });
+			res.status(200).send(updated);
 		} catch (err) {
 			debug(logger, `${req.method.toUpperCase()} ${req.path}: ${err}`);
 			next(err);
