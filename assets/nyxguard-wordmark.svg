@@ -71,6 +71,9 @@
   <g transform="translate(140, 132)">
     <text class="title" x="0" y="0" font-size="112" fill="#f7f9ff">NyxGuard</text>
     <text class="title" x="595" y="0" font-size="112" fill="url(#accent)" filter="url(#softGlow)">Manager</text>
+    <text class="sub" x="2" y="62" font-size="22" fill="#c6ccda" opacity="0.95">
+      Reverse proxy manager with an integrated security layer
+    </text>
   </g>
 
   <!-- shield dot -->
