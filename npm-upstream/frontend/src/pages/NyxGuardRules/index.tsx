@@ -11,7 +11,7 @@ import {
 	updateNyxGuardCountryRule,
 	updateNyxGuardIpRule,
 } from "src/api/backend";
-import { showSuccess } from "src/notifications";
+import { showError, showSuccess } from "src/notifications";
 import styles from "./index.module.css";
 
 const NyxGuardRules = () => {
@@ -55,6 +55,10 @@ const NyxGuardRules = () => {
 			showSuccess("Rule added and active.");
 			await qc.invalidateQueries({ queryKey: ["nyxguard", "rules", "ip"] });
 		},
+		onError: (err: any) => {
+			const msg = err instanceof Error ? err.message : "Failed to add IP rule.";
+			showError(msg);
+		},
 	});
 
 	const createCountryRule = useMutation({
@@ -75,6 +79,10 @@ const NyxGuardRules = () => {
 			});
 			showSuccess("Rule added and active.");
 			await qc.invalidateQueries({ queryKey: ["nyxguard", "rules", "country"] });
+		},
+		onError: (err: any) => {
+			const msg = err instanceof Error ? err.message : "Failed to add country rule.";
+			showError(msg);
 		},
 	});
 

@@ -77,8 +77,17 @@ function sanitizeCidr(value) {
 	const parts = v.split("/");
 	if (parts.length > 2) return null;
 
-	const ip = parts[0];
-	const ipVer = net.isIP(ip);
+	let ip = parts[0];
+	let ipVer = net.isIP(ip);
+	// Normalize IPv4 dotted quads like 10.01.01.11 (leading zeros) to 10.1.1.11.
+	// Node's net.isIP rejects some representations with leading zeros; users commonly paste them.
+	if (!ipVer && /^\d+\.\d+\.\d+\.\d+$/.test(ip)) {
+		const octets = ip.split(".").map((s) => Number.parseInt(s, 10));
+		if (octets.length === 4 && octets.every((n) => Number.isInteger(n) && n >= 0 && n <= 255)) {
+			ip = octets.join(".");
+			ipVer = net.isIP(ip);
+		}
+	}
 	if (!ipVer) return null;
 
 	if (parts.length === 1) {

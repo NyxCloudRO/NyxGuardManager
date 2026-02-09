@@ -6,6 +6,7 @@ import {
 	getNyxGuardAppsSummary,
 	getNyxGuardCountryRules,
 	getNyxGuardIps,
+	getNyxGuardIpRules,
 	getNyxGuardSettings,
 	getNyxGuardSummary,
 	updateNyxGuardSettings,
@@ -55,8 +56,14 @@ const NyxGuard = () => {
 	});
 
 	const countryRules = useQuery({
-		queryKey: ["nyxguard", "rules", "country", "summary"],
+		queryKey: ["nyxguard", "rules", "country"],
 		queryFn: () => getNyxGuardCountryRules(),
+		refetchInterval: 15000,
+	});
+
+	const ipRules = useQuery({
+		queryKey: ["nyxguard", "rules", "ip"],
+		queryFn: () => getNyxGuardIpRules(),
 		refetchInterval: 15000,
 	});
 
@@ -186,6 +193,38 @@ const NyxGuard = () => {
 			preview,
 		};
 	}, [countryRules.data?.items]);
+
+	const ipRulesOverview = useMemo(() => {
+		const items = ipRules.data?.items ?? [];
+		const now = Date.now();
+		const isExpired = (expiresOn: string | null) => {
+			if (!expiresOn) return false;
+			const t = Date.parse(expiresOn);
+			return Number.isFinite(t) ? t <= now : false;
+		};
+
+		const active = items.filter((r) => r.enabled && !isExpired(r.expiresOn));
+		const allow = active.filter((r) => r.action === "allow");
+		const deny = active.filter((r) => r.action === "deny");
+
+		const preview = [...active]
+			.sort((a, b) => Number(b.id) - Number(a.id))
+			.slice(0, 5)
+			.map((r) => ({
+				id: r.id,
+				action: r.action,
+				ipCidr: r.ipCidr,
+				expiresOn: r.expiresOn,
+			}));
+
+		return {
+			totalRules: items.length,
+			activeRules: active.length,
+			allowCount: allow.length,
+			denyCount: deny.length,
+			preview,
+		};
+	}, [ipRules.data?.items]);
 
 	const windowLabel = useMemo(() => {
 		if (windowMinutes === 15) return "Last 15m";
@@ -495,12 +534,52 @@ const NyxGuard = () => {
 							<p className={styles.sectionText}>
 								Define deny/allow logic for IPs, ranges, ASN, and behavior.
 							</p>
-							<div className={styles.emptyState}>
-								Rule builder will appear after the rules engine is configured.
-							</div>
+							{ipRules.isLoading ? (
+								<div className={styles.emptyState}>Loading IP rules…</div>
+							) : ipRules.isError ? (
+								<div className={styles.emptyState}>Unable to load IP rules (API error).</div>
+							) : ipRulesOverview.totalRules === 0 ? (
+								<div className={styles.emptyState}>
+									No IP rules yet. Add an IP/CIDR rule to apply enforcement.
+								</div>
+							) : (
+								<>
+									<div className={styles.ruleList}>
+										<div className={styles.ruleItem}>
+											<span>Active IP Rules</span>
+											<span className={styles.ruleTag}>{ipRulesOverview.activeRules.toLocaleString()}</span>
+										</div>
+										<div className={styles.ruleItem}>
+											<span>Allow</span>
+											<span className={styles.ruleTag}>{ipRulesOverview.allowCount.toLocaleString()}</span>
+										</div>
+										<div className={styles.ruleItem}>
+											<span>Deny</span>
+											<span className={styles.ruleTag}>{ipRulesOverview.denyCount.toLocaleString()}</span>
+										</div>
+									</div>
+									{ipRulesOverview.preview.length ? (
+										<div className={styles.ruleList}>
+											{ipRulesOverview.preview.map((r) => (
+												<div key={r.id} className={styles.ruleItem}>
+													<span title={r.ipCidr}>
+														{r.ipCidr}
+														<span style={{ opacity: 0.7 }}>
+															{r.expiresOn ? ` (expires ${new Date(r.expiresOn).toLocaleDateString()})` : ""}
+														</span>
+													</span>
+													<span className={r.action === "deny" ? styles.badgeDeny : styles.badgeAllow}>
+														{r.action.toUpperCase()}
+													</span>
+												</div>
+											))}
+										</div>
+									) : null}
+								</>
+							)}
 							<div className={styles.actionRow}>
 								<Link className={styles.primaryButton} to="/nyxguard/rules?type=ip">
-									Save Rule
+									Add IP Rule
 								</Link>
 								<Link className={styles.ghostButton} to="/nyxguard/rules?type=ip">
 									View All Rules
