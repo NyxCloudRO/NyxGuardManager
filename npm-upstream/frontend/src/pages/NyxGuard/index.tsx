@@ -73,11 +73,18 @@ const NyxGuard = () => {
 	const toggleWafAll = useMutation({
 		mutationFn: (enabled: boolean) => updateNyxGuardAppsWaf(enabled),
 		onSuccess: async (res, enabled) => {
-			showSuccess(
-				enabled
-					? `Enabled WAF for ${res.updated.toLocaleString()} app(s).`
-					: `Disabled WAF for ${res.updated.toLocaleString()} app(s).`,
-			);
+			const updated = typeof (res as any)?.updated === "number" ? (res as any).updated : 0;
+			if (enabled && updated === 0 && appsOverview.totalApps > 0) {
+				showError(
+					"No apps were updated. If you just updated, make sure your running NyxGuardManager image includes backend version 2.0.1+ and that your user can update Proxy Hosts.",
+				);
+			} else {
+				showSuccess(
+					enabled
+						? `Enabled WAF for ${updated.toLocaleString()} app(s).`
+						: `Disabled WAF for ${updated.toLocaleString()} app(s).`,
+				);
+			}
 			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps"] });
 			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps", "summary"] });
 		},
@@ -92,11 +99,15 @@ const NyxGuard = () => {
 		onSuccess: async (res: any, enabled) => {
 			const updated = typeof res?.updated === "number" ? res.updated : 0;
 			const skipped = typeof res?.skipped === "number" ? res.skipped : 0;
-			showSuccess(
-				enabled
-					? `Enabled Bot Defense for ${updated.toLocaleString()} app(s)${skipped ? ` (skipped ${skipped.toLocaleString()} monitoring-only).` : "."}`
-					: `Disabled Bot Defense for ${updated.toLocaleString()} app(s).`,
-			);
+			if (enabled && updated === 0 && skipped > 0) {
+				showError("Bot Defense default is ON, but there are no protected apps yet. Enable WAF on apps to apply it.");
+			} else {
+				showSuccess(
+					enabled
+						? `Enabled Bot Defense for ${updated.toLocaleString()} app(s)${skipped ? ` (skipped ${skipped.toLocaleString()} monitoring-only).` : "."}`
+						: `Disabled Bot Defense for ${updated.toLocaleString()} app(s).`,
+				);
+			}
 			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps"] });
 			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps", "summary"] });
 			await qc.invalidateQueries({ queryKey: ["nyxguard", "settings"] });
@@ -112,11 +123,15 @@ const NyxGuard = () => {
 		onSuccess: async (res: any, enabled) => {
 			const updated = typeof res?.updated === "number" ? res.updated : 0;
 			const skipped = typeof res?.skipped === "number" ? res.skipped : 0;
-			showSuccess(
-				enabled
-					? `Enabled DDoS Shield for ${updated.toLocaleString()} app(s)${skipped ? ` (skipped ${skipped.toLocaleString()} monitoring-only).` : "."}`
-					: `Disabled DDoS Shield for ${updated.toLocaleString()} app(s).`,
-			);
+			if (enabled && updated === 0 && skipped > 0) {
+				showError("DDoS Shield default is ON, but there are no protected apps yet. Enable WAF on apps to apply it.");
+			} else {
+				showSuccess(
+					enabled
+						? `Enabled DDoS Shield for ${updated.toLocaleString()} app(s)${skipped ? ` (skipped ${skipped.toLocaleString()} monitoring-only).` : "."}`
+						: `Disabled DDoS Shield for ${updated.toLocaleString()} app(s).`,
+				);
+			}
 			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps"] });
 			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps", "summary"] });
 			await qc.invalidateQueries({ queryKey: ["nyxguard", "settings"] });
