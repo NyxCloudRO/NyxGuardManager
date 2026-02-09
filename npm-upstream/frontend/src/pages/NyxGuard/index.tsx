@@ -616,7 +616,15 @@ const NyxGuard = () => {
 								<div className={styles.ruleItem}>
 									<div className={styles.controlLabel}>
 										<span>WAF Protection</span>
-										<span className={wafProtectedEnabled ? styles.badgeActive : styles.badgeMuted}>
+										<span
+											className={
+												wafProtectedEnabled
+													? wafAllEnabled
+														? styles.pillOn
+														: styles.pillPartial
+													: styles.pillOff
+											}
+										>
 											{wafProtectedEnabled ? (wafAllEnabled ? "ON" : "PARTIAL") : "OFF"}
 										</span>
 										<span className={styles.ruleTag} title="Protected apps / total apps">
@@ -650,9 +658,7 @@ const NyxGuard = () => {
 								<div className={styles.ruleItem}>
 									<div className={styles.controlLabel}>
 										<span>Bot Defense</span>
-										<span className={botDefenseEnabled ? styles.badgeActive : styles.badgeMuted}>
-											{botDefenseEnabled ? "ON" : "OFF"}
-										</span>
+										<span className={botDefenseEnabled ? styles.pillOn : styles.pillOff}>{botDefenseEnabled ? "ON" : "OFF"}</span>
 									</div>
 									<div className={styles.controlActions}>
 										<button
@@ -674,9 +680,7 @@ const NyxGuard = () => {
 								<div className={styles.ruleItem}>
 									<div className={styles.controlLabel}>
 										<span>DDoS Shield</span>
-										<span className={ddosEnabled ? styles.badgeActive : styles.badgeMuted}>
-											{ddosEnabled ? "ON" : "OFF"}
-										</span>
+										<span className={ddosEnabled ? styles.pillOn : styles.pillOff}>{ddosEnabled ? "ON" : "OFF"}</span>
 									</div>
 									<div className={styles.controlActions}>
 										<button

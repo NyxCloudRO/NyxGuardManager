@@ -286,6 +286,7 @@
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  align-items: center;
   padding: 10px 12px;
   border-radius: 12px;
   background: rgba(12, 16, 46, 0.7);
@@ -294,14 +295,16 @@
 }
 
 .controlLabel {
-  display: flex;
+  flex: 1 1 auto;
+  min-width: 220px;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
   align-items: center;
-  gap: 10px;
-  min-width: 180px;
-  flex-wrap: wrap;
+  column-gap: 10px;
 }
 
 .controlActions {
+  flex: 0 0 auto;
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
@@ -313,6 +316,56 @@
   padding: 8px 12px;
   font-size: 12px;
   letter-spacing: 0.04em;
+}
+
+@keyframes nyxguardBadgePulse {
+  0% {
+    transform: translateY(0);
+    box-shadow: 0 0 0 rgba(35, 196, 131, 0);
+    opacity: 0.88;
+  }
+  50% {
+    transform: translateY(-1px);
+    box-shadow: 0 0 16px rgba(35, 196, 131, 0.45);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 0 0 rgba(35, 196, 131, 0);
+    opacity: 0.92;
+  }
+}
+
+.pillOn,
+.pillOff,
+.pillPartial {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  justify-self: end;
+  white-space: nowrap;
+}
+
+.pillOn {
+  background: rgba(35, 196, 131, 0.18);
+  border: 1px solid rgba(35, 196, 131, 0.5);
+  color: #d9fff0;
+  animation: nyxguardBadgePulse 1.25s ease-in-out infinite;
+}
+
+.pillPartial {
+  background: rgba(255, 199, 92, 0.16);
+  border: 1px solid rgba(255, 199, 92, 0.45);
+  color: #fff2d9;
+  animation: nyxguardBadgePulse 1.6s ease-in-out infinite;
+}
+
+.pillOff {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(246, 244, 255, 0.9);
 }
 
 .ruleTag {
