@@ -20,6 +20,33 @@ need_root() {
 
 have_cmd() { command -v "$1" >/dev/null 2>&1; }
 
+set_compose_image_tag() {
+  local compose_file="$1"
+  local tag="$2"
+
+  [[ -f "${compose_file}" ]] || return 0
+
+  # Keep this portable across sed variants by using awk + atomic replace.
+  local tmp
+  tmp="$(mktemp)"
+  awk -v v="${tag}" '
+    {
+      if (match($0, /^[[:space:]]*image:[[:space:]]*"?nyxguardmanager:/)) {
+        pre = substr($0, 1, RLENGTH)
+        # Preserve an opening quote if present.
+        q = ""
+        if (pre ~ /"$/) {
+          pre = substr(pre, 1, length(pre) - 1)
+          q = "\""
+        }
+        $0 = pre v q
+      }
+      print
+    }
+  ' "${compose_file}" > "${tmp}"
+  mv -f "${tmp}" "${compose_file}"
+}
+
 rand() {
   # 32 chars, URL-safe-ish
   tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32 || true
@@ -159,9 +186,7 @@ build_image() {
 
   # Ensure compose uses the just-built local image tag.
   cd "${INSTALL_DIR}"
-  if [[ -f docker-compose.yml ]]; then
-    sed -i -E "s#^([[:space:]]*image:[[:space:]]*nyxguardmanager:).*$#\\1${version}#g" docker-compose.yml
-  fi
+  set_compose_image_tag docker-compose.yml "${version}"
 }
 
 start_stack() {
