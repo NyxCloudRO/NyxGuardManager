@@ -6,7 +6,7 @@ Admin UI: `http://<server-ip>:81/`
 
 ## Support
 <a href="https://buymeacoffee.com/nyxmael" target="_blank" rel="noopener noreferrer">
-  <img src="assets/buy-me-a-pizza.svg" alt="Buy me a pizza" height="54" />
+  <img src="assets/buy-me-a-coffee.svg" alt="Buy me a coffee" height="54" />
 </a>
 
 ## What You Get

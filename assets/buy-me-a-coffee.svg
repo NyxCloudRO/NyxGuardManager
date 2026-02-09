@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="140" viewBox="0 0 520 140" role="img" aria-label="Buy me a coffee">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#06b6d4"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Button base -->
+  <rect x="20" y="22" width="480" height="96" rx="18" fill="url(#g)" filter="url(#shadow)"/>
+
+  <!-- Coffee icon -->
+  <g transform="translate(56 44)">
+    <circle cx="34" cy="34" r="34" fill="#111827" opacity="0.18"/>
+    <!-- steam -->
+    <path d="M25 10c-3 4 2 7-1 11" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+    <path d="M34 8c-3 4 2 7-1 11" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+    <path d="M43 10c-3 4 2 7-1 11" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+    <!-- cup -->
+    <path d="M18 28h30v16c0 8-6 14-14 14h-2c-8 0-14-6-14-14V28z" fill="#fff" opacity="0.92"/>
+    <!-- coffee surface -->
+    <rect x="20.5" y="31" width="25" height="5.5" rx="2.75" fill="#7c2d12" opacity="0.9"/>
+    <!-- handle -->
+    <path d="M48 32h3c6 0 10 4 10 9s-4 9-10 9h-5" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity="0.92"/>
+    <!-- saucer -->
+    <path d="M18 60c4.5 3.5 11 5.5 16 5.5s11.5-2 16-5.5" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity="0.82"/>
+  </g>
+
+  <!-- Text -->
+  <g font-family="ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="800">
+    <text x="150" y="82" font-size="44" fill="#ffffff" letter-spacing="0.5">Buy me a coffee</text>
+  </g>
+</svg>
+
