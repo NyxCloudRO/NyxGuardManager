@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - NyxGuard Traffic page: live/recent traffic table with country column.
 - NyxGuard Defense Controls: bulk enable/disable for WAF, Bot Defense, and DDoS Shield across apps.
 - IPs & Locations page: additional time filters (30m/60m/30d/60d/90d) and JSON export for the current table.
+- Users: profile avatar upload/remove for user accounts (shown in header and user lists).
 - `update.sh`: in-place updater for existing installs (fetch latest `main`, rebuild frontend + Docker image, restart stack) without wiping `.env` or volumes.
 - Support badge: new “Buy me a coffee” button asset (`assets/buy-me-a-coffee.svg`).
 
