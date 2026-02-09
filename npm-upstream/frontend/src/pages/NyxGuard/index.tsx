@@ -587,38 +587,50 @@ const NyxGuard = () => {
 							</div>
 						</div>
 						<div className={styles.sectionCard}>
-							<h3 className={styles.sectionTitle}>Bot Defense</h3>
+							<h3 className={styles.sectionTitle}>Defense Controls</h3>
 							<p className={styles.sectionText}>
-								Detect automation, fingerprint bots, and throttle suspicious patterns.
+								Bot defense and DDoS shield toggles (applies to protected apps).
 							</p>
+							<div className={styles.ruleList}>
+								<div className={styles.ruleItem}>
+									<span>Bot Defense</span>
+									<div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+										<span className={botDefenseEnabled ? styles.badgeActive : styles.badgeMuted}>
+											{botDefenseEnabled ? "ON" : "OFF"}
+										</span>
+										<button
+											type="button"
+											className={styles.primaryButton}
+											disabled={saveSettings.isPending}
+											onClick={() => saveSettings.mutate({ botDefenseEnabled: !botDefenseEnabled })}
+											style={{ padding: "8px 12px", fontSize: 12 }}
+										>
+											{botDefenseEnabled ? "Disable" : "Enable"}
+										</button>
+									</div>
+								</div>
+								<div className={styles.ruleItem}>
+									<span>DDoS Shield</span>
+									<div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+										<span className={ddosEnabled ? styles.badgeActive : styles.badgeMuted}>
+											{ddosEnabled ? "ON" : "OFF"}
+										</span>
+										<button
+											type="button"
+											className={styles.primaryButton}
+											disabled={saveSettings.isPending}
+											onClick={() => saveSettings.mutate({ ddosEnabled: !ddosEnabled })}
+											style={{ padding: "8px 12px", fontSize: 12 }}
+										>
+											{ddosEnabled ? "Disable" : "Activate"}
+										</button>
+									</div>
+								</div>
+							</div>
 							<div className={styles.actionRow}>
-								<button
-									type="button"
-									className={styles.primaryButton}
-									disabled={saveSettings.isPending}
-									onClick={() => saveSettings.mutate({ botDefenseEnabled: !botDefenseEnabled })}
-								>
-									{botDefenseEnabled ? "Disable Bot Defense" : "Enable Bot Defense"}
-								</button>
 								<Link className={styles.ghostButton} to="/nyxguard/apps">
 									Protected Apps
 								</Link>
-							</div>
-						</div>
-						<div className={styles.sectionCard}>
-							<h3 className={styles.sectionTitle}>DDoS Shield</h3>
-							<p className={styles.sectionText}>
-								Auto-mitigate spikes with rate limits, challenges, and emergency blocks.
-							</p>
-							<div className={styles.actionRow}>
-								<button
-									type="button"
-									className={styles.primaryButton}
-									disabled={saveSettings.isPending}
-									onClick={() => saveSettings.mutate({ ddosEnabled: !ddosEnabled })}
-								>
-									{ddosEnabled ? "Disable Shield" : "Activate Shield"}
-								</button>
 								<Link className={styles.ghostButton} to="/nyxguard/traffic">
 									View Live Traffic
 								</Link>
