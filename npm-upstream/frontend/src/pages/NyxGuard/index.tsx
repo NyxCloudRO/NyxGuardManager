@@ -525,7 +525,7 @@ const NyxGuard = () => {
 											<div className="text-end">Requests</div>
 											<div className="text-end">Blocked</div>
 										</div>
-										{ipInsights.topCountries.map((c) => (
+									{ipInsights.topCountries.map((c) => (
 											<div key={c.country} className={styles.tableRow}>
 												<div>{c.country}</div>
 												<div className="text-end">{c.ips.toLocaleString()}</div>
@@ -534,20 +534,6 @@ const NyxGuard = () => {
 											</div>
 										))}
 									</div>
-									{ipInsights.topBlockedIps.length ? (
-										<div className={styles.ruleList}>
-											{ipInsights.topBlockedIps.map((it) => (
-												<div key={it.ip} className={styles.ruleItem}>
-													<span title={it.ip}>
-														{it.ip} {it.country ? `(${it.country})` : ""}
-													</span>
-													<span className={styles.ruleTag}>
-														{it.blocked.toLocaleString()} blocked
-													</span>
-												</div>
-											))}
-										</div>
-									) : null}
 								</>
 							)}
 							<div className={styles.actionRow}>
