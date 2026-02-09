@@ -283,9 +283,9 @@
 }
 
 .ruleItem {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: 1fr 140px auto;
+  column-gap: 14px;
   align-items: center;
   padding: 10px 12px;
   border-radius: 12px;
@@ -295,12 +295,17 @@
 }
 
 .controlLabel {
-  flex: 1 1 auto;
-  min-width: 220px;
-  display: grid;
-  grid-template-columns: 1fr auto auto;
+  display: flex;
   align-items: center;
-  column-gap: 10px;
+  min-width: 0;
+}
+
+.controlMid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
 }
 
 .controlActions {
@@ -344,7 +349,6 @@
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  justify-self: end;
   white-space: nowrap;
 }
 
