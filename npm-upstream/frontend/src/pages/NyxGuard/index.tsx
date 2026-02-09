@@ -644,13 +644,13 @@ const NyxGuard = () => {
 														: "Enable WAF for all apps"
 											}
 										>
-											{wafAllEnabled ? "Disable All" : "Enable All"}
+											{wafAllEnabled ? "All Off" : "All On"}
 										</button>
 										<Link
 											className={`${styles.ghostButton} ${styles.miniButton}`}
 											to="/nyxguard/apps"
 										>
-											Manage Apps
+											Apps
 										</Link>
 									</div>
 								</div>

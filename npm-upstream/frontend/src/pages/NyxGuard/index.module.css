@@ -320,9 +320,10 @@
 }
 
 .miniButton {
-  padding: 8px 12px;
-  font-size: 12px;
+  padding: 7px 10px;
+  font-size: 11px;
   letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 @keyframes nyxguardBadgePulse {
