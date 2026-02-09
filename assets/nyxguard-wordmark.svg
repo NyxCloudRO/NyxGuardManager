@@ -68,9 +68,9 @@
         fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="2" stroke-linecap="round"/>
 
   <!-- wordmark -->
-  <g transform="translate(140, 120)">
-    <text class="title" x="0" y="0" font-size="96" fill="#f7f9ff">NyxGuard</text>
-    <text class="title" x="510" y="0" font-size="96" fill="url(#accent)" filter="url(#softGlow)">Manager</text>
+  <g transform="translate(140, 132)">
+    <text class="title" x="0" y="0" font-size="112" fill="#f7f9ff">NyxGuard</text>
+    <text class="title" x="595" y="0" font-size="112" fill="url(#accent)" filter="url(#softGlow)">Manager</text>
   </g>
 
   <!-- shield dot -->
