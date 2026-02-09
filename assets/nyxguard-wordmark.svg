@@ -76,12 +76,5 @@
     </text>
   </g>
 
-  <!-- shield dot -->
-  <g transform="translate(1380, 78)">
-    <circle cx="0" cy="0" r="56" fill="#0a0d1a" stroke="url(#accent)" stroke-width="2" opacity="0.95"/>
-    <path d="M0,-28 C18,-22 32,-14 32,3 C32,28 12,42 0,48 C-12,42 -32,28 -32,3 C-32,-14 -18,-22 0,-28Z"
-          fill="url(#accent)" opacity="0.92" filter="url(#softGlow)"/>
-    <path d="M0,-20 C12,-15 20,-9 20,3 C20,19 8,28 0,33 C-8,28 -20,19 -20,3 C-20,-9 -12,-15 0,-20Z"
-          fill="#ffffff" fill-opacity="0.12"/>
-  </g>
+  <!-- (removed) shield dot -->
 </svg>
