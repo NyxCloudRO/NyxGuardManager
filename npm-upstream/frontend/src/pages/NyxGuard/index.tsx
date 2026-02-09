@@ -482,10 +482,10 @@ const NyxGuard = () => {
 								</>
 							)}
 							<div className={styles.actionRow}>
-								<Link className={styles.primaryButton} to="/nyxguard/rules">
+								<Link className={styles.primaryButton} to="/nyxguard/rules?type=country">
 									Add Country Rule
 								</Link>
-								<Link className={styles.ghostButton} to="/nyxguard/rules">
+								<Link className={styles.ghostButton} to="/nyxguard/rules?type=country">
 									Manage Rules
 								</Link>
 							</div>
@@ -499,10 +499,10 @@ const NyxGuard = () => {
 								Rule builder will appear after the rules engine is configured.
 							</div>
 							<div className={styles.actionRow}>
-								<Link className={styles.primaryButton} to="/nyxguard/rules">
+								<Link className={styles.primaryButton} to="/nyxguard/rules?type=ip">
 									Save Rule
 								</Link>
-								<Link className={styles.ghostButton} to="/nyxguard/rules">
+								<Link className={styles.ghostButton} to="/nyxguard/rules?type=ip">
 									View All Rules
 								</Link>
 							</div>

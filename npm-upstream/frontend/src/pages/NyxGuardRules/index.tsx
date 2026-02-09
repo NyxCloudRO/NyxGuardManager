@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
 	createNyxGuardCountryRule,
 	createNyxGuardIpRule,
@@ -15,7 +16,10 @@ import styles from "./index.module.css";
 
 const NyxGuardRules = () => {
 	const qc = useQueryClient();
-	const [ruleType, setRuleType] = useState<"ip" | "country">("ip");
+	const [searchParams, setSearchParams] = useSearchParams();
+	const queryType = (searchParams.get("type") ?? "").toLowerCase();
+	const initialRuleType = queryType === "country" ? "country" : "ip";
+	const [ruleType, setRuleType] = useState<"ip" | "country">(initialRuleType);
 	const [action, setAction] = useState<"allow" | "deny">("deny");
 	const [ipCidr, setIpCidr] = useState("");
 	const [countryCode, setCountryCode] = useState("");
@@ -108,6 +112,12 @@ const NyxGuardRules = () => {
 		return null;
 	}, [countryCode, ipCidr, ruleType]);
 
+	// Keep state in sync with deep-links like /nyxguard/rules?type=country
+	useEffect(() => {
+		if (queryType !== "ip" && queryType !== "country") return;
+		setRuleType(queryType);
+	}, [queryType]);
+
 	return (
 		<div className={styles.page}>
 			<div className="container-xl">
@@ -124,14 +134,28 @@ const NyxGuardRules = () => {
 								<button
 									type="button"
 									className={ruleType === "ip" ? styles.pillActiveBtn : styles.pillBtn}
-									onClick={() => setRuleType("ip")}
+									onClick={() => {
+										setRuleType("ip");
+										setSearchParams((prev) => {
+											const next = new URLSearchParams(prev);
+											next.set("type", "ip");
+											return next;
+										});
+									}}
 								>
 									IP / Range
 								</button>
 								<button
 									type="button"
 									className={ruleType === "country" ? styles.pillActiveBtn : styles.pillBtn}
-									onClick={() => setRuleType("country")}
+									onClick={() => {
+										setRuleType("country");
+										setSearchParams((prev) => {
+											const next = new URLSearchParams(prev);
+											next.set("type", "country");
+											return next;
+										});
+									}}
 								>
 									Country
 								</button>
