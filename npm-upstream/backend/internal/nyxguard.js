@@ -16,6 +16,7 @@ const NYXGUARD_DDOS_CONF = path.join(NYXGUARD_CUSTOM_DIR, "nyxguard_ddos.conf");
 
 const GEOIP_DIR = "/data/geoip";
 const GEOIP_COUNTRY_DB = path.join(GEOIP_DIR, "GeoLite2-Country.mmdb");
+const GEOIP_IP2LOCATION_DB = path.join(GEOIP_DIR, "IP2Location-Country.mmdb");
 
 const WAF_MARK_BEGIN = "# NyxGuard WAF BEGIN";
 const WAF_MARK_END = "# NyxGuard WAF END";
@@ -437,17 +438,53 @@ const internalNyxGuard = {
 				geoipAvailable = false;
 			}
 
-			// Write geoip2 include only when DB exists so nginx never fails to start.
+			let ip2Available = false;
+			try {
+				await fs.stat(GEOIP_IP2LOCATION_DB);
+				ip2Available = true;
+			} catch {
+				ip2Available = false;
+			}
+
+			const buildGeoip2Conf = ({ withIp2location }) => {
+				const lines = [];
+				lines.push("# Managed by NyxGuard Manager");
+				lines.push(`# Only included when at least one GeoIP DB exists in ${GEOIP_DIR}.`);
+				lines.push("");
+
+				// MaxMind GeoLite2 Country (expected schema: country.iso_code)
+				if (geoipAvailable) {
+					lines.push(`# MaxMind GeoLite2 Country DB`);
+					lines.push(`geoip2 ${GEOIP_COUNTRY_DB} {`);
+					lines.push(`    $geoip2_country_code_mm country iso_code;`);
+					lines.push(`}`);
+					lines.push("");
+				}
+
+				// IP2Location Country (expected schema: country_short)
+				if (withIp2location && ip2Available) {
+					lines.push(`# IP2Location Country DB (fallback)`);
+					lines.push(`geoip2 ${GEOIP_IP2LOCATION_DB} {`);
+					lines.push(`    $geoip2_country_code_ip2 country_short;`);
+					lines.push(`}`);
+					lines.push("");
+				}
+
+				return ensureTrailingNewline(lines.join("\n"));
+			};
+
+			// Write geoip2 include only when a DB exists. If the IP2Location schema isn't compatible,
+			// nginx -t will fail; we detect that and fall back to MaxMind-only config automatically.
 			try {
 				await fs.mkdir(GEOIP_DIR, { recursive: true });
-				if (geoipAvailable) {
-					const geoip2Conf =
-						`# Managed by NyxGuard Manager\n` +
-						`# Only included when ${GEOIP_COUNTRY_DB} exists.\n` +
-						`geoip2 ${GEOIP_COUNTRY_DB} {\n` +
-						`    $geoip2_country_code country iso_code;\n` +
-						`}\n`;
-					await writeAtomic(NYXGUARD_GEOIP2_CONF, geoip2Conf);
+				if (geoipAvailable || ip2Available) {
+					await writeAtomic(NYXGUARD_GEOIP2_CONF, buildGeoip2Conf({ withIp2location: true }));
+					try {
+						await internalNginx.test();
+					} catch {
+						// Fall back to MaxMind-only (or empty) geoip2 conf so nginx never stays broken.
+						await writeAtomic(NYXGUARD_GEOIP2_CONF, buildGeoip2Conf({ withIp2location: false }));
+					}
 				}
 			} catch {
 				// ignore
@@ -457,17 +494,24 @@ const internalNyxGuard = {
 			httpLines.push("# Managed by NyxGuard Manager");
 			httpLines.push("# This file is included in nginx http{} via /data/nginx/custom/http_top.conf");
 			httpLines.push("");
-			if (geoipAvailable) {
+			if (geoipAvailable || ip2Available) {
 				httpLines.push(`# GeoIP2 Country DB (optional)`);
 				httpLines.push(`include ${NYXGUARD_GEOIP2_CONF};`);
 				httpLines.push("");
 			}
 
 			httpLines.push("# Country resolution (CF header preferred; GeoIP2 fallback when installed)");
-			if (geoipAvailable) {
-				httpLines.push("map $http_cf_ipcountry $nyxguard_country {");
+			if (geoipAvailable || ip2Available) {
+				// Stage 1: Cloudflare header (if present), else MaxMind (if installed).
+				httpLines.push("map $http_cf_ipcountry $nyxguard_country_mm {");
 				httpLines.push("\tdefault $http_cf_ipcountry;");
-				httpLines.push("\t\"\" $geoip2_country_code;");
+				httpLines.push("\t\"\" $geoip2_country_code_mm;");
+				httpLines.push("}");
+				httpLines.push("");
+				// Stage 2: if still empty, fall back to IP2Location (if installed).
+				httpLines.push("map $nyxguard_country_mm $nyxguard_country {");
+				httpLines.push("\tdefault $nyxguard_country_mm;");
+				httpLines.push("\t\"\" $geoip2_country_code_ip2;");
 				httpLines.push("}");
 			} else {
 				httpLines.push("map $http_cf_ipcountry $nyxguard_country {");

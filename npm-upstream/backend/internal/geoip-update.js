@@ -99,11 +99,12 @@ const internalGeoIpUpdate = {
 			internalGeoIpUpdate.process,
 			internalGeoIpUpdate.intervalTimeout,
 		);
-		// Run once on startup too (best-effort)
-		internalGeoIpUpdate.process();
+		// Best-effort run on startup, but avoid burning MaxMind download quota on frequent restarts.
+		// We'll only download if the DB is missing or older than our interval.
+		internalGeoIpUpdate.process({ startup: true });
 	},
 
-	process: async () => {
+	process: async ({ startup = false } = {}) => {
 		if (internalGeoIpUpdate.intervalProcessing) return;
 		internalGeoIpUpdate.intervalProcessing = true;
 
@@ -123,6 +124,22 @@ const internalGeoIpUpdate = {
 
 			// Only download what we actually use today.
 			const editionId = "GeoLite2-Country";
+			const dest = path.join(GEOIP_DIR, `${editionId}.mmdb`);
+
+			// Skip downloads if the current DB is still "fresh" (prevents exhausting daily quotas).
+			try {
+				const st = await fs.stat(dest);
+				const ageMs = Date.now() - st.mtimeMs;
+				if (ageMs >= 0 && ageMs < internalGeoIpUpdate.intervalTimeout) {
+					// On startup this is the common case; don't spam logs.
+					if (!startup) {
+						logger.info("GeoIP DB is recent; skipping update");
+					}
+					return;
+				}
+			} catch {
+				// No existing DB, proceed.
+			}
 
 			const url =
 				`https://download.maxmind.com/app/geoip_download?edition_id=${encodeURIComponent(editionId)}` +
@@ -143,7 +160,6 @@ const internalGeoIpUpdate = {
 				throw new Error("Downloaded archive did not contain a .mmdb file");
 			}
 
-			const dest = path.join(GEOIP_DIR, `${editionId}.mmdb`);
 			const tmpDest = path.join(GEOIP_DIR, `.${editionId}.${process.pid}.tmp`);
 			await fs.copyFile(mmdb, tmpDest);
 			await fs.rename(tmpDest, dest);

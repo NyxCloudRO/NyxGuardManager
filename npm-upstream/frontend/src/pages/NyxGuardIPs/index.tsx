@@ -10,6 +10,7 @@ import {
 	uploadNyxGuardGeoip,
 } from "src/api/backend";
 import type { NyxGuardSettings } from "src/api/backend";
+import type { GeoipProvider } from "src/api/backend/getNyxGuardGeoip";
 import styles from "./index.module.css";
 
 const NyxGuardIPs = () => {
@@ -17,6 +18,7 @@ const NyxGuardIPs = () => {
 	const qc = useQueryClient();
 	const [retentionDraft, setRetentionDraft] = useState<30 | 60 | 90 | 180>(60);
 	const [geoipFile, setGeoipFile] = useState<File | null>(null);
+	const [geoipProvider, setGeoipProvider] = useState<GeoipProvider>("maxmind");
 	const [mmAccountId, setMmAccountId] = useState("");
 	const [mmLicenseKey, setMmLicenseKey] = useState("");
 
@@ -66,11 +68,13 @@ const NyxGuardIPs = () => {
 		queryFn: () => getNyxGuardGeoip(),
 		refetchInterval: 60000,
 	});
+	const installedMaxMind = geoip.data?.providers?.maxmind?.installed ?? geoip.data?.installed ?? false;
+	const installedIp2 = geoip.data?.providers?.ip2location?.installed ?? false;
 
 	const uploadGeoip = useMutation({
 		mutationFn: async () => {
 			if (!geoipFile) return;
-			await uploadNyxGuardGeoip(geoipFile);
+			await uploadNyxGuardGeoip(geoipFile, geoipProvider);
 		},
 		onSuccess: async () => {
 			setGeoipFile(null);
@@ -238,8 +242,26 @@ const NyxGuardIPs = () => {
 							GeoIP DB
 						</div>
 						<div className="text-secondary">
-							{geoip.isLoading ? "Checking…" : geoip.data?.installed ? "Installed" : "Not installed"}
+							{geoip.isLoading
+								? "Checking…"
+								: geoipProvider === "ip2location"
+									? installedIp2
+										? "Installed"
+										: "Not installed"
+									: installedMaxMind
+										? "Installed"
+										: "Not installed"}
 						</div>
+						<select
+							value={geoipProvider}
+							onChange={(e) => setGeoipProvider(e.target.value as GeoipProvider)}
+							className="form-select form-select-sm"
+							style={{ width: 190 }}
+							title="Choose which GeoIP database you are uploading"
+						>
+							<option value="maxmind">MaxMind GeoLite2</option>
+							<option value="ip2location">IP2Location (.mmdb)</option>
+						</select>
 						<input
 							type="file"
 							accept=".mmdb"

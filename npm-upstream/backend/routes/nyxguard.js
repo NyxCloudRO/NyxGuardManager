@@ -26,6 +26,7 @@ const MAX_MINUTES = 180 * 24 * 60;
 const MAX_TOTAL_SCAN_BYTES = 80 * 1024 * 1024; // safety cap for long windows
 const GEOIP_DIR = "/data/geoip";
 const GEOIP_COUNTRY_DB = path.join(GEOIP_DIR, "GeoLite2-Country.mmdb");
+const GEOIP_IP2LOCATION_DB = path.join(GEOIP_DIR, "IP2Location-Country.mmdb");
 
 function monthToIndex(mon) {
 	const m = mon.toLowerCase();
@@ -1199,6 +1200,12 @@ router
 			} catch {
 				st = null;
 			}
+			let ip2St = null;
+			try {
+				ip2St = await fs.stat(GEOIP_IP2LOCATION_DB);
+			} catch {
+				ip2St = null;
+			}
 			let confSt = null;
 			try {
 				confSt = await fs.stat(path.join(GEOIP_DIR, "GeoIP.conf"));
@@ -1206,10 +1213,27 @@ router
 				confSt = null;
 			}
 			res.status(200).send({
+				// Backwards-compatible fields (represent MaxMind GeoLite2 Country).
 				installed: !!st,
 				path: GEOIP_COUNTRY_DB,
 				size: st?.size ?? null,
 				modifiedOn: st ? new Date(st.mtimeMs).toISOString() : null,
+
+				// New: multi-provider status.
+				providers: {
+					maxmind: {
+						installed: !!st,
+						path: GEOIP_COUNTRY_DB,
+						size: st?.size ?? null,
+						modifiedOn: st ? new Date(st.mtimeMs).toISOString() : null,
+					},
+					ip2location: {
+						installed: !!ip2St,
+						path: GEOIP_IP2LOCATION_DB,
+						size: ip2St?.size ?? null,
+						modifiedOn: ip2St ? new Date(ip2St.mtimeMs).toISOString() : null,
+					},
+				},
 				updateConfigured: !!confSt,
 			});
 		} catch (err) {
@@ -1242,17 +1266,23 @@ router
 				res.status(400).send({ error: "File must be a .mmdb database" });
 				return;
 			}
-			// Keep it simple: we only support the GeoLite2 Country DB here.
-			// (ASN/City DBs have different structures and won't populate $geoip2_country_code.)
-			if (!name.toLowerCase().includes("country")) {
-				res.status(400).send({ error: "Please upload the GeoLite2-Country.mmdb database (not ASN/City)." });
-				return;
+
+			const providerRaw = String(req.query.provider ?? req.query.source ?? "maxmind").toLowerCase();
+			const provider = providerRaw === "ip2location" || providerRaw === "ip2" ? "ip2location" : "maxmind";
+
+			if (provider === "maxmind") {
+				// Keep it simple: we only support the GeoLite2 Country DB here.
+				// (ASN/City DBs have different structures and won't populate $geoip2_country_code.)
+				if (!name.toLowerCase().includes("country")) {
+					res.status(400).send({ error: "Please upload the GeoLite2-Country.mmdb database (not ASN/City)." });
+					return;
+				}
 			}
 
 			await fs.mkdir(GEOIP_DIR, { recursive: true });
 			const tmp = path.join(GEOIP_DIR, `.upload.${process.pid}.tmp`);
 			await fs.writeFile(tmp, f.data);
-			await fs.rename(tmp, GEOIP_COUNTRY_DB);
+			await fs.rename(tmp, provider === "ip2location" ? GEOIP_IP2LOCATION_DB : GEOIP_COUNTRY_DB);
 
 			await internalNyxGuard.nginx.apply(db());
 			res.status(200).send({ ok: true });
