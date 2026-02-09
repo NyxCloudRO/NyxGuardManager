@@ -3,10 +3,13 @@
 
 # This file assumes that the frontend has been built using ./scripts/frontend-build
 
-FROM nginxproxymanager/testca AS testca
-FROM nginxproxymanager/nginx-full:certbot-node
+FROM golang:1.22-bookworm AS certprune-build
+ARG CERT_PRUNE_VERSION="latest"
+RUN go install "github.com/axllent/cert-prune@${CERT_PRUNE_VERSION}"
 
-ARG TARGETPLATFORM
+FROM nginxproxymanager/testca AS testca
+FROM jc21/nginx-proxy-manager:latest
+
 ARG BUILD_VERSION
 ARG BUILD_COMMIT
 ARG BUILD_DATE
@@ -30,9 +33,7 @@ RUN echo "fs.file-max = 65535" > /etc/sysctl.conf \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
 
-# s6 overlay
-COPY docker/scripts/install-s6 /tmp/install-s6
-RUN /tmp/install-s6 "${TARGETPLATFORM}" && rm -f /tmp/install-s6
+COPY --from=certprune-build /go/bin/cert-prune /usr/bin/cert-prune
 
 EXPOSE 80 81 443
 

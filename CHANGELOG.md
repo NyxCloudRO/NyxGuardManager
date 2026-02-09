@@ -27,6 +27,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - NyxGuard rules: IP rule creation now works correctly; dashboard rules cards show summary counters only (no per-rule list).
 - NyxGuard bulk toggles: fixed WAF bulk endpoint routing and ensured bulk changes apply to per-app protection flags.
 
+## [2.0.2] - 2026-02-09
+
+### Changed
+- Container image publishing: installs now pull `nyxmael/nyxguardmanager` by default.
+- Security: rebuilt image against the latest upstream base image to reduce inherited CVEs (no functional app changes intended).
+
 ## [2.0.0] - 2026-02-08
 
 ### Added
