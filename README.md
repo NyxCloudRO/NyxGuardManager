@@ -58,6 +58,7 @@ This repo is not published as a prebuilt image on Docker Hub. The install builds
 
 ## Supported Distributions
 - Ubuntu 24.xx (tested)
+- Debian 13 (tested)
 - Other distributions: not fully tested yet. We plan to validate and add them over time.
 
 ## Hardware Requirements (Guidelines)
