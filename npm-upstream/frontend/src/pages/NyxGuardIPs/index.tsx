@@ -20,6 +20,29 @@ const NyxGuardIPs = () => {
 	const [mmAccountId, setMmAccountId] = useState("");
 	const [mmLicenseKey, setMmLicenseKey] = useState("");
 
+	const windowLabel = (() => {
+		switch (windowMinutes) {
+			case 15:
+				return "15 minutes";
+			case 30:
+				return "30 minutes";
+			case 60:
+				return "60 minutes";
+			case 1440:
+				return "1 day";
+			case 10080:
+				return "7 days";
+			case 43200:
+				return "30 days";
+			case 86400:
+				return "60 days";
+			case 129600:
+				return "90 days";
+			default:
+				return `${windowMinutes} minutes`;
+		}
+	})();
+
 	const settings = useQuery<NyxGuardSettings>({
 		queryKey: ["nyxguard", "settings"],
 		queryFn: () => getNyxGuardSettings(),
@@ -75,9 +98,28 @@ const NyxGuardIPs = () => {
 
 	const ips = useQuery({
 		queryKey: ["nyxguard", "ips", windowMinutes],
-		queryFn: () => getNyxGuardIps(windowMinutes, windowMinutes >= 10080 ? 400 : 200),
+		queryFn: () => getNyxGuardIps(windowMinutes, windowMinutes >= 43200 ? 800 : windowMinutes >= 10080 ? 400 : 200),
 		refetchInterval: windowMinutes <= 60 ? 15000 : 60000,
 	});
+
+	const exportIpsJson = () => {
+		if (!ips.data?.items?.length) return;
+		const ts = new Date().toISOString().replace(/[:.]/g, "-");
+		const payload = {
+			now: ips.data.now,
+			windowMinutes: ips.data.windowMinutes,
+			items: ips.data.items,
+		};
+		const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement("a");
+		a.href = url;
+		a.download = `nyxguard-ips-${windowMinutes}m-${ts}.json`;
+		document.body.appendChild(a);
+		a.click();
+		a.remove();
+		setTimeout(() => URL.revokeObjectURL(url), 1000);
+	};
 
 	const retention = settings.data?.logRetentionDays ?? 30;
 	const retentionChanged = retentionDraft !== retention;
@@ -98,10 +140,17 @@ const NyxGuardIPs = () => {
 							</button>
 							<button
 								type="button"
+								className={windowMinutes === 30 ? styles.windowActive : styles.window}
+								onClick={() => setWindowMinutes(30)}
+							>
+								Last 30m
+							</button>
+							<button
+								type="button"
 								className={windowMinutes === 60 ? styles.windowActive : styles.window}
 								onClick={() => setWindowMinutes(60)}
 							>
-								Last 1h
+								Last 60m
 							</button>
 							<button
 								type="button"
@@ -116,6 +165,36 @@ const NyxGuardIPs = () => {
 								onClick={() => setWindowMinutes(10080)}
 							>
 								Last 7d
+							</button>
+							<button
+								type="button"
+								className={windowMinutes === 43200 ? styles.windowActive : styles.window}
+								onClick={() => setWindowMinutes(43200)}
+							>
+								Last 30d
+							</button>
+							<button
+								type="button"
+								className={windowMinutes === 86400 ? styles.windowActive : styles.window}
+								onClick={() => setWindowMinutes(86400)}
+							>
+								Last 60d
+							</button>
+							<button
+								type="button"
+								className={windowMinutes === 129600 ? styles.windowActive : styles.window}
+								onClick={() => setWindowMinutes(129600)}
+							>
+								Last 90d
+							</button>
+							<button
+								type="button"
+								className={styles.window}
+								disabled={!ips.data?.items?.length || ips.isLoading}
+								onClick={exportIpsJson}
+								title={ips.data?.items?.length ? "Download current table as JSON" : "No data to export"}
+							>
+								Export JSON
 							</button>
 						</div>
 					</div>
@@ -239,15 +318,7 @@ const NyxGuardIPs = () => {
 						<div className={styles.emptyState}>Unable to load IP data.</div>
 					) : (ips.data?.items?.length ?? 0) === 0 ? (
 						<div className={styles.emptyState}>
-							No IP data found in the last{" "}
-							{windowMinutes === 15
-								? "15 minutes"
-								: windowMinutes === 60
-									? "hour"
-									: windowMinutes === 1440
-										? "day"
-										: "7 days"}
-							.
+							No IP data found in the last {windowLabel}.
 						</div>
 					) : (
 						<div style={{ overflowX: "auto" }}>
