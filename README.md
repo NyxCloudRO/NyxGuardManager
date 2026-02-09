@@ -1,4 +1,4 @@
-# NyxGuard Manager (v2.0.0)
+# NyxGuard Manager (v2.0.1)
 
 NyxGuard Manager is a self-hosted reverse proxy manager with an integrated WAF-style security layer (NyxGuard).
 
@@ -57,6 +57,14 @@ Run as root on Ubuntu/Debian:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | bash
+```
+
+## Update (In-Place)
+
+If you already installed NyxGuard Manager and want the latest code + a rebuilt local image without wiping your config:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | sudo bash
 ```
 
 After install:

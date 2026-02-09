@@ -1,7 +1,7 @@
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxguardmanager:2.0.0
+    image: nyxguardmanager:2.0.1
     restart: unless-stopped
     ports:
       - "80:80"
@@ -47,4 +47,3 @@ volumes:
   nyxguard_data:
   nyxguard_letsencrypt:
   nyxguard_db:
-

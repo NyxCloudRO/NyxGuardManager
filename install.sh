@@ -4,7 +4,7 @@ set -euo pipefail
 REPO_URL="${REPO_URL:-https://github.com/NyxCloudRO/NyxGuardManager.git}"
 REF="${REF:-main}"
 INSTALL_DIR="${INSTALL_DIR:-/opt/nyxguardmanager}"
-VERSION="${VERSION:-2.0.0}"
+VERSION="${VERSION:-2.0.1}"
 
 need_root() {
   if [[ "${EUID}" -ne 0 ]]; then
