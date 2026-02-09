@@ -183,7 +183,13 @@ sudo systemctl enable --now nyxguardmanager.service
 The curl installer clones this repo. If the repo is private, `git clone` will require authentication (SSH key or HTTPS token).
 
 ## About Me
-I created NyxGuard Manager to run a practical, self-hosted reverse proxy manager with security controls (WAF, bot defense, DDoS shielding, geo/IP insights) that are tightly integrated with proxy hosts, easy to toggle per-app, and observable in real time.
+I created **NyxGuard Manager** because I wanted a reverse proxy manager that feels like an *operator tool*, not a toy: simple to run on your own infrastructure, but serious about security, visibility, and day-2 operations.
+
+My vision for NyxGuard Manager is:
+- **Security that lives where you operate**: WAF-style controls, bot defence, DDoS shielding, and IP/geo insights that are built into the same workflow as your proxy hosts (per-app toggles, clear status, fast rollback).
+- **Real-time observability, not guesswork**: live traffic, active hosts, and decision streams that make it obvious what is happening and why.
+- **Local-first and predictable**: your configuration, certificates, and history stay on your server in volumes; updates are designed to be in-place without wiping your data.
+- **Pragmatic by design**: focus on features that reduce operational load, make incidents easier to debug, and keep the UI fast and clean.
 
 ## License / Attribution
 NyxGuard Manager is built on top of an upstream proxy-manager codebase and includes substantial modifications and new NyxGuard features.
