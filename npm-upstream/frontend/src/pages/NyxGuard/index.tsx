@@ -491,46 +491,41 @@ const NyxGuard = () => {
 							</div>
 						</div>
 						<div className={styles.sectionCard}>
-							<h3 className={styles.sectionTitle}>Country Controls</h3>
+							<h3 className={styles.sectionTitle}>Apps Overview</h3>
 							<p className={styles.sectionText}>
-								Allow or deny by country. Changes apply instantly to protected apps.
+								Protect proxy hosts with profiles, policies, and rule packs.
 							</p>
-							{countryRules.isLoading ? (
-								<div className={styles.emptyState}>Loading country rules…</div>
-							) : countryRules.isError ? (
-								<div className={styles.emptyState}>Unable to load country rules (API error).</div>
-							) : countryRulesOverview.totalRules === 0 ? (
+							{appsSummary.isLoading && apps.isLoading ? (
+								<div className={styles.emptyState}>Loading apps…</div>
+							) : appsSummary.isError || apps.isError ? (
+								<div className={styles.emptyState}>Unable to load apps overview (API error).</div>
+							) : appsOverview.totalApps === 0 ? (
 								<div className={styles.emptyState}>
-									No country rules yet. Create your first rule to apply enforcement.
+									No apps are connected yet. Add a proxy host to begin protection.
 								</div>
 							) : (
 								<>
 									<div className={styles.ruleList}>
 										<div className={styles.ruleItem}>
-											<span>Active Country Rules</span>
-											<span className={styles.ruleTag}>{countryRulesOverview.activeRules.toLocaleString()}</span>
+											<span>Connected Apps</span>
+											<span className={styles.ruleTag}>{appsOverview.totalApps.toLocaleString()}</span>
 										</div>
 										<div className={styles.ruleItem}>
-											<span>Allow</span>
-											<span className={styles.ruleTag}>{countryRulesOverview.allowCount.toLocaleString()}</span>
+											<span>Protected (WAF)</span>
+											<span className={styles.ruleTag}>{appsOverview.protectedCount.toLocaleString()}</span>
 										</div>
 										<div className={styles.ruleItem}>
-											<span>Deny</span>
-											<span className={styles.ruleTag}>{countryRulesOverview.denyCount.toLocaleString()}</span>
+											<span>Monitoring Only</span>
+											<span className={styles.ruleTag}>{appsOverview.monitoringCount.toLocaleString()}</span>
 										</div>
 									</div>
-									{countryRulesOverview.preview.length ? (
-										<div className={styles.ruleList}>
-											{countryRulesOverview.preview.map((r) => (
-												<div key={r.id} className={styles.ruleItem}>
-													<span>
-														{r.countryCode || "??"}
-														<span style={{ opacity: 0.7 }}>
-															{r.expiresOn ? ` (expires ${new Date(r.expiresOn).toLocaleDateString()})` : ""}
-														</span>
-													</span>
-													<span className={r.action === "deny" ? styles.badgeDeny : styles.badgeAllow}>
-														{r.action.toUpperCase()}
+									{appsOverview.preview.length ? (
+										<div className={styles.appList}>
+											{appsOverview.preview.map((app) => (
+												<div key={app.id} className={styles.appRow}>
+													<span>{app.name}</span>
+													<span className={app.wafEnabled ? styles.badgeActive : styles.badgeMuted}>
+														{app.wafEnabled ? "Protected" : "Monitoring"}
 													</span>
 												</div>
 											))}
@@ -539,11 +534,11 @@ const NyxGuard = () => {
 								</>
 							)}
 							<div className={styles.actionRow}>
-								<Link className={styles.primaryButton} to="/nyxguard/rules?type=country">
-									Add Country Rule
+								<Link className={styles.primaryButton} to="/nyxguard/apps">
+									Add App
 								</Link>
-								<Link className={styles.ghostButton} to="/nyxguard/rules?type=country">
-									Manage Rules
+								<Link className={styles.ghostButton} to="/nyxguard/apps">
+									View All Apps
 								</Link>
 							</div>
 						</div>
@@ -605,6 +600,63 @@ const NyxGuard = () => {
 							</div>
 						</div>
 						<div className={styles.sectionCard}>
+							<h3 className={styles.sectionTitle}>Country Controls</h3>
+							<p className={styles.sectionText}>
+								Allow or deny by country. Changes apply instantly to protected apps.
+							</p>
+							{countryRules.isLoading ? (
+								<div className={styles.emptyState}>Loading country rules…</div>
+							) : countryRules.isError ? (
+								<div className={styles.emptyState}>Unable to load country rules (API error).</div>
+							) : countryRulesOverview.totalRules === 0 ? (
+								<div className={styles.emptyState}>
+									No country rules yet. Create your first rule to apply enforcement.
+								</div>
+							) : (
+								<>
+									<div className={styles.ruleList}>
+										<div className={styles.ruleItem}>
+											<span>Active Country Rules</span>
+											<span className={styles.ruleTag}>{countryRulesOverview.activeRules.toLocaleString()}</span>
+										</div>
+										<div className={styles.ruleItem}>
+											<span>Allow</span>
+											<span className={styles.ruleTag}>{countryRulesOverview.allowCount.toLocaleString()}</span>
+										</div>
+										<div className={styles.ruleItem}>
+											<span>Deny</span>
+											<span className={styles.ruleTag}>{countryRulesOverview.denyCount.toLocaleString()}</span>
+										</div>
+									</div>
+									{countryRulesOverview.preview.length ? (
+										<div className={styles.ruleList}>
+											{countryRulesOverview.preview.map((r) => (
+												<div key={r.id} className={styles.ruleItem}>
+													<span>
+														{r.countryCode || "??"}
+														<span style={{ opacity: 0.7 }}>
+															{r.expiresOn ? ` (expires ${new Date(r.expiresOn).toLocaleDateString()})` : ""}
+														</span>
+													</span>
+													<span className={r.action === "deny" ? styles.badgeDeny : styles.badgeAllow}>
+														{r.action.toUpperCase()}
+													</span>
+												</div>
+											))}
+										</div>
+									) : null}
+								</>
+							)}
+							<div className={styles.actionRow}>
+								<Link className={styles.primaryButton} to="/nyxguard/rules?type=country">
+									Add Country Rule
+								</Link>
+								<Link className={styles.ghostButton} to="/nyxguard/rules?type=country">
+									Manage Rules
+								</Link>
+							</div>
+						</div>
+						<div className={styles.sectionCard}>
 							<h3 className={styles.sectionTitle}>Defense Controls</h3>
 							<p className={styles.sectionText}>
 								WAF app protection, bot defense, and DDoS shield controls.
@@ -643,10 +695,7 @@ const NyxGuard = () => {
 										>
 											{wafAllEnabled ? "All Off" : "All On"}
 										</button>
-										<Link
-											className={`${styles.ghostButton} ${styles.miniButton}`}
-											to="/nyxguard/apps"
-										>
+										<Link className={`${styles.ghostButton} ${styles.miniButton}`} to="/nyxguard/apps">
 											Apps
 										</Link>
 									</div>
@@ -669,10 +718,7 @@ const NyxGuard = () => {
 										>
 											{botDefenseEnabled ? "Disable" : "Enable"}
 										</button>
-										<Link
-											className={`${styles.ghostButton} ${styles.miniButton}`}
-											to="/nyxguard/bot"
-										>
+										<Link className={`${styles.ghostButton} ${styles.miniButton}`} to="/nyxguard/bot">
 											Bot Settings
 										</Link>
 									</div>
@@ -693,10 +739,7 @@ const NyxGuard = () => {
 										>
 											{ddosEnabled ? "Disable" : "Activate"}
 										</button>
-										<Link
-											className={`${styles.ghostButton} ${styles.miniButton}`}
-											to="/nyxguard/ddos"
-										>
+										<Link className={`${styles.ghostButton} ${styles.miniButton}`} to="/nyxguard/ddos">
 											DDoS Settings
 										</Link>
 									</div>
@@ -705,58 +748,6 @@ const NyxGuard = () => {
 							<div className={styles.actionRow}>
 								<Link className={styles.ghostButton} to="/nyxguard/traffic">
 									View Live Traffic
-								</Link>
-							</div>
-						</div>
-						<div className={styles.sectionCard}>
-							<h3 className={styles.sectionTitle}>Apps Overview</h3>
-							<p className={styles.sectionText}>
-								Protect proxy hosts with profiles, policies, and rule packs.
-							</p>
-							{appsSummary.isLoading && apps.isLoading ? (
-								<div className={styles.emptyState}>Loading apps…</div>
-							) : appsSummary.isError || apps.isError ? (
-								<div className={styles.emptyState}>Unable to load apps overview (API error).</div>
-							) : appsOverview.totalApps === 0 ? (
-								<div className={styles.emptyState}>
-									No apps are connected yet. Add a proxy host to begin protection.
-								</div>
-							) : (
-								<>
-									<div className={styles.ruleList}>
-										<div className={styles.ruleItem}>
-											<span>Connected Apps</span>
-											<span className={styles.ruleTag}>{appsOverview.totalApps.toLocaleString()}</span>
-										</div>
-										<div className={styles.ruleItem}>
-											<span>Protected (WAF)</span>
-											<span className={styles.ruleTag}>{appsOverview.protectedCount.toLocaleString()}</span>
-										</div>
-										<div className={styles.ruleItem}>
-											<span>Monitoring Only</span>
-											<span className={styles.ruleTag}>{appsOverview.monitoringCount.toLocaleString()}</span>
-										</div>
-									</div>
-									{appsOverview.preview.length ? (
-										<div className={styles.appList}>
-											{appsOverview.preview.map((app) => (
-												<div key={app.id} className={styles.appRow}>
-													<span>{app.name}</span>
-													<span className={app.wafEnabled ? styles.badgeActive : styles.badgeMuted}>
-														{app.wafEnabled ? "Protected" : "Monitoring"}
-													</span>
-												</div>
-											))}
-										</div>
-									) : null}
-								</>
-							)}
-							<div className={styles.actionRow}>
-								<Link className={styles.primaryButton} to="/nyxguard/apps">
-									Add App
-								</Link>
-								<Link className={styles.ghostButton} to="/nyxguard/apps">
-									View All Apps
 								</Link>
 							</div>
 						</div>
