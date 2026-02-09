@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/nyxguard-wordmark.svg" alt="NyxGuard Manager" width="1000" />
+  <img src="assets/nyxguard-wordmark-clean.svg" alt="NyxGuard Manager" width="1000" />
 </p>
 
 ## Changelog
