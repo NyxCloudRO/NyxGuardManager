@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 - Container image publishing: installs now pull `nyxmael/nyxguardmanager` by default.
-- Security: rebuilt image against the latest upstream base image to reduce inherited CVEs (no functional app changes intended).
+- Security: rebuilt the Docker image on the latest upstream `jc21/nginx-proxy-manager:latest` base to pick up upstream patches and reduce inherited CVEs (no functional app changes intended).
+- Security: rebuilt `cert-prune` from source during the image build (`golang:1.22-bookworm`, `cert-prune@latest`) to reduce CVEs attributed to the previously bundled binary (no functional app changes intended).
 
 ## [2.0.1] - 2026-02-09
 
