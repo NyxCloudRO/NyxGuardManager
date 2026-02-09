@@ -8,6 +8,7 @@ import {
 	getNyxGuardIps,
 	getNyxGuardIpRules,
 	getNyxGuardSettings,
+	getNyxGuardGeoip,
 	getNyxGuardSummary,
 	updateNyxGuardAppsWaf,
 	updateNyxGuardAppsBot,
@@ -15,6 +16,28 @@ import {
 } from "src/api/backend";
 import { showError, showSuccess } from "src/notifications";
 import styles from "./index.module.css";
+
+function formatBytes(bytes: number) {
+	if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+	const units = ["B", "KB", "MB", "GB", "TB"];
+	let n = bytes;
+	let u = 0;
+	while (n >= 1024 && u < units.length - 1) {
+		n /= 1024;
+		u += 1;
+	}
+	const digits = u === 0 ? 0 : n >= 100 ? 0 : n >= 10 ? 1 : 2;
+	return `${n.toFixed(digits)} ${units[u]}`;
+}
+
+function trafficWindowLabel(minutes: number) {
+	if (minutes === 5) return "5 minutes";
+	if (minutes === 15) return "15 minutes";
+	if (minutes === 1440) return "24 hours";
+	if (minutes === 10080) return "7 days";
+	if (minutes === 43200) return "30 days";
+	return `${minutes} minutes`;
+}
 
 const NyxGuard = () => {
 	const qc = useQueryClient();
@@ -47,13 +70,19 @@ const NyxGuard = () => {
 	const trafficSummary = useQuery({
 		queryKey: ["nyxguard", "summary", "recent", trafficWindowMinutes, trafficLimit],
 		queryFn: () => getNyxGuardSummary(trafficWindowMinutes, trafficLimit),
-		refetchInterval: trafficWindowMinutes <= 15 ? 3000 : 15000,
+		refetchInterval: trafficWindowMinutes <= 15 ? 3000 : trafficWindowMinutes <= 1440 ? 15000 : 60000,
 	});
 
 	const settings = useQuery({
 		queryKey: ["nyxguard", "settings"],
 		queryFn: () => getNyxGuardSettings(),
 		refetchInterval: 15000,
+	});
+
+	const geoip = useQuery({
+		queryKey: ["nyxguard", "geoip"],
+		queryFn: () => getNyxGuardGeoip(),
+		refetchInterval: 60000,
 	});
 
 	const appsSummary = useQuery({
@@ -159,14 +188,26 @@ const NyxGuard = () => {
 	});
 
 	const statValue = (v?: number) => (typeof v === "number" ? v.toLocaleString() : "Waiting for data…");
+	const statBytes = (v?: number) => (typeof v === "number" ? formatBytes(v) : "Waiting for data…");
 
 	const requests = summary.data?.requests;
 	const blocked = summary.data?.blocked;
 	const allowed = summary.data?.allowed;
 	const uniqueIps = summary.data?.uniqueIps;
+	const rxBytes = summary.data?.rxBytes;
+	const txBytes = summary.data?.txBytes;
 	const botDefenseEnabled = settings.data?.botDefenseEnabled ?? false;
 	const ddosEnabled = settings.data?.ddosEnabled ?? false;
 	const wafProtectedEnabled = (appsSummary.data?.protectedCount ?? 0) > 0;
+	const geoSourcesLabel = useMemo(() => {
+		const p = geoip.data?.providers;
+		const hasMax = !!p?.maxmind?.installed || !!geoip.data?.installed; // installed is legacy MaxMind field
+		const hasIp2 = !!p?.ip2location?.installed;
+		if (hasMax && hasIp2) return "GeoLite2 + IP2Location (local DBs)";
+		if (hasMax) return "GeoLite2 (local DB)";
+		if (hasIp2) return "IP2Location (local DB)";
+		return "Not installed";
+	}, [geoip.data]);
 
 	const ipInsights = useMemo(() => {
 		const items = ips.data?.items ?? [];
@@ -400,7 +441,7 @@ const NyxGuard = () => {
 						) : null}
 						<div className={styles.heroMeta}>
 							<div className={styles.metaLabel}>Geo Source</div>
-							<div className={styles.metaValue}>GeoLite2 (free local DB)</div>
+							<div className={styles.metaValue}>{geoSourcesLabel}</div>
 						</div>
 					</div>
 					<div className={styles.stats}>
@@ -419,6 +460,14 @@ const NyxGuard = () => {
 						<div className={styles.statCard}>
 							<div className={styles.statLabel}>Unique IPs ({windowLabel})</div>
 							<div className={styles.statValue}>{statValue(uniqueIps)}</div>
+						</div>
+						<div className={styles.statCard}>
+							<div className={styles.statLabel}>RX ({windowLabel})</div>
+							<div className={styles.statValue}>{statBytes(rxBytes)}</div>
+						</div>
+						<div className={styles.statCard}>
+							<div className={styles.statLabel}>TX ({windowLabel})</div>
+							<div className={styles.statValue}>{statBytes(txBytes)}</div>
 						</div>
 					</div>
 					<div className={styles.chartCard}>
@@ -449,6 +498,20 @@ const NyxGuard = () => {
 								>
 									Last 24h
 								</button>
+								<button
+									type="button"
+									className={trafficWindowMinutes === 10080 ? styles.windowActive : styles.window}
+									onClick={() => setTrafficWindowMinutes(10080)}
+								>
+									Last 7d
+								</button>
+								<button
+									type="button"
+									className={trafficWindowMinutes === 43200 ? styles.windowActive : styles.window}
+									onClick={() => setTrafficWindowMinutes(43200)}
+								>
+									Last 30d
+								</button>
 							</div>
 						</div>
 						{trafficSummary.isLoading ? (
@@ -456,35 +519,41 @@ const NyxGuard = () => {
 						) : trafficSummary.isError ? (
 							<div className={styles.sparklinePlaceholder}>Unable to load traffic (API error).</div>
 						) : trafficSummary.data?.recent?.length ? (
-							<div style={{ marginTop: 16, overflowX: "auto", maxHeight: 360 }}>
-								<table className="table table-sm table-vcenter">
-									<thead>
-										<tr>
-											<th>Time</th>
-											<th>Host</th>
-											<th>Request</th>
-											<th className="text-end">Status</th>
-											<th>IP</th>
-										</tr>
-									</thead>
-									<tbody>
-										{trafficSummary.data.recent.slice(0, trafficWindowMinutes >= 1440 ? 200 : 25).map((r) => (
-											<tr key={`${r.ts}-${r.ip}-${r.host}-${r.uri}`}>
-												<td className="text-secondary text-nowrap">{new Date(r.ts).toLocaleTimeString()}</td>
-												<td className="text-nowrap">{r.host}</td>
-												<td className="text-truncate" style={{ maxWidth: 520 }}>
-													<span className="text-secondary">{r.method}</span> {r.uri}
-												</td>
-												<td className="text-end text-nowrap">{r.status ?? "-"}</td>
-												<td className="text-nowrap text-secondary">{r.ip}</td>
+							<>
+								<div className="text-secondary" style={{ marginTop: 10 }}>
+									Window totals: RX <strong className="text-white">{formatBytes(trafficSummary.data.rxBytes)}</strong>, TX{" "}
+									<strong className="text-white">{formatBytes(trafficSummary.data.txBytes)}</strong>
+								</div>
+								<div style={{ marginTop: 12, overflowX: "auto", maxHeight: 360 }}>
+									<table className="table table-sm table-vcenter">
+										<thead>
+											<tr>
+												<th>Time</th>
+												<th>Host</th>
+												<th>Request</th>
+												<th className="text-end">Status</th>
+												<th>IP</th>
 											</tr>
-										))}
-									</tbody>
-								</table>
-							</div>
+										</thead>
+										<tbody>
+											{trafficSummary.data.recent.slice(0, trafficWindowMinutes >= 1440 ? 200 : 25).map((r) => (
+												<tr key={`${r.ts}-${r.ip}-${r.host}-${r.uri}`}>
+													<td className="text-secondary text-nowrap">{new Date(r.ts).toLocaleTimeString()}</td>
+													<td className="text-nowrap">{r.host}</td>
+													<td className="text-truncate" style={{ maxWidth: 520 }}>
+														<span className="text-secondary">{r.method}</span> {r.uri}
+													</td>
+													<td className="text-end text-nowrap">{r.status ?? "-"}</td>
+													<td className="text-nowrap text-secondary">{r.ip}</td>
+												</tr>
+											))}
+										</tbody>
+									</table>
+								</div>
+							</>
 						) : (
 							<div className={styles.sparklinePlaceholder}>
-								No recent traffic found in the last {trafficWindowMinutes === 1440 ? "24 hours" : `${trafficWindowMinutes} minutes`}.
+								No recent traffic found in the last {trafficWindowLabel(trafficWindowMinutes)}.
 							</div>
 						)}
 					</div>
@@ -802,6 +871,20 @@ const NyxGuard = () => {
 								>
 									Last 24h
 								</button>
+								<button
+									type="button"
+									className={trafficWindowMinutes === 10080 ? styles.windowActive : styles.window}
+									onClick={() => setTrafficWindowMinutes(10080)}
+								>
+									Last 7d
+								</button>
+								<button
+									type="button"
+									className={trafficWindowMinutes === 43200 ? styles.windowActive : styles.window}
+									onClick={() => setTrafficWindowMinutes(43200)}
+								>
+									Last 30d
+								</button>
 							</div>
 							{trafficSummary.isLoading ? (
 								<div className={styles.emptyState}>Loading decision stream…</div>
@@ -832,7 +915,7 @@ const NyxGuard = () => {
 								</div>
 							) : (
 								<div className={styles.emptyState}>
-									No recent traffic found in the last {trafficWindowMinutes === 1440 ? "24 hours" : `${trafficWindowMinutes} minutes`}. If
+									No recent traffic found in the last {trafficWindowLabel(trafficWindowMinutes)}. If
 									you are sure there is traffic, confirm the NyxGuard access logs are present under `/data/logs` (or set `NYXGUARD_LOG_DIR`).
 								</div>
 							)}
@@ -869,6 +952,8 @@ const NyxGuard = () => {
 											<th className="text-end">Allowed</th>
 											<th className="text-end">Blocked</th>
 											<th className="text-end">Unique IPs</th>
+											<th className="text-end">RX</th>
+											<th className="text-end">TX</th>
 										</tr>
 									</thead>
 									<tbody>
@@ -879,6 +964,8 @@ const NyxGuard = () => {
 												<td className="text-end">{h.allowed.toLocaleString()}</td>
 												<td className="text-end">{h.blocked.toLocaleString()}</td>
 												<td className="text-end">{h.uniqueIps.toLocaleString()}</td>
+												<td className="text-end text-nowrap text-secondary">{formatBytes(h.rxBytes)}</td>
+												<td className="text-end text-nowrap text-secondary">{formatBytes(h.txBytes)}</td>
 											</tr>
 										))}
 									</tbody>

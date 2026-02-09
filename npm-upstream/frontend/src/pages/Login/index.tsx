@@ -187,9 +187,6 @@ export default function Login() {
 		if (version) {
 			parts.push(`v${version}`);
 		}
-		if (build?.date) {
-			parts.push(build.date.split(" ")[0]);
-		}
 		return parts.join(" · ");
 	};
 

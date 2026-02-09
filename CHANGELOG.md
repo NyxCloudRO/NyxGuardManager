@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.0.5] - 2026-02-09
+
+### Added
+- Live Traffic: new windows `Last 7d` and `Last 30d`.
+- Traffic analytics: per-request and per-host RX/TX byte counters (derived from Nginx access logs).
+- NyxGuard dashboard: shows RX/TX totals and per-host RX/TX columns in the Active Hosts table.
+- NyxGuard dashboard: Geo Source badge now reflects what local GeoIP databases are installed (GeoLite2, IP2Location, or both).
+
+### Changed
+- Version display (login + footer): now shows only the current version (build date hidden).
+- Nginx access log format: now includes `[Rx ...]` and `[Tx ...]` fields for traffic aggregation.
+
+### Fixed
+- Frontend build: added missing TypeScript module declarations for CSS modules and `humps` in strict builds.
+
 ## [2.0.4] - 2026-02-09
 
 ### Fixed

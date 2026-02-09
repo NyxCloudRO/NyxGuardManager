@@ -82,7 +82,14 @@ function parseTimeLocal(timeLocal) {
 }
 
 const lineRe =
-	/^\[(?<time>[^\]]+)\]\s+(?<cache>\S+)\s+(?<upstream_status>\S+)\s+(?<status>\d{3}|-)\s+-\s+(?<method>\S+)\s+(?<scheme>\S+)\s+(?<host>\S+)\s+"(?<uri>[^"]*)"\s+\[Client\s+(?<ip>[^\]]+)\](?:\s+\[Country\s+(?<country>[^\]]+)\])?/;
+	/^\[(?<time>[^\]]+)\]\s+(?<cache>\S+)\s+(?<upstream_status>\S+)\s+(?<status>\d{3}|-)\s+-\s+(?<method>\S+)\s+(?<scheme>\S+)\s+(?<host>\S+)\s+"(?<uri>[^"]*)"\s+\[Client\s+(?<ip>[^\]]+)\](?:\s+\[Country\s+(?<country>[^\]]+)\])?(?:\s+\[Rx\s+(?<rx>[^\]]+)\])?(?:\s+\[Tx\s+(?<tx>[^\]]+)\])?/;
+
+function parseByteCount(value) {
+	const v = String(value ?? "").trim();
+	if (!v || v === "-") return 0;
+	const n = Number.parseInt(v, 10);
+	return Number.isFinite(n) && n >= 0 ? n : 0;
+}
 
 function parseAccessLine(line) {
 	const m = lineRe.exec(line);
@@ -100,6 +107,8 @@ function parseAccessLine(line) {
 		uri: m.groups.uri,
 		ip: m.groups.ip,
 		country: m.groups.country && m.groups.country !== "-" ? m.groups.country : null,
+		rxBytes: parseByteCount(m.groups.rx),
+		txBytes: parseByteCount(m.groups.tx),
 	};
 }
 
@@ -193,8 +202,10 @@ async function buildSummary({ minutes, limit }) {
 	let total = 0;
 	let allowed = 0;
 	let blocked = 0;
+	let rxBytes = 0;
+	let txBytes = 0;
 	const uniqueIps = new Set();
-	const perHost = new Map(); // host -> {total, allowed, blocked, ips:Set}
+	const perHost = new Map(); // host -> {total, allowed, blocked, rxBytes, txBytes, ips:Set}
 	const recent = [];
 	let totalScanBytes = 0;
 
@@ -225,18 +236,22 @@ async function buildSummary({ minutes, limit }) {
 					if (ev.ts < sinceMs) continue;
 					total += 1;
 					if (ev.ip) uniqueIps.add(ev.ip);
+					rxBytes += ev.rxBytes || 0;
+					txBytes += ev.txBytes || 0;
 
 					const isBlocked = typeof ev.status === "number" ? ev.status >= 400 : false;
 					if (isBlocked) blocked += 1;
 					else allowed += 1;
 
 					if (!perHost.has(ev.host)) {
-						perHost.set(ev.host, { total: 0, allowed: 0, blocked: 0, ips: new Set() });
+						perHost.set(ev.host, { total: 0, allowed: 0, blocked: 0, rxBytes: 0, txBytes: 0, ips: new Set() });
 					}
 					const h = perHost.get(ev.host);
 					h.total += 1;
 					if (isBlocked) h.blocked += 1;
 					else h.allowed += 1;
+					h.rxBytes += ev.rxBytes || 0;
+					h.txBytes += ev.txBytes || 0;
 					if (ev.ip) h.ips.add(ev.ip);
 
 					pushRecent(ev);
@@ -251,18 +266,22 @@ async function buildSummary({ minutes, limit }) {
 					onEvent: (ev) => {
 						total += 1;
 						if (ev.ip) uniqueIps.add(ev.ip);
+						rxBytes += ev.rxBytes || 0;
+						txBytes += ev.txBytes || 0;
 
 						const isBlocked = typeof ev.status === "number" ? ev.status >= 400 : false;
 						if (isBlocked) blocked += 1;
 						else allowed += 1;
 
 						if (!perHost.has(ev.host)) {
-							perHost.set(ev.host, { total: 0, allowed: 0, blocked: 0, ips: new Set() });
+							perHost.set(ev.host, { total: 0, allowed: 0, blocked: 0, rxBytes: 0, txBytes: 0, ips: new Set() });
 						}
 						const h = perHost.get(ev.host);
 						h.total += 1;
 						if (isBlocked) h.blocked += 1;
 						else h.allowed += 1;
+						h.rxBytes += ev.rxBytes || 0;
+						h.txBytes += ev.txBytes || 0;
 						if (ev.ip) h.ips.add(ev.ip);
 
 						pushRecent(ev);
@@ -286,6 +305,8 @@ async function buildSummary({ minutes, limit }) {
 		status: e.status,
 		ip: e.ip,
 		country: e.country ?? null,
+		rxBytes: e.rxBytes || 0,
+		txBytes: e.txBytes || 0,
 	}));
 
 	const hosts = [...perHost.entries()]
@@ -295,6 +316,8 @@ async function buildSummary({ minutes, limit }) {
 			allowed: v.allowed,
 			blocked: v.blocked,
 			uniqueIps: v.ips.size,
+			rxBytes: v.rxBytes || 0,
+			txBytes: v.txBytes || 0,
 		}))
 		.sort((a, b) => b.requests - a.requests)
 		.slice(0, 25);
@@ -306,6 +329,8 @@ async function buildSummary({ minutes, limit }) {
 		allowed,
 		blocked,
 		uniqueIps: uniqueIps.size,
+		rxBytes,
+		txBytes,
 		hosts,
 		recent: recentTrimmed,
 		truncated: totalScanBytes >= MAX_TOTAL_SCAN_BYTES,

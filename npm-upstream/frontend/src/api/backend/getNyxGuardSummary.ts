@@ -6,6 +6,8 @@ export interface NyxGuardSummaryHost {
 	allowed: number;
 	blocked: number;
 	uniqueIps: number;
+	rxBytes: number;
+	txBytes: number;
 }
 
 export interface NyxGuardSummaryRecent {
@@ -18,6 +20,8 @@ export interface NyxGuardSummaryRecent {
 	status: number | null;
 	ip: string;
 	country?: string | null;
+	rxBytes: number;
+	txBytes: number;
 }
 
 export interface NyxGuardSummary {
@@ -27,6 +31,8 @@ export interface NyxGuardSummary {
 	allowed: number;
 	blocked: number;
 	uniqueIps: number;
+	rxBytes: number;
+	txBytes: number;
 	hosts: NyxGuardSummaryHost[];
 	recent: NyxGuardSummaryRecent[];
 	truncated?: boolean;

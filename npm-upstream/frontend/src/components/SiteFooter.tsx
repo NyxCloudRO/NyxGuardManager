@@ -15,10 +15,6 @@ export function SiteFooter() {
 	} else if (versionText) {
 		buildTextParts.push(`v${versionText}`);
 	}
-	if (build?.date) {
-		// Prefer just the date portion when timestamps are provided.
-		buildTextParts.push(build.date.split(" ")[0]);
-	}
 
 	return (
 		<footer className="footer d-print-none py-3">

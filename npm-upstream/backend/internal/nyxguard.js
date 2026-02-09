@@ -651,11 +651,11 @@ const internalNyxGuard = {
 				const logProxyConf =
 					`log_format proxy ` +
 					`'[$time_local] $upstream_cache_status $upstream_status $status - $request_method $scheme $host \"$request_uri\" ` +
-					`[Client $remote_addr] [Country $nyxguard_country] [Length $body_bytes_sent] [Gzip $gzip_ratio] [Sent-to $server] ` +
+					`[Client $remote_addr] [Country $nyxguard_country] [Rx $request_length] [Tx $bytes_sent] [Length $body_bytes_sent] [Gzip $gzip_ratio] [Sent-to $server] ` +
 					`\"$http_user_agent\" \"$http_referer\"';\n` +
 					`log_format standard ` +
 					`'[$time_local] $status - $request_method $scheme $host \"$request_uri\" ` +
-					`[Client $remote_addr] [Country $nyxguard_country] [Length $body_bytes_sent] [Gzip $gzip_ratio] ` +
+					`[Client $remote_addr] [Country $nyxguard_country] [Rx $request_length] [Tx $bytes_sent] [Length $body_bytes_sent] [Gzip $gzip_ratio] ` +
 					`\"$http_user_agent\" \"$http_referer\"';\n\n` +
 					`access_log /data/logs/fallback_http_access.log proxy;\n`;
 				await fs.writeFile("/etc/nginx/conf.d/include/log-proxy.conf", logProxyConf, { encoding: "utf8" });
