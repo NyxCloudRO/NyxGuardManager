@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.0.4] - 2026-02-09
+
+### Fixed
+- GeoIP: prevent nginx config errors when only one GeoIP provider is installed (no more “unknown variable” failures).
+
 ## [2.0.3] - 2026-02-09
 
 ### Changed

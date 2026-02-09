@@ -10,7 +10,7 @@ IMAGE_REPO="${IMAGE_REPO:-nyxmael/nyxguardmanager}"
 # App version used for the local Docker image tag.
 # Note: do NOT rely on a variable named VERSION because /etc/os-release defines VERSION
 # (e.g. Debian "13 (trixie)"), which would break Docker tag formatting.
-DEFAULT_APP_VERSION="2.0.3"
+DEFAULT_APP_VERSION="2.0.4"
 APP_VERSION="${APP_VERSION:-${VERSION:-${DEFAULT_APP_VERSION}}}"
 
 need_root() {

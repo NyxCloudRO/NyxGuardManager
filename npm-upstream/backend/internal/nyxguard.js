@@ -445,6 +445,7 @@ const internalNyxGuard = {
 			} catch {
 				ip2Available = false;
 			}
+			let ip2Enabled = ip2Available;
 
 			const buildGeoip2Conf = ({ withIp2location }) => {
 				const lines = [];
@@ -484,6 +485,7 @@ const internalNyxGuard = {
 					} catch {
 						// Fall back to MaxMind-only (or empty) geoip2 conf so nginx never stays broken.
 						await writeAtomic(NYXGUARD_GEOIP2_CONF, buildGeoip2Conf({ withIp2location: false }));
+						ip2Enabled = false;
 					}
 				}
 			} catch {
@@ -494,25 +496,37 @@ const internalNyxGuard = {
 			httpLines.push("# Managed by NyxGuard Manager");
 			httpLines.push("# This file is included in nginx http{} via /data/nginx/custom/http_top.conf");
 			httpLines.push("");
-			if (geoipAvailable || ip2Available) {
+			if (geoipAvailable || ip2Enabled) {
 				httpLines.push(`# GeoIP2 Country DB (optional)`);
 				httpLines.push(`include ${NYXGUARD_GEOIP2_CONF};`);
 				httpLines.push("");
 			}
 
 			httpLines.push("# Country resolution (CF header preferred; GeoIP2 fallback when installed)");
-			if (geoipAvailable || ip2Available) {
-				// Stage 1: Cloudflare header (if present), else MaxMind (if installed).
-				httpLines.push("map $http_cf_ipcountry $nyxguard_country_mm {");
-				httpLines.push("\tdefault $http_cf_ipcountry;");
-				httpLines.push("\t\"\" $geoip2_country_code_mm;");
-				httpLines.push("}");
-				httpLines.push("");
-				// Stage 2: if still empty, fall back to IP2Location (if installed).
-				httpLines.push("map $nyxguard_country_mm $nyxguard_country {");
-				httpLines.push("\tdefault $nyxguard_country_mm;");
-				httpLines.push("\t\"\" $geoip2_country_code_ip2;");
-				httpLines.push("}");
+			if (geoipAvailable || ip2Enabled) {
+				if (geoipAvailable && ip2Enabled) {
+					// Stage 1: Cloudflare header (if present), else MaxMind.
+					httpLines.push("map $http_cf_ipcountry $nyxguard_country_mm {");
+					httpLines.push("\tdefault $http_cf_ipcountry;");
+					httpLines.push("\t\"\" $geoip2_country_code_mm;");
+					httpLines.push("}");
+					httpLines.push("");
+					// Stage 2: if still empty, fall back to IP2Location.
+					httpLines.push("map $nyxguard_country_mm $nyxguard_country {");
+					httpLines.push("\tdefault $nyxguard_country_mm;");
+					httpLines.push("\t\"\" $geoip2_country_code_ip2;");
+					httpLines.push("}");
+				} else if (geoipAvailable) {
+					httpLines.push("map $http_cf_ipcountry $nyxguard_country {");
+						httpLines.push("\tdefault $http_cf_ipcountry;");
+						httpLines.push("\t\"\" $geoip2_country_code_mm;");
+					httpLines.push("}");
+				} else {
+					httpLines.push("map $http_cf_ipcountry $nyxguard_country {");
+						httpLines.push("\tdefault $http_cf_ipcountry;");
+						httpLines.push("\t\"\" $geoip2_country_code_ip2;");
+					httpLines.push("}");
+				}
 			} else {
 				httpLines.push("map $http_cf_ipcountry $nyxguard_country {");
 				httpLines.push("\tdefault $http_cf_ipcountry;");
