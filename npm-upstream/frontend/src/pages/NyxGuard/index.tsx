@@ -10,7 +10,9 @@ import {
 	getNyxGuardSettings,
 	getNyxGuardSummary,
 	updateNyxGuardSettings,
+	updateNyxGuardAppsWaf,
 } from "src/api/backend";
+import { showError, showSuccess } from "src/notifications";
 import styles from "./index.module.css";
 
 const NyxGuard = () => {
@@ -71,6 +73,23 @@ const NyxGuard = () => {
 		mutationFn: (patch: { botDefenseEnabled?: boolean; ddosEnabled?: boolean; logRetentionDays?: 30 | 60 | 90 }) =>
 			updateNyxGuardSettings(patch),
 		onSuccess: () => qc.invalidateQueries({ queryKey: ["nyxguard", "settings"] }),
+	});
+
+	const toggleWafAll = useMutation({
+		mutationFn: (enabled: boolean) => updateNyxGuardAppsWaf(enabled),
+		onSuccess: async (res, enabled) => {
+			showSuccess(
+				enabled
+					? `Enabled WAF for ${res.updated.toLocaleString()} app(s).`
+					: `Disabled WAF for ${res.updated.toLocaleString()} app(s).`,
+			);
+			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps"] });
+			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps", "summary"] });
+		},
+		onError: (err: any) => {
+			const msg = err instanceof Error ? err.message : "Failed to update WAF for all apps.";
+			showError(msg);
+		},
 	});
 
 	const statValue = (v?: number) => (typeof v === "number" ? v.toLocaleString() : "Waiting for data…");
@@ -161,6 +180,8 @@ const NyxGuard = () => {
 
 		return { totalApps, protectedCount, monitoringCount, preview };
 	}, [apps.data?.items, appsSummary.data?.protectedCount, appsSummary.data?.totalApps]);
+
+	const wafAllEnabled = appsOverview.totalApps > 0 && appsOverview.protectedCount >= appsOverview.totalApps;
 
 	const countryRulesOverview = useMemo(() => {
 		const items = countryRules.data?.items ?? [];
@@ -596,11 +617,27 @@ const NyxGuard = () => {
 									<span>WAF Protection</span>
 									<div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
 										<span className={wafProtectedEnabled ? styles.badgeActive : styles.badgeMuted}>
-											{wafProtectedEnabled ? "ON" : "OFF"}
+											{wafProtectedEnabled ? (wafAllEnabled ? "ON" : "PARTIAL") : "OFF"}
 										</span>
 										<span className={styles.ruleTag} title="Protected apps / total apps">
 											{appsOverview.protectedCount.toLocaleString()}/{appsOverview.totalApps.toLocaleString()}
 										</span>
+										<button
+											type="button"
+											className={styles.primaryButton}
+											disabled={toggleWafAll.isPending || appsOverview.totalApps === 0}
+											onClick={() => toggleWafAll.mutate(!wafAllEnabled)}
+											style={{ padding: "8px 12px", fontSize: 12 }}
+											title={
+												appsOverview.totalApps === 0
+													? "No apps found"
+													: wafAllEnabled
+														? "Disable WAF for all apps"
+														: "Enable WAF for all apps"
+											}
+										>
+											{wafAllEnabled ? "Disable All" : "Enable All"}
+										</button>
 										<Link
 											className={styles.ghostButton}
 											to="/nyxguard/apps"

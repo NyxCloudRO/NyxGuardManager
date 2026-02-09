@@ -680,6 +680,91 @@ router
 	});
 
 /**
+ * Bulk toggle WAF on all apps visible to the caller.
+ *
+ * PUT /api/nyxguard/apps/waf { enabled: boolean }
+ */
+router
+	.route("/apps/waf")
+	.options((_, res) => res.sendStatus(204))
+	.all(jwtdecode())
+	.put(async (req, res, next) => {
+		try {
+			await res.locals.access.can("proxy_hosts:update");
+
+			const body = req.body ?? {};
+			const data = await validator(
+				{
+					required: ["enabled"],
+					additionalProperties: false,
+					properties: {
+						enabled: { type: "boolean" },
+					},
+				},
+				{
+					enabled: body.enabled,
+				},
+			);
+
+			await internalNyxGuard.nginx.ensureFiles();
+
+			const rows = await internalProxyHost.getAll(res.locals.access, null, null);
+
+			let updated = 0;
+			for (const r of rows) {
+				const currentWaf = internalNyxGuard.waf.isEnabledInAdvancedConfig(r.advanced_config);
+				if (currentWaf === data.enabled) continue;
+
+				// When WAF is disabled, also force-disable Bot/DDoS at the app level.
+				let nextAdvanced = internalNyxGuard.waf.applyAdvancedConfig(r.advanced_config, data.enabled);
+				if (!data.enabled) {
+					nextAdvanced = internalNyxGuard.botDefense.applyAdvancedConfig(nextAdvanced, false);
+					nextAdvanced = internalNyxGuard.ddos.applyAdvancedConfig(nextAdvanced, false);
+				}
+
+				await internalProxyHost.update(res.locals.access, {
+					id: r.id,
+					advanced_config: nextAdvanced,
+					meta: {
+						...(r.meta ?? {}),
+						nyxguardWafEnabled: !!data.enabled,
+						nyxguardBotDefenseEnabled: data.enabled
+							? internalNyxGuard.botDefense.isEnabledInAdvancedConfig(nextAdvanced)
+							: false,
+						nyxguardDdosEnabled: data.enabled ? internalNyxGuard.ddos.isEnabledInAdvancedConfig(nextAdvanced) : false,
+					},
+				});
+
+				// Best-effort persistence. Advanced config is still the source of truth for nginx.
+				try {
+					await db()("nyxguard_app")
+						.insert({
+							proxy_host_id: r.id,
+							waf_enabled: data.enabled ? 1 : 0,
+							created_on: db().fn.now(),
+							modified_on: db().fn.now(),
+						})
+						.onConflict("proxy_host_id")
+						.merge({
+							waf_enabled: data.enabled ? 1 : 0,
+							modified_on: db().fn.now(),
+						});
+				} catch {
+					// ignore
+				}
+
+				updated += 1;
+			}
+
+			await internalNyxGuard.nginx.apply(db());
+			res.status(200).send({ updated });
+		} catch (err) {
+			debug(logger, `PUT /api/nyxguard/apps/waf: ${err}`);
+			next(err);
+		}
+	});
+
+/**
  * /api/nyxguard/rules/ip
  */
 router

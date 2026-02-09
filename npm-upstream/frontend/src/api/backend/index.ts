@@ -33,6 +33,7 @@ export * from "./getNyxGuardIps";
 export * from "./getNyxGuardApps";
 export * from "./getNyxGuardAppsSummary";
 export * from "./updateNyxGuardApp";
+export * from "./updateNyxGuardAppsWaf";
 export * from "./getNyxGuardIpRules";
 export * from "./createNyxGuardIpRule";
 export * from "./updateNyxGuardIpRule";
