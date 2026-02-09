@@ -15,6 +15,36 @@ need_root() {
 
 have_cmd() { command -v "$1" >/dev/null 2>&1; }
 
+wait_http_200() {
+  local url="$1"
+  local timeout_s="${2:-120}"
+
+  if ! have_cmd curl; then
+    return 0
+  fi
+
+  local start
+  start="$(date +%s)"
+
+  while true; do
+    local code="000"
+    code="$(curl -fsS -o /dev/null -m 2 -w '%{http_code}' "${url}" 2>/dev/null || true)"
+    if [[ "${code}" == "200" ]]; then
+      return 0
+    fi
+
+    local now elapsed
+    now="$(date +%s)"
+    elapsed=$((now - start))
+    if (( elapsed >= timeout_s )); then
+      echo "WARN: Timed out waiting for ${url} to become ready (${timeout_s}s)."
+      return 1
+    fi
+
+    sleep 2
+  done
+}
+
 set_compose_image_tag() {
   local compose_file="$1"
   local tag="$2"
@@ -112,6 +142,9 @@ main() {
   update_repo
   build_image
   restart_stack
+
+  echo "Waiting for NyxGuard Manager to become ready (http://127.0.0.1:81/api/) ..."
+  wait_http_200 "http://127.0.0.1:81/api/" 180 || true
 
   echo
   echo "Update complete."
