@@ -5,6 +5,8 @@ set -euo pipefail
 REPO_URL="${REPO_URL:-https://github.com/NyxCloudRO/NyxGuardManager.git}"
 REF="${REF:-main}"
 INSTALL_DIR="${INSTALL_DIR:-/opt/nyxguardmanager}"
+# Default published image (Docker Hub). Override if you publish elsewhere.
+IMAGE_REPO="${IMAGE_REPO:-nyxmael/nyxguardmanager}"
 # App version used for the local Docker image tag.
 # Note: do NOT rely on a variable named VERSION because /etc/os-release defines VERSION
 # (e.g. Debian "13 (trixie)"), which would break Docker tag formatting.
@@ -52,26 +54,21 @@ wait_http_200() {
   done
 }
 
-set_compose_image_tag() {
+set_compose_image() {
   local compose_file="$1"
-  local tag="$2"
+  local image="$2"
 
   [[ -f "${compose_file}" ]] || return 0
 
   # Keep this portable across sed variants by using awk + atomic replace.
   local tmp
   tmp="$(mktemp)"
-  awk -v v="${tag}" '
+  awk -v img="${image}" '
     {
-      if (match($0, /^[[:space:]]*image:[[:space:]]*"?nyxguardmanager:/)) {
-        pre = substr($0, 1, RLENGTH)
-        # Preserve an opening quote if present.
-        q = ""
-        if (pre ~ /"$/) {
-          pre = substr(pre, 1, length(pre) - 1)
-          q = "\""
-        }
-        $0 = pre v q
+      if ($0 ~ /^[[:space:]]*image:[[:space:]]*/ && $0 ~ /nyxguardmanager:/) {
+        match($0, /^[[:space:]]*/)
+        indent = substr($0, RSTART, RLENGTH)
+        $0 = indent "image: " img
       }
       print
     }
@@ -193,11 +190,7 @@ EOF
   echo "Generated ${INSTALL_DIR}/.env"
 }
 
-build_image() {
-  cd "${INSTALL_DIR}/npm-upstream"
-  echo "Building frontend..."
-  ./scripts/ci/frontend-build
-
+ensure_image() {
   cd "${INSTALL_DIR}"
   local version
   version="$(head -n 1 .version 2>/dev/null || true)"
@@ -212,13 +205,21 @@ build_image() {
     exit 1
   fi
 
-  echo "Building Docker image nyxguardmanager:${version}..."
-  cd "${INSTALL_DIR}/npm-upstream"
-  docker build -t "nyxguardmanager:${version}" -f docker/Dockerfile .
+  if [[ "${BUILD_LOCAL:-false}" == "true" ]]; then
+    echo "Building frontend..."
+    cd "${INSTALL_DIR}/npm-upstream"
+    ./scripts/ci/frontend-build
 
-  # Ensure compose uses the just-built local image tag.
+    echo "Building Docker image ${IMAGE_REPO}:${version}..."
+    docker build -t "${IMAGE_REPO}:${version}" -f docker/Dockerfile .
+  else
+    echo "Pulling Docker image ${IMAGE_REPO}:${version}..."
+    docker pull "${IMAGE_REPO}:${version}"
+  fi
+
+  # Ensure compose uses the desired image.
   cd "${INSTALL_DIR}"
-  set_compose_image_tag docker-compose.yml "${version}"
+  set_compose_image docker-compose.yml "${IMAGE_REPO}:${version}"
 }
 
 start_stack() {
@@ -237,7 +238,7 @@ main() {
   install_docker
   clone_repo
   ensure_env
-  build_image
+  ensure_image
   start_stack
 
   echo "Waiting for NyxGuard Manager to become ready (http://127.0.0.1:81/api/) ..."

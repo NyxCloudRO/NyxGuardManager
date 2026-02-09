@@ -5,6 +5,7 @@ set -euo pipefail
 REPO_URL="${REPO_URL:-https://github.com/NyxCloudRO/NyxGuardManager.git}"
 REF="${REF:-main}"
 INSTALL_DIR="${INSTALL_DIR:-/opt/nyxguardmanager}"
+IMAGE_REPO="${IMAGE_REPO:-nyxmael/nyxguardmanager}"
 
 need_root() {
   if [[ "${EUID}" -ne 0 ]]; then
@@ -45,26 +46,21 @@ wait_http_200() {
   done
 }
 
-set_compose_image_tag() {
+set_compose_image() {
   local compose_file="$1"
-  local tag="$2"
+  local image="$2"
 
   [[ -f "${compose_file}" ]] || return 0
 
   # Keep this portable across sed variants by using awk + atomic replace.
   local tmp
   tmp="$(mktemp)"
-  awk -v v="${tag}" '
+  awk -v img="${image}" '
     {
-      if (match($0, /^[[:space:]]*image:[[:space:]]*"?nyxguardmanager:/)) {
-        pre = substr($0, 1, RLENGTH)
-        # Preserve an opening quote if present.
-        q = ""
-        if (pre ~ /"$/) {
-          pre = substr(pre, 1, length(pre) - 1)
-          q = "\""
-        }
-        $0 = pre v q
+      if ($0 ~ /^[[:space:]]*image:[[:space:]]*/ && $0 ~ /nyxguardmanager:/) {
+        match($0, /^[[:space:]]*/)
+        indent = substr($0, RSTART, RLENGTH)
+        $0 = indent "image: " img
       }
       print
     }
@@ -105,7 +101,7 @@ update_repo() {
   git checkout -f -B "${REF}" "origin/${REF}"
 }
 
-build_image() {
+ensure_image() {
   cd "${INSTALL_DIR}"
   local version
   # Only read the first line so we can include comments/metadata below it.
@@ -114,16 +110,21 @@ build_image() {
     version="unknown"
   fi
 
-  echo "Building frontend..."
-  cd "${INSTALL_DIR}/npm-upstream"
-  ./scripts/ci/frontend-build
+  if [[ "${BUILD_LOCAL:-false}" == "true" ]]; then
+    echo "Building frontend..."
+    cd "${INSTALL_DIR}/npm-upstream"
+    ./scripts/ci/frontend-build
 
-  echo "Building Docker image nyxguardmanager:${version}..."
-  docker build -t "nyxguardmanager:${version}" -f docker/Dockerfile .
+    echo "Building Docker image ${IMAGE_REPO}:${version}..."
+    docker build -t "${IMAGE_REPO}:${version}" -f docker/Dockerfile .
+  else
+    echo "Pulling Docker image ${IMAGE_REPO}:${version}..."
+    docker pull "${IMAGE_REPO}:${version}"
+  fi
 
   # Ensure compose points at the current local tag.
   cd "${INSTALL_DIR}"
-  set_compose_image_tag docker-compose.yml "${version}"
+  set_compose_image docker-compose.yml "${IMAGE_REPO}:${version}"
 }
 
 restart_stack() {
@@ -140,7 +141,7 @@ main() {
   need_root
   require_cmds
   update_repo
-  build_image
+  ensure_image
   restart_stack
 
   echo "Waiting for NyxGuard Manager to become ready (http://127.0.0.1:81/api/) ..."
