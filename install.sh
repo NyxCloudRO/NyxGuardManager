@@ -5,7 +5,11 @@ set -euo pipefail
 REPO_URL="${REPO_URL:-https://github.com/NyxCloudRO/NyxGuardManager.git}"
 REF="${REF:-main}"
 INSTALL_DIR="${INSTALL_DIR:-/opt/nyxguardmanager}"
-VERSION="${VERSION:-2.0.1}"
+# App version used for the local Docker image tag.
+# Note: do NOT rely on a variable named VERSION because /etc/os-release defines VERSION
+# (e.g. Debian "13 (trixie)"), which would break Docker tag formatting.
+DEFAULT_APP_VERSION="2.0.1"
+APP_VERSION="${APP_VERSION:-${VERSION:-${DEFAULT_APP_VERSION}}}"
 
 need_root() {
   if [[ "${EUID}" -ne 0 ]]; then
@@ -135,8 +139,29 @@ build_image() {
   echo "Building frontend..."
   ./scripts/ci/frontend-build
 
-  echo "Building Docker image nyxguardmanager:${VERSION}..."
-  docker build -t "nyxguardmanager:${VERSION}" -f docker/Dockerfile .
+  cd "${INSTALL_DIR}"
+  local version
+  version="$(head -n 1 .version 2>/dev/null || true)"
+  if [[ -z "${version}" ]]; then
+    version="${APP_VERSION}"
+  fi
+
+  # Docker tag sanity: spaces/parentheses from OS VERSION would be invalid here.
+  if [[ ! "${version}" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$ ]]; then
+    echo "ERROR: Invalid app version for Docker tag: '${version}'" >&2
+    echo "Tip: set APP_VERSION to something like '2.0.1'." >&2
+    exit 1
+  fi
+
+  echo "Building Docker image nyxguardmanager:${version}..."
+  cd "${INSTALL_DIR}/npm-upstream"
+  docker build -t "nyxguardmanager:${version}" -f docker/Dockerfile .
+
+  # Ensure compose uses the just-built local image tag.
+  cd "${INSTALL_DIR}"
+  if [[ -f docker-compose.yml ]]; then
+    sed -i -E "s#^([[:space:]]*image:[[:space:]]*nyxguardmanager:).*$#\\1${version}#g" docker-compose.yml
+  fi
 }
 
 start_stack() {
@@ -159,7 +184,7 @@ main() {
   start_stack
 
   echo
-  echo "NyxGuard Manager ${VERSION} is installing/running."
+  echo "NyxGuard Manager is installing/running."
   echo "Open: http://$(hostname -I 2>/dev/null | awk '{print $1}'):81/"
   echo
 }
