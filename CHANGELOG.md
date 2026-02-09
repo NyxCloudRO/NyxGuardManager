@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.0.3] - 2026-02-09
+
+### Changed
+- GeoIP auto-update: avoid re-downloading MaxMind databases on frequent restarts (skips download if the local DB is still recent).
+- GeoIP: added support for uploading an additional IP2Location `.mmdb` as a fallback country database (used when Cloudflare header is missing and MaxMind is unavailable).
+
 ## [2.0.2] - 2026-02-09
 
 ### Changed
