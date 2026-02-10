@@ -128,6 +128,7 @@ docker compose --env-file .env up -d
 
 Actual resource usage depends heavily on traffic volume, number of protected apps, and log retention.
 
+- On a fresh install with little or no traffic, resource usage is typically very low. The recommended sizing becomes important as you add apps, enable protections, and increase retention and traffic.
 - Minimum (small install / short retention):
   - 2 vCPU
   - 4 GB RAM
