@@ -2,3 +2,4 @@
 
 This folder contains the application source (backend, frontend, and Docker build context).
 
+For the full project overview, see `../README.md`.

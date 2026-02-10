@@ -2,6 +2,8 @@
 
 This folder contains an optional `systemd` unit to start the Docker Compose stack on boot.
 
+For the full project overview, see `../README.md`.
+
 ## Install
 
 ```bash
