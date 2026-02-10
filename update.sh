@@ -85,12 +85,57 @@ require_cmds() {
   fi
 }
 
-update_repo() {
-  if [[ ! -d "${INSTALL_DIR}/.git" ]]; then
-    echo "ERROR: ${INSTALL_DIR} is not a git repo. (Expected an existing install.)" >&2
-    echo "Tip: set INSTALL_DIR or reinstall via install.sh." >&2
-    exit 1
+ts() { date -u '+%Y%m%d_%H%M%S'; }
+
+bootstrap_repo_if_needed() {
+  # If INSTALL_DIR isn't a git clone (manual install), bootstrap it into one
+  # while preserving .env. Docker volumes keep the actual data/config.
+  if [[ -d "${INSTALL_DIR}/.git" ]]; then
+    return 0
   fi
+
+  if [[ -d "${INSTALL_DIR}" ]]; then
+    echo "WARN: ${INSTALL_DIR} is not a git repo. Bootstrapping a fresh repo clone (preserving .env) ..."
+  else
+    echo "Bootstrapping repo clone into ${INSTALL_DIR} ..."
+  fi
+
+  local prev_env=""
+  if [[ -f "${INSTALL_DIR}/.env" ]]; then
+    prev_env="${INSTALL_DIR}/.env"
+  fi
+
+  local tmp backup
+  tmp="$(mktemp -d)"
+  git clone --depth 1 --branch "${REF}" "${REPO_URL}" "${tmp}"
+
+  if [[ -n "${prev_env}" ]]; then
+    cp -a "${prev_env}" "${tmp}/.env"
+    chmod 600 "${tmp}/.env" >/dev/null 2>&1 || true
+  fi
+
+  if [[ -d "${INSTALL_DIR}" ]]; then
+    backup="${INSTALL_DIR}_backup_$(ts)"
+    mv "${INSTALL_DIR}" "${backup}"
+    echo "Backup created: ${backup}"
+  fi
+
+  mv "${tmp}" "${INSTALL_DIR}"
+
+  if [[ ! -f "${INSTALL_DIR}/.env" ]]; then
+    echo "WARN: ${INSTALL_DIR}/.env is missing. Copying from .env.example (you must set strong DB passwords)."
+    if [[ -f "${INSTALL_DIR}/.env.example" ]]; then
+      cp -a "${INSTALL_DIR}/.env.example" "${INSTALL_DIR}/.env"
+      chmod 600 "${INSTALL_DIR}/.env" >/dev/null 2>&1 || true
+    else
+      echo "ERROR: Missing .env and .env.example; cannot continue." >&2
+      exit 1
+    fi
+  fi
+}
+
+update_repo() {
+  bootstrap_repo_if_needed
 
   cd "${INSTALL_DIR}"
   git remote set-url origin "${REPO_URL}" >/dev/null 2>&1 || true
