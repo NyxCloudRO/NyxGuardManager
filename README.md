@@ -78,6 +78,7 @@ By default the installer pulls `nyxmael/nyxguardmanager:<version>` and starts th
 Optional:
 - Build locally instead of pulling: `BUILD_LOCAL=true`
 - Use a different image/repo: `IMAGE_REPO=youruser/nyxguardmanager`
+- Install a specific version: `APP_VERSION=3.0.0`
 
 ### Install Via Docker (Compose)
 
@@ -95,6 +96,8 @@ curl -fsSLO https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/do
 curl -fsSLO https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/.env.example
 cp .env.example .env
 ```
+
+`docker-compose.yml` is pinned to `nyxmael/nyxguardmanager:3.0.0` for production installs. To use a different version, edit the `image:` tag in `docker-compose.yml`.
 
 3. Edit `.env` (set strong passwords for `DB_MYSQL_PASSWORD` and `MYSQL_ROOT_PASSWORD`), then start:
 
@@ -161,6 +164,7 @@ docker compose --env-file .env up -d
 
 - Your data is stored in Docker volumes, so updates should not wipe config/certs/DB unless you delete volumes.
 - If you previously migrated volumes (via `NYXGUARD_*_VOLUME` in `.env`), keep those values unchanged.
+- If you want to update to a specific release, change the `image:` tag in `docker-compose.yml` (for example, `nyxmael/nyxguardmanager:3.0.0`) before running `docker compose pull`.
 
 ## Quick Health Checks
 
