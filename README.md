@@ -201,4 +201,6 @@ My vision for NyxGuard Manager is:
 This release is validated in production-style deployments on Ubuntu 24 and Debian 13. More improvements and features will land soon.
 
 ## License / Attribution
-NyxGuard Manager is built on top of an upstream proxy-manager codebase and includes substantial modifications and new NyxGuard features.
+NyxGuard Manager builds on an upstream reverse-proxy manager codebase and adds substantial engineering and product work: the NyxGuard security layer (WAF controls, SQL Shield, bot defense, DDoS protection), traffic analytics, and operational tooling.
+
+Our intent is simple: keep NyxGuard Manager **free to use** for both personal and enterprise deployments. We do not plan to introduce paid license tiers or a commercial licensing model. As the project grows, we aim to rely on the community: contributions, testing, feedback, and optional community support.
