@@ -521,11 +521,17 @@
 	"nyxguard-apps": {
 		"defaultMessage": "Apps"
 	},
+	"nyxguard-attacks": {
+		"defaultMessage": "Attacks"
+	},
 	"nyxguard-bot": {
 		"defaultMessage": "Bot Defense"
 	},
 	"nyxguard-ddos": {
 		"defaultMessage": "DDoS Protection"
+	},
+	"nyxguard-globalgate": {
+		"defaultMessage": "GlobalGate Security Layer"
 	},
 	"nyxguard-ips": {
 		"defaultMessage": "IPs & Geo"

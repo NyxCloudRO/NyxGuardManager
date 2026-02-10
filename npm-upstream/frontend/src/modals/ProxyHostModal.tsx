@@ -81,12 +81,13 @@ const ProxyHostModal = EasyModal.create(({ id, visible, remove }: Props) => {
 							blockExploits: data?.blockExploits || false,
 							allowWebsocketUpgrade: data?.allowWebsocketUpgrade || false,
 							// NyxGuard per-app controls (stored in meta so API schema doesn't change)
-							meta: {
-								...(data?.meta || {}),
-								nyxguardWafEnabled: !!data?.meta?.nyxguardWafEnabled,
-								nyxguardBotDefenseEnabled: !!data?.meta?.nyxguardBotDefenseEnabled,
-								nyxguardDdosEnabled: !!data?.meta?.nyxguardDdosEnabled,
-							},
+								meta: {
+									...(data?.meta || {}),
+									nyxguardWafEnabled: !!data?.meta?.nyxguardWafEnabled,
+									nyxguardBotDefenseEnabled: !!data?.meta?.nyxguardBotDefenseEnabled,
+									nyxguardDdosEnabled: !!data?.meta?.nyxguardDdosEnabled,
+									nyxguardSqliEnabled: !!data?.meta?.nyxguardSqliEnabled,
+								},
 							// Locations tab
 							locations: data?.locations || [],
 							// SSL tab
@@ -356,14 +357,15 @@ const ProxyHostModal = EasyModal.create(({ id, visible, remove }: Props) => {
 																					onChange={(e) => {
 																						const checked = e.target.checked;
 																						form.setFieldValue(field.name, checked);
-																						if (!checked) {
-																							form.setFieldValue("meta.nyxguardBotDefenseEnabled", false);
-																							form.setFieldValue("meta.nyxguardDdosEnabled", false);
-																						}
-																					}}
-																				/>
-																			</label>
-																		)}
+																							if (!checked) {
+																								form.setFieldValue("meta.nyxguardBotDefenseEnabled", false);
+																								form.setFieldValue("meta.nyxguardDdosEnabled", false);
+																								form.setFieldValue("meta.nyxguardSqliEnabled", false);
+																							}
+																						}}
+																					/>
+																				</label>
+																			)}
 																	</Field>
 																</span>
 															</label>
@@ -394,11 +396,11 @@ const ProxyHostModal = EasyModal.create(({ id, visible, remove }: Props) => {
 																)}
 															</Field>
 														</div>
-														<div>
-															<Field name="meta.nyxguardWafEnabled">
-																{({ field: wafField }: any) => (
-																	<label className="row" htmlFor="nyxguardDdosEnabled">
-																		<span className="col">Enable DDoS Shield</span>
+															<div>
+																<Field name="meta.nyxguardWafEnabled">
+																	{({ field: wafField }: any) => (
+																		<label className="row" htmlFor="nyxguardDdosEnabled">
+																			<span className="col">Enable DDoS Shield</span>
 																		<span className="col-auto">
 																			<Field name="meta.nyxguardDdosEnabled" type="checkbox">
 																				{({ field }: any) => (
@@ -417,12 +419,38 @@ const ProxyHostModal = EasyModal.create(({ id, visible, remove }: Props) => {
 																			</Field>
 																		</span>
 																	</label>
-																)}
-															</Field>
+																	)}
+																</Field>
+															</div>
+															<div>
+																<Field name="meta.nyxguardWafEnabled">
+																	{({ field: wafField }: any) => (
+																		<label className="row" htmlFor="nyxguardSqliEnabled">
+																			<span className="col">Enable SQL Shield</span>
+																			<span className="col-auto">
+																				<Field name="meta.nyxguardSqliEnabled" type="checkbox">
+																					{({ field }: any) => (
+																						<label className="form-check form-check-single form-switch">
+																							<input
+																								{...field}
+																								id="nyxguardSqliEnabled"
+																								className={cn("form-check-input", {
+																									"bg-lime": field.checked,
+																								})}
+																								type="checkbox"
+																								disabled={!wafField.value}
+																							/>
+																						</label>
+																					)}
+																				</Field>
+																			</span>
+																		</label>
+																	)}
+																</Field>
+															</div>
 														</div>
 													</div>
 												</div>
-											</div>
 											<div className="tab-pane" id="tab-locations" role="tabpanel">
 												<LocationsFields initialValues={data?.locations || []} />
 											</div>

@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import {
+	AppShell,
 	ErrorNotFound,
 	LoadingPage,
 	Page,
@@ -26,11 +27,11 @@ const DeadHosts = lazy(() => import("src/pages/Nginx/DeadHosts"));
 const Streams = lazy(() => import("src/pages/Nginx/Streams"));
 const NyxGuard = lazy(() => import("src/pages/NyxGuard"));
 const NyxGuardTraffic = lazy(() => import("src/pages/NyxGuardTraffic"));
-const NyxGuardIPs = lazy(() => import("src/pages/NyxGuardIPs"));
-const NyxGuardRules = lazy(() => import("src/pages/NyxGuardRules"));
-const NyxGuardDdos = lazy(() => import("src/pages/NyxGuardDdos"));
-const NyxGuardBot = lazy(() => import("src/pages/NyxGuardBot"));
-const NyxGuardApps = lazy(() => import("src/pages/NyxGuardApps"));
+	const NyxGuardIPs = lazy(() => import("src/pages/NyxGuardIPs"));
+	const NyxGuardRules = lazy(() => import("src/pages/NyxGuardRules"));
+	const NyxGuardGlobalGate = lazy(() => import("src/pages/NyxGuardGlobalGate"));
+	const NyxGuardApps = lazy(() => import("src/pages/NyxGuardApps"));
+	const NyxGuardAttacks = lazy(() => import("src/pages/NyxGuardAttacks"));
 
 function Router() {
 	const health = useHealth();
@@ -62,34 +63,38 @@ function Router() {
 				<div>
 					<SiteHeader />
 				</div>
-				<SiteContainer>
-					<Suspense fallback={<LoadingPage noLogo />}>
-						<Routes>
-							<Route path="*" element={<ErrorNotFound />} />
-							<Route path="/nyxguard" element={<NyxGuard />} />
-							<Route path="/nyxguard/traffic" element={<NyxGuardTraffic />} />
-							<Route path="/nyxguard/ips" element={<NyxGuardIPs />} />
-							<Route path="/nyxguard/rules" element={<NyxGuardRules />} />
-							<Route path="/nyxguard/ddos" element={<NyxGuardDdos />} />
-							<Route path="/nyxguard/bot" element={<NyxGuardBot />} />
-							<Route path="/nyxguard/apps" element={<NyxGuardApps />} />
-							<Route path="/certificates" element={<Certificates />} />
-							<Route path="/access" element={<Access />} />
-							<Route path="/audit-log" element={<AuditLog />} />
-							<Route path="/settings" element={<Settings />} />
-							<Route path="/users" element={<Users />} />
-							<Route path="/nyxguard/proxy" element={<ProxyHosts />} />
-							<Route path="/nyxguard/redirection" element={<RedirectionHosts />} />
-							<Route path="/nyxguard/404" element={<DeadHosts />} />
-							<Route path="/nyxguard/stream" element={<Streams />} />
-							<Route path="/nginx/proxy" element={<Navigate to="/nyxguard/proxy" replace />} />
-							<Route path="/nginx/redirection" element={<Navigate to="/nyxguard/redirection" replace />} />
-							<Route path="/nginx/404" element={<Navigate to="/nyxguard/404" replace />} />
-							<Route path="/nginx/stream" element={<Navigate to="/nyxguard/stream" replace />} />
-							<Route path="/" element={<Dashboard />} />
-						</Routes>
-					</Suspense>
-				</SiteContainer>
+				<AppShell>
+					<SiteContainer>
+						<Suspense fallback={<LoadingPage noLogo />}>
+							<Routes>
+								<Route path="*" element={<ErrorNotFound />} />
+								<Route path="/nyxguard" element={<NyxGuard />} />
+									<Route path="/nyxguard/traffic" element={<NyxGuardTraffic />} />
+									<Route path="/nyxguard/ips" element={<NyxGuardIPs />} />
+									<Route path="/nyxguard/rules" element={<NyxGuardRules />} />
+									<Route path="/nyxguard/ddos" element={<Navigate to="/nyxguard/globalgate" replace />} />
+									<Route path="/nyxguard/bot" element={<Navigate to="/nyxguard/globalgate" replace />} />
+									<Route path="/nyxguard/apps" element={<NyxGuardApps />} />
+									<Route path="/nyxguard/attacks" element={<NyxGuardAttacks />} />
+									<Route path="/nyxguard/globalgate" element={<NyxGuardGlobalGate />} />
+								<Route path="/certificates" element={<Certificates />} />
+								<Route path="/access" element={<Access />} />
+								<Route path="/audit-log" element={<AuditLog />} />
+								<Route path="/settings" element={<Settings />} />
+								<Route path="/users" element={<Users />} />
+								<Route path="/nyxguard/proxy" element={<ProxyHosts />} />
+								<Route path="/nyxguard/redirection" element={<RedirectionHosts />} />
+								<Route path="/nyxguard/404" element={<DeadHosts />} />
+								<Route path="/nyxguard/stream" element={<Streams />} />
+								<Route path="/nginx/proxy" element={<Navigate to="/nyxguard/proxy" replace />} />
+								<Route path="/nginx/redirection" element={<Navigate to="/nyxguard/redirection" replace />} />
+								<Route path="/nginx/404" element={<Navigate to="/nyxguard/404" replace />} />
+								<Route path="/nginx/stream" element={<Navigate to="/nyxguard/stream" replace />} />
+								<Route path="/" element={<Dashboard />} />
+							</Routes>
+						</Suspense>
+					</SiteContainer>
+				</AppShell>
 				<SiteFooter />
 			</Page>
 		</BrowserRouter>

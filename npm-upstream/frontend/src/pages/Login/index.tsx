@@ -170,10 +170,10 @@ export default function Login() {
 	const { twoFactorChallenge } = useAuthState();
 	const health = useHealth();
 
-	const getVersion = () => {
-		if (!health.data) {
-			return "";
-		}
+		const getVersion = () => {
+			if (!health.data) {
+				return "";
+			}
 		const build = health.data.build;
 		const v = health.data.version;
 
@@ -183,12 +183,12 @@ export default function Login() {
 				? `${v.major}.${v.minor}.${v.revision}`
 				: "");
 
-		const parts: string[] = [];
-		if (version) {
-			parts.push(`v${version}`);
-		}
-		return parts.join(" · ");
-	};
+			const parts: string[] = [];
+			if (version) {
+				parts.push(`NyxGuard Manager · v${version}`);
+			}
+			return parts.join(" · ");
+		};
 
 	return (
 		<Page className="page page-center">

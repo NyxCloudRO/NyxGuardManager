@@ -1,12 +1,42 @@
-import { IconArrowsCross, IconBolt, IconBoltOff, IconChartLine, IconDisc, IconShieldCheck } from "@tabler/icons-react";
+import {
+	IconActivityHeartbeat,
+	IconAlertTriangle,
+	IconArrowsCross,
+	IconArrowsUpDown,
+	IconBolt,
+	IconBoltOff,
+	IconChartLine,
+	IconDisc,
+	IconShieldCheck,
+} from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { getNyxGuardAppsSummary, getNyxGuardSummary } from "src/api/backend";
+import { getNyxGuardAppsSummary, getNyxGuardAttacksSummary, getNyxGuardSummary } from "src/api/backend";
 import { HasPermission } from "src/components";
 import { useHostReport } from "src/hooks";
 import { T } from "src/locale";
 import { DEAD_HOSTS, PROXY_HOSTS, REDIRECTION_HOSTS, STREAMS, VIEW } from "src/modules/Permissions";
 import styles from "./index.module.css";
+
+function formatBytes(bytes: number) {
+	if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+	const units = ["B", "KB", "MB", "GB", "TB"];
+	let n = bytes;
+	let u = 0;
+	while (n >= 1024 && u < units.length - 1) {
+		n /= 1024;
+		u += 1;
+	}
+	const digits = u === 0 ? 0 : n >= 100 ? 0 : n >= 10 ? 1 : 2;
+	return `${n.toFixed(digits)} ${units[u]}`;
+}
+
+function attackTypeLabel(t: string | null | undefined) {
+	if (t === "sqli") return "SQL";
+	if (t === "ddos") return "DDoS";
+	if (t === "bot") return "Bot";
+	return "Unknown";
+}
 
 const Dashboard = () => {
 	const { data: hostReport } = useHostReport();
@@ -21,6 +51,12 @@ const Dashboard = () => {
 	const traffic1d = useQuery({
 		queryKey: ["nyxguard", "summary", "1d"],
 		queryFn: () => getNyxGuardSummary(1440, 1),
+		refetchInterval: 60000,
+	});
+
+	const attacks1d = useQuery({
+		queryKey: ["nyxguard", "attacks", "summary", "1d"],
+		queryFn: () => getNyxGuardAttacksSummary(1440),
 		refetchInterval: 60000,
 	});
 
@@ -109,6 +145,100 @@ const Dashboard = () => {
 												</div>
 												<div className="text-muted">
 													Blocked (1d): {traffic1d.data?.blocked?.toLocaleString?.() ?? "--"}
+												</div>
+											</div>
+										</div>
+									</div>
+								</a>
+							</div>
+						</HasPermission>
+						<HasPermission section={PROXY_HOSTS} permission={VIEW} hideError>
+							<div className="col-sm-6 col-lg-4">
+								<a
+									href="/nyxguard"
+									className="card card-sm card-link card-link-pop"
+									onClick={(e) => {
+										e.preventDefault();
+										navigate("/nyxguard");
+									}}
+								>
+									<div className="card-body">
+										<div className="row align-items-center">
+											<div className="col-auto">
+												<span className="bg-indigo text-white avatar">
+													<IconArrowsUpDown />
+												</span>
+											</div>
+											<div className="col">
+												<div className="font-weight-medium">
+													Traffic (1d): RX {typeof traffic1d.data?.rxBytes === "number" ? formatBytes(traffic1d.data.rxBytes) : "--"}
+												</div>
+												<div className="text-muted">
+													TX (1d): {typeof traffic1d.data?.txBytes === "number" ? formatBytes(traffic1d.data.txBytes) : "--"}
+												</div>
+											</div>
+										</div>
+									</div>
+								</a>
+							</div>
+						</HasPermission>
+						<HasPermission section={PROXY_HOSTS} permission={VIEW} hideError>
+							<div className="col-sm-6 col-lg-4">
+								<a
+									href="/nyxguard/attacks"
+									className="card card-sm card-link card-link-pop"
+									onClick={(e) => {
+										e.preventDefault();
+										navigate("/nyxguard/attacks");
+									}}
+								>
+									<div className="card-body">
+										<div className="row align-items-center">
+											<div className="col-auto">
+												<span className="bg-orange text-white avatar">
+													<IconAlertTriangle />
+												</span>
+											</div>
+											<div className="col">
+												<div className="font-weight-medium">
+													Attacks (1d): {attacks1d.data?.total?.toLocaleString?.() ?? "--"}
+												</div>
+												<div className="text-muted">
+													Last:{" "}
+													{attacks1d.data?.last
+														? `${attackTypeLabel(attacks1d.data.last.type)} (${attacks1d.data.last.ip})`
+														: "--"}
+												</div>
+											</div>
+										</div>
+									</div>
+								</a>
+							</div>
+						</HasPermission>
+						<HasPermission section={PROXY_HOSTS} permission={VIEW} hideError>
+							<div className="col-sm-6 col-lg-4">
+								<a
+									href="/nyxguard"
+									className="card card-sm card-link card-link-pop"
+									onClick={(e) => {
+										e.preventDefault();
+										navigate("/nyxguard");
+									}}
+								>
+									<div className="card-body">
+										<div className="row align-items-center">
+											<div className="col-auto">
+												<span className="bg-cyan text-white avatar">
+													<IconActivityHeartbeat />
+												</span>
+											</div>
+											<div className="col">
+												<div className="font-weight-medium">
+													Requests (1d): {traffic1d.data?.requests?.toLocaleString?.() ?? "--"}
+												</div>
+												<div className="text-muted">
+													Allowed: {traffic1d.data?.allowed?.toLocaleString?.() ?? "--"} | Blocked:{" "}
+													{traffic1d.data?.blocked?.toLocaleString?.() ?? "--"}
 												</div>
 											</div>
 										</div>

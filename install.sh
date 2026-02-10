@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# NyxGuard Manager v2.0.1 (stamp 2026-02-09T08:27:06Z)
+# NyxGuard Manager v3.0.0 (stamp 2026-02-10T20:00:00Z)
 set -euo pipefail
 
 REPO_URL="${REPO_URL:-https://github.com/NyxCloudRO/NyxGuardManager.git}"
@@ -10,7 +10,7 @@ IMAGE_REPO="${IMAGE_REPO:-nyxmael/nyxguardmanager}"
 # App version used for the local Docker image tag.
 # Note: do NOT rely on a variable named VERSION because /etc/os-release defines VERSION
 # (e.g. Debian "13 (trixie)"), which would break Docker tag formatting.
-DEFAULT_APP_VERSION="2.0.5"
+DEFAULT_APP_VERSION="3.0.0"
 APP_VERSION="${APP_VERSION:-${VERSION:-${DEFAULT_APP_VERSION}}}"
 
 need_root() {

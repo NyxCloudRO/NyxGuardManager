@@ -1,5 +1,5 @@
 import { IconLock, IconLogout, IconShieldLock, IconUser } from "@tabler/icons-react";
-import { LocalePicker, SiteMenu, ThemeSwitcher } from "src/components";
+import { LocalePicker } from "src/components";
 import { useAuthState } from "src/context";
 import { useUser } from "src/hooks";
 import { T } from "src/locale";
@@ -35,7 +35,7 @@ export function SiteHeader() {
 								<div className={styles.brandLink}>
 									<div className={styles.logo}>
 										<img
-											src="/images/favicon/favicon.svg"
+											src="/images/favicon/logo-128.png"
 											width={40}
 											height={40}
 											className={`navbar-brand-image ${styles.brandLogo}`}
@@ -53,9 +53,6 @@ export function SiteHeader() {
 							<div className={`navbar-nav flex-row ${styles.rightControls}`}>
 								<div className="nav-item">
 									<LocalePicker />
-								</div>
-								<div className="nav-item">
-									<ThemeSwitcher />
 								</div>
 								<div className="nav-item d-md-flex">
 									<div className={`nav-item dropdown ${styles.userMenu}`}>
@@ -89,7 +86,6 @@ export function SiteHeader() {
 														</div>
 													</div>
 													<div className="d-flex align-items-center">
-														<ThemeSwitcher className="me-n2" />
 														<LocalePicker menuAlign="end" />
 													</div>
 												</div>
@@ -146,16 +142,6 @@ export function SiteHeader() {
 							</div>
 						</div>
 					</div>
-					</div>
-				</div>
-			</div>
-
-			<div className={styles.menuRow}>
-				<div className="navbar navbar-expand-md">
-					<div className="container-fluid px-3 px-lg-4">
-						<div className="collapse navbar-collapse" id="navbar-menu">
-							<SiteMenu />
-						</div>
 					</div>
 				</div>
 			</div>

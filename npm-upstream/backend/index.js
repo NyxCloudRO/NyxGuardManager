@@ -2,6 +2,7 @@
 
 import app from "./app.js";
 import internalCertificate from "./internal/certificate.js";
+import internalAttackMonitor from "./internal/attack-monitor.js";
 import internalGeoIpUpdate from "./internal/geoip-update.js";
 import internalIpRanges from "./internal/ip_ranges.js";
 import internalNyxGuard from "./internal/nyxguard.js";
@@ -35,6 +36,7 @@ async function appStart() {
 		})
 		.then(() => {
 			internalCertificate.initTimer();
+			internalAttackMonitor.initTimer();
 			internalGeoIpUpdate.initTimer();
 			internalIpRanges.initTimer();
 

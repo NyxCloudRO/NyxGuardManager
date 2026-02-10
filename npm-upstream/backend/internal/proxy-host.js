@@ -9,6 +9,29 @@ import internalHost from "./host.js";
 import internalNginx from "./nginx.js";
 import internalNyxGuard from "./nyxguard.js";
 
+function nyxguardMetaBool(meta, camelKey, snakeKey) {
+	if (!meta) return undefined;
+	const vCamel = meta[camelKey];
+	if (typeof vCamel === "boolean") return vCamel;
+	const vSnake = meta[snakeKey];
+	if (typeof vSnake === "boolean") return vSnake;
+	// Defensive: tolerate 0/1 stored as numbers/strings.
+	if (vSnake === 1 || vSnake === "1") return true;
+	if (vSnake === 0 || vSnake === "0") return false;
+	return undefined;
+}
+
+function stripNyxguardSnakeKeys(meta) {
+	if (!meta) return meta;
+	// Keep meta stable: only normalize the NyxGuard keys that the UI may send in snake_case.
+	const copy = { ...meta };
+	delete copy.nyxguard_waf_enabled;
+	delete copy.nyxguard_bot_defense_enabled;
+	delete copy.nyxguard_ddos_enabled;
+	delete copy.nyxguard_sqli_enabled;
+	return copy;
+}
+
 const omissions = () => {
 	return ["is_deleted", "owner.is_deleted"];
 };
@@ -86,28 +109,33 @@ const internalProxyHost = {
 			})
 			.then((row) => {
 				// NyxGuard per-app toggles at creation time. Stored in meta to keep the API schema stable.
-				const waf = !!thisData?.meta?.nyxguardWafEnabled;
-				const bot = waf && !!thisData?.meta?.nyxguardBotDefenseEnabled;
-				const ddos = waf && !!thisData?.meta?.nyxguardDdosEnabled;
+				// Frontend decamelizes JSON bodies, so accept both camelCase and snake_case meta keys.
+				const meta = thisData?.meta || {};
+				const waf = !!nyxguardMetaBool(meta, "nyxguardWafEnabled", "nyxguard_waf_enabled");
+				const bot = waf && !!nyxguardMetaBool(meta, "nyxguardBotDefenseEnabled", "nyxguard_bot_defense_enabled");
+				const ddos = waf && !!nyxguardMetaBool(meta, "nyxguardDdosEnabled", "nyxguard_ddos_enabled");
+				const sqli = waf && !!nyxguardMetaBool(meta, "nyxguardSqliEnabled", "nyxguard_sqli_enabled");
 
-				if (!waf && !bot && !ddos) return row;
+					if (!waf && !bot && !ddos && !sqli) return row;
 
-				let nextAdvanced = row.advanced_config ?? "";
-				nextAdvanced = internalNyxGuard.waf.applyAdvancedConfig(nextAdvanced, waf);
-				nextAdvanced = internalNyxGuard.botDefense.applyAdvancedConfig(nextAdvanced, bot);
-				nextAdvanced = internalNyxGuard.ddos.applyAdvancedConfig(nextAdvanced, ddos);
+					let nextAdvanced = row.advanced_config ?? "";
+					nextAdvanced = internalNyxGuard.waf.applyAdvancedConfig(nextAdvanced, waf);
+					nextAdvanced = internalNyxGuard.botDefense.applyAdvancedConfig(nextAdvanced, bot);
+					nextAdvanced = internalNyxGuard.ddos.applyAdvancedConfig(nextAdvanced, ddos);
+					nextAdvanced = internalNyxGuard.sqli.applyAdvancedConfig(nextAdvanced, sqli);
 
 				return internalProxyHost
 					.update(access, {
 						id: row.id,
 						advanced_config: nextAdvanced,
 						meta: {
-							...(row.meta || {}),
+							...stripNyxguardSnakeKeys(row.meta || {}),
 							nyxguardWafEnabled: waf,
 							nyxguardBotDefenseEnabled: bot,
 							nyxguardDdosEnabled: ddos,
-						},
-					})
+							nyxguardSqliEnabled: sqli,
+							},
+						})
 					.then(() => internalProxyHost.get(access, { id: row.id, expand: ["certificate", "owner", "access_list.[clients,items]"] }));
 			})
 			.then((row) => {
@@ -201,29 +229,53 @@ const internalProxyHost = {
 			.then((row) => {
 				// If NyxGuard toggles are present, apply them to advanced_config.
 				// (UI sends these under meta.* to avoid changing the proxy-host API schema.)
+				const meta = thisData?.meta || {};
 				const hasNyx =
-					typeof thisData?.meta?.nyxguardWafEnabled === "boolean" ||
-					typeof thisData?.meta?.nyxguardBotDefenseEnabled === "boolean" ||
-					typeof thisData?.meta?.nyxguardDdosEnabled === "boolean";
+					typeof nyxguardMetaBool(meta, "nyxguardWafEnabled", "nyxguard_waf_enabled") === "boolean" ||
+					typeof nyxguardMetaBool(meta, "nyxguardBotDefenseEnabled", "nyxguard_bot_defense_enabled") === "boolean" ||
+					typeof nyxguardMetaBool(meta, "nyxguardDdosEnabled", "nyxguard_ddos_enabled") === "boolean" ||
+					typeof nyxguardMetaBool(meta, "nyxguardSqliEnabled", "nyxguard_sqli_enabled") === "boolean";
 
 				if (hasNyx) {
-					const waf = !!thisData?.meta?.nyxguardWafEnabled;
-					const bot = waf && !!thisData?.meta?.nyxguardBotDefenseEnabled;
-					const ddos = waf && !!thisData?.meta?.nyxguardDdosEnabled;
+					const prevMeta = row.meta || {};
+					const prevWaf =
+						nyxguardMetaBool(prevMeta, "nyxguardWafEnabled", "nyxguard_waf_enabled") ??
+						internalNyxGuard.waf.isEnabledInAdvancedConfig(row.advanced_config);
+					const prevBot =
+						nyxguardMetaBool(prevMeta, "nyxguardBotDefenseEnabled", "nyxguard_bot_defense_enabled") ??
+						internalNyxGuard.botDefense.isEnabledInAdvancedConfig(row.advanced_config);
+					const prevDdos =
+						nyxguardMetaBool(prevMeta, "nyxguardDdosEnabled", "nyxguard_ddos_enabled") ??
+						internalNyxGuard.ddos.isEnabledInAdvancedConfig(row.advanced_config);
+					const prevSqli =
+						nyxguardMetaBool(prevMeta, "nyxguardSqliEnabled", "nyxguard_sqli_enabled") ??
+						internalNyxGuard.sqli.isEnabledInAdvancedConfig(row.advanced_config);
+
+					const waf = nyxguardMetaBool(meta, "nyxguardWafEnabled", "nyxguard_waf_enabled");
+					const bot = nyxguardMetaBool(meta, "nyxguardBotDefenseEnabled", "nyxguard_bot_defense_enabled");
+					const ddos = nyxguardMetaBool(meta, "nyxguardDdosEnabled", "nyxguard_ddos_enabled");
+					const sqli = nyxguardMetaBool(meta, "nyxguardSqliEnabled", "nyxguard_sqli_enabled");
+
+					const wafNext = typeof waf === "boolean" ? waf : !!prevWaf;
+					const botNext = wafNext && (typeof bot === "boolean" ? bot : !!prevBot);
+					const ddosNext = wafNext && (typeof ddos === "boolean" ? ddos : !!prevDdos);
+					const sqliNext = wafNext && (typeof sqli === "boolean" ? sqli : !!prevSqli);
 
 					const baseAdvanced =
 						typeof thisData.advanced_config === "string" ? thisData.advanced_config : row.advanced_config ?? "";
-					let nextAdvanced = internalNyxGuard.waf.applyAdvancedConfig(baseAdvanced, waf);
-					nextAdvanced = internalNyxGuard.botDefense.applyAdvancedConfig(nextAdvanced, bot);
-					nextAdvanced = internalNyxGuard.ddos.applyAdvancedConfig(nextAdvanced, ddos);
+					let nextAdvanced = internalNyxGuard.waf.applyAdvancedConfig(baseAdvanced, wafNext);
+					nextAdvanced = internalNyxGuard.botDefense.applyAdvancedConfig(nextAdvanced, botNext);
+					nextAdvanced = internalNyxGuard.ddos.applyAdvancedConfig(nextAdvanced, ddosNext);
+					nextAdvanced = internalNyxGuard.sqli.applyAdvancedConfig(nextAdvanced, sqliNext);
 					thisData.advanced_config = nextAdvanced;
 
-					thisData.meta = _.assign({}, row.meta, thisData.meta, {
-						nyxguardWafEnabled: waf,
-						nyxguardBotDefenseEnabled: bot,
-						nyxguardDdosEnabled: ddos,
+					thisData.meta = _.assign({}, stripNyxguardSnakeKeys(row.meta), stripNyxguardSnakeKeys(thisData.meta), {
+						nyxguardWafEnabled: wafNext,
+						nyxguardBotDefenseEnabled: botNext,
+						nyxguardDdosEnabled: ddosNext,
+						nyxguardSqliEnabled: sqliNext,
 					});
-				}
+					}
 
 				// Add domain_names to the data in case it isn't there, so that the audit log renders correctly. The order is important here.
 				// NOTE: Use thisData (not the original `data`) so we don't accidentally drop

@@ -2,7 +2,7 @@
   min-height: calc(100vh - 120px);
   padding: 40px 0 60px;
   color: #f6f4ff;
-  background: radial-gradient(120% 120% at 10% 10%, #2b6bff 0%, #1b2a6b 40%, #5b1d84 70%, #d1178a 100%);
+  background: radial-gradient(120% 120% at 10% 10%, #2b6bff 0%, #1b2a6b 40%, #5b1d84 70%, #a31a78 100%);
 }
 
 .hero {
@@ -152,6 +152,12 @@
 .statValue {
   font-size: 22px;
   margin-top: 8px;
+}
+
+.statSub {
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.75;
 }
 
 .sections {

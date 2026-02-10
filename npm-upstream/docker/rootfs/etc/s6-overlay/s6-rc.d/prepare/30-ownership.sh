@@ -46,6 +46,12 @@ for loc in "${locations[@]}"; do
 	chownit "$loc"
 done
 
+# Ensure nginx can write its pid file when running as the configured PUID/PGID.
+# A stale root-owned pid file can prevent nginx from starting.
+rm -f /run/nginx/nginx.pid || true
+touch /run/nginx/nginx.pid || true
+chown "$PUID:$PGID" /run/nginx/nginx.pid || true
+
 if [ "$(is_true "${SKIP_CERTBOT_OWNERSHIP:-}")" = '1' ]; then
 	log_info 'Skipping ownership change of certbot directories'
 else

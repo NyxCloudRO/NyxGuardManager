@@ -1,20 +1,17 @@
 import { Link } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
 	getNyxGuardApps,
 	getNyxGuardAppsSummary,
+	getNyxGuardAttacksSummary,
 	getNyxGuardCountryRules,
 	getNyxGuardIps,
 	getNyxGuardIpRules,
 	getNyxGuardSettings,
 	getNyxGuardGeoip,
 	getNyxGuardSummary,
-	updateNyxGuardAppsWaf,
-	updateNyxGuardAppsBot,
-	updateNyxGuardAppsDdos,
 } from "src/api/backend";
-import { showError, showSuccess } from "src/notifications";
 import styles from "./index.module.css";
 
 function formatBytes(bytes: number) {
@@ -39,8 +36,14 @@ function trafficWindowLabel(minutes: number) {
 	return `${minutes} minutes`;
 }
 
+function attackTypeLabel(t: string | null | undefined) {
+	if (t === "sqli") return "SQL";
+	if (t === "ddos") return "DDoS";
+	if (t === "bot") return "Bot";
+	return "Unknown";
+}
+
 const NyxGuard = () => {
-	const qc = useQueryClient();
 	const [windowMinutes, setWindowMinutes] = useState(1440);
 	const [trafficWindowMinutes, setTrafficWindowMinutes] = useState(5);
 	const trafficLimit = useMemo(() => (trafficWindowMinutes >= 1440 ? 500 : 50), [trafficWindowMinutes]);
@@ -71,6 +74,12 @@ const NyxGuard = () => {
 		queryKey: ["nyxguard", "summary", "recent", trafficWindowMinutes, trafficLimit],
 		queryFn: () => getNyxGuardSummary(trafficWindowMinutes, trafficLimit),
 		refetchInterval: trafficWindowMinutes <= 15 ? 3000 : trafficWindowMinutes <= 1440 ? 15000 : 60000,
+	});
+
+	const attacksSummary = useQuery({
+		queryKey: ["nyxguard", "attacks", "summary", windowMinutes],
+		queryFn: () => getNyxGuardAttacksSummary(windowMinutes),
+		refetchInterval: windowMinutes <= 60 ? 15000 : 60000,
 	});
 
 	const settings = useQuery({
@@ -115,78 +124,6 @@ const NyxGuard = () => {
 		refetchInterval: 15000,
 	});
 
-	const toggleWafAll = useMutation({
-		mutationFn: (enabled: boolean) => updateNyxGuardAppsWaf(enabled),
-		onSuccess: async (res, enabled) => {
-			const updated = typeof (res as any)?.updated === "number" ? (res as any).updated : 0;
-			if (enabled && updated === 0 && appsOverview.totalApps > 0) {
-				showError(
-					"No apps were updated. If you just updated, make sure your running NyxGuardManager image includes backend version 2.0.1+ and that your user can update Proxy Hosts.",
-				);
-			} else {
-				showSuccess(
-					enabled
-						? `Enabled WAF for ${updated.toLocaleString()} app(s).`
-						: `Disabled WAF for ${updated.toLocaleString()} app(s).`,
-				);
-			}
-			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps"] });
-			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps", "summary"] });
-		},
-		onError: (err: any) => {
-			const msg = err instanceof Error ? err.message : "Failed to update WAF for all apps.";
-			showError(msg);
-		},
-	});
-
-	const toggleBotAll = useMutation({
-		mutationFn: (enabled: boolean) => updateNyxGuardAppsBot(enabled),
-		onSuccess: async (res: any, enabled) => {
-			const updated = typeof res?.updated === "number" ? res.updated : 0;
-			const skipped = typeof res?.skipped === "number" ? res.skipped : 0;
-			if (enabled && updated === 0 && skipped > 0) {
-				showError("Bot Defense default is ON, but there are no protected apps yet. Enable WAF on apps to apply it.");
-			} else {
-				showSuccess(
-					enabled
-						? `Enabled Bot Defense for ${updated.toLocaleString()} app(s)${skipped ? ` (skipped ${skipped.toLocaleString()} monitoring-only).` : "."}`
-						: `Disabled Bot Defense for ${updated.toLocaleString()} app(s).`,
-				);
-			}
-			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps"] });
-			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps", "summary"] });
-			await qc.invalidateQueries({ queryKey: ["nyxguard", "settings"] });
-		},
-		onError: (err: any) => {
-			const msg = err instanceof Error ? err.message : "Failed to update Bot Defense for all apps.";
-			showError(msg);
-		},
-	});
-
-	const toggleDdosAll = useMutation({
-		mutationFn: (enabled: boolean) => updateNyxGuardAppsDdos(enabled),
-		onSuccess: async (res: any, enabled) => {
-			const updated = typeof res?.updated === "number" ? res.updated : 0;
-			const skipped = typeof res?.skipped === "number" ? res.skipped : 0;
-			if (enabled && updated === 0 && skipped > 0) {
-				showError("DDoS Shield default is ON, but there are no protected apps yet. Enable WAF on apps to apply it.");
-			} else {
-				showSuccess(
-					enabled
-						? `Enabled DDoS Shield for ${updated.toLocaleString()} app(s)${skipped ? ` (skipped ${skipped.toLocaleString()} monitoring-only).` : "."}`
-						: `Disabled DDoS Shield for ${updated.toLocaleString()} app(s).`,
-				);
-			}
-			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps"] });
-			await qc.invalidateQueries({ queryKey: ["nyxguard", "apps", "summary"] });
-			await qc.invalidateQueries({ queryKey: ["nyxguard", "settings"] });
-		},
-		onError: (err: any) => {
-			const msg = err instanceof Error ? err.message : "Failed to update DDoS Shield for all apps.";
-			showError(msg);
-		},
-	});
-
 	const statValue = (v?: number) => (typeof v === "number" ? v.toLocaleString() : "Waiting for data…");
 	const statBytes = (v?: number) => (typeof v === "number" ? formatBytes(v) : "Waiting for data…");
 
@@ -198,7 +135,27 @@ const NyxGuard = () => {
 	const txBytes = summary.data?.txBytes;
 	const botDefenseEnabled = settings.data?.botDefenseEnabled ?? false;
 	const ddosEnabled = settings.data?.ddosEnabled ?? false;
-	const wafProtectedEnabled = (appsSummary.data?.protectedCount ?? 0) > 0;
+	const sqliEnabled = settings.data?.sqliEnabled ?? false;
+	const authBypassEnabled = settings.data?.authBypassEnabled ?? true;
+
+	const attacksCardMain = useMemo(() => {
+		if (attacksSummary.isLoading) return "Loading…";
+		if (attacksSummary.isError) return "Unavailable";
+		const lastType = attacksSummary.data?.last?.type;
+		return lastType ? attackTypeLabel(lastType) : "None";
+	}, [attacksSummary.data?.last?.type, attacksSummary.isError, attacksSummary.isLoading]);
+
+	const attacksCardSub = useMemo(() => {
+		if (attacksSummary.isLoading || attacksSummary.isError) return "Open Attacks";
+		const total = attacksSummary.data?.total ?? 0;
+		const byType = attacksSummary.data?.byType;
+		const parts = [
+			`Total: ${Number.isFinite(total) ? total.toLocaleString() : String(total)}`,
+			byType ? `SQL ${byType.sqli ?? 0}  DDoS ${byType.ddos ?? 0}  Bot ${byType.bot ?? 0}` : null,
+		].filter(Boolean);
+		return parts.join(" | ");
+	}, [attacksSummary.data?.byType, attacksSummary.data?.total, attacksSummary.isError, attacksSummary.isLoading]);
+
 	const geoSourcesLabel = useMemo(() => {
 		const p = geoip.data?.providers;
 		const hasMax = !!p?.maxmind?.installed || !!geoip.data?.installed; // installed is legacy MaxMind field
@@ -287,8 +244,6 @@ const NyxGuard = () => {
 
 		return { totalApps, protectedCount, monitoringCount, preview };
 	}, [apps.data?.items, appsSummary.data?.protectedCount, appsSummary.data?.totalApps]);
-
-	const wafAllEnabled = appsOverview.totalApps > 0 && appsOverview.protectedCount >= appsOverview.totalApps;
 
 	const countryRulesOverview = useMemo(() => {
 		const items = countryRules.data?.items ?? [];
@@ -420,29 +375,6 @@ const NyxGuard = () => {
 								</button>
 							</div>
 						</div>
-						{botDefenseEnabled || ddosEnabled || wafProtectedEnabled ? (
-							<div className={styles.statusBar} role="status" aria-live="polite">
-								{wafProtectedEnabled ? (
-									<Link className={`${styles.statusPill} ${styles.statusPillLink}`} to="/nyxguard/apps" title="Protected Apps">
-										WAF Protected: ON
-									</Link>
-								) : null}
-								{botDefenseEnabled ? (
-									<span className={styles.statusPill} title="Bot Defense is enabled">
-										Bot Defense: ON
-									</span>
-								) : null}
-								{ddosEnabled ? (
-									<span className={styles.statusPill} title="DDoS Shield is enabled">
-										DDoS Shield: ON
-									</span>
-								) : null}
-							</div>
-						) : null}
-						<div className={styles.heroMeta}>
-							<div className={styles.metaLabel}>Geo Source</div>
-							<div className={styles.metaValue}>{geoSourcesLabel}</div>
-						</div>
 					</div>
 					<div className={styles.stats}>
 						<div className={styles.statCard}>
@@ -468,6 +400,17 @@ const NyxGuard = () => {
 						<div className={styles.statCard}>
 							<div className={styles.statLabel}>TX ({windowLabel})</div>
 							<div className={styles.statValue}>{statBytes(txBytes)}</div>
+						</div>
+						<div className={styles.statCard}>
+							<div className={styles.statLabel}>Attacks ({windowLabel})</div>
+							<div className={styles.statValue}>{attacksCardMain}</div>
+							<div className={styles.statSub}>{attacksCardSub}</div>
+						</div>
+						<div className={styles.statCard}>
+							<div className={styles.statLabel}>Geo Source</div>
+							<div className={styles.statValue} style={{ fontSize: 14, marginTop: 10 }}>
+								{geoSourcesLabel}
+							</div>
 						</div>
 					</div>
 					<div className={styles.chartCard}>
@@ -738,112 +681,54 @@ const NyxGuard = () => {
 									Manage Rules
 								</Link>
 							</div>
-						</div>
-						<div className={styles.sectionCard}>
-							<h3 className={styles.sectionTitle}>Defense Controls</h3>
-							<p className={styles.sectionText}>
-								WAF app protection, bot defense, and DDoS shield controls.
-							</p>
-							<div className={styles.ruleList}>
-								<div className={styles.ruleItem}>
-									<div className={styles.controlLabel}>
+							</div>
+							<div className={styles.sectionCard}>
+								<h3 className={styles.sectionTitle}>GlobalGate Security Layer</h3>
+								<p className={styles.sectionText}>
+									Global toggles and tuning for Bot Defense, DDoS Shield, and SQL Shield are managed under GlobalGate.
+								</p>
+								<div className={styles.ruleList}>
+									<div className={styles.ruleItem}>
 										<span>WAF Protection</span>
-									</div>
-									<div className={styles.controlMid}>
 										<span
 											className={
-												wafProtectedEnabled
-													? wafAllEnabled
+												appsOverview.totalApps === 0 || appsOverview.protectedCount === 0
+													? styles.pillOff
+													: appsOverview.protectedCount >= appsOverview.totalApps
 														? styles.pillOn
 														: styles.pillPartial
-													: styles.pillOff
 											}
 										>
-											{wafProtectedEnabled ? (wafAllEnabled ? "ON" : "PARTIAL") : "OFF"}
+											{appsOverview.totalApps === 0 || appsOverview.protectedCount === 0
+												? "OFF"
+												: appsOverview.protectedCount >= appsOverview.totalApps
+													? "ON"
+													: "PARTIAL"}
 										</span>
 									</div>
-									<div className={styles.controlActions}>
-										<button
-											type="button"
-											className={`${styles.primaryButton} ${styles.miniButton}`}
-											disabled={toggleWafAll.isPending || appsOverview.totalApps === 0}
-											onClick={() => toggleWafAll.mutate(!wafAllEnabled)}
-											title={
-												appsOverview.totalApps === 0
-													? "No apps found"
-													: wafAllEnabled
-														? "Disable WAF for all apps"
-														: "Enable WAF for all apps"
-											}
-										>
-											{wafAllEnabled ? "All Off" : "All On"}
-										</button>
-										<Link className={`${styles.ghostButton} ${styles.miniButton}`} to="/nyxguard/apps">
-											Apps
-										</Link>
-									</div>
-								</div>
-								<div className={styles.ruleItem}>
-									<div className={styles.controlLabel}>
+									<div className={styles.ruleItem}>
 										<span>Bot Defense</span>
+										<span className={botDefenseEnabled ? styles.pillOn : styles.pillOff}>{botDefenseEnabled ? "ON" : "OFF"}</span>
 									</div>
-									<div className={styles.controlMid}>
-										<span className={botDefenseEnabled ? styles.pillOn : styles.pillOff}>
-											{botDefenseEnabled ? "ON" : "OFF"}
-										</span>
-									</div>
-									<div className={styles.controlActions}>
-										<button
-											type="button"
-											className={`${styles.primaryButton} ${styles.miniButton}`}
-											disabled={toggleBotAll.isPending}
-											onClick={() => toggleBotAll.mutate(!botDefenseEnabled)}
-											title={
-												botDefenseEnabled
-													? "Disable Bot Defense for all protected apps"
-													: "Enable Bot Defense for all protected apps"
-											}
-										>
-											{botDefenseEnabled ? "All Off" : "All On"}
-										</button>
-										<Link className={`${styles.ghostButton} ${styles.miniButton}`} to="/nyxguard/bot">
-											Bot Settings
-										</Link>
-									</div>
-								</div>
-								<div className={styles.ruleItem}>
-									<div className={styles.controlLabel}>
+									<div className={styles.ruleItem}>
 										<span>DDoS Shield</span>
-									</div>
-									<div className={styles.controlMid}>
 										<span className={ddosEnabled ? styles.pillOn : styles.pillOff}>{ddosEnabled ? "ON" : "OFF"}</span>
 									</div>
-									<div className={styles.controlActions}>
-										<button
-											type="button"
-											className={`${styles.primaryButton} ${styles.miniButton}`}
-											disabled={toggleDdosAll.isPending}
-											onClick={() => toggleDdosAll.mutate(!ddosEnabled)}
-											title={
-												ddosEnabled
-													? "Disable DDoS Shield for all protected apps"
-													: "Enable DDoS Shield for all protected apps"
-											}
-										>
-											{ddosEnabled ? "All Off" : "All On"}
-										</button>
-										<Link className={`${styles.ghostButton} ${styles.miniButton}`} to="/nyxguard/ddos">
-											DDoS Settings
-										</Link>
+									<div className={styles.ruleItem}>
+										<span>SQL Shield</span>
+										<span className={sqliEnabled ? styles.pillOn : styles.pillOff}>{sqliEnabled ? "ON" : "OFF"}</span>
+									</div>
+									<div className={styles.ruleItem}>
+										<span>Auth Traffic Bypass</span>
+										<span className={authBypassEnabled ? styles.pillOn : styles.pillOff}>{authBypassEnabled ? "ON" : "OFF"}</span>
 									</div>
 								</div>
+								<div className={styles.actionRow}>
+									<Link className={styles.primaryButton} to="/nyxguard/globalgate">
+										Open GlobalGate
+									</Link>
+								</div>
 							</div>
-							<div className={styles.actionRow}>
-								<Link className={styles.ghostButton} to="/nyxguard/traffic">
-									View Live Traffic
-								</Link>
-							</div>
-						</div>
 						<div className={styles.sectionCard}>
 							<h3 className={styles.sectionTitle}>Decision Stream</h3>
 							<p className={styles.sectionText}>

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { getNyxGuardSummary } from "src/api/backend";
+import { Link } from "react-router-dom";
+import { getNyxGuardAttacksSummary, getNyxGuardSummary } from "src/api/backend";
 import styles from "./index.module.css";
 
 function formatBytes(bytes: number) {
@@ -31,6 +32,11 @@ const NyxGuardTraffic = () => {
 	const summary = useQuery({
 		queryKey: ["nyxguard", "summary", windowMinutes, limit],
 		queryFn: () => getNyxGuardSummary(windowMinutes, limit),
+		refetchInterval: windowMinutes <= 15 ? 3000 : windowMinutes <= 1440 ? 15000 : 60000,
+	});
+	const attacks = useQuery({
+		queryKey: ["nyxguard", "attacks", "summary", windowMinutes],
+		queryFn: () => getNyxGuardAttacksSummary(windowMinutes),
 		refetchInterval: windowMinutes <= 15 ? 3000 : windowMinutes <= 1440 ? 15000 : 60000,
 	});
 
@@ -94,10 +100,18 @@ const NyxGuardTraffic = () => {
 								<span style={{ marginRight: 14 }}>
 									RX <strong className="text-white">{formatBytes(summary.data.rxBytes)}</strong>
 								</span>
-								<span>
-									TX <strong className="text-white">{formatBytes(summary.data.txBytes)}</strong>
-								</span>
-							</div>
+									<span>
+										TX <strong className="text-white">{formatBytes(summary.data.txBytes)}</strong>
+									</span>
+									<span style={{ marginLeft: 14 }}>
+										<Link to="/nyxguard/attacks" className="text-secondary">
+											Attacks{" "}
+											<strong className="text-white">
+												{attacks.data?.total?.toLocaleString?.() ?? "…"}
+											</strong>
+										</Link>
+									</span>
+								</div>
 							<div style={{ overflowX: "auto" }}>
 							<table className="table table-sm table-vcenter">
 								<thead>

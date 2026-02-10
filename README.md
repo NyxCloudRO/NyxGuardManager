@@ -2,6 +2,8 @@
   <img src="assets/nyxguard-wordmark-clean.svg" alt="NyxGuard Manager" width="1000" />
 </p>
 
+NyxGuard Manager is a production-ready reverse proxy manager with an integrated security layer (NyxGuard): WAF controls, bot defense, DDoS shielding, IP/Geo intelligence, and real-time traffic visibility, designed to run locally on your own server with Docker.
+
 ## Changelog
 <a href="CHANGELOG.md">
   <img src="assets/view-changelog.svg" alt="View Changelog" height="48" />
@@ -38,7 +40,7 @@ Resolution order:
 2. MaxMind GeoLite2 (if installed)
 3. IP2Location (if installed)
 
-<!-- NyxGuard Manager v2.0.1 (stamp 2026-02-09T08:27:06Z) -->
+<!-- NyxGuard Manager v3.0.0 (stamp 2026-02-10T20:00:00Z) -->
 
 Option A (manual upload, MaxMind GeoLite2):
 1. Create a free MaxMind account.
@@ -107,7 +109,7 @@ Actual resource usage depends heavily on traffic volume, number of protected app
 - Minimum (small install / short retention):
   - 2 vCPU
   - 4 GB RAM
-  - 25 GB disk
+  - 40 GB disk
 - Recommended (multiple apps / longer retention):
   - 4 vCPU
   - 8 GB RAM
@@ -190,6 +192,8 @@ My vision for NyxGuard Manager is:
 - **Real-time observability, not guesswork**: live traffic, active hosts, and decision streams that make it obvious what is happening and why.
 - **Local-first and predictable**: your configuration, certificates, and history stay on your server in volumes; updates are designed to be in-place without wiping your data.
 - **Pragmatic by design**: focus on features that reduce operational load, make incidents easier to debug, and keep the UI fast and clean.
+
+This release is validated in production-style deployments on Ubuntu 24 and Debian 13. More improvements and features will land soon.
 
 ## License / Attribution
 NyxGuard Manager is built on top of an upstream proxy-manager codebase and includes substantial modifications and new NyxGuard features.

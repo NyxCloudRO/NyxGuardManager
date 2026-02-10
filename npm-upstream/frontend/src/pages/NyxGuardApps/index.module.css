@@ -2,7 +2,7 @@
   min-height: calc(100vh - 120px);
   padding: 40px 0 60px;
   color: #f6f4ff;
-  background: radial-gradient(120% 120% at 10% 10%, #2b6bff 0%, #1b2a6b 40%, #5b1d84 70%, #d1178a 100%);
+  background: radial-gradient(120% 120% at 10% 10%, #2b6bff 0%, #1b2a6b 40%, #5b1d84 70%, #a31a78 100%);
 }
 
 .card {
@@ -28,10 +28,22 @@
   border-radius: 12px;
   background: rgba(12, 16, 46, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto minmax(420px, 2fr);
   align-items: center;
+  gap: 14px;
   margin-bottom: 12px;
+}
+
+.name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status {
+  justify-self: center;
 }
 
 .badge {
@@ -44,6 +56,12 @@
   border: 1px solid rgba(90, 152, 255, 0.4);
 }
 
+.badgeGreen {
+  background: rgba(34, 197, 94, 0.20);
+  border: 1px solid rgba(34, 197, 94, 0.55);
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.10) inset;
+}
+
 .badgeMuted {
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -54,6 +72,7 @@
   gap: 10px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  justify-self: end;
 }
 
 .toggle {
@@ -70,4 +89,19 @@
 .toggleDisabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+@media (max-width: 960px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+
+  .status {
+    justify-self: start;
+  }
+
+  .actions {
+    justify-self: start;
+    justify-content: flex-start;
+  }
 }

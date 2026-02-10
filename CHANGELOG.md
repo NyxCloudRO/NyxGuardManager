@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.0.0] - 2026-02-10
+
+### Added
+- NyxGuard GlobalGate Security Layer: expanded global protection controls and tuning options, applied across protected apps (DB-backed; includes new migrations).
+- NyxGuard Attacks: new attacks visibility and controls (including IP ban actions) with backend endpoints and UI pages.
+- SQL migrations for new NyxGuard capabilities (attacks monitoring, GlobalGate tuning, and application auth-bypass protections).
+- Installer and updater workflows remain in-place and volume-safe (Ubuntu/Debian oriented), with versioned Docker tags for production publishing.
+
+### Changed
+- UI navigation: redesigned into a left sidebar layout to avoid covering dashboard content and to use the available space effectively.
+- Sidebar menu structure: flattened NyxGuard and Hosts sections into full menu items (no dropdown-only navigation), improving discoverability.
+- Product requirements: updated minimum disk guidance to **40 GB** for small installs (short retention).
+
+### Fixed
+- Real client IP handling behind proxies/CDNs (including Cloudflare) for NyxGuard visibility and logging reliability.
+- Security hardening and stability fixes across backend routing and NyxGuard modules (multiple targeted fixes included in this release).
+
 ## [2.0.5] - 2026-02-09
 
 ### Added
@@ -65,4 +82,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 - Initial NyxGuard Manager v2.0.0 release.
 
-<!-- NyxGuard Manager v2.0.1 (stamp 2026-02-09T08:27:06Z) -->
+<!-- NyxGuard Manager v3.0.0 (stamp 2026-02-10T20:00:00Z) -->

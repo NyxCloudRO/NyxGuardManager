@@ -1,0 +1,189 @@
+.page {
+	min-height: calc(100vh - 120px);
+	padding: 28px 0;
+	/* Hint browsers to render native form popovers (select, date, etc) in dark style when supported. */
+	color-scheme: dark;
+}
+
+.card {
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 18px;
+	box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+	padding: 20px;
+}
+
+.title {
+	margin: 0 0 6px;
+	font-size: 22px;
+	letter-spacing: 0.2px;
+}
+
+.subtitle {
+	margin: 0 0 18px;
+	opacity: 0.9;
+	max-width: 70ch;
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 14px;
+}
+
+@media (min-width: 992px) {
+	.grid {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+.section {
+	background: rgba(0, 0, 0, 0.18);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 16px;
+	padding: 16px;
+}
+
+.sectionTitle {
+	margin: 0 0 10px;
+	font-size: 14px;
+	letter-spacing: 0.5px;
+	text-transform: uppercase;
+	opacity: 0.85;
+}
+
+.row {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 10px;
+	margin-bottom: 12px;
+}
+
+@media (min-width: 768px) {
+	.row {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+.field {
+	display: grid;
+	gap: 6px;
+}
+
+.label {
+	font-size: 13px;
+	opacity: 0.9;
+}
+
+.help {
+	font-size: 12px;
+	opacity: 0.75;
+}
+
+.input,
+.textarea {
+	width: 100%;
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	border-radius: 12px;
+	padding: 10px 12px;
+	color: inherit;
+	outline: none;
+}
+
+/* Improve native <select> dropdown contrast where browsers allow styling options. */
+select.input {
+	color-scheme: dark;
+}
+
+select.input option,
+select.input optgroup {
+	background: #0b1330;
+	color: #e9edf6;
+}
+
+.input:focus,
+.textarea:focus {
+	border-color: rgba(43, 98, 255, 0.65);
+	box-shadow: 0 0 0 3px rgba(43, 98, 255, 0.15);
+}
+
+.textarea {
+	min-height: 120px;
+	resize: vertical;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+	font-size: 12px;
+}
+
+.toggles {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 10px;
+}
+
+.toggleItem {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 10px 12px;
+	border-radius: 12px;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.badgeOn {
+	padding: 4px 10px;
+	border-radius: 999px;
+	background: rgba(24, 180, 126, 0.16);
+	border: 1px solid rgba(24, 180, 126, 0.35);
+	color: #d7fff2;
+	font-size: 12px;
+}
+
+.badgeOff {
+	padding: 4px 10px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.08);
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	font-size: 12px;
+	opacity: 0.9;
+}
+
+.badgePartial {
+	padding: 4px 10px;
+	border-radius: 999px;
+	background: rgba(255, 199, 92, 0.16);
+	border: 1px solid rgba(255, 199, 92, 0.45);
+	color: #fff2d9;
+	font-size: 12px;
+}
+
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-top: 14px;
+}
+
+.primary {
+	border: 0;
+	border-radius: 12px;
+	padding: 10px 14px;
+	background: linear-gradient(135deg, #2b62ff, #ff2bbd);
+	color: #0b0f1f;
+	font-weight: 700;
+}
+
+.ghost {
+	border-radius: 12px;
+	padding: 10px 14px;
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	color: inherit;
+	font-weight: 600;
+}
+
+.error {
+	margin-top: 12px;
+	color: #ffb4b4;
+}

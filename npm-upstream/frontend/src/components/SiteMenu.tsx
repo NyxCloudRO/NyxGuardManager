@@ -1,12 +1,18 @@
 import {
 	IconActivityHeartbeat,
+	IconAlertTriangle,
+	IconArrowsCross,
 	IconBook,
+	IconChartLine,
 	IconDeviceDesktop,
+	IconDisc,
 	IconHome,
 	IconLock,
 	IconSettings,
 	IconShield,
+	IconShieldCheck,
 	IconUser,
+	IconWorld,
 } from "@tabler/icons-react";
 import cn from "classnames";
 import React from "react";
@@ -40,60 +46,67 @@ const menuItems: MenuItem[] = [
 		label: "dashboard",
 	},
 	{
+		to: "/nyxguard",
 		icon: IconActivityHeartbeat,
 		label: "nyxguard",
-		items: [
-			{
-				to: "/nyxguard",
-				label: "nyxguard",
-			},
-			{
-				to: "/nyxguard/traffic",
-				label: "nyxguard-traffic",
-			},
-			{
-				to: "/nyxguard/ips",
-				label: "nyxguard-ips",
-			},
-			{
-				to: "/nyxguard/rules",
-				label: "nyxguard-rules",
-			},
-			{
-				to: "/nyxguard/apps",
-				label: "nyxguard-apps",
-			},
-		],
 	},
 	{
+		to: "/nyxguard/traffic",
+		icon: IconChartLine,
+		label: "nyxguard-traffic",
+	},
+	{
+		to: "/nyxguard/ips",
+		icon: IconWorld,
+		label: "nyxguard-ips",
+	},
+	{
+		to: "/nyxguard/rules",
+		icon: IconArrowsCross,
+		label: "nyxguard-rules",
+	},
+	{
+		to: "/nyxguard/apps",
+		icon: IconDisc,
+		label: "nyxguard-apps",
+	},
+	{
+		to: "/nyxguard/attacks",
+		icon: IconAlertTriangle,
+		label: "nyxguard-attacks",
+	},
+	{
+		to: "/nyxguard/globalgate",
+		icon: IconShieldCheck,
+		label: "nyxguard-globalgate",
+	},
+	{
+		to: "/nyxguard/proxy",
 		icon: IconDeviceDesktop,
-		label: "hosts",
-		items: [
-			{
-				to: "/nyxguard/proxy",
-				label: "proxy-hosts",
-				permissionSection: PROXY_HOSTS,
-				permission: VIEW,
-			},
-			{
-				to: "/nyxguard/redirection",
-				label: "redirection-hosts",
-				permissionSection: REDIRECTION_HOSTS,
-				permission: VIEW,
-			},
-			{
-				to: "/nyxguard/stream",
-				label: "streams",
-				permissionSection: STREAMS,
-				permission: VIEW,
-			},
-			{
-				to: "/nyxguard/404",
-				label: "dead-hosts",
-				permissionSection: DEAD_HOSTS,
-				permission: VIEW,
-			},
-		],
+		label: "proxy-hosts",
+		permissionSection: PROXY_HOSTS,
+		permission: VIEW,
+	},
+	{
+		to: "/nyxguard/redirection",
+		icon: IconArrowsCross,
+		label: "redirection-hosts",
+		permissionSection: REDIRECTION_HOSTS,
+		permission: VIEW,
+	},
+	{
+		to: "/nyxguard/stream",
+		icon: IconChartLine,
+		label: "streams",
+		permissionSection: STREAMS,
+		permission: VIEW,
+	},
+	{
+		to: "/nyxguard/404",
+		icon: IconAlertTriangle,
+		label: "dead-hosts",
+		permissionSection: DEAD_HOSTS,
+		permission: VIEW,
 	},
 	{
 		to: "/access",
@@ -141,6 +154,7 @@ const getMenuItem = (item: MenuItem, onClick?: () => void) => {
 
 	const isSupport = item.label === "support-nyxguard";
 	const linkClassName = isSupport ? "nav-link support-nyxguard" : "nav-link";
+	const menuTitle = item.label === "proxy-hosts" ? "NyxGate Proxy Hosts" : <T id={item.label} />;
 
 	return (
 		<HasPermission
@@ -149,28 +163,28 @@ const getMenuItem = (item: MenuItem, onClick?: () => void) => {
 			permission={item.permission || VIEW}
 			hideError
 		>
-			<li className="nav-item">
+			<li className="nav-item" data-menu={item.label}>
 				{item.to?.startsWith("http") ? (
 					<a className={linkClassName} href={item.to} target="_blank" rel="noreferrer">
-						<span className="nav-link-icon d-md-none d-lg-inline-block">
-							{item.icon && React.createElement(item.icon, { height: 24, width: 24 })}
-						</span>
-						<span className="nav-link-title">
-							<T id={item.label} />
-						</span>
-					</a>
-				) : (
-					<NavLink to={item.to} onClick={onClick} className={linkClassName}>
-						<span className="nav-link-icon d-md-none d-lg-inline-block">
-							{item.icon && React.createElement(item.icon, { height: 24, width: 24 })}
-						</span>
-						<span className="nav-link-title">
-							<T id={item.label} />
-						</span>
-					</NavLink>
-				)}
-			</li>
-		</HasPermission>
+					<span className="nav-link-icon d-md-none d-lg-inline-block">
+						{item.icon && React.createElement(item.icon, { height: 24, width: 24 })}
+					</span>
+					<span className="nav-link-title">
+						{menuTitle}
+					</span>
+				</a>
+			) : (
+				<NavLink to={item.to} onClick={onClick} className={linkClassName}>
+					<span className="nav-link-icon d-md-none d-lg-inline-block">
+						{item.icon && React.createElement(item.icon, { height: 24, width: 24 })}
+					</span>
+					<span className="nav-link-title">
+						{menuTitle}
+					</span>
+				</NavLink>
+			)}
+		</li>
+	</HasPermission>
 	);
 };
 
@@ -183,7 +197,7 @@ const getMenuDropown = (item: MenuItem, onClick?: () => void) => {
 			permission={item.permission || VIEW}
 			hideError
 		>
-			<li className={cns}>
+			<li className={cns} data-menu={item.label}>
 				<a
 					className="nav-link dropdown-toggle"
 					href={item.to}
@@ -220,7 +234,7 @@ const getMenuDropown = (item: MenuItem, onClick?: () => void) => {
 	);
 };
 
-export function SiteMenu() {
+export function SiteMenu({ variant = "top" }: { variant?: "top" | "side" }) {
 	const closeMenu = () =>
 		setTimeout(() => {
 			const navbarToggler = document.querySelector<HTMLElement>(".navbar-toggler");
@@ -231,7 +245,7 @@ export function SiteMenu() {
 		}, 300);
 
 	return (
-		<ul className="navbar-nav mx-auto">
+		<ul className={cn("navbar-nav", variant === "side" && "flex-column")}>
 			{menuItems.length > 0 &&
 				menuItems.map((item) => {
 					return getMenuItem(item, closeMenu);

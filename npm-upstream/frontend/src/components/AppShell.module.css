@@ -1,0 +1,28 @@
+.shell {
+	display: flex;
+	align-items: flex-start;
+	gap: 1rem;
+}
+
+.sidebarWrap {
+	flex: 0 0 280px;
+	width: 280px;
+	min-width: 240px;
+}
+
+.main {
+	flex: 1 1 auto;
+	min-width: 0; /* allow children to shrink instead of causing horizontal overflow */
+}
+
+@media (max-width: 767.98px) {
+	.shell {
+		flex-direction: column;
+	}
+
+	.sidebarWrap {
+		width: 100%;
+		min-width: 0;
+	}
+}
+

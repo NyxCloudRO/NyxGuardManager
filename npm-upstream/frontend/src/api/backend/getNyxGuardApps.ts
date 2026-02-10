@@ -9,6 +9,8 @@ export interface NyxGuardAppItem {
 	wafEnabled: boolean;
 	botDefenseEnabled: boolean;
 	ddosEnabled: boolean;
+	sqliEnabled: boolean;
+	authBypassEnabled: boolean;
 }
 
 export interface NyxGuardAppsResponse {

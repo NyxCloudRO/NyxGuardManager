@@ -1,0 +1,86 @@
+.page {
+  min-height: calc(100vh - 120px);
+  padding: 40px 0 60px;
+  color: #f6f4ff;
+  background: radial-gradient(120% 120% at 10% 10%, #ff6b2b 0%, #6b1b1b 40%, #2a1b6b 70%, #178ad1 100%);
+}
+
+.card {
+  border-radius: 18px;
+  padding: 28px;
+  background: rgba(9, 12, 38, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 60px rgba(8, 6, 26, 0.4);
+}
+
+.titleRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 30px;
+}
+
+.subtitle {
+  margin: 0 0 18px;
+  opacity: 0.85;
+}
+
+.windowGroup {
+  display: inline-flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.window {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+}
+
+.windowActive {
+  composes: window;
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.pill {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.pillBot {
+  background: rgba(90, 152, 255, 0.18);
+  border-color: rgba(90, 152, 255, 0.35);
+}
+
+.pillDdos {
+  background: rgba(255, 166, 0, 0.18);
+  border-color: rgba(255, 166, 0, 0.35);
+}
+
+.pillSqli {
+  background: rgba(255, 80, 140, 0.18);
+  border-color: rgba(255, 80, 140, 0.35);
+}
+
+.placeholder {
+  padding: 24px;
+  border-radius: 14px;
+  background: rgba(12, 16, 46, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+

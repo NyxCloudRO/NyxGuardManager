@@ -3,9 +3,19 @@
 
 # This file assumes that the frontend has been built using ./scripts/frontend-build
 
-FROM golang:1.22-bookworm AS certprune-build
+FROM golang:1.24-bookworm AS certprune-build
 ARG CERT_PRUNE_VERSION="latest"
-RUN go install "github.com/axllent/cert-prune@${CERT_PRUNE_VERSION}"
+RUN set -eux; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends git ca-certificates; \
+	rm -rf /var/lib/apt/lists/*; \
+	# Build from source so we can force patched deps when upstream lags.
+	mkdir -p /src; \
+	( git clone --depth 1 --branch "${CERT_PRUNE_VERSION}" https://github.com/axllent/cert-prune.git /src/cert-prune || git clone --depth 1 https://github.com/axllent/cert-prune.git /src/cert-prune ); \
+	cd /src/cert-prune; \
+	go mod edit -replace github.com/sirupsen/logrus=github.com/sirupsen/logrus@v1.9.3; \
+	go mod tidy; \
+	go build -trimpath -ldflags "-s -w" -o /go/bin/cert-prune .
 
 FROM nginxproxymanager/testca AS testca
 FROM jc21/nginx-proxy-manager:latest
@@ -29,7 +39,9 @@ ENV SUPPRESS_NO_CONFIG_WARNING=1 \
 
 RUN echo "fs.file-max = 65535" > /etc/sysctl.conf \
 	&& apt-get update \
-	&& apt-get install -y --no-install-recommends jq logrotate \
+	&& apt-get upgrade -y \
+	&& apt-get install -y --no-install-recommends jq logrotate python3-pip \
+	&& python3 -m pip install --no-cache-dir -U pip setuptools \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
 
