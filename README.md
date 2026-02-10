@@ -2,7 +2,7 @@
   <img src="assets/nyxguard-wordmark-clean.svg" alt="NyxGuard Manager" width="1000" />
 </p>
 
-NyxGuard Manager is a production-ready reverse proxy manager with an integrated security layer (NyxGuard): WAF controls, bot defense, DDoS shielding, IP/Geo intelligence, and real-time traffic visibility, designed to run locally on your own server with Docker.
+NyxGuard Manager is a production-ready reverse proxy manager with an integrated security layer (NyxGuard): WAF controls, SQL Shield protection, bot defense, DDoS shielding, auth-bypass controls, IP/Geo intelligence, attacks visibility, and real-time traffic analytics, designed to run locally on your own server with Docker.
 
 ## Changelog
 <a href="CHANGELOG.md">
