@@ -40,8 +40,7 @@ ENV SUPPRESS_NO_CONFIG_WARNING=1 \
 RUN echo "fs.file-max = 65535" > /etc/sysctl.conf \
 	&& apt-get update \
 	&& apt-get upgrade -y \
-	&& apt-get install -y --no-install-recommends jq logrotate python3-pip \
-	&& python3 -m pip install --no-cache-dir -U pip setuptools \
+	&& apt-get install -y --no-install-recommends jq logrotate \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
 
@@ -55,6 +54,11 @@ COPY frontend/dist /app/frontend
 WORKDIR /app
 RUN yarn install \
 	&& yarn cache clean
+
+# Reduce shipped CVE surface:
+# - npm/node-gyp are not required at runtime (backend runs via node + bundled deps).
+# - python3-pip/setuptools are not required at runtime (certbot is handled via its own venv in the base image).
+RUN rm -rf /usr/lib/node_modules/npm /usr/bin/npm /usr/bin/npx || true
 
 # add late to limit cache-busting by modifications
 COPY docker/rootfs /

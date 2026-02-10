@@ -1,8 +1,8 @@
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    # NyxGuard Manager v3.0.0 (published image). Override via install.sh or by editing this file.
-    image: nyxmael/nyxguardmanager:3.0.0
+    # NyxGuard Manager v3.0.1 (published image). Override via install.sh or by editing this file.
+    image: nyxmael/nyxguardmanager:3.0.1
     restart: unless-stopped
     ports:
       - "80:80"

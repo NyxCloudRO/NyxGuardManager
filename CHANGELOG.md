@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.0.1] - 2026-02-10
+
+### Changed
+- Container hardening: reduced shipped CVE surface by removing runtime-unneeded tooling (system `python3-pip`/`setuptools` and the global `npm`/`npx` CLI stack) from the production image.
+- Versioning/publishing: `docker-compose.yml` now targets `nyxmael/nyxguardmanager:3.0.1`.
+
 ## [3.0.0] - 2026-02-10
 
 ### Added
@@ -39,7 +45,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - UI navigation: redesigned into a left sidebar layout to avoid covering dashboard content and to use available space effectively.
 - Sidebar menu structure: flattened NyxGuard and Hosts sections into full menu items (improves discoverability and reduces overlay UI).
 - Product requirements: updated minimum disk guidance to **40 GB** for small installs (short retention).
-- Versioning/publishing: `docker-compose.yml` now targets the published image tag `nyxmael/nyxguardmanager:3.0.0`.
+- Versioning/publishing: `docker-compose.yml` targets the published Docker image tag for the current release.
 
 ### Fixed
 - Real client IP handling behind proxies/CDNs (including Cloudflare) for NyxGuard visibility and logging reliability.
@@ -106,4 +112,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 - Initial NyxGuard Manager v2.0.0 release.
 
-<!-- NyxGuard Manager v3.0.0 (stamp 2026-02-10T20:00:00Z) -->
+<!-- NyxGuard Manager v3.0.1 (stamp 2026-02-10T23:45:00Z) -->
