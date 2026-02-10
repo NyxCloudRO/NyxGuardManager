@@ -201,7 +201,7 @@ ensure_image() {
   # Docker tag sanity: spaces/parentheses from OS VERSION would be invalid here.
   if [[ ! "${version}" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$ ]]; then
     echo "ERROR: Invalid app version for Docker tag: '${version}'" >&2
-    echo "Tip: set APP_VERSION to something like '2.0.1'." >&2
+    echo "Tip: set APP_VERSION to something like '3.0.2'." >&2
     exit 1
   fi
 
