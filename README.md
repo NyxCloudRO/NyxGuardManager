@@ -75,6 +75,12 @@ sudo apt -y upgrade
 sudo apt install -y curl
 ```
 
+Why this method is recommended:
+- Installs into a predictable location: `/opt/nyxguardmanager` (override with `INSTALL_DIR=/your/path`)
+- Ensures required dependencies are present (Docker + Compose on Ubuntu/Debian)
+- Creates `.env` on first install and keeps upgrades in-place (data stays in Docker volumes)
+- Keeps future updates consistent: `update.sh` expects the same install directory
+
 Then run the installer (pinned to this release):
 
 ```bash
