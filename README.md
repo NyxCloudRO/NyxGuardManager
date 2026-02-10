@@ -22,11 +22,16 @@ NyxGuard Manager is a production-ready reverse proxy manager with an integrated 
 - Access Lists, Users, Audit Logs, Settings
 
 ### NyxGuard Security Layer
-- Per-proxy toggles: WAF, Bot Defence, DDoS Shield
-- Global toggles: Bot Defence (master), DDoS Shield (master)
-- Dashboard: live status pills, live traffic view, active hosts summary
+- Per-proxy toggles: WAF, Bot Defence, DDoS Shield, SQL Shield, Auth Bypass
+- Global toggles (GlobalGate): Bot Defence (master), DDoS Shield (master), SQL Shield (master), Auth Bypass (master)
+- Dashboard: live status pills, live traffic view, active hosts summary + traffic analytics (RX/TX)
+- Attacks: centralized attack stream and counters (SQLi / Bot / DDoS / AuthFail) with ban actions
 - IPs & Locations: 15m / 1h / 1d / 7d windows, retention 30 / 60 / 90 / 180 days
 - Rules: allow/deny by IP/CIDR or Country (ISO), optional expiry 1 / 7 / 30 / 60 / 90 / 180 days
+- SQL Shield Protection (WAF companion):
+  - Request scoring based on URI, query parameters, and small bodies (JSON/form/text) with a configurable max inspection size
+  - Hard block when score exceeds threshold, plus rolling correlation to block repeated low/medium probes from the same IP
+  - Structured attack logging to `/data/logs/nyxguard_attacks.log` (ingested into the database for the Attacks UI)
 
 ### GeoIP Country (Optional)
 NyxGuard can show the **country code** for each IP (RO/FR/GB/etc). For accurate results you need a local GeoIP database.

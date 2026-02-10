@@ -9,9 +9,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 - NyxGuard GlobalGate Security Layer: expanded global protection controls and tuning options, applied across protected apps (DB-backed).
 - NyxGuard Attacks: attacks visibility and controls (including IP ban actions) with backend endpoints and UI pages.
-- SQL Injection Shield:
-  - New global toggle (`nyxguard_settings.sqli_enabled`).
-  - Tuning knobs: threshold/body size/probe scoring and windowing.
+- SQL Shield Protection (SQL Injection Shield):
+  - Global master toggle: `nyxguard_settings.sqli_enabled`.
+  - Per-app toggle stored in proxy host metadata (enforced only when WAF is enabled for that app).
+  - Nginx/Lua-based request scoring that inspects:
+    - Request URI
+    - Query-string keys/values (parameter-aware)
+    - Small request bodies for `POST/PUT/PATCH/DELETE` (JSON/form/text), up to `sqli_max_body`
+    - For JSON bodies: recursive key/value inspection to reduce obfuscation (with safety caps)
+  - Blocking logic:
+    - Hard block (403) when `score >= sqli_threshold`
+    - Rolling correlation per IP using `lua_shared_dict nyxguard_sqli_ip`:
+      - accumulate scores when `score >= sqli_probe_min_score`
+      - block when accumulated score reaches `sqli_probe_ban_score` within `sqli_probe_window_sec`
+  - Tunables stored in `nyxguard_settings`:
+    - `sqli_threshold`, `sqli_max_body`
+    - `sqli_probe_min_score`, `sqli_probe_ban_score`, `sqli_probe_window_sec`
 - Attack event persistence:
   - New `nyxguard_attack_event` table (typed: `sqli`, `ddos`, `bot`) with indexed queries by time/type/IP.
   - New `nyxguard_attack_state` table to track nginx attack-log read position (inode/offset).
