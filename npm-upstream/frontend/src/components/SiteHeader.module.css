@@ -49,6 +49,63 @@
 	color: transparent;
 }
 
+.magicBrand {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.28rem;
+	white-space: nowrap;
+	user-select: none;
+	cursor: default;
+	/* Guard against inherited uppercase/letter-spacing from upstream navbar styles */
+	text-transform: none;
+	letter-spacing: 0;
+}
+
+.magicWordmark {
+	font-family:
+		"Segoe UI",
+		system-ui,
+		-apple-system,
+		"Helvetica Neue",
+		Arial,
+		sans-serif;
+	font-size: 1.18rem;
+	font-weight: 750;
+	letter-spacing: -0.01em;
+	line-height: 1.1;
+
+	/* Clean, static "electric" highlight (no motion). */
+	background: linear-gradient(90deg, rgba(136, 229, 255, 1), rgba(120, 172, 255, 1), rgba(187, 146, 255, 0.95));
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+
+	filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.28));
+}
+
+.magicSub {
+	font-family:
+		"Segoe UI",
+		system-ui,
+		-apple-system,
+		"Helvetica Neue",
+		Arial,
+		sans-serif;
+	font-size: 0.98rem;
+	font-weight: 650;
+	letter-spacing: 0.02em;
+	line-height: 1.1;
+	opacity: 0.88;
+	text-transform: none;
+	transform: translateY(1px); /* visually center against the primary word */
+
+	/* Calm companion palette (static, subtle). */
+	background: linear-gradient(90deg, rgba(226, 245, 255, 0.95), rgba(170, 196, 255, 0.92), rgba(210, 180, 255, 0.9));
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
 .brandMiniMark {
 	width: 14px;
 	height: 14px;
@@ -62,14 +119,41 @@
 	position: relative;
 	z-index: 1050;
 	padding: 0;
-	backdrop-filter: blur(10px);
-	background: rgba(9, 12, 38, 0.75);
-	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+	/* Match the "transparent UI" direction used by the left sidebar. */
+	backdrop-filter: blur(10px) saturate(120%);
+	background: rgba(0, 0, 0, 0.10);
+	border-bottom: 0;
 }
 
 .brandRow {
-	padding: 0.35rem 0;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+	padding: 0.2rem 0;
+	border-bottom: 0;
+}
+
+.brandRow :global(.navbar) {
+	/* Tabler/Bootstrap navbar defaults are tall; compact it to match the sidebar density. */
+	padding-top: 0;
+	padding-bottom: 0;
+	min-height: 52px;
+}
+
+.brandRow :global(.navbar .container-fluid) {
+	padding-top: 0.15rem;
+	padding-bottom: 0.15rem;
+}
+
+.brandRow :global(.navbar-brand) {
+	padding: 0;
+}
+
+.brandRow :global(.avatar-sm) {
+	width: 28px;
+	height: 28px;
+}
+
+.brandRow :global(.navbar-nav .nav-link) {
+	padding-top: 0.25rem;
+	padding-bottom: 0.25rem;
 }
 
 .brandBar {
@@ -121,12 +205,12 @@
 
 .sideMenu {
 	/* Shares the same palette as the top menu, but is rendered as a left sidebar. */
-	padding: 0.6rem 0.55rem;
+	padding: 0.45rem 0.4rem;
 	border-radius: 18px;
-	border: 1px solid rgba(255, 255, 255, 0.08);
+	border: 1px solid rgba(255, 255, 255, 0.10);
 	box-shadow:
-		0 22px 60px rgba(0, 0, 0, 0.35),
-		0 1px 0 rgba(255, 255, 255, 0.04) inset;
+		0 18px 46px rgba(0, 0, 0, 0.28),
+		0 1px 0 rgba(255, 255, 255, 0.03) inset;
 
 	/* Keep the palette vars in sync with `.menuRow` so the menu looks identical. */
 	--nav-bg-top: rgba(10, 14, 34, 0.86);
@@ -140,11 +224,9 @@
 	--nav-accent-a: rgba(75, 139, 255, 0.95);
 	--nav-accent-b: rgba(255, 43, 189, 0.85);
 
-	background:
-		radial-gradient(900px 160px at 18% 0%, rgba(75, 139, 255, 0.16), transparent 62%),
-		radial-gradient(800px 160px at 84% 0%, rgba(255, 43, 189, 0.10), transparent 58%),
-		linear-gradient(180deg, var(--nav-bg-top), var(--nav-bg-bot));
-	backdrop-filter: blur(14px) saturate(160%);
+	/* Transparent sidebar: let the dashboard background show through. */
+	background: transparent;
+	backdrop-filter: none;
 }
 
 .menuRow :global(.navbar-collapse) {
@@ -166,7 +248,7 @@
 
 .sideMenu :global(.navbar-nav) {
 	flex-wrap: nowrap;
-	gap: 0.25rem;
+	gap: 0.12rem;
 }
 
 .menuRow :global(.navbar-nav .nav-link) {
@@ -190,11 +272,13 @@
 .sideMenu :global(.navbar-nav .nav-link) {
 	position: relative;
 	color: var(--nav-fg);
-	text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+	/* Cleaner type, closer to the dashboard card typography. */
+	text-shadow: none;
 	border-radius: 12px;
-	padding: 0.55rem 0.85rem;
-	font-weight: 650;
-	letter-spacing: 0.02em;
+	padding: 0.42rem 0.65rem;
+	font-weight: 600;
+	letter-spacing: 0.005em;
+	line-height: 1.15;
 	--item-accent-a: var(--nav-accent-a);
 	--item-accent-b: var(--nav-accent-b);
 	transition:
@@ -212,6 +296,14 @@
 .sideMenu :global(.navbar-nav .nav-link .nav-link-icon) {
 	opacity: 0.92;
 	transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.sideMenu :global(.navbar-nav .nav-link .nav-link-title) {
+	/* Override the global `.navbar .nav-link-title` small uppercase styling for the sidebar. */
+	text-transform: none;
+	font-size: 0.86rem;
+	letter-spacing: 0.005em;
+	font-weight: 600;
 }
 
 .menuRow :global(.navbar-nav .nav-link:hover),

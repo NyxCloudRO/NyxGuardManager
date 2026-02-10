@@ -531,7 +531,7 @@
 		"defaultMessage": "DDoS Protection"
 	},
 	"nyxguard-globalgate": {
-		"defaultMessage": "GlobalGate Security Layer"
+		"defaultMessage": "GlobalGate Shieldwall"
 	},
 	"nyxguard-ips": {
 		"defaultMessage": "IPs & Geo"

@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.0.3] - 2026-02-10
+
+### Changed
+- UI/UX polish: refined left sidebar density, translucency, and typography for higher readability.
+- UI/UX polish: applied a consistent “glass” palette across cards, tables, and form controls for a more cohesive operator UI.
+- Header branding: updated the top-center wordmark styling to be compact, clean, and consistent with the overall palette (no motion).
+- Navigation copy: renamed GlobalGate menu entry to **GlobalGate Shieldwall**.
+
 ## [3.0.2] - 2026-02-10
 
 ### Changed
@@ -116,4 +124,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 - Initial NyxGuard Manager v2.0.0 release.
 
-<!-- NyxGuard Manager v3.0.2 (stamp 2026-02-10T23:55:00Z) -->
+<!-- NyxGuard Manager v3.0.3 (stamp 2026-02-10T23:36:07Z) -->

@@ -32,20 +32,9 @@ export function SiteHeader() {
 						</div>
 						<div className={styles.brandCenter}>
 							<div className="navbar-brand navbar-brand-autodark p-0">
-								<div className={styles.brandLink}>
-									<div className={styles.logo}>
-										<img
-											src="/images/favicon/logo-128.png"
-											width={40}
-											height={40}
-											className={`navbar-brand-image ${styles.brandLogo}`}
-											alt="NyxGuard"
-										/>
-									</div>
-									<span className={styles.brandText}>
-										<span className={styles.brandWordPrimary}>NyxGuard</span>
-										<span className={styles.brandWordSecondary}>Manager</span>
-									</span>
+								<div className={styles.magicBrand}>
+									<span className={styles.magicWordmark}>NyxGuard</span>
+									<span className={styles.magicSub}>Manager</span>
 								</div>
 							</div>
 						</div>

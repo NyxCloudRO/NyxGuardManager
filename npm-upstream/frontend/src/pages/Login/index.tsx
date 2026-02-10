@@ -195,7 +195,6 @@ export default function Login() {
 			<div className="container container-tight py-4">
 				<div className="d-flex justify-content-center align-items-center mb-4">
 					<div className={styles.brand}>
-						<img className={styles.brandIcon} src="/images/favicon/favicon.svg" alt="" />
 						<div className={styles.brandText}>
 							<span className={styles.brandWordPrimary}>NyxGuard</span>
 							<span className={styles.brandWordSecondary}>Manager</span>
