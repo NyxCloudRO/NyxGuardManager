@@ -67,7 +67,15 @@ NyxGuard Manager is published as a prebuilt Docker image on Docker Hub (`nyxmael
 
 ### Install Via curl (Recommended)
 
-Run as root on Ubuntu/Debian:
+On a fresh Ubuntu/Debian VM (or container), do a quick OS update first and ensure `curl` is installed:
+
+```bash
+sudo apt update
+sudo apt -y upgrade
+sudo apt install -y curl
+```
+
+Then run the installer (pinned to this release):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | sudo APP_VERSION=3.0.0 bash
