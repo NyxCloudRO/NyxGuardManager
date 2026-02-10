@@ -7,19 +7,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [3.0.0] - 2026-02-10
 
 ### Added
-- NyxGuard GlobalGate Security Layer: expanded global protection controls and tuning options, applied across protected apps (DB-backed; includes new migrations).
-- NyxGuard Attacks: new attacks visibility and controls (including IP ban actions) with backend endpoints and UI pages.
-- SQL migrations for new NyxGuard capabilities (attacks monitoring, GlobalGate tuning, and application auth-bypass protections).
-- Installer and updater workflows remain in-place and volume-safe (Ubuntu/Debian oriented), with versioned Docker tags for production publishing.
+- NyxGuard GlobalGate Security Layer: expanded global protection controls and tuning options, applied across protected apps (DB-backed).
+- NyxGuard Attacks: attacks visibility and controls (including IP ban actions) with backend endpoints and UI pages.
+- SQL Injection Shield:
+  - New global toggle (`nyxguard_settings.sqli_enabled`).
+  - Tuning knobs: threshold/body size/probe scoring and windowing.
+- Attack event persistence:
+  - New `nyxguard_attack_event` table (typed: `sqli`, `ddos`, `bot`) with indexed queries by time/type/IP.
+  - New `nyxguard_attack_state` table to track nginx attack-log read position (inode/offset).
+- DDoS, Bot, and Failed-login auto-ban tuning (stored in `nyxguard_settings`).
+- Auth bypass controls:
+  - Global setting (`nyxguard_settings.auth_bypass_enabled`).
+  - Per-app setting (`nyxguard_app.auth_bypass_enabled`).
+- Updated installer defaults to v3.0.0 and kept in-place update strategy (volumes preserved).
 
 ### Changed
-- UI navigation: redesigned into a left sidebar layout to avoid covering dashboard content and to use the available space effectively.
-- Sidebar menu structure: flattened NyxGuard and Hosts sections into full menu items (no dropdown-only navigation), improving discoverability.
+- UI navigation: redesigned into a left sidebar layout to avoid covering dashboard content and to use available space effectively.
+- Sidebar menu structure: flattened NyxGuard and Hosts sections into full menu items (improves discoverability and reduces overlay UI).
 - Product requirements: updated minimum disk guidance to **40 GB** for small installs (short retention).
+- Versioning/publishing: `docker-compose.yml` now targets the published image tag `nyxmael/nyxguardmanager:3.0.0`.
 
 ### Fixed
 - Real client IP handling behind proxies/CDNs (including Cloudflare) for NyxGuard visibility and logging reliability.
-- Security hardening and stability fixes across backend routing and NyxGuard modules (multiple targeted fixes included in this release).
+- Multiple security hardening and stability fixes across backend routing and NyxGuard modules.
 
 ## [2.0.5] - 2026-02-09
 
