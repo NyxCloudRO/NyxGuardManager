@@ -204,8 +204,7 @@ This release is validated in production-style deployments on Ubuntu 24 and Debia
 NyxGuard Manager builds on an upstream reverse-proxy manager codebase and adds substantial engineering and product work: the NyxGuard security layer (WAF controls, SQL Shield, bot defense, DDoS protection), traffic analytics, and operational tooling.
 
 <p>
-  <strong><span style="color:#20c997">Commitment:</span></strong>
-  keep NyxGuard Manager <strong><span style="color:#20c997">free to use</span></strong> for both personal and enterprise deployments.
-  We do not plan to introduce paid license tiers or a commercial licensing model.
-  As the project grows, we aim to rely on the community: contributions, testing, feedback, and optional community support.
+  <img src="assets/free-forever.svg" alt="Commitment: Free Forever" height="48" />
 </p>
+
+**Commitment:** keep NyxGuard Manager **free to use** for both personal and enterprise deployments. We do not plan to introduce paid license tiers or a commercial licensing model. As the project grows, we aim to rely on the community: contributions, testing, feedback, and optional community support.
