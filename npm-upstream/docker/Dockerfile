@@ -41,6 +41,8 @@ RUN echo "fs.file-max = 65535" > /etc/sysctl.conf \
 	&& apt-get update \
 	&& apt-get upgrade -y \
 	&& apt-get install -y --no-install-recommends jq logrotate \
+	&& apt-get purge -y python3-pip python3-pip-whl python3-setuptools python3-setuptools-whl python3-wheel 2>/dev/null || true \
+	&& apt-get autoremove -y || true \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
 

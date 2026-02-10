@@ -45,7 +45,7 @@ Resolution order:
 2. MaxMind GeoLite2 (if installed)
 3. IP2Location (if installed)
 
-<!-- NyxGuard Manager v3.0.1 (stamp 2026-02-10T23:45:00Z) -->
+<!-- NyxGuard Manager v3.0.2 (stamp 2026-02-10T23:55:00Z) -->
 
 Option A (manual upload, MaxMind GeoLite2):
 1. Create a free MaxMind account.
@@ -84,7 +84,7 @@ Why this method is recommended:
 Then run the installer (pinned to this release):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | sudo APP_VERSION=3.0.1 bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | sudo APP_VERSION=3.0.2 bash
 ```
 
 By default the installer pulls `nyxmael/nyxguardmanager:<version>` and starts the stack with Docker Compose.
@@ -92,7 +92,7 @@ By default the installer pulls `nyxmael/nyxguardmanager:<version>` and starts th
 Optional:
 - Build locally instead of pulling: `BUILD_LOCAL=true`
 - Use a different image/repo: `IMAGE_REPO=youruser/nyxguardmanager`
-- Install a specific version: `APP_VERSION=3.0.1`
+- Install a specific version: `APP_VERSION=3.0.2`
 
 ### Install Via Docker (Compose)
 
@@ -111,7 +111,7 @@ curl -fsSLO https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/.e
 cp .env.example .env
 ```
 
-`docker-compose.yml` is pinned to `nyxmael/nyxguardmanager:3.0.1` for production installs. To use a different version, edit the `image:` tag in `docker-compose.yml`.
+`docker-compose.yml` is pinned to `nyxmael/nyxguardmanager:3.0.2` for production installs. To use a different version, edit the `image:` tag in `docker-compose.yml`.
 
 3. Edit `.env` (set strong passwords for `DB_MYSQL_PASSWORD` and `MYSQL_ROOT_PASSWORD`), then start:
 
@@ -185,7 +185,7 @@ docker compose --env-file .env up -d
 
 - Your data is stored in Docker volumes, so updates should not wipe config/certs/DB unless you delete volumes.
 - If you previously migrated volumes (via `NYXGUARD_*_VOLUME` in `.env`), keep those values unchanged.
-- If you want to update to a specific release, change the `image:` tag in `docker-compose.yml` (for example, `nyxmael/nyxguardmanager:3.0.1`) before running `docker compose pull`.
+- If you want to update to a specific release, change the `image:` tag in `docker-compose.yml` (for example, `nyxmael/nyxguardmanager:3.0.2`) before running `docker compose pull`.
 
 ## Quick Health Checks
 

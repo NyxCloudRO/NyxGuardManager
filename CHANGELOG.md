@@ -4,11 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.0.2] - 2026-02-10
+
+### Changed
+- Container hardening: removed remaining system Python wheel packages (`python3-pip-whl`, `python3-setuptools-whl`, etc.) from the production image to further reduce reported CVEs.
+
 ## [3.0.1] - 2026-02-10
 
 ### Changed
 - Container hardening: reduced shipped CVE surface by removing runtime-unneeded tooling (system `python3-pip`/`setuptools` and the global `npm`/`npx` CLI stack) from the production image.
-- Versioning/publishing: `docker-compose.yml` now targets `nyxmael/nyxguardmanager:3.0.1`.
 
 ## [3.0.0] - 2026-02-10
 
@@ -112,4 +116,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 - Initial NyxGuard Manager v2.0.0 release.
 
-<!-- NyxGuard Manager v3.0.1 (stamp 2026-02-10T23:45:00Z) -->
+<!-- NyxGuard Manager v3.0.2 (stamp 2026-02-10T23:55:00Z) -->
