@@ -70,7 +70,7 @@ NyxGuard Manager is published as a prebuilt Docker image on Docker Hub (`nyxmael
 Run as root on Ubuntu/Debian:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | sudo APP_VERSION=3.0.0 bash
 ```
 
 By default the installer pulls `nyxmael/nyxguardmanager:<version>` and starts the stack with Docker Compose.
