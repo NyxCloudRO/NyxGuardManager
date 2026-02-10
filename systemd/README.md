@@ -12,3 +12,4 @@ sudo systemctl enable --now nyxguardmanager.service
 
 By default, the service expects the stack in `/opt/nyxguardmanager` (as installed by `install.sh`).
 
+<!-- stamp 2026-02-10T22:03:52Z -->

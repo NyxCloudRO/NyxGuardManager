@@ -45,7 +45,7 @@ Resolution order:
 2. MaxMind GeoLite2 (if installed)
 3. IP2Location (if installed)
 
-<!-- NyxGuard Manager v3.0.2 (stamp 2026-02-10T23:55:00Z) -->
+<!-- NyxGuard Manager v3.0.2 (stamp 2026-02-10T22:03:52Z) -->
 
 Option A (manual upload, MaxMind GeoLite2):
 1. Create a free MaxMind account.

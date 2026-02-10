@@ -1,8 +1,4 @@
-# NyxGuard Manager
+# NyxGuard Manager v3.0.2
 
-This folder contains the upstream proxy-manager stack used by NyxGuard Manager (backend, frontend, docker rootfs, etc).
+This folder contains the application source (backend, frontend, and Docker build context).
 
-Read the project README at the repository root for:
-- Features
-- Install instructions
-- NyxGuard usage

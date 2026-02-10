@@ -5,3 +5,4 @@ This folder contains GitHub configuration for the NyxGuard Manager project:
 - Issue templates: `.github/ISSUE_TEMPLATE/`
 - Automation workflows: `.github/workflows/`
 
+<!-- stamp 2026-02-10T22:03:52Z -->
