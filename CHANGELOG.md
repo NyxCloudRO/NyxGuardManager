@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 - NyxGuard GlobalGate Security Layer: expanded global protection controls and tuning options, applied across protected apps (DB-backed).
 - NyxGuard Attacks: attacks visibility and controls (including IP ban actions) with backend endpoints and UI pages.
+- Expanded install validation: confirmed working installs on Ubuntu 22, Ubuntu 24, Debian 12, and Debian 13.
 - SQL Shield Protection (SQL Injection Shield):
   - Global master toggle: `nyxguard_settings.sqli_enabled`.
   - Per-app toggle stored in proxy host metadata (enforced only when WAF is enabled for that app).
