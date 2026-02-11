@@ -1,5 +1,5 @@
 import { IconLock, IconLogout, IconShieldLock, IconUser } from "@tabler/icons-react";
-import { LocalePicker } from "src/components";
+import { LocalePicker, ThemeSwitcher } from "src/components";
 import { useAuthState } from "src/context";
 import { useUser } from "src/hooks";
 import { T } from "src/locale";
@@ -42,6 +42,9 @@ export function SiteHeader() {
 							<div className={`navbar-nav flex-row ${styles.rightControls}`}>
 								<div className="nav-item">
 									<LocalePicker />
+								</div>
+								<div className="nav-item d-none d-lg-flex">
+									<ThemeSwitcher compact />
 								</div>
 								<div className="nav-item d-md-flex">
 									<div className={`nav-item dropdown ${styles.userMenu}`}>

@@ -75,7 +75,7 @@
 	line-height: 1.1;
 
 	/* Clean, static "electric" highlight (no motion). */
-	background: linear-gradient(90deg, rgba(136, 229, 255, 1), rgba(120, 172, 255, 1), rgba(187, 146, 255, 0.95));
+	background: linear-gradient(90deg, color-mix(in srgb, var(--app-primary) 58%, #b6f1ff), var(--app-primary), var(--app-secondary));
 	-webkit-background-clip: text;
 	background-clip: text;
 	color: transparent;
@@ -100,7 +100,12 @@
 	transform: translateY(1px); /* visually center against the primary word */
 
 	/* Calm companion palette (static, subtle). */
-	background: linear-gradient(90deg, rgba(226, 245, 255, 0.95), rgba(170, 196, 255, 0.92), rgba(210, 180, 255, 0.9));
+	background: linear-gradient(
+		90deg,
+		color-mix(in srgb, var(--app-text-primary) 94%, #ffffff),
+		color-mix(in srgb, var(--app-text-secondary) 84%, var(--app-primary)),
+		color-mix(in srgb, var(--app-text-secondary) 76%, var(--app-secondary))
+	);
 	-webkit-background-clip: text;
 	background-clip: text;
 	color: transparent;
@@ -121,7 +126,7 @@
 	padding: 0;
 	/* Match the "transparent UI" direction used by the left sidebar. */
 	backdrop-filter: blur(10px) saturate(120%);
-	background: rgba(0, 0, 0, 0.10);
+	background: color-mix(in srgb, var(--app-surface-2) 82%, transparent);
 	border-bottom: 0;
 }
 
@@ -183,20 +188,20 @@
 .menuRow {
 	padding: 0.2rem 0;
 	/* Menu palette: glassy, high-contrast, and aligned with NyxGuard blue/magenta brand. */
-	--nav-bg-top: rgba(10, 14, 34, 0.86);
-	--nav-bg-bot: rgba(10, 14, 34, 0.58);
-	--nav-fg: rgba(243, 247, 255, 0.92);
-	--nav-fg-strong: rgba(255, 255, 255, 0.98);
-	--nav-fg-muted: rgba(206, 219, 255, 0.78);
-	--nav-item-bg: rgba(255, 255, 255, 0.05);
-	--nav-item-bg-strong: rgba(255, 255, 255, 0.08);
-	--nav-item-border: rgba(255, 255, 255, 0.12);
-	--nav-accent-a: rgba(75, 139, 255, 0.95);
-	--nav-accent-b: rgba(255, 43, 189, 0.85);
+	--nav-bg-top: var(--app-sidebar-top);
+	--nav-bg-bot: var(--app-sidebar-bottom);
+	--nav-fg: var(--app-text-primary);
+	--nav-fg-strong: color-mix(in srgb, var(--app-text-primary) 95%, #ffffff);
+	--nav-fg-muted: var(--app-text-secondary);
+	--nav-item-bg: color-mix(in srgb, var(--app-surface-2) 84%, transparent);
+	--nav-item-bg-strong: color-mix(in srgb, var(--app-surface-2) 100%, transparent);
+	--nav-item-border: var(--app-border);
+	--nav-accent-a: var(--app-primary);
+	--nav-accent-b: var(--app-secondary);
 
 	background:
-		radial-gradient(900px 140px at 18% 0%, rgba(75, 139, 255, 0.16), transparent 62%),
-		radial-gradient(800px 140px at 84% 0%, rgba(255, 43, 189, 0.10), transparent 58%),
+		radial-gradient(900px 140px at 18% 0%, var(--app-sidebar-overlay-a), transparent 62%),
+		radial-gradient(800px 140px at 84% 0%, var(--app-sidebar-overlay-b), transparent 58%),
 		linear-gradient(180deg, var(--nav-bg-top), var(--nav-bg-bot));
 	backdrop-filter: blur(14px) saturate(160%);
 	/* Bottom border now handled by `.topNav` so we don't get double lines/gaps */
@@ -207,22 +212,22 @@
 	/* Shares the same palette as the top menu, but is rendered as a left sidebar. */
 	padding: 0.45rem 0.4rem;
 	border-radius: 18px;
-	border: 1px solid rgba(255, 255, 255, 0.10);
+	border: 1px solid color-mix(in srgb, var(--app-border) 100%, transparent);
 	box-shadow:
 		0 18px 46px rgba(0, 0, 0, 0.28),
 		0 1px 0 rgba(255, 255, 255, 0.03) inset;
 
 	/* Keep the palette vars in sync with `.menuRow` so the menu looks identical. */
-	--nav-bg-top: rgba(10, 14, 34, 0.86);
-	--nav-bg-bot: rgba(10, 14, 34, 0.58);
-	--nav-fg: rgba(243, 247, 255, 0.92);
-	--nav-fg-strong: rgba(255, 255, 255, 0.98);
-	--nav-fg-muted: rgba(206, 219, 255, 0.78);
-	--nav-item-bg: rgba(255, 255, 255, 0.05);
-	--nav-item-bg-strong: rgba(255, 255, 255, 0.08);
-	--nav-item-border: rgba(255, 255, 255, 0.12);
-	--nav-accent-a: rgba(75, 139, 255, 0.95);
-	--nav-accent-b: rgba(255, 43, 189, 0.85);
+	--nav-bg-top: var(--app-sidebar-top);
+	--nav-bg-bot: var(--app-sidebar-bottom);
+	--nav-fg: var(--app-text-primary);
+	--nav-fg-strong: color-mix(in srgb, var(--app-text-primary) 95%, #ffffff);
+	--nav-fg-muted: var(--app-text-secondary);
+	--nav-item-bg: color-mix(in srgb, var(--app-surface-2) 84%, transparent);
+	--nav-item-bg-strong: color-mix(in srgb, var(--app-surface-2) 100%, transparent);
+	--nav-item-border: var(--app-border);
+	--nav-accent-a: var(--app-primary);
+	--nav-accent-b: var(--app-secondary);
 
 	/* Transparent sidebar: let the dashboard background show through. */
 	background: transparent;
@@ -341,7 +346,7 @@
 	border: 1px solid var(--nav-item-border);
 	box-shadow:
 		0 14px 28px rgba(0, 0, 0, 0.25),
-		0 2px 0 rgba(255, 255, 255, 0.04) inset;
+		0 2px 0 color-mix(in srgb, var(--app-border) 30%, transparent) inset;
 }
 
 .sideMenu :global(.navbar-nav .nav-link.active),
@@ -351,7 +356,7 @@
 	border: 1px solid var(--nav-item-border);
 	box-shadow:
 		0 14px 28px rgba(0, 0, 0, 0.25),
-		0 2px 0 rgba(255, 255, 255, 0.04) inset;
+		0 2px 0 color-mix(in srgb, var(--app-border) 30%, transparent) inset;
 }
 
 .menuRow :global(.navbar-nav .nav-link.active::after),
@@ -365,8 +370,8 @@
 	border-radius: 999px;
 	background: linear-gradient(90deg, var(--item-accent-a), var(--item-accent-b));
 	box-shadow:
-		0 0 0 1px rgba(255, 255, 255, 0.08),
-		0 10px 26px rgba(75, 139, 255, 0.18);
+		0 0 0 1px color-mix(in srgb, var(--app-border) 65%, transparent),
+		0 10px 26px color-mix(in srgb, var(--item-accent-a) 24%, transparent);
 }
 
 .sideMenu :global(.navbar-nav .nav-link.active::after),
@@ -380,125 +385,77 @@
 	border-radius: 999px;
 	background: linear-gradient(90deg, var(--item-accent-a), var(--item-accent-b));
 	box-shadow:
-		0 0 0 1px rgba(255, 255, 255, 0.08),
-		0 10px 26px rgba(75, 139, 255, 0.18);
+		0 0 0 1px color-mix(in srgb, var(--app-border) 65%, transparent),
+		0 10px 26px color-mix(in srgb, var(--item-accent-a) 24%, transparent);
 }
 
-/* Per-section accents (top-level items) */
-.menuRow :global(li[data-menu="dashboard"] > .nav-link) {
-	--item-accent-a: rgba(92, 239, 255, 0.90);
-	--item-accent-b: rgba(75, 139, 255, 0.95);
-}
-
+/* Per-section accents from theme tokens */
+.menuRow :global(li[data-menu="dashboard"] > .nav-link),
 .sideMenu :global(li[data-menu="dashboard"] > .nav-link) {
-	--item-accent-a: rgba(92, 239, 255, 0.90);
-	--item-accent-b: rgba(75, 139, 255, 0.95);
+	--item-accent-a: color-mix(in srgb, var(--app-secondary) 30%, var(--app-primary));
+	--item-accent-b: color-mix(in srgb, var(--app-primary) 82%, #ffffff);
 }
 
-.menuRow :global(li[data-menu="nyxguard"] > .nav-link) {
-	--item-accent-a: rgba(75, 139, 255, 0.98);
-	--item-accent-b: rgba(255, 43, 189, 0.88);
-}
-
-.sideMenu :global(li[data-menu="nyxguard"] > .nav-link) {
-	--item-accent-a: rgba(75, 139, 255, 0.98);
-	--item-accent-b: rgba(255, 43, 189, 0.88);
-}
-
+.menuRow :global(li[data-menu="nyxguard"] > .nav-link),
+.sideMenu :global(li[data-menu="nyxguard"] > .nav-link),
 .sideMenu :global(li[data-menu="nyxguard-traffic"] > .nav-link),
 .sideMenu :global(li[data-menu="nyxguard-ips"] > .nav-link),
 .sideMenu :global(li[data-menu="nyxguard-rules"] > .nav-link),
 .sideMenu :global(li[data-menu="nyxguard-apps"] > .nav-link),
 .sideMenu :global(li[data-menu="nyxguard-attacks"] > .nav-link),
 .sideMenu :global(li[data-menu="nyxguard-globalgate"] > .nav-link) {
-	--item-accent-a: rgba(75, 139, 255, 0.98);
-	--item-accent-b: rgba(255, 43, 189, 0.88);
+	--item-accent-a: var(--app-primary);
+	--item-accent-b: var(--app-secondary);
 }
 
-.menuRow :global(li[data-menu="hosts"] > .nav-link) {
-	--item-accent-a: rgba(92, 239, 255, 0.92);
-	--item-accent-b: rgba(75, 139, 255, 0.92);
-}
-
-.sideMenu :global(li[data-menu="hosts"] > .nav-link) {
-	--item-accent-a: rgba(92, 239, 255, 0.92);
-	--item-accent-b: rgba(75, 139, 255, 0.92);
-}
-
+.menuRow :global(li[data-menu="hosts"] > .nav-link),
+.sideMenu :global(li[data-menu="hosts"] > .nav-link),
 .menuRow :global(li[data-menu="proxy-hosts"] > .nav-link),
 .menuRow :global(li[data-menu="redirection-hosts"] > .nav-link),
 .menuRow :global(li[data-menu="streams"] > .nav-link),
-.menuRow :global(li[data-menu="dead-hosts"] > .nav-link) {
-	--item-accent-a: rgba(92, 239, 255, 0.92);
-	--item-accent-b: rgba(75, 139, 255, 0.92);
-}
-
+.menuRow :global(li[data-menu="dead-hosts"] > .nav-link),
 .sideMenu :global(li[data-menu="proxy-hosts"] > .nav-link),
 .sideMenu :global(li[data-menu="redirection-hosts"] > .nav-link),
 .sideMenu :global(li[data-menu="streams"] > .nav-link),
 .sideMenu :global(li[data-menu="dead-hosts"] > .nav-link) {
-	--item-accent-a: rgba(92, 239, 255, 0.92);
-	--item-accent-b: rgba(75, 139, 255, 0.92);
+	--item-accent-a: color-mix(in srgb, var(--app-primary) 70%, var(--app-success));
+	--item-accent-b: color-mix(in srgb, var(--app-primary) 88%, #ffffff);
 }
 
-.menuRow :global(li[data-menu="access-lists"] > .nav-link) {
-	--item-accent-a: rgba(158, 112, 255, 0.92);
-	--item-accent-b: rgba(75, 139, 255, 0.92);
-}
-
+.menuRow :global(li[data-menu="access-lists"] > .nav-link),
 .sideMenu :global(li[data-menu="access-lists"] > .nav-link) {
-	--item-accent-a: rgba(158, 112, 255, 0.92);
-	--item-accent-b: rgba(75, 139, 255, 0.92);
+	--item-accent-a: color-mix(in srgb, var(--app-secondary) 44%, var(--app-primary));
+	--item-accent-b: var(--app-primary);
 }
 
-.menuRow :global(li[data-menu="certificates"] > .nav-link) {
-	--item-accent-a: rgba(255, 205, 90, 0.95);
-	--item-accent-b: rgba(255, 122, 88, 0.88);
-}
-
+.menuRow :global(li[data-menu="certificates"] > .nav-link),
 .sideMenu :global(li[data-menu="certificates"] > .nav-link) {
-	--item-accent-a: rgba(255, 205, 90, 0.95);
-	--item-accent-b: rgba(255, 122, 88, 0.88);
+	--item-accent-a: var(--app-warning);
+	--item-accent-b: color-mix(in srgb, var(--app-warning) 35%, var(--app-secondary));
 }
 
-.menuRow :global(li[data-menu="users"] > .nav-link) {
-	--item-accent-a: rgba(120, 255, 208, 0.92);
-	--item-accent-b: rgba(92, 239, 255, 0.84);
-}
-
+.menuRow :global(li[data-menu="users"] > .nav-link),
 .sideMenu :global(li[data-menu="users"] > .nav-link) {
-	--item-accent-a: rgba(120, 255, 208, 0.92);
-	--item-accent-b: rgba(92, 239, 255, 0.84);
+	--item-accent-a: color-mix(in srgb, var(--app-success) 70%, #ffffff);
+	--item-accent-b: color-mix(in srgb, var(--app-success) 40%, var(--app-primary));
 }
 
-.menuRow :global(li[data-menu="auditlogs"] > .nav-link) {
-	--item-accent-a: rgba(255, 122, 88, 0.90);
-	--item-accent-b: rgba(255, 43, 189, 0.70);
-}
-
+.menuRow :global(li[data-menu="auditlogs"] > .nav-link),
 .sideMenu :global(li[data-menu="auditlogs"] > .nav-link) {
-	--item-accent-a: rgba(255, 122, 88, 0.90);
-	--item-accent-b: rgba(255, 43, 189, 0.70);
+	--item-accent-a: color-mix(in srgb, var(--app-error) 75%, var(--app-warning));
+	--item-accent-b: color-mix(in srgb, var(--app-error) 55%, var(--app-secondary));
 }
 
-.menuRow :global(li[data-menu="settings"] > .nav-link) {
-	--item-accent-a: rgba(206, 219, 255, 0.88);
-	--item-accent-b: rgba(158, 112, 255, 0.78);
-}
-
+.menuRow :global(li[data-menu="settings"] > .nav-link),
 .sideMenu :global(li[data-menu="settings"] > .nav-link) {
-	--item-accent-a: rgba(206, 219, 255, 0.88);
-	--item-accent-b: rgba(158, 112, 255, 0.78);
+	--item-accent-a: color-mix(in srgb, var(--app-text-secondary) 88%, #ffffff);
+	--item-accent-b: color-mix(in srgb, var(--app-secondary) 32%, var(--app-primary));
 }
 
-.menuRow :global(li[data-menu="support-nyxguard"] > .nav-link) {
-	--item-accent-a: rgba(25, 255, 124, 0.92);
-	--item-accent-b: rgba(92, 239, 255, 0.75);
-}
-
+.menuRow :global(li[data-menu="support-nyxguard"] > .nav-link),
 .sideMenu :global(li[data-menu="support-nyxguard"] > .nav-link) {
-	--item-accent-a: rgba(25, 255, 124, 0.92);
-	--item-accent-b: rgba(92, 239, 255, 0.75);
+	--item-accent-a: color-mix(in srgb, var(--app-success) 85%, #6affc1);
+	--item-accent-b: color-mix(in srgb, var(--app-success) 55%, var(--app-primary));
 }
 
 /* Make each active/open item feel "tagged" by its accent */
@@ -506,28 +463,28 @@
 .menuRow :global(.navbar-nav li[data-menu] > .nav-link.show) {
 	box-shadow:
 		0 16px 34px rgba(0, 0, 0, 0.26),
-		0 0 0 1px rgba(255, 255, 255, 0.08) inset,
-		0 0 22px rgba(75, 139, 255, 0.10),
-		0 0 22px rgba(255, 43, 189, 0.06);
+		0 0 0 1px color-mix(in srgb, var(--app-border) 60%, transparent) inset,
+		0 0 22px color-mix(in srgb, var(--app-primary) 24%, transparent),
+		0 0 22px color-mix(in srgb, var(--app-secondary) 18%, transparent);
 }
 
 .sideMenu :global(.navbar-nav li[data-menu] > .nav-link.active),
 .sideMenu :global(.navbar-nav li[data-menu] > .nav-link.show) {
 	box-shadow:
 		0 16px 34px rgba(0, 0, 0, 0.26),
-		0 0 0 1px rgba(255, 255, 255, 0.08) inset,
-		0 0 22px rgba(75, 139, 255, 0.10),
-		0 0 22px rgba(255, 43, 189, 0.06);
+		0 0 0 1px color-mix(in srgb, var(--app-border) 60%, transparent) inset,
+		0 0 22px color-mix(in srgb, var(--app-primary) 24%, transparent),
+		0 0 22px color-mix(in srgb, var(--app-secondary) 18%, transparent);
 }
 
 .menuRow :global(.dropdown-menu) {
 	z-index: 2500;
 	background:
-		radial-gradient(720px 320px at 20% 0%, rgba(75, 139, 255, 0.12), transparent 60%),
-		radial-gradient(520px 260px at 80% 10%, rgba(255, 43, 189, 0.08), transparent 55%),
-		rgba(10, 14, 34, 0.78);
+		radial-gradient(720px 320px at 20% 0%, color-mix(in srgb, var(--app-primary) 22%, transparent), transparent 60%),
+		radial-gradient(520px 260px at 80% 10%, color-mix(in srgb, var(--app-secondary) 18%, transparent), transparent 55%),
+		var(--app-dropdown-bg);
 	backdrop-filter: blur(16px) saturate(175%);
-	border: 1px solid rgba(255, 255, 255, 0.12);
+	border: 1px solid var(--app-border);
 	box-shadow:
 		0 24px 60px rgba(0, 0, 0, 0.55),
 		0 10px 26px rgba(0, 0, 0, 0.35);
@@ -558,11 +515,11 @@
 	margin: 0.35rem 0 0.55rem 0;
 
 	background:
-		radial-gradient(720px 320px at 20% 0%, rgba(75, 139, 255, 0.12), transparent 60%),
-		radial-gradient(520px 260px at 80% 10%, rgba(255, 43, 189, 0.08), transparent 55%),
-		rgba(10, 14, 34, 0.70);
+		radial-gradient(720px 320px at 20% 0%, color-mix(in srgb, var(--app-primary) 22%, transparent), transparent 60%),
+		radial-gradient(520px 260px at 80% 10%, color-mix(in srgb, var(--app-secondary) 18%, transparent), transparent 55%),
+		var(--app-dropdown-bg);
 	backdrop-filter: blur(16px) saturate(175%);
-	border: 1px solid rgba(255, 255, 255, 0.12);
+	border: 1px solid var(--app-border);
 	box-shadow:
 		0 22px 50px rgba(0, 0, 0, 0.48),
 		0 10px 22px rgba(0, 0, 0, 0.30);
@@ -601,36 +558,36 @@
 .menuRow :global(.dropdown-item:hover),
 .menuRow :global(.dropdown-item:focus-visible) {
 	color: var(--nav-fg-strong);
-	background: linear-gradient(90deg, rgba(75, 139, 255, 0.20), rgba(255, 43, 189, 0.10));
+	background: var(--app-dropdown-hover);
 	outline: none;
 }
 
 .sideMenu :global(.dropdown-item:hover),
 .sideMenu :global(.dropdown-item:focus-visible) {
 	color: var(--nav-fg-strong);
-	background: linear-gradient(90deg, rgba(75, 139, 255, 0.20), rgba(255, 43, 189, 0.10));
+	background: var(--app-dropdown-hover);
 	outline: none;
 }
 
 .menuRow :global(.dropdown-item.active),
 .menuRow :global(.dropdown-item:active) {
 	color: var(--nav-fg-strong);
-	background: linear-gradient(90deg, rgba(75, 139, 255, 0.30), rgba(255, 43, 189, 0.16));
+	background: color-mix(in srgb, var(--app-primary) 20%, var(--app-secondary));
 }
 
 .sideMenu :global(.dropdown-item.active),
 .sideMenu :global(.dropdown-item:active) {
 	color: var(--nav-fg-strong);
-	background: linear-gradient(90deg, rgba(75, 139, 255, 0.30), rgba(255, 43, 189, 0.16));
+	background: color-mix(in srgb, var(--app-primary) 20%, var(--app-secondary));
 }
 
 .userMenu {
 	position: relative;
 	z-index: 1060;
-	border: 1px solid rgba(255, 255, 255, 0.08);
+	border: 1px solid color-mix(in srgb, var(--app-border) 80%, transparent);
 	border-radius: 999px;
 	padding: 4px 10px;
-	background: rgba(255, 255, 255, 0.04);
+	background: color-mix(in srgb, var(--app-surface-2) 80%, transparent);
 	margin-left: 0.25rem;
 }
 

@@ -1,7 +1,6 @@
 import cn from "classnames";
 import { Flag } from "src/components";
 import { useLocaleState } from "src/context";
-import { useTheme } from "src/hooks";
 import { changeLocale, getFlagCodeForLocale, localeOptions, T } from "src/locale";
 import styles from "./LocalePicker.module.css";
 
@@ -11,7 +10,6 @@ interface Props {
 
 function LocalePicker({ menuAlign = "start" }: Props) {
 	const { locale, setLocale } = useLocaleState();
-	const { getTheme } = useTheme();
 
 	const changeTo = (lang: string) => {
 		changeLocale(lang);
@@ -20,7 +18,7 @@ function LocalePicker({ menuAlign = "start" }: Props) {
 	};
 
 	const classes = ["btn", "dropdown-toggle", "btn-sm", styles.btn];
-	const cns = cn(...classes, getTheme() === "dark" ? "btn-ghost-dark" : "btn-ghost-light");
+	const cns = cn(...classes, "btn-ghost-dark");
 
 	return (
 		<div className="dropdown">

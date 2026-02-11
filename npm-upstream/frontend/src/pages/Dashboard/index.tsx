@@ -31,13 +31,6 @@ function formatBytes(bytes: number) {
 	return `${n.toFixed(digits)} ${units[u]}`;
 }
 
-function attackTypeLabel(t: string | null | undefined) {
-	if (t === "sqli") return "SQL";
-	if (t === "ddos") return "DDoS";
-	if (t === "bot") return "Bot";
-	return "Unknown";
-}
-
 const Dashboard = () => {
 	const { data: hostReport } = useHostReport();
 	const navigate = useNavigate();
@@ -59,6 +52,10 @@ const Dashboard = () => {
 		queryFn: () => getNyxGuardAttacksSummary(1440),
 		refetchInterval: 60000,
 	});
+
+	const blocked1d = traffic1d.data?.blocked ?? 0;
+	const requests1d = traffic1d.data?.requests ?? 0;
+	const blockedRate1d = requests1d > 0 ? (blocked1d / requests1d) * 100 : 0;
 
 	return (
 		<div className={styles.wrapper}>
@@ -122,19 +119,19 @@ const Dashboard = () => {
 								</a>
 							</div>
 						</HasPermission>
-						<HasPermission section={PROXY_HOSTS} permission={VIEW} hideError>
-							<div className="col-sm-6 col-lg-4">
-								<a
-									href="/nyxguard"
-									className="card card-sm card-link card-link-pop"
-									onClick={(e) => {
-										e.preventDefault();
-										navigate("/nyxguard");
-									}}
-								>
-									<div className="card-body">
-										<div className="row align-items-center">
-											<div className="col-auto">
+							<HasPermission section={PROXY_HOSTS} permission={VIEW} hideError>
+								<div className="col-sm-6 col-lg-4">
+									<a
+										href="/nyxguard"
+										className="card card-sm card-link card-link-pop"
+										onClick={(e) => {
+											e.preventDefault();
+											navigate("/nyxguard");
+										}}
+									>
+										<div className="card-body">
+											<div className="row align-items-center">
+												<div className="col-auto">
 												<span className="bg-purple text-white avatar">
 													<IconChartLine />
 												</span>
@@ -198,20 +195,18 @@ const Dashboard = () => {
 												<span className="bg-orange text-white avatar">
 													<IconAlertTriangle />
 												</span>
-											</div>
-											<div className="col">
-												<div className="font-weight-medium">
-													Attacks (1d): {attacks1d.data?.total?.toLocaleString?.() ?? "--"}
 												</div>
-												<div className="text-muted">
-													Last:{" "}
-													{attacks1d.data?.last
-														? `${attackTypeLabel(attacks1d.data.last.type)} (${attacks1d.data.last.ip})`
-														: "--"}
+												<div className="col">
+													<div className="font-weight-medium">
+														Blocked Rate (1d): {Number.isFinite(blockedRate1d) ? `${blockedRate1d.toFixed(1)}%` : "--"}
+													</div>
+													<div className="text-muted">
+														Blocked: {traffic1d.data?.blocked?.toLocaleString?.() ?? "--"} / Requests:{" "}
+														{traffic1d.data?.requests?.toLocaleString?.() ?? "--"}
+													</div>
 												</div>
 											</div>
 										</div>
-									</div>
 								</a>
 							</div>
 						</HasPermission>
@@ -230,19 +225,21 @@ const Dashboard = () => {
 											<div className="col-auto">
 												<span className="bg-cyan text-white avatar">
 													<IconActivityHeartbeat />
-												</span>
-											</div>
-											<div className="col">
-												<div className="font-weight-medium">
-													Requests (1d): {traffic1d.data?.requests?.toLocaleString?.() ?? "--"}
+													</span>
 												</div>
-												<div className="text-muted">
-													Allowed: {traffic1d.data?.allowed?.toLocaleString?.() ?? "--"} | Blocked:{" "}
-													{traffic1d.data?.blocked?.toLocaleString?.() ?? "--"}
+												<div className="col">
+													<div className="font-weight-medium">
+														Attacks (last 1d)
+													</div>
+													<div className="text-muted">
+														Total: {attacks1d.data?.total?.toLocaleString?.() ?? "--"} | SQL{" "}
+														{attacks1d.data?.byType?.sqli?.toLocaleString?.() ?? "--"} DDoS{" "}
+														{attacks1d.data?.byType?.ddos?.toLocaleString?.() ?? "--"} Bot{" "}
+														{attacks1d.data?.byType?.bot?.toLocaleString?.() ?? "--"}
+													</div>
 												</div>
 											</div>
 										</div>
-									</div>
 								</a>
 							</div>
 						</HasPermission>

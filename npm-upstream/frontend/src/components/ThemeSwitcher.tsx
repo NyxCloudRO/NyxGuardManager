@@ -1,39 +1,44 @@
-import { IconMoon, IconSun } from "@tabler/icons-react";
+import { IconCheck, IconPalette } from "@tabler/icons-react";
 import cn from "classnames";
-import { Button } from "src/components";
 import { useTheme } from "src/hooks";
 import styles from "./ThemeSwitcher.module.css";
 
 interface Props {
 	className?: string;
+	compact?: boolean;
 }
-function ThemeSwitcher({ className }: Props) {
-	const { setTheme } = useTheme();
+function ThemeSwitcher({ className, compact = false }: Props) {
+	const { currentTheme, themes, setTheme } = useTheme();
 
 	return (
-		<div className={cn("d-print-none", "d-inline-block", className)}>
-			<Button
-				size="sm"
-				className={cn("btn-ghost-dark", "hide-theme-dark", styles.lightBtn)}
-				data-bs-toggle="tooltip"
-				data-bs-placement="bottom"
-				aria-label="Enable dark mode"
-				data-bs-original-title="Enable dark mode"
-				onClick={() => setTheme("dark")}
+		<div className={cn("dropdown", className)}>
+			<button
+				type="button"
+				className={cn("btn btn-sm dropdown-toggle", styles.switcherBtn, {
+					[styles.compactBtn]: compact,
+				})}
+				data-bs-toggle="dropdown"
 			>
-				<IconMoon width={24} />
-			</Button>
-			<Button
-				size="sm"
-				className={cn("btn-ghost-light", "hide-theme-light", styles.darkBtn)}
-				data-bs-toggle="tooltip"
-				data-bs-placement="bottom"
-				aria-label="Enable dark mode"
-				data-bs-original-title="Enable dark mode"
-				onClick={() => setTheme("light")}
-			>
-				<IconSun width={24} />
-			</Button>
+				<IconPalette size={16} />
+				<span className={styles.switcherLabel}>
+					Theme{compact ? "" : ":"} <strong>{currentTheme.displayName}</strong>
+				</span>
+			</button>
+			<div className={cn("dropdown-menu", "dropdown-menu-end", styles.switcherMenu)}>
+				{themes.map((theme) => (
+					<button
+						type="button"
+						key={theme.id}
+						className={cn("dropdown-item", styles.switcherItem, {
+							[styles.active]: currentTheme.id === theme.id,
+						})}
+						onClick={() => setTheme(theme.id)}
+					>
+						<span>{theme.displayName}</span>
+						{currentTheme.id === theme.id ? <IconCheck size={14} /> : null}
+					</button>
+				))}
+			</div>
 		</div>
 	);
 }

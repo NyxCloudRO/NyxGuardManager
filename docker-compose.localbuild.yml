@@ -1,0 +1,10 @@
+services:
+  nyxguard-manager:
+    image: nyxguardmanager:local
+    build:
+      context: ./npm-upstream
+      dockerfile: docker/Dockerfile
+      args:
+        BUILD_VERSION: "3.0.0"
+        BUILD_COMMIT: "local"
+        BUILD_DATE: "2026-02-11"

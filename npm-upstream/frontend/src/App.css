@@ -1,54 +1,96 @@
 :root {
-	color-scheme: light dark;
+	color-scheme: dark;
+	--app-background: #0a1029;
+	--app-surface: rgba(0, 0, 0, 0.16);
+	--app-surface-2: rgba(0, 0, 0, 0.22);
+	--app-text-primary: rgba(243, 247, 255, 0.92);
+	--app-text-secondary: rgba(206, 219, 255, 0.78);
+	--app-primary: #4b8bff;
+	--app-secondary: #ff2bbd;
+	--app-border: rgba(255, 255, 255, 0.12);
+	--app-success: #45d284;
+	--app-warning: #ffa642;
+	--app-error: #ff5c92;
+	--app-sidebar-top: rgba(10, 14, 34, 0.86);
+	--app-sidebar-bottom: rgba(10, 14, 34, 0.58);
+	--app-sidebar-overlay-a: rgba(75, 139, 255, 0.16);
+	--app-sidebar-overlay-b: rgba(255, 43, 189, 0.10);
+	--app-card-start: rgba(255, 255, 255, 0.06);
+	--app-card-end: rgba(255, 255, 255, 0.03);
+	--app-dropdown-bg: rgba(10, 14, 34, 0.86);
+	--app-dropdown-hover: linear-gradient(90deg, rgba(75, 139, 255, 0.20), rgba(255, 43, 189, 0.10));
+	--app-modal-bg: linear-gradient(180deg, rgba(6, 12, 34, 0.96), rgba(10, 18, 46, 0.94));
+	--app-input-bg: rgba(255, 255, 255, 0.06);
+	--app-focus-ring: rgba(43, 98, 255, 0.16);
 }
 
-.light {
-	color-scheme: light;
+:root,
+[data-app-theme] {
+	--tblr-body-color: var(--app-text-primary);
+	--tblr-secondary-color: var(--app-text-secondary);
+	--tblr-border-color: color-mix(in srgb, var(--app-border) 100%, transparent);
+	--tblr-border-color-translucent: color-mix(in srgb, var(--app-border) 70%, transparent);
+	--tblr-bg-surface: var(--app-surface);
+	--tblr-bg-surface-secondary: color-mix(in srgb, var(--app-surface-2) 90%, transparent);
+	--tblr-bg-surface-tertiary: color-mix(in srgb, var(--app-surface-2) 100%, transparent);
+	--tblr-bg-forms: var(--app-input-bg);
+	--tblr-bg-surface-dark: color-mix(in srgb, var(--app-surface-2) 100%, black 20%);
+	--tblr-primary: var(--app-primary);
+	--tblr-success: var(--app-success);
+	--tblr-warning: var(--app-warning);
+	--tblr-danger: var(--app-error);
 }
-.dark {
-	color-scheme: dark;
+
+html,
+body,
+#root {
+	min-height: 100%;
+}
+
+body {
+	background:
+		radial-gradient(1200px 500px at 10% 0%, var(--app-sidebar-overlay-a), transparent 58%),
+		radial-gradient(960px 480px at 90% 10%, var(--app-sidebar-overlay-b), transparent 55%),
+		linear-gradient(160deg, var(--app-background) 0%, color-mix(in srgb, var(--app-background) 82%, var(--app-secondary)) 100%);
+	color: var(--app-text-primary);
 }
 
 .modal-backdrop {
-	--tblr-backdrop-opacity: 0.8 !important;
+	--tblr-backdrop-opacity: 0.65 !important;
+	--tblr-backdrop-bg: #000 !important;
 }
 
-[data-bs-theme="dark"] .modal-content {
+.modal-content {
 	--tblr-modal-box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-	background: linear-gradient(180deg, rgba(6, 12, 34, 0.96), rgba(10, 18, 46, 0.94)) !important;
-	border: 1px solid rgba(170, 191, 255, 0.28) !important;
+	background: var(--app-modal-bg) !important;
+	border: 1px solid color-mix(in srgb, var(--app-border) 100%, transparent) !important;
 	box-shadow:
 		0 28px 80px rgba(0, 0, 0, 0.62),
-		0 10px 36px rgba(10, 24, 72, 0.44) !important;
+		0 10px 36px color-mix(in srgb, var(--app-primary) 26%, transparent) !important;
 	backdrop-filter: blur(10px) saturate(130%);
 }
 
-[data-bs-theme="dark"] .modal-header,
-[data-bs-theme="dark"] .modal-footer {
-	background: rgba(6, 12, 34, 0.68);
-	border-color: rgba(170, 191, 255, 0.2);
+.modal-header,
+.modal-footer {
+	background: color-mix(in srgb, var(--app-surface-2) 84%, transparent);
+	border-color: color-mix(in srgb, var(--app-border) 100%, transparent);
 }
 
-[data-bs-theme="dark"] .modal .card,
-[data-bs-theme="dark"] .modal .card-header,
-[data-bs-theme="dark"] .modal .card-body,
-[data-bs-theme="dark"] .modal .card-footer {
-	background: rgba(12, 22, 58, 0.72);
+.modal .card,
+.modal .card-header,
+.modal .card-body,
+.modal .card-footer {
+	background: color-mix(in srgb, var(--app-surface-2) 90%, transparent);
 }
 
-[data-bs-theme="dark"] .modal .nav-tabs .nav-link {
-	color: rgba(222, 232, 255, 0.82);
+.modal .nav-tabs .nav-link {
+	color: var(--app-text-secondary);
 }
 
-[data-bs-theme="dark"] .modal .nav-tabs .nav-link.active {
-	background: rgba(17, 30, 79, 0.78);
-	color: rgba(246, 250, 255, 0.95);
-	border-color: rgba(170, 191, 255, 0.26);
-}
-
-[data-bs-theme="dark"] .modal-backdrop {
-	--tblr-backdrop-bg: #000 !important;
-	--tblr-backdrop-opacity: 0.65 !important;
+.modal .nav-tabs .nav-link.active {
+	background: color-mix(in srgb, var(--app-primary) 18%, var(--app-surface-2));
+	color: var(--app-text-primary);
+	border-color: color-mix(in srgb, var(--app-border) 100%, transparent);
 }
 
 .domain-name {
@@ -62,7 +104,7 @@
 }
 
 .navbar .nav-link.active {
-	background: rgba(255, 255, 255, 0.08);
+	background: color-mix(in srgb, var(--app-primary) 18%, transparent);
 	border-radius: 999px;
 }
 
@@ -83,126 +125,114 @@
 }
 
 .navbar .navbar-nav::-webkit-scrollbar-thumb {
-	background: rgba(255, 255, 255, 0.2);
+	background: color-mix(in srgb, var(--app-border) 80%, transparent);
 	border-radius: 999px;
 }
 
-/* NyxGuard "glass" theme overrides (dark mode) */
-[data-bs-theme="dark"] {
-	/* Align Tabler surface + form vars with the NyxGuard gradient background. */
-	--tblr-border-color: rgba(255, 255, 255, 0.10);
-	--tblr-border-color-translucent: rgba(255, 255, 255, 0.08);
-	--tblr-bg-surface: rgba(0, 0, 0, 0.16);
-	--tblr-bg-surface-secondary: rgba(0, 0, 0, 0.18);
-	--tblr-bg-surface-tertiary: rgba(0, 0, 0, 0.22);
-	--tblr-bg-forms: rgba(255, 255, 255, 0.06);
-	--tblr-bg-surface-dark: rgba(0, 0, 0, 0.28);
-}
-
-[data-bs-theme="dark"] .card {
-	background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
-	border: 1px solid rgba(255, 255, 255, 0.10);
+.card {
+	background: linear-gradient(180deg, var(--app-card-start), var(--app-card-end));
+	border: 1px solid color-mix(in srgb, var(--app-border) 100%, transparent);
 	box-shadow: 0 30px 80px rgba(0, 0, 0, 0.30);
 	backdrop-filter: blur(14px) saturate(140%);
 }
 
-[data-bs-theme="dark"] .card-header {
-	background: rgba(0, 0, 0, 0.10);
-	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+.card-header {
+	background: color-mix(in srgb, var(--app-surface) 92%, transparent);
+	border-bottom: 1px solid color-mix(in srgb, var(--app-border) 90%, transparent);
 }
 
-[data-bs-theme="dark"] .card-table {
+.card-table {
 	background: transparent;
 }
 
-/* Make Tabler's status-top accent less "neon" and more integrated. */
-[data-bs-theme="dark"] .card-status-top {
+.card-status-top {
 	height: 2px;
 	opacity: 0.9;
 	filter: saturate(85%);
 }
 
-[data-bs-theme="dark"] .table {
+.table {
 	--tblr-table-bg: transparent;
-	--tblr-table-color: rgba(243, 247, 255, 0.92);
-	--tblr-table-border-color: rgba(255, 255, 255, 0.08);
+	--tblr-table-color: var(--app-text-primary);
+	--tblr-table-border-color: color-mix(in srgb, var(--app-border) 80%, transparent);
 	color: var(--tblr-table-color);
 }
 
-[data-bs-theme="dark"] .table thead th {
-	color: rgba(206, 219, 255, 0.72);
+.table thead th {
+	color: var(--app-text-secondary);
 	font-weight: 650;
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
 	font-size: 0.72rem;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-	background: rgba(0, 0, 0, 0.10);
+	border-bottom: 1px solid color-mix(in srgb, var(--app-border) 90%, transparent);
+	background: color-mix(in srgb, var(--app-surface) 90%, transparent);
 }
 
-[data-bs-theme="dark"] .table tbody tr {
-	border-color: rgba(255, 255, 255, 0.06);
+.table tbody tr {
+	border-color: color-mix(in srgb, var(--app-border) 60%, transparent);
 }
 
-[data-bs-theme="dark"] .table tbody tr:hover {
-	background: rgba(255, 255, 255, 0.03);
+.table tbody tr:hover {
+	background: color-mix(in srgb, var(--app-primary) 8%, transparent);
 }
 
-[data-bs-theme="dark"] .form-control,
-[data-bs-theme="dark"] .form-select,
-[data-bs-theme="dark"] .input-group-text {
-	background-color: rgba(255, 255, 255, 0.06) !important;
-	border-color: rgba(255, 255, 255, 0.12) !important;
-	color: rgba(243, 247, 255, 0.92) !important;
+.form-control,
+.form-select,
+.input-group-text {
+	background-color: var(--app-input-bg) !important;
+	border-color: color-mix(in srgb, var(--app-border) 100%, transparent) !important;
+	color: var(--app-text-primary) !important;
 }
 
-[data-bs-theme="dark"] .form-control::placeholder {
-	color: rgba(206, 219, 255, 0.55) !important;
+.form-control::placeholder {
+	color: color-mix(in srgb, var(--app-text-secondary) 78%, transparent) !important;
 }
 
-[data-bs-theme="dark"] .form-control:focus,
-[data-bs-theme="dark"] .form-select:focus {
-	border-color: rgba(43, 98, 255, 0.55) !important;
-	box-shadow: 0 0 0 3px rgba(43, 98, 255, 0.16) !important;
+.form-control:focus,
+.form-select:focus {
+	border-color: color-mix(in srgb, var(--app-primary) 65%, transparent) !important;
+	box-shadow: 0 0 0 3px var(--app-focus-ring) !important;
 }
 
-[data-bs-theme="dark"] .dropdown-menu {
-	background: rgba(10, 14, 34, 0.78);
+.dropdown-menu {
+	background: var(--app-dropdown-bg);
 	backdrop-filter: blur(16px) saturate(175%);
-	border: 1px solid rgba(255, 255, 255, 0.12);
+	border: 1px solid color-mix(in srgb, var(--app-border) 100%, transparent);
 	box-shadow:
 		0 24px 60px rgba(0, 0, 0, 0.55),
 		0 10px 26px rgba(0, 0, 0, 0.35);
 }
 
-[data-bs-theme="dark"] .dropdown-item,
-[data-bs-theme="dark"] .dropdown-header {
-	color: rgba(238, 245, 255, 0.92);
+.dropdown-item,
+.dropdown-header {
+	color: var(--app-text-primary);
 }
 
-[data-bs-theme="dark"] .dropdown-item:hover,
-[data-bs-theme="dark"] .dropdown-item:focus-visible {
-	background: linear-gradient(90deg, rgba(75, 139, 255, 0.20), rgba(255, 43, 189, 0.10));
+.dropdown-item:hover,
+.dropdown-item:focus-visible {
+	background: var(--app-dropdown-hover);
+	color: var(--app-text-primary);
 }
 
-[data-bs-theme="dark"] .form-select,
-[data-bs-theme="dark"] select.form-control {
+.form-select,
+select.form-control {
 	color-scheme: dark;
 }
 
-[data-bs-theme="dark"] .form-select option,
-[data-bs-theme="dark"] .form-select optgroup,
-[data-bs-theme="dark"] select.form-control option,
-[data-bs-theme="dark"] select.form-control optgroup {
-	background: #c8ceda !important;
-	color: #0b1020 !important;
+.form-select option,
+.form-select optgroup,
+select.form-control option,
+select.form-control optgroup {
+	background: color-mix(in srgb, var(--app-surface-2) 75%, #dbe2f2) !important;
+	color: #091120 !important;
 }
 
-[data-bs-theme="dark"] .form-select option:checked,
-[data-bs-theme="dark"] .form-select option:hover,
-[data-bs-theme="dark"] select.form-control option:checked,
-[data-bs-theme="dark"] select.form-control option:hover {
-	background: #9aa7bf !important;
-	color: #070b16 !important;
+.form-select option:checked,
+.form-select option:hover,
+select.form-control option:checked,
+select.form-control option:hover {
+	background: color-mix(in srgb, var(--app-primary) 24%, #c7d2e9) !important;
+	color: #050b18 !important;
 }
 
 @media (max-width: 1200px) {
@@ -215,12 +245,13 @@
 .mr-1 {
 	margin-right: 0.25rem;
 }
+
 .ml-1 {
 	margin-left: 0.25rem;
 }
 
 .react-select-container {
-	.react-select__control  {
+	.react-select__control {
 		color: var(--tblr-body-color);
 		background-color: var(--tblr-bg-forms);
 		border: var(--tblr-border-width) solid var(--tblr-border-color);
@@ -248,21 +279,22 @@
 		background-color: var(--tblr-bg-forms);
 
 		.react-select__option {
-			background: rgba(var(--tblr-primary-rgb), .04);
-			color: inherit !important;
+			background: color-mix(in srgb, var(--app-primary) 8%, transparent);
+			color: var(--app-text-primary) !important;
+
 			&.react-select__option--is-focused {
-				background: rgba(var(--tblr-primary-rgb), .1);
+				background: color-mix(in srgb, var(--app-primary) 16%, transparent);
 			}
 
 			&.react-select__option--is-focused.react-select__option--is-selected {
-				background: rgba(var(--tblr-primary-rgb), .2);
+				background: color-mix(in srgb, var(--app-primary) 24%, transparent);
 			}
 		}
 	}
 }
 
 .textareaMono {
-	font-family: 'Courier New', Courier, monospace !important;
+	font-family: "Courier New", Courier, monospace !important;
 	resize: vertical;
 }
 
@@ -274,10 +306,10 @@ label.row {
 	display: flex;
 	align-items: center;
 	padding: 0;
-	font-size: .875rem;
+	font-size: 0.875rem;
 	font-weight: 400;
 	line-height: 1.25rem;
-	color: var(--tblr-gray-500);
+	color: var(--app-text-secondary);
 	text-align: center;
 	white-space: nowrap;
 	background-color: var(--tblr-bg-surface-secondary);
@@ -293,22 +325,21 @@ label.row {
 
 .nav-link.support-nyxguard .nav-link-title,
 .nav-link.support-nyxguard .nav-link-icon {
-	color: #00c853;
+	color: color-mix(in srgb, var(--app-success) 88%, #00c853);
 }
 
 .nav-link.support-nyxguard:hover .nav-link-title,
 .nav-link.support-nyxguard:hover .nav-link-icon {
-	color: #00a843;
+	color: color-mix(in srgb, var(--app-success) 72%, #00a843);
 }
 
-/* Fix for dropdown menus being clipped by table-responsive containers. */
 .table-responsive .dropdown {
 	position: static;
 }
 
-/* Fix for Tabler scrollbar compensation */
 @media (min-width: 992px) {
-  :host, :root {
-    margin-left: 0;
-  }
+	:host,
+	:root {
+		margin-left: 0;
+	}
 }

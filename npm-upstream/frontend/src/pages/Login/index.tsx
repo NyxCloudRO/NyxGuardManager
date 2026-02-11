@@ -1,7 +1,7 @@
 import { Field, Form, Formik } from "formik";
 import { useEffect, useRef, useState } from "react";
 import Alert from "react-bootstrap/Alert";
-import { Button, LocalePicker, Page, ThemeSwitcher } from "src/components";
+import { Button, LocalePicker, Page } from "src/components";
 import { useAuthState } from "src/context";
 import { useHealth } from "src/hooks";
 import { intl, T } from "src/locale";
@@ -203,7 +203,6 @@ export default function Login() {
 				</div>
 				<div className={styles.brandControls}>
 					<LocalePicker />
-					<ThemeSwitcher />
 				</div>
 				<div className="card card-md">
 					<div className="card-body">
