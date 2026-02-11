@@ -7,9 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [3.0.3] - 2026-02-10
 
 ### Changed
-- UI/UX polish: refined left sidebar density, translucency, and typography for higher readability.
-- UI/UX polish: applied a consistent “glass” palette across cards, tables, and form controls for a more cohesive operator UI.
-- Header branding: updated the top-center wordmark styling to be compact, clean, and consistent with the overall palette (no motion).
+- UI/UX polish: refined left sidebar density and spacing (more compact, more readable).
+- UI/UX polish: made the left sidebar background fully transparent so the dashboard gradient shows through (cleaner, less “boxed-in” feel).
+- UI/UX polish: applied a consistent “glass” palette across cards, tables, dropdowns, and form controls for a cohesive operator UI.
+- Header branding: updated the top-center wordmark styling to be compact and clean, with a static palette (no motion).
+- Login branding: updated the login header branding to match the global header palette.
 - Navigation copy: renamed GlobalGate menu entry to **GlobalGate Shieldwall**.
 
 ## [3.0.2] - 2026-02-10
