@@ -2,5 +2,5 @@
 	display: grid;
 	grid-template-rows: auto 1fr auto; /* Header, Main Content, Footer */
 	min-height: 100vh;
-	background: radial-gradient(120% 120% at 10% 10%, #2b6bff 0%, #1b2a6b 40%, #5b1d84 70%, #a31a78 100%);
+	background: var(--app-page-gradient);
 }

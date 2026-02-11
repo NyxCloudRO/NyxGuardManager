@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.0.4] - 2026-02-11
+
+### Added
+- NyxGuard dashboard host observability block with live host metrics: CPU usage, RAM usage, HDD used/free/total.
+- NyxGuard dashboard container observability block with live app-container metrics: CPU, RAM usage, RSS, NET I/O, and BLOCK I/O.
+- Expanded theme catalog to 8 distinct themes, with Nyx Aurora preserved as the default for fresh installs.
+
+### Fixed
+- Host resources data path in production container: restored backend system metrics reporting and container metrics collection.
+- Theme consistency: applied token-based button gradients per active theme across dashboard controls and action buttons.
+- Dropdown/readability regressions: improved select and dropdown contrast to avoid white-on-white text in themed views.
+- Theme persistence and runtime updates: stabilized global query/theme behavior so dashboard metrics refresh without manual page reload.
+
+### Tweaks
+- Refined theme naming and palette separation for clearer visual identity between themes.
+- Improved attacks view visual language (theme-adaptive attack card/pills/select controls) while keeping readability high.
+- Updated release metadata and installer defaults to 3.0.4 (`.version`, `docker-compose.yml`, `install.sh`, `update.sh`).
+
 ## [3.0.3] - 2026-02-10
 
 ### Changed

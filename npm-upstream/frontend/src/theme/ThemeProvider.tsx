@@ -6,6 +6,11 @@ const StorageKey = "app_theme";
 
 const TOKEN_TO_CSS_VAR: Record<string, string> = {
 	background: "--app-background",
+	pageGradient: "--app-page-gradient",
+	bodyOverlayA: "--app-body-overlay-a",
+	bodyOverlayB: "--app-body-overlay-b",
+	bodyOverlayAPosition: "--app-body-overlay-a-pos",
+	bodyOverlayBPosition: "--app-body-overlay-b-pos",
 	surface: "--app-surface",
 	surface2: "--app-surface-2",
 	textPrimary: "--app-text-primary",
@@ -27,6 +32,8 @@ const TOKEN_TO_CSS_VAR: Record<string, string> = {
 	modalBackground: "--app-modal-bg",
 	inputBackground: "--app-input-bg",
 	focusRing: "--app-focus-ring",
+	ctaGradient: "--app-cta-gradient",
+	ctaText: "--app-cta-text",
 };
 
 export interface ThemeContextType {
@@ -97,4 +104,3 @@ export function useTheme(): ThemeContextType {
 	}
 	return context;
 }
-

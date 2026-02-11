@@ -1,15 +1,50 @@
 .page {
 	min-height: calc(100vh - 120px);
 	padding: 28px 0;
+	background: var(--app-page-gradient);
 	/* Hint browsers to render native form popovers (select, date, etc) in dark style when supported. */
 	color-scheme: dark;
 }
 
+.page :global(.container-xl) {
+	position: relative;
+	border-radius: 24px;
+	padding: 16px;
+	background:
+		radial-gradient(
+			120% 130% at 2% 0%,
+			color-mix(in srgb, var(--app-primary) 20%, transparent),
+			transparent 62%
+		),
+		radial-gradient(
+			120% 130% at 98% 100%,
+			color-mix(in srgb, var(--app-secondary) 20%, transparent),
+			transparent 58%
+		),
+		linear-gradient(
+			180deg,
+			color-mix(in srgb, var(--app-surface-2) 86%, transparent),
+			color-mix(in srgb, var(--app-surface) 92%, transparent)
+		);
+	border: 1px solid color-mix(in srgb, var(--app-border) 78%, transparent);
+	box-shadow:
+		0 34px 90px rgba(0, 0, 0, 0.36),
+		inset 0 1px 0 color-mix(in srgb, var(--app-text-primary) 12%, transparent);
+	backdrop-filter: blur(12px) saturate(140%);
+}
+
 .card {
-	background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+	background:
+		linear-gradient(
+			156deg,
+			color-mix(in srgb, var(--app-surface-2) 84%, var(--app-primary) 16%),
+			color-mix(in srgb, var(--app-surface-2) 90%, var(--app-secondary) 10%)
+		);
 	border: 1px solid rgba(255, 255, 255, 0.1);
 	border-radius: 18px;
-	box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+	box-shadow:
+		0 30px 80px rgba(0, 0, 0, 0.35),
+		inset 0 1px 0 color-mix(in srgb, var(--app-text-primary) 12%, transparent);
 	padding: 20px;
 }
 
@@ -39,7 +74,7 @@
 
 .section {
 	background: rgba(0, 0, 0, 0.18);
-	border: 1px solid rgba(255, 255, 255, 0.08);
+	border: 1px solid color-mix(in srgb, var(--app-border) 70%, transparent);
 	border-radius: 16px;
 	padding: 16px;
 }
@@ -83,7 +118,7 @@
 .input,
 .textarea {
 	width: 100%;
-	background: rgba(255, 255, 255, 0.06);
+	background: color-mix(in srgb, var(--app-surface-2) 70%, transparent);
 	border: 1px solid rgba(255, 255, 255, 0.12);
 	border-radius: 12px;
 	padding: 10px 12px;
@@ -128,7 +163,7 @@ select.input optgroup {
 	padding: 10px 12px;
 	border-radius: 12px;
 	background: rgba(255, 255, 255, 0.04);
-	border: 1px solid rgba(255, 255, 255, 0.08);
+	border: 1px solid color-mix(in srgb, var(--app-border) 70%, transparent);
 }
 
 .badgeOn {
@@ -143,8 +178,8 @@ select.input optgroup {
 .badgeOff {
 	padding: 4px 10px;
 	border-radius: 999px;
-	background: rgba(255, 255, 255, 0.08);
-	border: 1px solid rgba(255, 255, 255, 0.18);
+	background: color-mix(in srgb, var(--app-border) 70%, transparent);
+	border: 1px solid color-mix(in srgb, var(--app-border) 100%, transparent);
 	font-size: 12px;
 	opacity: 0.9;
 }
@@ -169,16 +204,16 @@ select.input optgroup {
 	border: 0;
 	border-radius: 12px;
 	padding: 10px 14px;
-	background: linear-gradient(135deg, #2b62ff, #ff2bbd);
-	color: #0b0f1f;
+	background: var(--app-cta-gradient);
+	color: var(--app-cta-text);
 	font-weight: 700;
 }
 
 .ghost {
 	border-radius: 12px;
 	padding: 10px 14px;
-	background: rgba(255, 255, 255, 0.06);
-	border: 1px solid rgba(255, 255, 255, 0.14);
+	background: color-mix(in srgb, var(--app-surface-2) 70%, transparent);
+	border: 1px solid color-mix(in srgb, var(--app-surface-2) 94%, transparent);
 	color: inherit;
 	font-weight: 600;
 }

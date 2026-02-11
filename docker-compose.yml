@@ -1,8 +1,8 @@
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    # NyxGuard Manager v3.0.3 (stamp 2026-02-10T23:36:07Z)
-    image: nyxmael/nyxguardmanager:3.0.3
+    # NyxGuard Manager v3.0.4 (stamp 2026-02-11T19:45:00Z)
+    image: nyxmael/nyxguardmanager:3.0.4
     restart: unless-stopped
     ports:
       - "80:80"

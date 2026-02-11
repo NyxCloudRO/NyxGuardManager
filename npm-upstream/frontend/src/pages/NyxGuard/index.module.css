@@ -1,16 +1,50 @@
 .page {
   min-height: calc(100vh - 120px);
   padding: 40px 0 60px;
-  color: #f6f4ff;
-  background: radial-gradient(120% 120% at 10% 10%, #2b6bff 0%, #1b2a6b 40%, #5b1d84 70%, #a31a78 100%);
+  color: var(--app-text-primary);
+  background: var(--app-page-gradient);
+}
+
+.page :global(.container-xl) {
+  position: relative;
+  border-radius: 24px;
+  padding: 16px;
+  background:
+    radial-gradient(
+      120% 130% at 2% 0%,
+      color-mix(in srgb, var(--app-primary) 20%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      120% 130% at 98% 100%,
+      color-mix(in srgb, var(--app-secondary) 20%, transparent),
+      transparent 58%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--app-surface-2) 86%, transparent),
+      color-mix(in srgb, var(--app-surface) 92%, transparent)
+    );
+  border: 1px solid color-mix(in srgb, var(--app-border) 78%, transparent);
+  box-shadow:
+    0 34px 90px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 color-mix(in srgb, var(--app-text-primary) 12%, transparent);
+  backdrop-filter: blur(12px) saturate(140%);
 }
 
 .hero {
   border-radius: 22px;
   padding: 48px 44px;
-  background: rgba(9, 12, 38, 0.58);
-  box-shadow: 0 28px 72px rgba(8, 6, 26, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(
+      156deg,
+      color-mix(in srgb, var(--app-surface-2) 84%, var(--app-primary) 16%),
+      color-mix(in srgb, var(--app-surface-2) 90%, var(--app-secondary) 10%)
+    );
+  box-shadow:
+    0 28px 72px rgba(8, 6, 26, 0.45),
+    inset 0 1px 0 color-mix(in srgb, var(--app-text-primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-border) 70%, transparent);
 }
 
 .heroHeader {
@@ -33,9 +67,9 @@
 .statusPill {
   padding: 8px 12px;
   border-radius: 999px;
-  background: rgba(35, 196, 131, 0.16);
-  border: 1px solid rgba(35, 196, 131, 0.55);
-  color: #d9fff0;
+  background: color-mix(in srgb, var(--app-success) 26%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-success) 72%, white 28%);
+  color: color-mix(in srgb, var(--app-cta-text) 84%, white 16%);
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -62,7 +96,7 @@
   }
   50% {
     transform: translateY(-1px);
-    box-shadow: 0 0 18px rgba(35, 196, 131, 0.45);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--app-success) 64%, transparent);
     opacity: 1;
   }
   100% {
@@ -75,8 +109,8 @@
 .heroMeta {
   padding: 12px 16px;
   border-radius: 14px;
-  background: rgba(11, 14, 40, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--app-surface-2) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-border) 70%, transparent);
   min-width: 200px;
 }
 
@@ -113,18 +147,18 @@
 
 .window,
 .windowActive {
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid color-mix(in srgb, var(--app-border) 100%, transparent);
   padding: 8px 12px;
   border-radius: 999px;
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--app-surface-2) 70%, transparent);
   color: inherit;
 }
 
 .windowActive {
-  background: rgba(255, 255, 255, 0.14);
+  background: color-mix(in srgb, var(--app-surface-2) 94%, transparent);
   border-color: rgba(255, 255, 255, 0.28);
 }
 
@@ -138,8 +172,8 @@
 .statCard {
   padding: 18px 16px;
   border-radius: 14px;
-  background: rgba(11, 14, 40, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--app-surface-2) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-border) 70%, transparent);
 }
 
 .statLabel {
@@ -167,11 +201,82 @@
   gap: 18px;
 }
 
+.hostBoard {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      150deg,
+      color-mix(in srgb, var(--app-surface-2) 84%, var(--app-primary) 16%),
+      color-mix(in srgb, var(--app-surface-2) 92%, var(--app-secondary) 8%)
+    );
+  border: 1px solid color-mix(in srgb, var(--app-border) 72%, transparent);
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 color-mix(in srgb, var(--app-text-primary) 10%, transparent);
+}
+
+.hostBoardHeader {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hostBoardHeader .sectionTitle {
+  margin: 0;
+}
+
+.hostBoardHeader .sectionText {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.78;
+}
+
+.hostGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.hostMetric {
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--app-surface-2) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-border) 66%, transparent);
+}
+
+.hostValue {
+  margin-top: 6px;
+  font-size: 15px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.hostMetric .statLabel {
+  font-size: 10px;
+  letter-spacing: 0.11em;
+}
+
+.hostMetric .statSub {
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: 0.72;
+}
+
 .sectionCard {
   padding: 22px;
   border-radius: 18px;
-  background: rgba(11, 14, 40, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(
+      150deg,
+      color-mix(in srgb, var(--app-surface-2) 86%, var(--app-primary) 14%),
+      color-mix(in srgb, var(--app-surface-2) 92%, var(--app-secondary) 8%)
+    );
+  border: 1px solid color-mix(in srgb, var(--app-border) 70%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--app-text-primary) 10%, transparent);
 }
 
 .sectionTitle {
@@ -189,8 +294,14 @@
   margin-top: 26px;
   padding: 22px;
   border-radius: 18px;
-  background: rgba(11, 14, 40, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(
+      150deg,
+      color-mix(in srgb, var(--app-surface-2) 86%, var(--app-primary) 14%),
+      color-mix(in srgb, var(--app-surface-2) 92%, var(--app-secondary) 8%)
+    );
+  border: 1px solid color-mix(in srgb, var(--app-border) 70%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--app-text-primary) 10%, transparent);
 }
 
 .chartHeader {
@@ -210,7 +321,7 @@
 .pill {
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--app-border) 70%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.12);
   font-size: 11px;
   letter-spacing: 0.08em;
@@ -244,7 +355,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(12, 16, 46, 0.7);
+  background: color-mix(in srgb, var(--app-surface-2) 90%, transparent);
   border: 1px dashed rgba(255, 255, 255, 0.2);
   font-size: 13px;
   opacity: 0.8;
@@ -272,14 +383,15 @@
 }
 
 .primaryButton {
-  background: linear-gradient(120deg, rgba(45, 110, 255, 0.95), rgba(209, 23, 138, 0.95));
-  border-color: rgba(255, 255, 255, 0.18);
+  background: var(--app-cta-gradient);
+  color: var(--app-cta-text);
+  border-color: color-mix(in srgb, var(--app-border) 100%, transparent);
   box-shadow: 0 10px 25px rgba(17, 16, 34, 0.3);
 }
 
 .ghostButton {
-  border-color: rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.06);
+  border-color: color-mix(in srgb, var(--app-border) 100%, transparent);
+  background: color-mix(in srgb, var(--app-surface-2) 70%, transparent);
 }
 
 .ruleList {
@@ -296,8 +408,8 @@
   align-items: center;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(12, 16, 46, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--app-surface-2) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-border) 70%, transparent);
   font-size: 14px;
 }
 
@@ -374,22 +486,22 @@
 }
 
 .pillOn {
-  background: rgba(35, 196, 131, 0.18);
-  border: 1px solid rgba(35, 196, 131, 0.5);
-  color: #d9fff0;
+  background: color-mix(in srgb, var(--app-success) 26%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-success) 72%, white 28%);
+  color: color-mix(in srgb, var(--app-cta-text) 84%, white 16%);
   animation: nyxguardBadgePulse 1.25s ease-in-out infinite;
 }
 
 .pillPartial {
-  background: rgba(255, 199, 92, 0.16);
-  border: 1px solid rgba(255, 199, 92, 0.45);
-  color: #fff2d9;
+  background: color-mix(in srgb, var(--app-warning) 24%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-warning) 68%, white 32%);
+  color: color-mix(in srgb, var(--app-cta-text) 80%, white 20%);
   animation: nyxguardBadgePulse 1.6s ease-in-out infinite;
 }
 
 .pillOff {
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: color-mix(in srgb, var(--app-surface-2) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-border) 78%, transparent);
   color: rgba(246, 244, 255, 0.9);
 }
 
@@ -426,8 +538,8 @@
 .tableRow {
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(12, 16, 46, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--app-surface-2) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-border) 70%, transparent);
   font-size: 14px;
 }
 
@@ -487,7 +599,7 @@
 .selectRow span {
   padding: 8px 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--app-border) 70%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.16);
   font-size: 12px;
 }
@@ -495,7 +607,7 @@
 .inputFake {
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(12, 16, 46, 0.7);
+  background: color-mix(in srgb, var(--app-surface-2) 90%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.12);
   font-size: 14px;
 }
@@ -512,8 +624,8 @@
   align-items: center;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(12, 16, 46, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--app-surface-2) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-border) 70%, transparent);
   font-size: 14px;
 }
 
@@ -541,8 +653,8 @@
   align-items: center;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(12, 16, 46, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--app-surface-2) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-border) 70%, transparent);
   font-size: 13px;
 }
 
@@ -581,8 +693,8 @@
   margin-top: 14px;
   padding: 14px 16px;
   border-radius: 12px;
-  background: rgba(12, 16, 46, 0.7);
-  border: 1px dashed rgba(255, 255, 255, 0.18);
+  background: color-mix(in srgb, var(--app-surface-2) 90%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--app-border) 100%, transparent);
   font-size: 13px;
   opacity: 0.82;
 }
@@ -592,12 +704,21 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .hostGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .sections {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
+  .page :global(.container-xl) {
+    border-radius: 18px;
+    padding: 12px;
+  }
+
   .hero {
     padding: 36px 28px;
   }
@@ -607,6 +728,10 @@
   }
 
   .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .hostGrid {
     grid-template-columns: 1fr;
   }
 }

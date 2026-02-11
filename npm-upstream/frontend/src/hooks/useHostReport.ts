@@ -1,16 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
-import { getHostsReport } from "src/api/backend";
+import { getHostsReport, type HostsReport } from "src/api/backend";
 
 const fetchHostReport = () => getHostsReport();
 
 const useHostReport = (options = {}) => {
-	return useQuery<Record<string, number>, Error>({
+	return useQuery<HostsReport, Error>({
 		queryKey: ["host-report"],
 		queryFn: fetchHostReport,
-		refetchOnWindowFocus: false,
+		refetchOnMount: "always",
+		refetchOnWindowFocus: true,
+		refetchOnReconnect: true,
+		refetchIntervalInBackground: true,
 		retry: 5,
-		refetchInterval: 15 * 1000, // 15 seconds
-		staleTime: 14 * 1000, // 14 seconds
+		refetchInterval: 5 * 1000, // 5 seconds
+		staleTime: 4 * 1000, // 4 seconds
 		...options,
 	});
 };

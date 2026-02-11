@@ -1,6 +1,11 @@
 :root {
 	color-scheme: dark;
 	--app-background: #0a1029;
+	--app-page-gradient: radial-gradient(120% 120% at 10% 10%, #2b6bff 0%, #1b2a6b 40%, #5b1d84 70%, #a31a78 100%);
+	--app-body-overlay-a: rgba(75, 139, 255, 0.16);
+	--app-body-overlay-b: rgba(255, 43, 189, 0.10);
+	--app-body-overlay-a-pos: 10% 0%;
+	--app-body-overlay-b-pos: 90% 10%;
 	--app-surface: rgba(0, 0, 0, 0.16);
 	--app-surface-2: rgba(0, 0, 0, 0.22);
 	--app-text-primary: rgba(243, 247, 255, 0.92);
@@ -22,6 +27,8 @@
 	--app-modal-bg: linear-gradient(180deg, rgba(6, 12, 34, 0.96), rgba(10, 18, 46, 0.94));
 	--app-input-bg: rgba(255, 255, 255, 0.06);
 	--app-focus-ring: rgba(43, 98, 255, 0.16);
+	--app-cta-gradient: linear-gradient(120deg, #4b8bff, #ff2bbd);
+	--app-cta-text: #f7fbff;
 }
 
 :root,
@@ -49,8 +56,8 @@ body,
 
 body {
 	background:
-		radial-gradient(1200px 500px at 10% 0%, var(--app-sidebar-overlay-a), transparent 58%),
-		radial-gradient(960px 480px at 90% 10%, var(--app-sidebar-overlay-b), transparent 55%),
+		radial-gradient(1200px 500px at var(--app-body-overlay-a-pos), var(--app-body-overlay-a), transparent 58%),
+		radial-gradient(960px 480px at var(--app-body-overlay-b-pos), var(--app-body-overlay-b), transparent 55%),
 		linear-gradient(160deg, var(--app-background) 0%, color-mix(in srgb, var(--app-background) 82%, var(--app-secondary)) 100%);
 	color: var(--app-text-primary);
 }
@@ -194,6 +201,61 @@ body {
 	box-shadow: 0 0 0 3px var(--app-focus-ring) !important;
 }
 
+.btn-primary,
+.btn.btn-pink,
+.btn.btn-blue,
+.btn.btn-cyan,
+.btn.btn-lime,
+.btn.btn-orange,
+.btn.btn-yellow,
+.btn.btn-azure,
+.btn.btn-indigo,
+.btn.btn-purple {
+	background: var(--app-cta-gradient) !important;
+	color: var(--app-cta-text) !important;
+	border-color: color-mix(in srgb, var(--app-border) 100%, transparent) !important;
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.28);
+}
+
+.btn-primary:hover,
+.btn.btn-pink:hover,
+.btn.btn-blue:hover,
+.btn.btn-cyan:hover,
+.btn.btn-lime:hover,
+.btn.btn-orange:hover,
+.btn.btn-yellow:hover,
+.btn.btn-azure:hover,
+.btn.btn-indigo:hover,
+.btn.btn-purple:hover {
+	filter: brightness(1.06);
+}
+
+.btn-outline-primary {
+	color: var(--app-text-primary) !important;
+	border-color: color-mix(in srgb, var(--app-border) 100%, transparent) !important;
+	background: color-mix(in srgb, var(--app-surface-2) 70%, transparent) !important;
+}
+
+.btn-outline-secondary,
+.btn.btn-action,
+.btn.btn-ghost {
+	color: var(--app-text-primary) !important;
+	border-color: color-mix(in srgb, var(--app-border) 100%, transparent) !important;
+	background: color-mix(in srgb, var(--app-surface-2) 74%, transparent) !important;
+}
+
+.btn-outline-primary:hover {
+	background: color-mix(in srgb, var(--app-primary) 20%, var(--app-surface-2)) !important;
+	color: var(--app-text-primary) !important;
+}
+
+.btn-outline-secondary:hover,
+.btn.btn-action:hover,
+.btn.btn-ghost:hover {
+	background: color-mix(in srgb, var(--app-primary) 16%, var(--app-surface-2)) !important;
+	color: var(--app-text-primary) !important;
+}
+
 .dropdown-menu {
 	background: var(--app-dropdown-bg);
 	backdrop-filter: blur(16px) saturate(175%);
@@ -223,16 +285,16 @@ select.form-control {
 .form-select optgroup,
 select.form-control option,
 select.form-control optgroup {
-	background: color-mix(in srgb, var(--app-surface-2) 75%, #dbe2f2) !important;
-	color: #091120 !important;
+	background: color-mix(in srgb, var(--app-surface-2) 96%, black 4%) !important;
+	color: color-mix(in srgb, var(--app-text-primary) 94%, white 6%) !important;
 }
 
 .form-select option:checked,
 .form-select option:hover,
 select.form-control option:checked,
 select.form-control option:hover {
-	background: color-mix(in srgb, var(--app-primary) 24%, #c7d2e9) !important;
-	color: #050b18 !important;
+	background: color-mix(in srgb, var(--app-primary) 36%, var(--app-surface-2)) !important;
+	color: color-mix(in srgb, var(--app-text-primary) 96%, white 4%) !important;
 }
 
 @media (max-width: 1200px) {

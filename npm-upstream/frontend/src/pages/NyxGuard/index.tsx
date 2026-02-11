@@ -12,6 +12,7 @@ import {
 	getNyxGuardGeoip,
 	getNyxGuardSummary,
 } from "src/api/backend";
+import { useHostReport } from "src/hooks";
 import styles from "./index.module.css";
 
 function formatBytes(bytes: number) {
@@ -43,10 +44,16 @@ function attackTypeLabel(t: string | null | undefined) {
 	return "Unknown";
 }
 
+function formatPercent(v: number | null | undefined) {
+	if (typeof v !== "number" || !Number.isFinite(v)) return "N/A";
+	return `${v.toFixed(1)}%`;
+}
+
 const NyxGuard = () => {
 	const [windowMinutes, setWindowMinutes] = useState(1440);
 	const [trafficWindowMinutes, setTrafficWindowMinutes] = useState(5);
 	const trafficLimit = useMemo(() => (trafficWindowMinutes >= 1440 ? 500 : 50), [trafficWindowMinutes]);
+	const hostReport = useHostReport();
 
 	const exportDecisionEvents = () => {
 		const recent = trafficSummary.data?.recent ?? [];
@@ -165,6 +172,9 @@ const NyxGuard = () => {
 		if (hasIp2) return "IP2Location (local DB)";
 		return "Not installed";
 	}, [geoip.data]);
+
+	const hostSystem = hostReport.data?.system;
+	const hostContainer = hostSystem?.container;
 
 	const ipInsights = useMemo(() => {
 		const items = ips.data?.items ?? [];
@@ -410,6 +420,90 @@ const NyxGuard = () => {
 							<div className={styles.statLabel}>Geo Source</div>
 							<div className={styles.statValue} style={{ fontSize: 14, marginTop: 10 }}>
 								{geoSourcesLabel}
+							</div>
+						</div>
+					</div>
+					<div className={styles.hostBoard}>
+						<div className={styles.hostBoardHeader}>
+							<h3 className={styles.sectionTitle}>Host Resources</h3>
+							<p className={styles.sectionText}>CPU, RAM, and disk usage from the server running this app.</p>
+						</div>
+						<div className={styles.hostGrid}>
+							<div className={styles.hostMetric}>
+								<div className={styles.statLabel}>CPU Usage</div>
+								<div className={styles.hostValue}>{formatPercent(hostSystem?.cpuUsagePercent)}</div>
+							</div>
+							<div className={styles.hostMetric}>
+								<div className={styles.statLabel}>RAM Usage</div>
+								<div className={styles.hostValue}>
+									{hostSystem ? `${formatBytes(hostSystem.ramUsedBytes)} / ${formatBytes(hostSystem.ramTotalBytes)}` : "N/A"}
+								</div>
+								<div className={styles.statSub}>{formatPercent(hostSystem?.ramUsedPercent)} used</div>
+							</div>
+							<div className={styles.hostMetric}>
+								<div className={styles.statLabel}>HDD Used</div>
+								<div className={styles.hostValue}>
+									{hostSystem?.disk ? formatBytes(hostSystem.disk.usedBytes) : "N/A"}
+								</div>
+								<div className={styles.statSub}>
+									{hostSystem?.disk ? `${hostSystem.disk.usedPercent.toFixed(1)}%` : "No disk info"}
+								</div>
+							</div>
+							<div className={styles.hostMetric}>
+								<div className={styles.statLabel}>HDD Free</div>
+								<div className={styles.hostValue}>
+									{hostSystem?.disk ? formatBytes(hostSystem.disk.freeBytes) : "N/A"}
+								</div>
+							</div>
+							<div className={styles.hostMetric}>
+								<div className={styles.statLabel}>HDD Total</div>
+								<div className={styles.hostValue}>
+									{hostSystem?.disk ? formatBytes(hostSystem.disk.totalBytes) : "N/A"}
+								</div>
+								<div className={styles.statSub}>{hostSystem?.disk ? `Path: ${hostSystem.disk.path}` : ""}</div>
+							</div>
+						</div>
+						<div className={styles.hostBoardHeader} style={{ marginTop: 16 }}>
+							<h3 className={styles.sectionTitle}>Docker Usage (This App Container)</h3>
+							<p className={styles.sectionText}>
+								Runtime memory and CPU usage for the current container ({hostContainer?.containerId ?? "unknown"}).
+							</p>
+						</div>
+						<div className={styles.hostGrid}>
+							<div className={styles.hostMetric}>
+								<div className={styles.statLabel}>Container CPU</div>
+								<div className={styles.hostValue}>{formatPercent(hostContainer?.cpuUsagePercent)}</div>
+							</div>
+							<div className={styles.hostMetric}>
+								<div className={styles.statLabel}>Container RAM Usage</div>
+								<div className={styles.hostValue}>
+									{hostContainer ? formatBytes(hostContainer.memoryUsageBytes) : "N/A"}
+								</div>
+								<div className={styles.statSub}>
+									{hostContainer?.memoryUsagePercent != null ? `${hostContainer.memoryUsagePercent.toFixed(2)}%` : ""}
+								</div>
+							</div>
+							<div className={styles.hostMetric}>
+								<div className={styles.statLabel}>Container RSS</div>
+								<div className={styles.hostValue}>{hostContainer ? formatBytes(hostContainer.rssBytes) : "N/A"}</div>
+							</div>
+							<div className={styles.hostMetric}>
+								<div className={styles.statLabel}>Container NET I/O</div>
+								<div className={styles.hostValue}>
+									{hostContainer
+										? `${formatBytes(hostContainer.netIo?.rxBytes ?? 0)} / ${formatBytes(hostContainer.netIo?.txBytes ?? 0)}`
+										: "N/A"}
+								</div>
+								<div className={styles.statSub}>RX / TX</div>
+							</div>
+							<div className={styles.hostMetric}>
+								<div className={styles.statLabel}>Container BLOCK I/O</div>
+								<div className={styles.hostValue}>
+									{hostContainer
+										? `${formatBytes(hostContainer.blockIo?.readBytes ?? 0)} / ${formatBytes(hostContainer.blockIo?.writeBytes ?? 0)}`
+										: "N/A"}
+								</div>
+								<div className={styles.statSub}>Read / Write</div>
 							</div>
 						</div>
 					</div>

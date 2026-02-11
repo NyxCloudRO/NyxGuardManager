@@ -77,7 +77,7 @@ const NyxGuardAttacks = () => {
 						<div className={styles.placeholder}>No attacks detected in this window.</div>
 					) : (
 						<div style={{ overflowX: "auto" }}>
-							<table className="table table-sm table-vcenter">
+							<table className={cn("table table-sm table-vcenter", styles.table)}>
 								<thead>
 									<tr>
 										<th>IP</th>
@@ -100,8 +100,7 @@ const NyxGuardAttacks = () => {
 											<td className="text-nowrap text-secondary">{banLabel(it)}</td>
 											<td className="text-end text-nowrap">
 												<select
-													className="form-select form-select-sm"
-													style={{ maxWidth: 180, display: "inline-block" }}
+													className={cn("form-select form-select-sm", styles.banSelect)}
 													disabled={ban.isPending}
 													defaultValue=""
 													onChange={(e) => {

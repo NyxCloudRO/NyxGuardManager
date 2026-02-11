@@ -1,7 +1,34 @@
 .wrapper {
   /* Avoid forcing extra vertical space; the header already consumes height. */
   padding: 20px 0 24px;
-  background: radial-gradient(120% 120% at 10% 10%, #2b6bff 0%, #1b2a6b 40%, #5b1d84 70%, #a31a78 100%);
+  background: var(--app-page-gradient);
+}
+
+.wrapper :global(.row-deck) {
+  position: relative;
+  border-radius: 24px;
+  padding: 16px 14px;
+  background:
+    radial-gradient(
+      120% 130% at 2% 0%,
+      color-mix(in srgb, var(--app-primary) 20%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      120% 130% at 98% 100%,
+      color-mix(in srgb, var(--app-secondary) 20%, transparent),
+      transparent 58%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--app-surface-2) 86%, transparent),
+      color-mix(in srgb, var(--app-surface) 92%, transparent)
+    );
+  border: 1px solid color-mix(in srgb, var(--app-border) 78%, transparent);
+  box-shadow:
+    0 34px 90px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 color-mix(in srgb, var(--app-text-primary) 12%, transparent);
+  backdrop-filter: blur(12px) saturate(140%);
 }
 
 .cards {
@@ -9,9 +36,17 @@
 }
 
 .cards :global(.card) {
-  background: rgba(11, 14, 40, 0.75);
-  color: #f7f7fb;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--app-surface-2) 84%, var(--app-primary) 16%),
+      color-mix(in srgb, var(--app-surface-2) 90%, var(--app-secondary) 10%)
+    );
+  color: var(--app-text-primary);
+  border: 1px solid color-mix(in srgb, var(--app-border) 70%, transparent);
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 color-mix(in srgb, var(--app-text-primary) 12%, transparent);
 }
 
 .cards :global(.card .text-muted) {
@@ -21,5 +56,10 @@
 @media (max-width: 768px) {
   .wrapper {
     padding: 16px 0 20px;
+  }
+
+  .wrapper :global(.row-deck) {
+    border-radius: 18px;
+    padding: 12px 10px;
   }
 }
