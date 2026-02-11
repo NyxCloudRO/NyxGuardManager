@@ -1,6 +1,6 @@
 FROM nginxproxymanager/testca AS testca
 FROM nginxproxymanager/nginx-full:certbot-node
-LABEL maintainer="Jamie Curnow <jc@jc21.com>"
+LABEL maintainer="Vlad-Eusebiu Cardei <VladCardei@live.com>"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 

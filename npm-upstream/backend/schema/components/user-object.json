@@ -29,13 +29,13 @@
 			"type": "string",
 			"description": "Email",
 			"minLength": 3,
-			"example": "jc@jc21.com"
+			"example": "VladCardei@live.com"
 		},
 		"name": {
 			"type": "string",
 			"description": "Name",
 			"minLength": 1,
-			"example": "Jamie Curnow"
+			"example": "Vlad-Eusebiu Cardei"
 		},
 		"nickname": {
 			"type": "string",
