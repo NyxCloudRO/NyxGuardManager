@@ -1,5 +1,5 @@
 {
-  "name": "nginx-proxy-manager",
+  "name": "nyxguard-manager-frontend",
   "version": "3.0.4",
   "type": "module",
   "author": "Jamie Curnow <jc@jc21.com>",

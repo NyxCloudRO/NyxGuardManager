@@ -1,7 +1,7 @@
 {
-  "name": "nginx-proxy-manager",
+  "name": "nyxguard-manager",
   "version": "3.0.4",
-  "description": "A beautiful interface for creating Nginx endpoints",
+  "description": "NyxGuard Manager backend service",
   "author": "Jamie Curnow <jc@jc21.com>",
   "license": "MIT",
   "main": "index.js",
