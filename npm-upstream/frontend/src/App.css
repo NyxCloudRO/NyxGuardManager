@@ -15,6 +15,35 @@
 
 [data-bs-theme="dark"] .modal-content {
 	--tblr-modal-box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+	background: linear-gradient(180deg, rgba(6, 12, 34, 0.96), rgba(10, 18, 46, 0.94)) !important;
+	border: 1px solid rgba(170, 191, 255, 0.28) !important;
+	box-shadow:
+		0 28px 80px rgba(0, 0, 0, 0.62),
+		0 10px 36px rgba(10, 24, 72, 0.44) !important;
+	backdrop-filter: blur(10px) saturate(130%);
+}
+
+[data-bs-theme="dark"] .modal-header,
+[data-bs-theme="dark"] .modal-footer {
+	background: rgba(6, 12, 34, 0.68);
+	border-color: rgba(170, 191, 255, 0.2);
+}
+
+[data-bs-theme="dark"] .modal .card,
+[data-bs-theme="dark"] .modal .card-header,
+[data-bs-theme="dark"] .modal .card-body,
+[data-bs-theme="dark"] .modal .card-footer {
+	background: rgba(12, 22, 58, 0.72);
+}
+
+[data-bs-theme="dark"] .modal .nav-tabs .nav-link {
+	color: rgba(222, 232, 255, 0.82);
+}
+
+[data-bs-theme="dark"] .modal .nav-tabs .nav-link.active {
+	background: rgba(17, 30, 79, 0.78);
+	color: rgba(246, 250, 255, 0.95);
+	border-color: rgba(170, 191, 255, 0.26);
 }
 
 [data-bs-theme="dark"] .modal-backdrop {
@@ -145,9 +174,35 @@
 		0 10px 26px rgba(0, 0, 0, 0.35);
 }
 
+[data-bs-theme="dark"] .dropdown-item,
+[data-bs-theme="dark"] .dropdown-header {
+	color: rgba(238, 245, 255, 0.92);
+}
+
 [data-bs-theme="dark"] .dropdown-item:hover,
 [data-bs-theme="dark"] .dropdown-item:focus-visible {
 	background: linear-gradient(90deg, rgba(75, 139, 255, 0.20), rgba(255, 43, 189, 0.10));
+}
+
+[data-bs-theme="dark"] .form-select,
+[data-bs-theme="dark"] select.form-control {
+	color-scheme: dark;
+}
+
+[data-bs-theme="dark"] .form-select option,
+[data-bs-theme="dark"] .form-select optgroup,
+[data-bs-theme="dark"] select.form-control option,
+[data-bs-theme="dark"] select.form-control optgroup {
+	background: #c8ceda !important;
+	color: #0b1020 !important;
+}
+
+[data-bs-theme="dark"] .form-select option:checked,
+[data-bs-theme="dark"] .form-select option:hover,
+[data-bs-theme="dark"] select.form-control option:checked,
+[data-bs-theme="dark"] select.form-control option:hover {
+	background: #9aa7bf !important;
+	color: #070b16 !important;
 }
 
 @media (max-width: 1200px) {
