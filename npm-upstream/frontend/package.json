@@ -2,7 +2,7 @@
   "name": "nyxguard-manager-frontend",
   "version": "3.0.4",
   "type": "module",
-  "author": "Jamie Curnow <jc@jc21.com>",
+  "author": "Vlad-Eusebiu Cardei <VladCardei@live.com>",
   "license": "MIT",
   "scripts": {
     "dev": "vite",
