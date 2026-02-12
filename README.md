@@ -120,11 +120,9 @@ docker compose --env-file .env up -d
 ```
 
 ## Supported Distributions
-- Ubuntu 24.xx (tested)
-- Ubuntu 22.xx (tested)
-- Debian 13 (tested)
-- Debian 12 (tested)
-- Other distributions: not fully tested yet. We plan to validate and add them over time.
+- Ubuntu 22.xx / Ubuntu 24.xx / Ubuntu 25.xx (tested)
+- Debian 12 / Debian 13 (tested)
+- Other distributions: not fully tested yet. We might plan to validate and add them over time.
 
 ## Hardware Requirements (Guidelines)
 
