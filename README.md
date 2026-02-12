@@ -230,6 +230,17 @@ This release is validated in production-style deployments on Ubuntu 24 and Debia
   <img src="assets/free-forever.svg" alt="Commitment: Free Forever" height="48" />
 </p>
 
-NyxGuard Manager builds on an upstream reverse-proxy manager codebase and adds substantial engineering and product work: the NyxGuard security layer (WAF controls, SQL Shield, bot defense, DDoS protection), traffic analytics, and operational tooling.
+📜 License
 
-**Commitment:** keep NyxGuard Manager **free to use** for both personal and enterprise deployments. We do not plan to introduce paid license tiers or a commercial licensing model. As the project grows, we aim to rely on the community: contributions, testing, feedback, and optional community support.
+NyxGuard Manager builds on an upstream reverse-proxy manager codebase and adds substantial engineering and product development, including the NyxGuard security layer (WAF controls, SQL Shield, bot defense, DDoS protection), traffic analytics, and operational tooling.
+
+NyxGuard Manager is free to use for both personal and enterprise deployments.
+
+The project is distributed under the NyxGuard Manager Proprietary License (NMPLA).
+
+Use is permitted for internal personal and commercial environments.
+Modification, redistribution, resale, and third-party hosting are not permitted.
+
+For full terms and legal details, see the complete license:
+
+🔗 https://github.com/NyxCloudRO/NyxGuardManager/blob/main/LICENSE.md
