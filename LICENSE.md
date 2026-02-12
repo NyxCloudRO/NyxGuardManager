@@ -12,11 +12,13 @@ Licensor: NyxGuard Manager
 
 Backend services (Node.js / Express API)
 
-Frontend (React / TypeScript build artifacts and source)
+Frontend (React / TypeScript built with Vite)
 
-Reverse proxy configurations (NyxGuard / OpenResty)
+Reverse proxy configurations (NyxGuard/OpenResty (inside the stack)
 
 Deployment files (Docker Compose definitions, configuration files)
+
+Database: MariaDB (MySQL-compatible)
 
 Associated scripts and documentation
 
