@@ -1,9 +1,11 @@
 NyxGuard Manager Proprietary License Agreement (NMPLA)
-
 Version 1.0 — Effective 2026
 
-Copyright (c) 2026 NyxGuard Manager - Author Vlad-Eusebiu Cardei
+Copyright (c) 2026 Vlad-Eusebiu Cardei
 All rights reserved.
+
+Licensor: Vlad-Eusebiu Cardei
+Contact: VladCardei@live.com
 
 1. Definitions
 
