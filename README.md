@@ -208,6 +208,7 @@ sudo systemctl enable --now nyxguardmanager.service
 - Let’s Encrypt HTTP certificates require inbound `80/tcp` from the public internet to your server.
 - DNS challenge certificates require the matching DNS provider credentials.
 - “Protected Apps” are proxy hosts with WAF enabled.
+- You must also allow traffic 80/tcp and 443/tcp into your router
 
 ## Private Repo Installs
 The curl installer clones this repo. If the repo is private, `git clone` will require authentication (SSH key or HTTPS token).
