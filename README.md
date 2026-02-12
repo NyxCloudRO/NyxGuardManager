@@ -241,6 +241,7 @@ The project is distributed under the NyxGuard Manager Proprietary License (NMPLA
 Use is permitted for internal personal and commercial environments.
 Modification, redistribution, resale, and third-party hosting are not permitted.
 
-For full terms and legal details, see the complete license:
+See the full license in the [LICENSE](LICENSE.md) file.
 
-🔗 https://github.com/NyxCloudRO/NyxGuardManager/blob/main/LICENSE.md
+
+
