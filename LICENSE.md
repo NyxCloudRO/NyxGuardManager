@@ -1,11 +1,10 @@
 NyxGuard Manager Proprietary License Agreement (NMPLA)
 Version 1.0 — Effective 2026
 
-Copyright (c) 2026 Vlad-Eusebiu Cardei
+Copyright (c) 2026 NyxGuard Manager Proprietary
 All rights reserved.
 
-Licensor: Vlad-Eusebiu Cardei
-Contact: VladCardei@live.com
+Licensor: NyxGuard Manager
 
 1. Definitions
 
@@ -15,13 +14,13 @@ Backend services (Node.js / Express API)
 
 Frontend (React / TypeScript build artifacts and source)
 
-Reverse proxy configurations (Nginx / OpenResty)
+Reverse proxy configurations (NyxGuard / OpenResty)
 
 Deployment files (Docker Compose definitions, configuration files)
 
 Associated scripts and documentation
 
-“Licensor” means NyxGuard.
+“Licensor” means NyxGuard Manager.
 
 “User” means any individual or entity using the Software.
 
