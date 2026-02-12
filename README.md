@@ -243,5 +243,14 @@ Modification, redistribution, resale, and third-party hosting are not permitted.
 
 See the full license in the [LICENSE](LICENSE.md) file.
 
+## Author
+
+**Vlad-Eusebiu Cardei**  
+Founder of NyxGuard Manager /  BillCore  / NyxCloud
+
+- https://nyxcloud.ro/
+- https://billcore.ro/
+
+Contact: VladCardei@live.com
 
 
