@@ -38,6 +38,6 @@ export interface NyxGuardSummary {
 	truncated?: boolean;
 }
 
-export async function getNyxGuardSummary(minutes = 15, limit = 50): Promise<NyxGuardSummary> {
-	return get({ url: "nyxguard/summary", params: { minutes, limit } });
+export async function getNyxGuardSummary(minutes = 15, limit = 50, offset = 0): Promise<NyxGuardSummary> {
+	return get({ url: "nyxguard/summary", params: { minutes, limit, offset } });
 }

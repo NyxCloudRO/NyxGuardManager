@@ -1,11 +1,18 @@
 .page {
-  min-height: calc(100vh - 120px);
-  padding: 40px 0 60px;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
   color: var(--app-text-primary);
   background: var(--app-page-gradient);
 }
 
 .page :global(.container-xl) {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
   position: relative;
   border-radius: 24px;
   padding: 16px;
@@ -52,6 +59,53 @@
   justify-content: space-between;
   gap: 20px;
   flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.heroTitleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.heroPills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+.miniPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-surface-2) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-border) 72%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--app-text-primary) 10%, transparent);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.miniPillLabel {
+  opacity: 0.74;
+}
+
+.miniPillValue {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.miniPillMuted {
+  opacity: 0.62;
 }
 
 .statusBar {
@@ -312,10 +366,57 @@
   align-items: center;
 }
 
+.controlsRow {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pageSizeGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.controlsLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.72;
+}
+
+.trafficTableViewport {
+  margin-top: 12px;
+  max-height: min(42vh, 420px);
+}
+
+.hostsTableViewport {
+  max-height: min(32vh, 360px);
+}
+
 .pillRow {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.paginationRow {
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.paginationMeta {
+  font-size: 12px;
+  opacity: 0.82;
+}
+
+.paginationActions {
+  display: inline-flex;
+  gap: 8px;
 }
 
 .pill {

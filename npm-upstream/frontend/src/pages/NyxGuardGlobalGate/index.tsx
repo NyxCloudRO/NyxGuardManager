@@ -8,6 +8,7 @@ import {
 	type NyxGuardAppsSummary,
 	type NyxGuardSettings,
 } from "src/api/backend";
+import { intl, T } from "src/locale";
 import styles from "./index.module.css";
 
 type Draft = NyxGuardSettings;
@@ -61,6 +62,12 @@ const NyxGuardGlobalGate = () => {
 			await qc.invalidateQueries({ queryKey: ["nyxguard", "summary"] });
 		},
 	});
+	const applyRetention = useMutation({
+		mutationFn: (days: Draft["logRetentionDays"]) => updateNyxGuardSettings({ logRetentionDays: days }),
+		onSuccess: async () => {
+			await qc.invalidateQueries({ queryKey: ["nyxguard", "settings"] });
+		},
+	});
 
 	const wafAll = useMutation({
 		mutationFn: (enabled: boolean) => updateNyxGuardAppsWaf(enabled),
@@ -108,8 +115,8 @@ const NyxGuardGlobalGate = () => {
 	if (settings.isLoading || !draft) {
 		return (
 			<div className={styles.page}>
-				<div className="container-xl">
-					<div className={styles.card}>Loading GlobalGate Security Layer…</div>
+				<div className="container-xl nyx-scroll-theme">
+					<div className={styles.card}><T id="nyxguard.globalgate.loading" /></div>
 				</div>
 			</div>
 		);
@@ -117,46 +124,43 @@ const NyxGuardGlobalGate = () => {
 
 	const wafState = (() => {
 		const s: NyxGuardAppsSummary | undefined = appsSummary.data;
-		if (!s || s.totalApps <= 0) return { label: "OFF", className: styles.badgeOff, canToggle: false, next: true };
-		if (s.protectedCount <= 0) return { label: "OFF", className: styles.badgeOff, canToggle: true, next: true };
-		if (s.protectedCount >= s.totalApps) return { label: "ON", className: styles.badgeOn, canToggle: true, next: false };
-		return { label: "PARTIAL", className: styles.badgePartial, canToggle: true, next: true };
+		if (!s || s.totalApps <= 0) return { label: intl.formatMessage({ id: "nyxguard.globalgate.off" }), className: styles.badgeOff, canToggle: false, next: true };
+		if (s.protectedCount <= 0) return { label: intl.formatMessage({ id: "nyxguard.globalgate.off" }), className: styles.badgeOff, canToggle: true, next: true };
+		if (s.protectedCount >= s.totalApps) return { label: intl.formatMessage({ id: "nyxguard.globalgate.on" }), className: styles.badgeOn, canToggle: true, next: false };
+		return { label: intl.formatMessage({ id: "nyxguard.globalgate.partial" }), className: styles.badgePartial, canToggle: true, next: true };
 	})();
 
 	return (
 		<div className={styles.page}>
-			<div className="container-xl">
+			<div className="container-xl nyx-scroll-theme">
 				<div className={styles.card}>
-					<h2 className={styles.title}>GlobalGate Security Layer</h2>
-					<p className={styles.subtitle}>
-						GlobalGate is the central control surface for NyxGuard’s global protections. Changes apply instantly
-						after nginx reload and affect all protected applications.
-					</p>
+						<h2 className={styles.title}><T id="nyxguard.globalgate.title" /></h2>
+						<p className={styles.subtitle}><T id="nyxguard.globalgate.subtitle" /></p>
 
 					<div className={styles.grid}>
 						<div className={styles.section}>
-							<div className={styles.sectionTitle}>Global Toggles</div>
+								<div className={styles.sectionTitle}><T id="nyxguard.globalgate.global-toggles" /></div>
 							<div className={styles.toggles}>
 								<div className={styles.toggleItem}>
-									<span>WAF Protection</span>
+										<span><T id="nyxguard.globalgate.waf-protection" /></span>
 									<button
 										type="button"
 										className={wafState.className}
 										disabled={!wafState.canToggle || wafAll.isPending}
 										onClick={() => wafAll.mutate(wafState.next)}
-										title={
-											!wafState.canToggle
-												? "No proxy hosts found yet."
-												: wafState.next
-													? "Enable WAF for all proxy hosts"
-													: "Disable WAF for all proxy hosts"
-										}
+											title={
+												!wafState.canToggle
+													? intl.formatMessage({ id: "nyxguard.globalgate.no-proxy-hosts" })
+													: wafState.next
+														? intl.formatMessage({ id: "nyxguard.globalgate.enable-waf-all" })
+														: intl.formatMessage({ id: "nyxguard.globalgate.disable-waf-all" })
+											}
 									>
 										{wafState.label}
 									</button>
 								</div>
 								<div className={styles.toggleItem}>
-									<span>Bot Defense</span>
+										<span><T id="nyxguard.globalgate.bot-defense" /></span>
 									<button
 										type="button"
 										className={draft.botDefenseEnabled ? styles.badgeOn : styles.badgeOff}
@@ -167,11 +171,11 @@ const NyxGuardGlobalGate = () => {
 											save.mutate({ botDefenseEnabled: next });
 										}}
 									>
-										{draft.botDefenseEnabled ? "ON" : "OFF"}
+											{draft.botDefenseEnabled ? intl.formatMessage({ id: "nyxguard.globalgate.on" }) : intl.formatMessage({ id: "nyxguard.globalgate.off" })}
 									</button>
 								</div>
 								<div className={styles.toggleItem}>
-									<span>DDoS Shield</span>
+										<span><T id="nyxguard.globalgate.ddos-shield" /></span>
 									<button
 										type="button"
 										className={draft.ddosEnabled ? styles.badgeOn : styles.badgeOff}
@@ -182,11 +186,11 @@ const NyxGuardGlobalGate = () => {
 											save.mutate({ ddosEnabled: next });
 										}}
 									>
-										{draft.ddosEnabled ? "ON" : "OFF"}
+											{draft.ddosEnabled ? intl.formatMessage({ id: "nyxguard.globalgate.on" }) : intl.formatMessage({ id: "nyxguard.globalgate.off" })}
 									</button>
 								</div>
 								<div className={styles.toggleItem}>
-									<span>SQL Shield</span>
+										<span><T id="nyxguard.globalgate.sql-shield" /></span>
 									<button
 										type="button"
 										className={draft.sqliEnabled ? styles.badgeOn : styles.badgeOff}
@@ -197,11 +201,11 @@ const NyxGuardGlobalGate = () => {
 											save.mutate({ sqliEnabled: next });
 										}}
 									>
-										{draft.sqliEnabled ? "ON" : "OFF"}
+											{draft.sqliEnabled ? intl.formatMessage({ id: "nyxguard.globalgate.on" }) : intl.formatMessage({ id: "nyxguard.globalgate.off" })}
 									</button>
 								</div>
 								<div className={styles.toggleItem}>
-									<span>Authenticated Traffic Bypass</span>
+										<span><T id="nyxguard.globalgate.auth-bypass" /></span>
 									<button
 										type="button"
 										className={draft.authBypassEnabled ? styles.badgeOn : styles.badgeOff}
@@ -211,18 +215,18 @@ const NyxGuardGlobalGate = () => {
 											setDraft({ ...draft, authBypassEnabled: next });
 											save.mutate({ authBypassEnabled: next });
 										}}
-										title="If enabled, authenticated users are far less likely to be blocked by bot/SQL/DDoS protections."
-									>
-										{draft.authBypassEnabled ? "ON" : "OFF"}
-									</button>
+											title={intl.formatMessage({ id: "nyxguard.globalgate.auth-bypass-help" })}
+										>
+											{draft.authBypassEnabled ? intl.formatMessage({ id: "nyxguard.globalgate.on" }) : intl.formatMessage({ id: "nyxguard.globalgate.off" })}
+										</button>
 								</div>
 							</div>
 						</div>
 
 						<div className={styles.section}>
-							<div className={styles.sectionTitle}>Log Retention</div>
-							<div className={styles.field}>
-								<div className={styles.label}>NyxGuard log retention (days)</div>
+								<div className={styles.sectionTitle}><T id="nyxguard.globalgate.log-retention" /></div>
+								<div className={styles.field}>
+									<div className={styles.label}><T id="nyxguard.globalgate.log-retention-days" /></div>
 								<select
 									className={styles.input}
 									value={draft.logRetentionDays}
@@ -238,15 +242,25 @@ const NyxGuardGlobalGate = () => {
 									<option value={90}>90</option>
 									<option value={180}>180</option>
 								</select>
-								<div className={styles.help}>Controls how long proxy access/error logs are kept on disk.</div>
+								<div className={styles.inlineActions}>
+									<button
+										type="button"
+										className={styles.ghost}
+										disabled={applyRetention.isPending || draft.logRetentionDays === (settings.data?.logRetentionDays ?? 90)}
+										onClick={() => applyRetention.mutate(draft.logRetentionDays)}
+									>
+											<T id="apply" />
+										</button>
+									</div>
+									<div className={styles.help}><T id="nyxguard.globalgate.log-retention-help" /></div>
+								</div>
 							</div>
-						</div>
 
-						<div className={styles.section}>
-							<div className={styles.sectionTitle}>DDoS Shield Tuning</div>
-							<div className={styles.row}>
-								<div className={styles.field}>
-									<div className={styles.label}>Rate (requests/sec)</div>
+							<div className={styles.section}>
+								<div className={styles.sectionTitle}><T id="nyxguard.globalgate.ddos-tuning" /></div>
+								<div className={styles.row}>
+									<div className={styles.field}>
+										<div className={styles.label}><T id="nyxguard.globalgate.rate-rps" /></div>
 									<input
 										className={styles.input}
 										type="number"
@@ -255,10 +269,10 @@ const NyxGuardGlobalGate = () => {
 										value={draft.ddosRateRps}
 										onChange={(e) => setDraft({ ...draft, ddosRateRps: asInt(e.target.value, draft.ddosRateRps) })}
 									/>
-									<div className={styles.help}>Global limit_req_zone rate.</div>
-								</div>
-								<div className={styles.field}>
-									<div className={styles.label}>Burst</div>
+										<div className={styles.help}><T id="nyxguard.globalgate.rate-help" /></div>
+									</div>
+									<div className={styles.field}>
+										<div className={styles.label}><T id="nyxguard.globalgate.burst" /></div>
 									<input
 										className={styles.input}
 										type="number"
@@ -267,12 +281,12 @@ const NyxGuardGlobalGate = () => {
 										value={draft.ddosBurst}
 										onChange={(e) => setDraft({ ...draft, ddosBurst: asInt(e.target.value, draft.ddosBurst) })}
 									/>
-									<div className={styles.help}>Extra requests allowed during spikes.</div>
+										<div className={styles.help}><T id="nyxguard.globalgate.burst-help" /></div>
+									</div>
 								</div>
-							</div>
-							<div className={styles.row}>
-								<div className={styles.field}>
-									<div className={styles.label}>Connection limit</div>
+								<div className={styles.row}>
+									<div className={styles.field}>
+										<div className={styles.label}><T id="nyxguard.globalgate.connection-limit" /></div>
 									<input
 										className={styles.input}
 										type="number"
@@ -281,46 +295,42 @@ const NyxGuardGlobalGate = () => {
 										value={draft.ddosConnLimit}
 										onChange={(e) => setDraft({ ...draft, ddosConnLimit: asInt(e.target.value, draft.ddosConnLimit) })}
 									/>
-									<div className={styles.help}>limit_conn nyxguard_conn.</div>
+										<div className={styles.help}><T id="nyxguard.globalgate.connection-limit-help" /></div>
+									</div>
 								</div>
 							</div>
-						</div>
 
-						<div className={styles.section}>
-							<div className={styles.sectionTitle}>Bot Defense Tuning</div>
-							<div className={styles.field}>
-								<div className={styles.label}>User-Agent tokens (one per line)</div>
+							<div className={styles.section}>
+								<div className={styles.sectionTitle}><T id="nyxguard.globalgate.bot-tuning" /></div>
+								<div className={styles.field}>
+									<div className={styles.label}><T id="nyxguard.globalgate.user-agent-tokens" /></div>
 								<textarea
 									className={styles.textarea}
 									value={draft.botUaTokens}
 									onChange={(e) => setDraft({ ...draft, botUaTokens: e.target.value })}
 								/>
-								<div className={styles.help}>
-									Used to identify known bot tools by their User-Agent. One token per line. Case-insensitive substring
-									match. Examples: <code>sqlmap</code>, <code>nikto</code>, <code>python-requests</code>,{" "}
-									<code>curl</code>.
+									<div className={styles.help}>
+										<T id="nyxguard.globalgate.user-agent-help" />
+									</div>
 								</div>
-							</div>
-							<div className={styles.field} style={{ marginTop: 10 }}>
-								<div className={styles.label}>Path tokens (one per line)</div>
+								<div className={styles.field} style={{ marginTop: 10 }}>
+									<div className={styles.label}><T id="nyxguard.globalgate.path-tokens" /></div>
 								<textarea
 									className={styles.textarea}
 									value={draft.botPathTokens}
 									onChange={(e) => setDraft({ ...draft, botPathTokens: e.target.value })}
 								/>
-								<div className={styles.help}>
-									Used to block common automated scanning paths. One token per line. Case-insensitive substring match
-									against the request URI. Examples: <code>wp-login.php</code>, <code>xmlrpc.php</code>,{" "}
-									<code>.env</code>, <code>phpmyadmin</code>.
+									<div className={styles.help}>
+										<T id="nyxguard.globalgate.path-help" />
+									</div>
 								</div>
 							</div>
-						</div>
 
-						<div className={styles.section}>
-							<div className={styles.sectionTitle}>SQL Shield Tuning</div>
-							<div className={styles.row}>
-								<div className={styles.field}>
-									<div className={styles.label}>Block threshold (score)</div>
+							<div className={styles.section}>
+								<div className={styles.sectionTitle}><T id="nyxguard.globalgate.sqli-tuning" /></div>
+								<div className={styles.row}>
+									<div className={styles.field}>
+										<div className={styles.label}><T id="nyxguard.globalgate.block-threshold" /></div>
 									<input
 										className={styles.input}
 										type="number"
@@ -329,9 +339,9 @@ const NyxGuardGlobalGate = () => {
 										value={draft.sqliThreshold}
 										onChange={(e) => setDraft({ ...draft, sqliThreshold: asInt(e.target.value, draft.sqliThreshold) })}
 									/>
-								</div>
-								<div className={styles.field}>
-									<div className={styles.label}>Max body inspect (bytes)</div>
+									</div>
+									<div className={styles.field}>
+										<div className={styles.label}><T id="nyxguard.globalgate.max-body-inspect" /></div>
 									<input
 										className={styles.input}
 										type="number"
@@ -342,9 +352,9 @@ const NyxGuardGlobalGate = () => {
 									/>
 								</div>
 							</div>
-							<div className={styles.row}>
-								<div className={styles.field}>
-									<div className={styles.label}>Probe min score</div>
+								<div className={styles.row}>
+									<div className={styles.field}>
+										<div className={styles.label}><T id="nyxguard.globalgate.probe-min-score" /></div>
 									<input
 										className={styles.input}
 										type="number"
@@ -355,10 +365,10 @@ const NyxGuardGlobalGate = () => {
 											setDraft({ ...draft, sqliProbeMinScore: asInt(e.target.value, draft.sqliProbeMinScore) })
 										}
 									/>
-									<div className={styles.help}>Scores above this count toward correlation.</div>
-								</div>
-								<div className={styles.field}>
-									<div className={styles.label}>Probe ban score</div>
+										<div className={styles.help}><T id="nyxguard.globalgate.probe-min-score-help" /></div>
+									</div>
+									<div className={styles.field}>
+										<div className={styles.label}><T id="nyxguard.globalgate.probe-ban-score" /></div>
 									<input
 										className={styles.input}
 										type="number"
@@ -371,9 +381,9 @@ const NyxGuardGlobalGate = () => {
 									/>
 								</div>
 							</div>
-							<div className={styles.row}>
-								<div className={styles.field}>
-									<div className={styles.label}>Probe window (seconds)</div>
+								<div className={styles.row}>
+									<div className={styles.field}>
+										<div className={styles.label}><T id="nyxguard.globalgate.probe-window-seconds" /></div>
 									<input
 										className={styles.input}
 										type="number"
@@ -388,11 +398,11 @@ const NyxGuardGlobalGate = () => {
 							</div>
 						</div>
 
-						<div className={styles.section}>
-							<div className={styles.sectionTitle}>Failed Login Auto-Ban</div>
-							<div className={styles.row}>
-								<div className={styles.field}>
-									<div className={styles.label}>Threshold (attempts)</div>
+							<div className={styles.section}>
+								<div className={styles.sectionTitle}><T id="nyxguard.globalgate.failed-login-auto-ban" /></div>
+								<div className={styles.row}>
+									<div className={styles.field}>
+										<div className={styles.label}><T id="nyxguard.globalgate.threshold-attempts" /></div>
 									<input
 										className={styles.input}
 										type="number"
@@ -404,8 +414,8 @@ const NyxGuardGlobalGate = () => {
 										}
 									/>
 								</div>
-								<div className={styles.field}>
-									<div className={styles.label}>Window (seconds)</div>
+									<div className={styles.field}>
+										<div className={styles.label}><T id="nyxguard.globalgate.window-seconds" /></div>
 									<input
 										className={styles.input}
 										type="number"
@@ -418,9 +428,9 @@ const NyxGuardGlobalGate = () => {
 									/>
 								</div>
 							</div>
-							<div className={styles.row}>
-								<div className={styles.field}>
-									<div className={styles.label}>Ban duration (hours)</div>
+								<div className={styles.row}>
+									<div className={styles.field}>
+										<div className={styles.label}><T id="nyxguard.globalgate.ban-duration-hours" /></div>
 									<input
 										className={styles.input}
 										type="number"
@@ -431,10 +441,10 @@ const NyxGuardGlobalGate = () => {
 											setDraft({ ...draft, authfailBanHours: asInt(e.target.value, draft.authfailBanHours) })
 										}
 									/>
-									<div className={styles.help}>Default is 24 hours.</div>
+										<div className={styles.help}><T id="nyxguard.globalgate.default-24-hours" /></div>
+									</div>
 								</div>
 							</div>
-						</div>
 					</div>
 
 					<div className={styles.actions}>
@@ -444,7 +454,7 @@ const NyxGuardGlobalGate = () => {
 							disabled={save.isPending}
 							onClick={() => save.mutate(draft)}
 						>
-							Save GlobalGate Settings
+								<T id="nyxguard.globalgate.save-settings" />
 						</button>
 						<button
 							type="button"
@@ -452,13 +462,13 @@ const NyxGuardGlobalGate = () => {
 							disabled={save.isPending}
 							onClick={() => setDraft(settings.data ?? draft)}
 						>
-							Reset
+								<T id="reset" />
 						</button>
 					</div>
 
 					{settings.isError || save.isError ? (
-						<div className={styles.error}>Unable to save settings. Check API and try again.</div>
-					) : null}
+							<div className={styles.error}><T id="nyxguard.globalgate.save-error" /></div>
+						) : null}
 				</div>
 			</div>
 		</div>

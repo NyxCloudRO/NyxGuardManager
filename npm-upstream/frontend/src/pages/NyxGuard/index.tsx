@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { intl, T } from "src/locale";
 import {
 	getNyxGuardApps,
 	getNyxGuardAppsSummary,
@@ -29,12 +30,12 @@ function formatBytes(bytes: number) {
 }
 
 function trafficWindowLabel(minutes: number) {
-	if (minutes === 5) return "5 minutes";
-	if (minutes === 15) return "15 minutes";
-	if (minutes === 1440) return "24 hours";
-	if (minutes === 10080) return "7 days";
-	if (minutes === 43200) return "30 days";
-	return `${minutes} minutes`;
+	if (minutes === 5) return intl.formatMessage({ id: "nyxguard.window.5m" });
+	if (minutes === 15) return intl.formatMessage({ id: "nyxguard.window.15m" });
+	if (minutes === 1440) return intl.formatMessage({ id: "nyxguard.window.24h" });
+	if (minutes === 10080) return intl.formatMessage({ id: "nyxguard.window.7d" });
+	if (minutes === 43200) return intl.formatMessage({ id: "nyxguard.window.30d" });
+	return intl.formatMessage({ id: "nyxguard.window.mins" }, { minutes });
 }
 
 function attackTypeLabel(t: string | null | undefined) {
@@ -49,10 +50,23 @@ function formatPercent(v: number | null | undefined) {
 	return `${v.toFixed(1)}%`;
 }
 
+function formatDurationCompact(seconds: number | null | undefined) {
+	if (typeof seconds !== "number" || !Number.isFinite(seconds) || seconds < 0) return "N/A";
+	const s = Math.floor(seconds);
+	const d = Math.floor(s / 86400);
+	const h = Math.floor((s % 86400) / 3600);
+	const m = Math.floor((s % 3600) / 60);
+	if (d > 0) return `${d}d ${h}h`;
+	if (h > 0) return `${h}h ${m}m`;
+	return `${m}m`;
+}
+
 const NyxGuard = () => {
 	const [windowMinutes, setWindowMinutes] = useState(1440);
 	const [trafficWindowMinutes, setTrafficWindowMinutes] = useState(5);
-	const trafficLimit = useMemo(() => (trafficWindowMinutes >= 1440 ? 500 : 50), [trafficWindowMinutes]);
+	const [trafficPageSize, setTrafficPageSize] = useState<50 | 100>(50);
+	const [trafficPage, setTrafficPage] = useState(0);
+	const trafficOffset = trafficPage * trafficPageSize;
 	const hostReport = useHostReport();
 
 	const exportDecisionEvents = () => {
@@ -78,10 +92,15 @@ const NyxGuard = () => {
 	});
 
 	const trafficSummary = useQuery({
-		queryKey: ["nyxguard", "summary", "recent", trafficWindowMinutes, trafficLimit],
-		queryFn: () => getNyxGuardSummary(trafficWindowMinutes, trafficLimit),
+		queryKey: ["nyxguard", "summary", "recent", trafficWindowMinutes, trafficPageSize, trafficOffset],
+		queryFn: () => getNyxGuardSummary(trafficWindowMinutes, trafficPageSize, trafficOffset),
 		refetchInterval: trafficWindowMinutes <= 15 ? 3000 : trafficWindowMinutes <= 1440 ? 15000 : 60000,
 	});
+
+	const trafficHasPrev = trafficPage > 0;
+	const trafficVisibleCount = trafficSummary.data?.recent?.length ?? 0;
+	const trafficTotalCount = trafficSummary.data?.requests ?? 0;
+	const trafficHasNext = trafficOffset + trafficVisibleCount < trafficTotalCount;
 
 	const attacksSummary = useQuery({
 		queryKey: ["nyxguard", "attacks", "summary", windowMinutes],
@@ -175,6 +194,12 @@ const NyxGuard = () => {
 
 	const hostSystem = hostReport.data?.system;
 	const hostContainer = hostSystem?.container;
+	const hostContainersAggregate = hostSystem?.containersAggregate;
+	const dockerUsage = hostContainersAggregate ?? hostContainer;
+	const dockerUsageTitle = hostContainersAggregate ? "Docker Usage (nyxguard-manager + nyxguard-db)" : "Docker Usage";
+	const dockerUsageSummary = hostContainersAggregate
+		? `Combined runtime memory and CPU usage across: ${(hostContainersAggregate.containerNames ?? []).join(", ")}.`
+		: `Runtime memory and CPU usage for the current container (${hostContainer?.containerId ?? "unknown"}).`;
 
 	const ipInsights = useMemo(() => {
 		const items = ips.data?.items ?? [];
@@ -320,26 +345,62 @@ const NyxGuard = () => {
 	}, [ipRules.data?.items]);
 
 	const windowLabel = useMemo(() => {
-		if (windowMinutes === 15) return "Last 15m";
-		if (windowMinutes === 1440) return "Last 1d";
-		if (windowMinutes === 10080) return "Last 7d";
-		if (windowMinutes === 43200) return "Last 30d";
-		if (windowMinutes === 86400) return "Last 60d";
-		if (windowMinutes === 129600) return "Last 90d";
-		if (windowMinutes === 259200) return "Last 180d";
-		return `Last ${windowMinutes}m`;
+		if (windowMinutes === 15) return intl.formatMessage({ id: "nyxguard.last.15m" });
+		if (windowMinutes === 1440) return intl.formatMessage({ id: "nyxguard.last.1d" });
+		if (windowMinutes === 10080) return intl.formatMessage({ id: "nyxguard.last.7d" });
+		if (windowMinutes === 43200) return intl.formatMessage({ id: "nyxguard.last.30d" });
+		if (windowMinutes === 86400) return intl.formatMessage({ id: "nyxguard.last.60d" });
+		if (windowMinutes === 129600) return intl.formatMessage({ id: "nyxguard.last.90d" });
+		if (windowMinutes === 259200) return intl.formatMessage({ id: "nyxguard.last.180d" });
+		return intl.formatMessage({ id: "nyxguard.last.mins" }, { minutes: windowMinutes });
 	}, [windowMinutes]);
 
 	return (
 		<div className={styles.page}>
-			<div className="container-xl">
+			<div className="container-xl nyx-scroll-theme">
 				<div className={styles.hero}>
 					<div className={styles.heroHeader}>
-						<div>
-							<h2 className={styles.title}>NyxGuard WAF</h2>
-							<p className={styles.subtitle}>
-								Live traffic, IP intelligence, geo insights, and action-ready rules.
-							</p>
+						<div style={{ flex: 1, minWidth: 260 }}>
+							<div className={styles.heroTitleRow}>
+								<div>
+									<h2 className={styles.title}>
+										<T id="nyxguard.title" />
+									</h2>
+									<p className={styles.subtitle}>
+										<T id="nyxguard.subtitle" />
+									</p>
+								</div>
+									<div className={styles.heroPills} role="group" aria-label="NyxGuard live stats">
+										<span className={styles.miniPill}>
+											<span className={styles.miniPillLabel}>System Uptime</span>
+											<span className={styles.miniPillValue}>
+												{hostReport.isLoading ? <span className={styles.miniPillMuted}>...</span> : formatDurationCompact(hostSystem?.systemUptimeSeconds)}
+											</span>
+									</span>
+									<span className={styles.miniPill}>
+										<span className={styles.miniPillLabel}>Docker Uptime</span>
+										<span className={styles.miniPillValue}>
+											{hostReport.isLoading ? <span className={styles.miniPillMuted}>...</span> : formatDurationCompact(hostSystem?.dockerContainerUptimeSeconds)}
+										</span>
+									</span>
+									<span className={styles.miniPill}>
+										<span className={styles.miniPillLabel}>Load</span>
+										<span className={styles.miniPillValue}>
+											{hostReport.isLoading ? (
+												<span className={styles.miniPillMuted}>...</span>
+											) : (
+												`${hostSystem?.loadAvg?.one ?? "N/A"} ${hostSystem?.loadAvg?.five ?? ""} ${hostSystem?.loadAvg?.fifteen ?? ""}`.trim()
+											)}
+										</span>
+									</span>
+									<span className={styles.miniPill}>
+										<span className={styles.miniPillLabel}>Pending Updates</span>
+										<span className={styles.miniPillValue}>
+											{hostReport.isLoading ? <span className={styles.miniPillMuted}>...</span> : (typeof hostSystem?.pendingUpdatesCount === "number" ? hostSystem.pendingUpdatesCount.toLocaleString() : "N/A")}
+										</span>
+									</span>
+								</div>
+							</div>
 							<div className={styles.windowButtons}>
 								<button
 									type="button"
@@ -388,19 +449,19 @@ const NyxGuard = () => {
 					</div>
 					<div className={styles.stats}>
 						<div className={styles.statCard}>
-							<div className={styles.statLabel}>Requests ({windowLabel})</div>
+							<div className={styles.statLabel}>{intl.formatMessage({ id: "nyxguard.requests-window" }, { window: windowLabel })}</div>
 							<div className={styles.statValue}>{statValue(requests)}</div>
 						</div>
 						<div className={styles.statCard}>
-							<div className={styles.statLabel}>Blocked ({windowLabel})</div>
+							<div className={styles.statLabel}>{intl.formatMessage({ id: "nyxguard.blocked-window" }, { window: windowLabel })}</div>
 							<div className={styles.statValue}>{statValue(blocked)}</div>
 						</div>
 						<div className={styles.statCard}>
-							<div className={styles.statLabel}>Allowed ({windowLabel})</div>
+							<div className={styles.statLabel}>{intl.formatMessage({ id: "nyxguard.allowed-window" }, { window: windowLabel })}</div>
 							<div className={styles.statValue}>{statValue(allowed)}</div>
 						</div>
 						<div className={styles.statCard}>
-							<div className={styles.statLabel}>Unique IPs ({windowLabel})</div>
+							<div className={styles.statLabel}>{intl.formatMessage({ id: "nyxguard.unique-ips-window" }, { window: windowLabel })}</div>
 							<div className={styles.statValue}>{statValue(uniqueIps)}</div>
 						</div>
 						<div className={styles.statCard}>
@@ -412,12 +473,12 @@ const NyxGuard = () => {
 							<div className={styles.statValue}>{statBytes(txBytes)}</div>
 						</div>
 						<div className={styles.statCard}>
-							<div className={styles.statLabel}>Attacks ({windowLabel})</div>
+							<div className={styles.statLabel}>{intl.formatMessage({ id: "nyxguard.attacks-window" }, { window: windowLabel })}</div>
 							<div className={styles.statValue}>{attacksCardMain}</div>
 							<div className={styles.statSub}>{attacksCardSub}</div>
 						</div>
 						<div className={styles.statCard}>
-							<div className={styles.statLabel}>Geo Source</div>
+							<div className={styles.statLabel}><T id="nyxguard.geo-source" /></div>
 							<div className={styles.statValue} style={{ fontSize: 14, marginTop: 10 }}>
 								{geoSourcesLabel}
 							</div>
@@ -425,73 +486,71 @@ const NyxGuard = () => {
 					</div>
 					<div className={styles.hostBoard}>
 						<div className={styles.hostBoardHeader}>
-							<h3 className={styles.sectionTitle}>Host Resources</h3>
-							<p className={styles.sectionText}>CPU, RAM, and disk usage from the server running this app.</p>
+							<h3 className={styles.sectionTitle}><T id="nyxguard.host-resources" /></h3>
+							<p className={styles.sectionText}><T id="nyxguard.host-resources-subtitle" /></p>
 						</div>
 						<div className={styles.hostGrid}>
 							<div className={styles.hostMetric}>
-								<div className={styles.statLabel}>CPU Usage</div>
+								<div className={styles.statLabel}><T id="nyxguard.cpu-usage" /></div>
 								<div className={styles.hostValue}>{formatPercent(hostSystem?.cpuUsagePercent)}</div>
 							</div>
 							<div className={styles.hostMetric}>
-								<div className={styles.statLabel}>RAM Usage</div>
+								<div className={styles.statLabel}><T id="nyxguard.ram-usage" /></div>
 								<div className={styles.hostValue}>
 									{hostSystem ? `${formatBytes(hostSystem.ramUsedBytes)} / ${formatBytes(hostSystem.ramTotalBytes)}` : "N/A"}
 								</div>
-								<div className={styles.statSub}>{formatPercent(hostSystem?.ramUsedPercent)} used</div>
+								<div className={styles.statSub}>{intl.formatMessage({ id: "nyxguard.used-suffix" }, { value: formatPercent(hostSystem?.ramUsedPercent) })}</div>
 							</div>
 							<div className={styles.hostMetric}>
-								<div className={styles.statLabel}>HDD Used</div>
+								<div className={styles.statLabel}><T id="nyxguard.hdd-used" /></div>
 								<div className={styles.hostValue}>
 									{hostSystem?.disk ? formatBytes(hostSystem.disk.usedBytes) : "N/A"}
 								</div>
 								<div className={styles.statSub}>
-									{hostSystem?.disk ? `${hostSystem.disk.usedPercent.toFixed(1)}%` : "No disk info"}
+									{hostSystem?.disk ? `${hostSystem.disk.usedPercent.toFixed(1)}%` : intl.formatMessage({ id: "nyxguard.no-disk-info" })}
 								</div>
 							</div>
 							<div className={styles.hostMetric}>
-								<div className={styles.statLabel}>HDD Free</div>
+								<div className={styles.statLabel}><T id="nyxguard.hdd-free" /></div>
 								<div className={styles.hostValue}>
 									{hostSystem?.disk ? formatBytes(hostSystem.disk.freeBytes) : "N/A"}
 								</div>
 							</div>
 							<div className={styles.hostMetric}>
-								<div className={styles.statLabel}>HDD Total</div>
+								<div className={styles.statLabel}><T id="nyxguard.hdd-total" /></div>
 								<div className={styles.hostValue}>
 									{hostSystem?.disk ? formatBytes(hostSystem.disk.totalBytes) : "N/A"}
 								</div>
-								<div className={styles.statSub}>{hostSystem?.disk ? `Path: ${hostSystem.disk.path}` : ""}</div>
+								<div className={styles.statSub}>{hostSystem?.disk ? intl.formatMessage({ id: "nyxguard.path" }, { path: hostSystem.disk.path }) : ""}</div>
 							</div>
 						</div>
 						<div className={styles.hostBoardHeader} style={{ marginTop: 16 }}>
-							<h3 className={styles.sectionTitle}>Docker Usage (This App Container)</h3>
-							<p className={styles.sectionText}>
-								Runtime memory and CPU usage for the current container ({hostContainer?.containerId ?? "unknown"}).
-							</p>
+							<h3 className={styles.sectionTitle}>{dockerUsageTitle}</h3>
+							<p className={styles.sectionText}>{dockerUsageSummary}</p>
 						</div>
 						<div className={styles.hostGrid}>
 							<div className={styles.hostMetric}>
 								<div className={styles.statLabel}>Container CPU</div>
-								<div className={styles.hostValue}>{formatPercent(hostContainer?.cpuUsagePercent)}</div>
+								<div className={styles.hostValue}>{formatPercent(dockerUsage?.cpuUsagePercent)}</div>
 							</div>
 							<div className={styles.hostMetric}>
 								<div className={styles.statLabel}>Container RAM Usage</div>
 								<div className={styles.hostValue}>
-									{hostContainer ? formatBytes(hostContainer.memoryUsageBytes) : "N/A"}
+									{dockerUsage ? formatBytes(dockerUsage.memoryUsageBytes) : "N/A"}
 								</div>
 								<div className={styles.statSub}>
-									{hostContainer?.memoryUsagePercent != null ? `${hostContainer.memoryUsagePercent.toFixed(2)}%` : ""}
+									{dockerUsage?.memoryUsagePercent != null ? `${dockerUsage.memoryUsagePercent.toFixed(2)}%` : ""}
 								</div>
 							</div>
 							<div className={styles.hostMetric}>
 								<div className={styles.statLabel}>Container RSS</div>
-								<div className={styles.hostValue}>{hostContainer ? formatBytes(hostContainer.rssBytes) : "N/A"}</div>
+								<div className={styles.hostValue}>{dockerUsage ? formatBytes(dockerUsage.rssBytes) : "N/A"}</div>
 							</div>
 							<div className={styles.hostMetric}>
 								<div className={styles.statLabel}>Container NET I/O</div>
 								<div className={styles.hostValue}>
-									{hostContainer
-										? `${formatBytes(hostContainer.netIo?.rxBytes ?? 0)} / ${formatBytes(hostContainer.netIo?.txBytes ?? 0)}`
+									{dockerUsage
+										? `${formatBytes(dockerUsage.netIo?.rxBytes ?? 0)} / ${formatBytes(dockerUsage.netIo?.txBytes ?? 0)}`
 										: "N/A"}
 								</div>
 								<div className={styles.statSub}>RX / TX</div>
@@ -499,8 +558,8 @@ const NyxGuard = () => {
 							<div className={styles.hostMetric}>
 								<div className={styles.statLabel}>Container BLOCK I/O</div>
 								<div className={styles.hostValue}>
-									{hostContainer
-										? `${formatBytes(hostContainer.blockIo?.readBytes ?? 0)} / ${formatBytes(hostContainer.blockIo?.writeBytes ?? 0)}`
+									{dockerUsage
+										? `${formatBytes(dockerUsage.blockIo?.readBytes ?? 0)} / ${formatBytes(dockerUsage.blockIo?.writeBytes ?? 0)}`
 										: "N/A"}
 								</div>
 								<div className={styles.statSub}>Read / Write</div>
@@ -510,44 +569,84 @@ const NyxGuard = () => {
 					<div className={styles.chartCard}>
 						<div className={styles.chartHeader}>
 							<div>
-								<h3 className={styles.sectionTitle}>Live Traffic</h3>
-								<p className={styles.sectionText}>Requests per minute with burst detection.</p>
+								<h3 className={styles.sectionTitle}><T id="nyxguard.live-traffic" /></h3>
+								<p className={styles.sectionText}><T id="nyxguard.live-traffic-subtitle" /></p>
 							</div>
 							<div className={styles.pillRow}>
 								<button
 									type="button"
 									className={trafficWindowMinutes === 5 ? styles.windowActive : styles.window}
-									onClick={() => setTrafficWindowMinutes(5)}
+									onClick={() => {
+										setTrafficWindowMinutes(5);
+										setTrafficPage(0);
+									}}
 								>
-									Realtime
+									<T id="nyxguard.realtime" />
 								</button>
 								<button
 									type="button"
 									className={trafficWindowMinutes === 15 ? styles.windowActive : styles.window}
-									onClick={() => setTrafficWindowMinutes(15)}
+									onClick={() => {
+										setTrafficWindowMinutes(15);
+										setTrafficPage(0);
+									}}
 								>
-									Last 15m
+									<T id="nyxguard.last-15m" />
 								</button>
 								<button
 									type="button"
 									className={trafficWindowMinutes === 1440 ? styles.windowActive : styles.window}
-									onClick={() => setTrafficWindowMinutes(1440)}
+									onClick={() => {
+										setTrafficWindowMinutes(1440);
+										setTrafficPage(0);
+									}}
 								>
-									Last 24h
+									<T id="nyxguard.last-24h" />
 								</button>
 								<button
 									type="button"
 									className={trafficWindowMinutes === 10080 ? styles.windowActive : styles.window}
-									onClick={() => setTrafficWindowMinutes(10080)}
+									onClick={() => {
+										setTrafficWindowMinutes(10080);
+										setTrafficPage(0);
+									}}
 								>
-									Last 7d
+									<T id="nyxguard.last-7d" />
 								</button>
 								<button
 									type="button"
 									className={trafficWindowMinutes === 43200 ? styles.windowActive : styles.window}
-									onClick={() => setTrafficWindowMinutes(43200)}
+									onClick={() => {
+										setTrafficWindowMinutes(43200);
+										setTrafficPage(0);
+									}}
 								>
-									Last 30d
+									<T id="nyxguard.last-30d" />
+								</button>
+							</div>
+						</div>
+						<div className={styles.controlsRow}>
+							<div className={styles.pageSizeGroup}>
+								<span className={styles.controlsLabel}><T id="rows" /></span>
+								<button
+									type="button"
+									className={trafficPageSize === 50 ? styles.windowActive : styles.window}
+									onClick={() => {
+										setTrafficPageSize(50);
+										setTrafficPage(0);
+									}}
+								>
+									50
+								</button>
+								<button
+									type="button"
+									className={trafficPageSize === 100 ? styles.windowActive : styles.window}
+									onClick={() => {
+										setTrafficPageSize(100);
+										setTrafficPage(0);
+									}}
+								>
+									100
 								</button>
 							</div>
 						</div>
@@ -561,7 +660,7 @@ const NyxGuard = () => {
 									Window totals: RX <strong className="text-white">{formatBytes(trafficSummary.data.rxBytes)}</strong>, TX{" "}
 									<strong className="text-white">{formatBytes(trafficSummary.data.txBytes)}</strong>
 								</div>
-								<div style={{ marginTop: 12, overflowX: "auto", maxHeight: 360 }}>
+								<div className={`nyx-scroll-y nyx-scroll-theme ${styles.trafficTableViewport}`}>
 									<table className="table table-sm table-vcenter">
 										<thead>
 											<tr>
@@ -573,7 +672,7 @@ const NyxGuard = () => {
 											</tr>
 										</thead>
 										<tbody>
-											{trafficSummary.data.recent.slice(0, trafficWindowMinutes >= 1440 ? 200 : 25).map((r) => (
+											{trafficSummary.data.recent.map((r) => (
 												<tr key={`${r.ts}-${r.ip}-${r.host}-${r.uri}`}>
 													<td className="text-secondary text-nowrap">{new Date(r.ts).toLocaleTimeString()}</td>
 													<td className="text-nowrap">{r.host}</td>
@@ -586,6 +685,30 @@ const NyxGuard = () => {
 											))}
 										</tbody>
 									</table>
+								</div>
+								<div className={styles.paginationRow}>
+									<div className={styles.paginationMeta}>
+										Showing {trafficVisibleCount ? trafficOffset + 1 : 0}-{trafficOffset + trafficVisibleCount} of{" "}
+										{trafficTotalCount.toLocaleString()} events
+									</div>
+									<div className={styles.paginationActions}>
+										<button
+											type="button"
+											className={styles.window}
+											disabled={!trafficHasPrev}
+											onClick={() => setTrafficPage((p) => Math.max(0, p - 1))}
+										>
+											Prev
+										</button>
+										<button
+											type="button"
+											className={styles.window}
+											disabled={!trafficHasNext}
+											onClick={() => setTrafficPage((p) => p + 1)}
+										>
+											Next
+										</button>
+									</div>
 								</div>
 							</>
 						) : (
@@ -832,35 +955,50 @@ const NyxGuard = () => {
 								<button
 									type="button"
 									className={trafficWindowMinutes === 5 ? styles.windowActive : styles.window}
-									onClick={() => setTrafficWindowMinutes(5)}
+									onClick={() => {
+										setTrafficWindowMinutes(5);
+										setTrafficPage(0);
+									}}
 								>
 									Realtime
 								</button>
 								<button
 									type="button"
 									className={trafficWindowMinutes === 15 ? styles.windowActive : styles.window}
-									onClick={() => setTrafficWindowMinutes(15)}
+									onClick={() => {
+										setTrafficWindowMinutes(15);
+										setTrafficPage(0);
+									}}
 								>
 									Last 15m
 								</button>
 								<button
 									type="button"
 									className={trafficWindowMinutes === 1440 ? styles.windowActive : styles.window}
-									onClick={() => setTrafficWindowMinutes(1440)}
+									onClick={() => {
+										setTrafficWindowMinutes(1440);
+										setTrafficPage(0);
+									}}
 								>
 									Last 24h
 								</button>
 								<button
 									type="button"
 									className={trafficWindowMinutes === 10080 ? styles.windowActive : styles.window}
-									onClick={() => setTrafficWindowMinutes(10080)}
+									onClick={() => {
+										setTrafficWindowMinutes(10080);
+										setTrafficPage(0);
+									}}
 								>
 									Last 7d
 								</button>
 								<button
 									type="button"
 									className={trafficWindowMinutes === 43200 ? styles.windowActive : styles.window}
-									onClick={() => setTrafficWindowMinutes(43200)}
+									onClick={() => {
+										setTrafficWindowMinutes(43200);
+										setTrafficPage(0);
+									}}
 								>
 									Last 30d
 								</button>
@@ -870,7 +1008,7 @@ const NyxGuard = () => {
 							) : trafficSummary.isError ? (
 								<div className={styles.emptyState}>Unable to load decision stream (API error).</div>
 							) : trafficSummary.data?.recent?.length ? (
-								<div className={styles.decisionStream}>
+								<div className={`nyx-scroll-theme ${styles.decisionStream}`}>
 									{trafficSummary.data.recent.slice(0, 10).map((r) => {
 										const status = typeof r.status === "number" ? r.status : null;
 										const isBlocked = typeof status === "number" ? status >= 400 : false;
@@ -922,7 +1060,7 @@ const NyxGuard = () => {
 									<p className={styles.sectionText}>Requests seen in NyxGuard Manager access logs.</p>
 								</div>
 							</div>
-							<div style={{ overflowX: "auto" }}>
+							<div className={`nyx-scroll-y nyx-scroll-theme ${styles.hostsTableViewport}`}>
 								<table className="table table-sm table-vcenter card-table">
 									<thead>
 										<tr>

@@ -1,12 +1,12 @@
 import {
 	IconActivityHeartbeat,
-	IconAlertTriangle,
 	IconArrowsCross,
+	IconBolt,
 	IconBook,
 	IconChartLine,
 	IconDeviceDesktop,
-	IconDisc,
 	IconHome,
+	IconLayoutGrid,
 	IconLock,
 	IconSettings,
 	IconShield,
@@ -22,11 +22,8 @@ import {
 	ACCESS_LISTS,
 	ADMIN,
 	CERTIFICATES,
-	DEAD_HOSTS,
 	PROXY_HOSTS,
-	REDIRECTION_HOSTS,
 	type Section,
-	STREAMS,
 	VIEW,
 } from "src/modules/Permissions";
 
@@ -67,12 +64,12 @@ const menuItems: MenuItem[] = [
 	},
 	{
 		to: "/nyxguard/apps",
-		icon: IconDisc,
+		icon: IconLayoutGrid,
 		label: "nyxguard-apps",
 	},
 	{
 		to: "/nyxguard/attacks",
-		icon: IconAlertTriangle,
+		icon: IconBolt,
 		label: "nyxguard-attacks",
 	},
 	{
@@ -85,27 +82,6 @@ const menuItems: MenuItem[] = [
 		icon: IconDeviceDesktop,
 		label: "proxy-hosts",
 		permissionSection: PROXY_HOSTS,
-		permission: VIEW,
-	},
-	{
-		to: "/nyxguard/redirection",
-		icon: IconArrowsCross,
-		label: "redirection-hosts",
-		permissionSection: REDIRECTION_HOSTS,
-		permission: VIEW,
-	},
-	{
-		to: "/nyxguard/stream",
-		icon: IconChartLine,
-		label: "streams",
-		permissionSection: STREAMS,
-		permission: VIEW,
-	},
-	{
-		to: "/nyxguard/404",
-		icon: IconAlertTriangle,
-		label: "dead-hosts",
-		permissionSection: DEAD_HOSTS,
 		permission: VIEW,
 	},
 	{
@@ -154,7 +130,7 @@ const getMenuItem = (item: MenuItem, onClick?: () => void) => {
 
 	const isSupport = item.label === "support-nyxguard";
 	const linkClassName = isSupport ? "nav-link support-nyxguard" : "nav-link";
-	const menuTitle = item.label === "proxy-hosts" ? "NyxGate Proxy Hosts" : <T id={item.label} />;
+	const menuTitle = <T id={item.label} />;
 
 	return (
 		<HasPermission

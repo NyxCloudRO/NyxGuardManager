@@ -1,28 +1,11 @@
-import { useHealth } from "src/hooks";
+import styles from "./SiteFooter.module.css";
+
+const APP_VERSION = "4.0.0";
 
 export function SiteFooter() {
-	const health = useHealth();
-	const v = health.data?.version;
-	const build = health.data?.build;
-	const versionText =
-		v && Number.isFinite(v.major) && Number.isFinite(v.minor) && Number.isFinite(v.revision)
-			? `${v.major}.${v.minor}.${v.revision}`
-			: "";
-
-	const buildTextParts: string[] = [];
-	if (build?.version) {
-		buildTextParts.push(`v${build.version}`);
-	} else if (versionText) {
-		buildTextParts.push(`v${versionText}`);
-	}
-
 	return (
-		<footer className="footer d-print-none py-3">
-			<div className="container-xl">
-				<div className="text-center text-secondary">
-					NyxGuard Manager · {buildTextParts.length ? buildTextParts.join(" · ") : "…"}
-				</div>
-			</div>
+		<footer className={styles.footer}>
+			<div className={styles.inner}>NyxGuard Manager · v{APP_VERSION}</div>
 		</footer>
 	);
 }

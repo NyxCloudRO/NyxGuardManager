@@ -146,7 +146,7 @@ const setupCertbotPlugins = async () => {
  * @returns {Promise}
  */
 const setupLogrotation = () => {
-	const intervalTimeout = 1000 * 60 * 60 * 24 * 2; // 2 days
+	const intervalTimeout = 1000 * 60 * 60 * 24; // daily
 
 	const runLogrotate = async () => {
 		try {

@@ -234,6 +234,23 @@
 	backdrop-filter: none;
 }
 
+/* Nyx Aurora only: darken the left sidebar menu backdrop for stronger contrast. */
+:global(html[data-app-theme="nyx-aurora"]) .sideMenu {
+	background:
+		radial-gradient(760px 260px at 8% 0%, color-mix(in srgb, var(--app-primary) 34%, transparent), transparent 62%),
+		radial-gradient(740px 260px at 98% 100%, color-mix(in srgb, var(--app-secondary) 26%, transparent), transparent 64%),
+		linear-gradient(
+			165deg,
+			color-mix(in srgb, var(--app-surface-2) 74%, var(--app-primary) 26%),
+			color-mix(in srgb, var(--app-surface-2) 72%, var(--app-secondary) 28%)
+		);
+	backdrop-filter: blur(12px) saturate(140%);
+	border-color: color-mix(in srgb, var(--app-border) 84%, var(--app-primary) 16%);
+	box-shadow:
+		0 16px 38px rgba(8, 12, 36, 0.30),
+		0 1px 0 rgba(255, 255, 255, 0.045) inset;
+}
+
 .menuRow :global(.navbar-collapse) {
 	align-items: center;
 	justify-content: flex-start;
@@ -290,7 +307,12 @@
 		background-color 140ms ease,
 		border-color 140ms ease,
 		color 140ms ease,
-		transform 140ms ease;
+		transform 140ms ease,
+		box-shadow 180ms ease;
+}
+
+.sideMenu :global(.navbar-nav .nav-link:active) {
+	transform: translateY(0) scale(0.985);
 }
 
 .menuRow :global(.navbar-nav .nav-link .nav-link-icon) {
@@ -475,6 +497,22 @@
 		0 0 0 1px color-mix(in srgb, var(--app-border) 60%, transparent) inset,
 		0 0 22px color-mix(in srgb, var(--app-primary) 24%, transparent),
 		0 0 22px color-mix(in srgb, var(--app-secondary) 18%, transparent);
+	animation: menuLinkPop 220ms ease-out;
+}
+
+@keyframes menuLinkPop {
+	0% {
+		transform: scale(0.985);
+		filter: brightness(0.95);
+	}
+	60% {
+		transform: scale(1.012);
+		filter: brightness(1.04);
+	}
+	100% {
+		transform: scale(1);
+		filter: brightness(1);
+	}
 }
 
 .menuRow :global(.dropdown-menu) {

@@ -65,6 +65,9 @@
 	"action.view-details": {
 		"defaultMessage": "Visualizza Dettagli"
 	},
+	"apply": {
+		"defaultMessage": "Apply"
+	},
 	"auditlogs": {
 		"defaultMessage": "Log di Audit"
 	},
@@ -248,6 +251,36 @@
 	"dashboard": {
 		"defaultMessage": "Dashboard"
 	},
+	"dashboard.attacks-breakdown": {
+		"defaultMessage": "Totale: {total} | SQL {sqli} DDoS {ddos} Bot {bot}"
+	},
+	"dashboard.attacks-last-1d": {
+		"defaultMessage": "Attacchi (ultimo 1g)"
+	},
+	"dashboard.blocked-1d": {
+		"defaultMessage": "Bloccate (1g): {count}"
+	},
+	"dashboard.blocked-over-requests": {
+		"defaultMessage": "Bloccate: {blocked} / Richieste: {requests}"
+	},
+	"dashboard.blocked-rate-1d": {
+		"defaultMessage": "Tasso blocchi (1g): {rate}"
+	},
+	"dashboard.protected-apps": {
+		"defaultMessage": "{count} Applicazioni Protette"
+	},
+	"dashboard.requests-1d": {
+		"defaultMessage": "Richieste (1g): {count}"
+	},
+	"dashboard.total-apps": {
+		"defaultMessage": "App totali: {count}"
+	},
+	"dashboard.traffic-rx-1d": {
+		"defaultMessage": "Traffico (1g): RX {bytes}"
+	},
+	"dashboard.traffic-tx-1d": {
+		"defaultMessage": "TX (1g): {bytes}"
+	},
 	"dead-host": {
 		"defaultMessage": "Host 404"
 	},
@@ -371,6 +404,9 @@
 	"http-only": {
 		"defaultMessage": "Solo HTTP"
 	},
+	"language.label": {
+		"defaultMessage": "Lingua"
+	},
 	"lets-encrypt": {
 		"defaultMessage": "Let's Encrypt"
 	},
@@ -424,6 +460,396 @@
 	},
 	"notification.success": {
 		"defaultMessage": "Successo"
+	},
+	"nyxguard": {
+		"defaultMessage": "NyxGuard"
+	},
+	"nyxguard-apps": {
+		"defaultMessage": "Applicazioni"
+	},
+	"nyxguard-attacks": {
+		"defaultMessage": "Attività delle Minacce"
+	},
+	"nyxguard-globalgate": {
+		"defaultMessage": "Scudo GlobalGate"
+	},
+	"nyxguard-ips": {
+		"defaultMessage": "IP e Geo"
+	},
+	"nyxguard-rules": {
+		"defaultMessage": "Regole Traffico"
+	},
+	"nyxguard-traffic": {
+		"defaultMessage": "Traffico in tempo reale"
+	},
+	"nyxguard.apps.action.auth-global-off": {
+		"defaultMessage": "Auth Bypass (Global OFF)"
+	},
+	"nyxguard.apps.action.bot-global-off": {
+		"defaultMessage": "Bot Defence (Global OFF)"
+	},
+	"nyxguard.apps.action.ddos-global-off": {
+		"defaultMessage": "DDoS (Global OFF)"
+	},
+	"nyxguard.apps.action.disable-auth": {
+		"defaultMessage": "Disable Auth Bypass"
+	},
+	"nyxguard.apps.action.disable-bot": {
+		"defaultMessage": "Disable Bot Defence"
+	},
+	"nyxguard.apps.action.disable-ddos": {
+		"defaultMessage": "Disable DDoS"
+	},
+	"nyxguard.apps.action.disable-sqli": {
+		"defaultMessage": "Disable SQL Shield"
+	},
+	"nyxguard.apps.action.disable-waf": {
+		"defaultMessage": "Disable WAF"
+	},
+	"nyxguard.apps.action.enable-auth": {
+		"defaultMessage": "Enable Auth Bypass"
+	},
+	"nyxguard.apps.action.enable-bot": {
+		"defaultMessage": "Enable Bot Defence"
+	},
+	"nyxguard.apps.action.enable-ddos": {
+		"defaultMessage": "Enable DDoS"
+	},
+	"nyxguard.apps.action.enable-sqli": {
+		"defaultMessage": "Enable SQL Shield"
+	},
+	"nyxguard.apps.action.enable-waf": {
+		"defaultMessage": "Enable WAF"
+	},
+	"nyxguard.apps.action.sqli-global-off": {
+		"defaultMessage": "SQL Shield (Global OFF)"
+	},
+	"nyxguard.apps.empty": {
+		"defaultMessage": "No proxy hosts found yet."
+	},
+	"nyxguard.apps.error.update-failed": {
+		"defaultMessage": "Unable to update WAF status."
+	},
+	"nyxguard.apps.load-error": {
+		"defaultMessage": "Unable to load proxy hosts."
+	},
+	"nyxguard.apps.loading": {
+		"defaultMessage": "Loading..."
+	},
+	"nyxguard.apps.proxy-host-fallback": {
+		"defaultMessage": "Proxy Host #{id}"
+	},
+	"nyxguard.apps.status.monitoring": {
+		"defaultMessage": "Monitoring"
+	},
+	"nyxguard.apps.status.protected": {
+		"defaultMessage": "Protected"
+	},
+	"nyxguard.apps.subtitle": {
+		"defaultMessage": "Assign WAF profiles, enforce rules, and monitor app status."
+	},
+	"nyxguard.apps.title": {
+		"defaultMessage": "Protected Apps"
+	},
+	"nyxguard.apps.tooltip.auth-global-off": {
+		"defaultMessage": "Authenticated Traffic Bypass is disabled globally (GlobalGate)."
+	},
+	"nyxguard.apps.tooltip.auth-info": {
+		"defaultMessage": "If enabled, authenticated users are far less likely to be blocked by protections."
+	},
+	"nyxguard.apps.tooltip.bot-global-off": {
+		"defaultMessage": "Bot Defense is disabled globally (GlobalGate)."
+	},
+	"nyxguard.apps.tooltip.ddos-global-off": {
+		"defaultMessage": "DDoS Shield is disabled globally (GlobalGate)."
+	},
+	"nyxguard.apps.tooltip.enable-waf-first": {
+		"defaultMessage": "Enable WAF first"
+	},
+	"nyxguard.apps.tooltip.sqli-global-off": {
+		"defaultMessage": "SQL Shield is disabled globally (GlobalGate)."
+	},
+	"nyxguard.apps.tooltip.toggle-bot": {
+		"defaultMessage": "Toggle Bot Defence"
+	},
+	"nyxguard.apps.tooltip.toggle-ddos": {
+		"defaultMessage": "Toggle DDoS Shield"
+	},
+	"nyxguard.apps.tooltip.toggle-sqli": {
+		"defaultMessage": "Toggle SQL Shield"
+	},
+	"nyxguard.attacks.clear-logs": {
+		"defaultMessage": "Clear Logs"
+	},
+	"nyxguard.attacks.day-1": {
+		"defaultMessage": "1 day"
+	},
+	"nyxguard.attacks.day-30": {
+		"defaultMessage": "30 days"
+	},
+	"nyxguard.attacks.day-7": {
+		"defaultMessage": "7 days"
+	},
+	"nyxguard.attacks.duration-24h": {
+		"defaultMessage": "24 hours"
+	},
+	"nyxguard.attacks.duration-30d": {
+		"defaultMessage": "30 days"
+	},
+	"nyxguard.attacks.duration-permanent": {
+		"defaultMessage": "Permanent"
+	},
+	"nyxguard.attacks.empty": {
+		"defaultMessage": "No attacks detected in this window."
+	},
+	"nyxguard.attacks.set-ban": {
+		"defaultMessage": "Set ban..."
+	},
+	"nyxguard.attacks.status.banned": {
+		"defaultMessage": "Banned"
+	},
+	"nyxguard.attacks.status.not-banned": {
+		"defaultMessage": "Not banned"
+	},
+	"nyxguard.attacks.status.permanent": {
+		"defaultMessage": "Permanent"
+	},
+	"nyxguard.attacks.status.until": {
+		"defaultMessage": "Until {date}"
+	},
+	"nyxguard.attacks.subtitle": {
+		"defaultMessage": "Recent bot, DDoS, and SQL threat activity detected by NyxGuard."
+	},
+	"nyxguard.attacks.table.adjust": {
+		"defaultMessage": "Adjust"
+	},
+	"nyxguard.attacks.table.ban": {
+		"defaultMessage": "Ban"
+	},
+	"nyxguard.attacks.table.count": {
+		"defaultMessage": "Count"
+	},
+	"nyxguard.attacks.table.ip": {
+		"defaultMessage": "IP"
+	},
+	"nyxguard.attacks.table.last-seen": {
+		"defaultMessage": "Last Seen"
+	},
+	"nyxguard.attacks.table.type": {
+		"defaultMessage": "Type"
+	},
+	"nyxguard.attacks.type.bot": {
+		"defaultMessage": "Bot"
+	},
+	"nyxguard.attacks.type.ddos": {
+		"defaultMessage": "DDoS"
+	},
+	"nyxguard.attacks.type.sql": {
+		"defaultMessage": "SQL"
+	},
+	"nyxguard.globalgate.auth-bypass": {
+		"defaultMessage": "Authenticated Traffic Bypass"
+	},
+	"nyxguard.globalgate.auth-bypass-help": {
+		"defaultMessage": "If enabled, authenticated users are far less likely to be blocked by bot/SQL/DDoS protections."
+	},
+	"nyxguard.globalgate.ban-duration-hours": {
+		"defaultMessage": "Ban duration (hours)"
+	},
+	"nyxguard.globalgate.block-threshold": {
+		"defaultMessage": "Block threshold (score)"
+	},
+	"nyxguard.globalgate.bot-defense": {
+		"defaultMessage": "Bot Defense"
+	},
+	"nyxguard.globalgate.bot-tuning": {
+		"defaultMessage": "Bot Defense Tuning"
+	},
+	"nyxguard.globalgate.burst": {
+		"defaultMessage": "Burst"
+	},
+	"nyxguard.globalgate.burst-help": {
+		"defaultMessage": "Extra requests allowed during spikes."
+	},
+	"nyxguard.globalgate.connection-limit": {
+		"defaultMessage": "Connection limit"
+	},
+	"nyxguard.globalgate.connection-limit-help": {
+		"defaultMessage": "limit_conn nyxguard_conn."
+	},
+	"nyxguard.globalgate.ddos-shield": {
+		"defaultMessage": "DDoS Shield"
+	},
+	"nyxguard.globalgate.ddos-tuning": {
+		"defaultMessage": "DDoS Shield Tuning"
+	},
+	"nyxguard.globalgate.default-24-hours": {
+		"defaultMessage": "Default is 24 hours."
+	},
+	"nyxguard.globalgate.disable-waf-all": {
+		"defaultMessage": "Disable WAF for all proxy hosts"
+	},
+	"nyxguard.globalgate.enable-waf-all": {
+		"defaultMessage": "Enable WAF for all proxy hosts"
+	},
+	"nyxguard.globalgate.failed-login-auto-ban": {
+		"defaultMessage": "Failed Login Auto-Ban"
+	},
+	"nyxguard.globalgate.global-toggles": {
+		"defaultMessage": "Global Toggles"
+	},
+	"nyxguard.globalgate.loading": {
+		"defaultMessage": "Loading GlobalGate Security Layer..."
+	},
+	"nyxguard.globalgate.log-retention": {
+		"defaultMessage": "Log Retention"
+	},
+	"nyxguard.globalgate.log-retention-days": {
+		"defaultMessage": "NyxGuard log retention (days)"
+	},
+	"nyxguard.globalgate.log-retention-help": {
+		"defaultMessage": "Controls how long proxy access/error logs are kept on disk."
+	},
+	"nyxguard.globalgate.max-body-inspect": {
+		"defaultMessage": "Max body inspect (bytes)"
+	},
+	"nyxguard.globalgate.no-proxy-hosts": {
+		"defaultMessage": "No proxy hosts found yet."
+	},
+	"nyxguard.globalgate.off": {
+		"defaultMessage": "OFF"
+	},
+	"nyxguard.globalgate.on": {
+		"defaultMessage": "ON"
+	},
+	"nyxguard.globalgate.partial": {
+		"defaultMessage": "PARTIAL"
+	},
+	"nyxguard.globalgate.path-help": {
+		"defaultMessage": "Used to block common automated scanning paths. One token per line. Case-insensitive substring match against the request URI. Examples: wp-login.php, xmlrpc.php, .env, phpmyadmin."
+	},
+	"nyxguard.globalgate.path-tokens": {
+		"defaultMessage": "Path tokens (one per line)"
+	},
+	"nyxguard.globalgate.probe-ban-score": {
+		"defaultMessage": "Probe ban score"
+	},
+	"nyxguard.globalgate.probe-min-score": {
+		"defaultMessage": "Probe min score"
+	},
+	"nyxguard.globalgate.probe-min-score-help": {
+		"defaultMessage": "Scores above this count toward correlation."
+	},
+	"nyxguard.globalgate.probe-window-seconds": {
+		"defaultMessage": "Probe window (seconds)"
+	},
+	"nyxguard.globalgate.rate-help": {
+		"defaultMessage": "Global limit_req_zone rate."
+	},
+	"nyxguard.globalgate.rate-rps": {
+		"defaultMessage": "Rate (requests/sec)"
+	},
+	"nyxguard.globalgate.save-error": {
+		"defaultMessage": "Unable to save settings. Check API and try again."
+	},
+	"nyxguard.globalgate.save-settings": {
+		"defaultMessage": "Save GlobalGate Settings"
+	},
+	"nyxguard.globalgate.sql-shield": {
+		"defaultMessage": "SQL Shield"
+	},
+	"nyxguard.globalgate.sqli-tuning": {
+		"defaultMessage": "SQL Shield Tuning"
+	},
+	"nyxguard.globalgate.subtitle": {
+		"defaultMessage": "GlobalGate is the central control surface for NyxGuard's global protections. Changes apply instantly after nginx reload and affect all protected applications."
+	},
+	"nyxguard.globalgate.threshold-attempts": {
+		"defaultMessage": "Threshold (attempts)"
+	},
+	"nyxguard.globalgate.title": {
+		"defaultMessage": "GlobalGate Security Layer"
+	},
+	"nyxguard.globalgate.user-agent-help": {
+		"defaultMessage": "Used to identify known bot tools by their User-Agent. One token per line. Case-insensitive substring match. Examples: sqlmap, nikto, python-requests, curl."
+	},
+	"nyxguard.globalgate.user-agent-tokens": {
+		"defaultMessage": "User-Agent tokens (one per line)"
+	},
+	"nyxguard.globalgate.waf-protection": {
+		"defaultMessage": "WAF Protection"
+	},
+	"nyxguard.globalgate.window-seconds": {
+		"defaultMessage": "Window (seconds)"
+	},
+	"nyxguard.rules.active-rules": {
+		"defaultMessage": "Active Rules"
+	},
+	"nyxguard.rules.country": {
+		"defaultMessage": "Country"
+	},
+	"nyxguard.rules.country-placeholder": {
+		"defaultMessage": "MD"
+	},
+	"nyxguard.rules.country-required": {
+		"defaultMessage": "Enter a country code (example: MD)"
+	},
+	"nyxguard.rules.days-1": {
+		"defaultMessage": "1 day"
+	},
+	"nyxguard.rules.days-180": {
+		"defaultMessage": "180 days"
+	},
+	"nyxguard.rules.days-30": {
+		"defaultMessage": "30 days"
+	},
+	"nyxguard.rules.days-60": {
+		"defaultMessage": "60 days"
+	},
+	"nyxguard.rules.days-7": {
+		"defaultMessage": "7 days"
+	},
+	"nyxguard.rules.days-90": {
+		"defaultMessage": "90 days"
+	},
+	"nyxguard.rules.delete-all": {
+		"defaultMessage": "Delete All"
+	},
+	"nyxguard.rules.ip-placeholder": {
+		"defaultMessage": "203.0.113.0/24"
+	},
+	"nyxguard.rules.ip-range": {
+		"defaultMessage": "IP / Range"
+	},
+	"nyxguard.rules.ip-required": {
+		"defaultMessage": "Enter an IP or CIDR (example: 203.0.113.0/24)"
+	},
+	"nyxguard.rules.load-error": {
+		"defaultMessage": "Unable to load rules."
+	},
+	"nyxguard.rules.no-country-rules": {
+		"defaultMessage": "No country rules yet."
+	},
+	"nyxguard.rules.no-ip-rules": {
+		"defaultMessage": "No IP rules yet."
+	},
+	"nyxguard.rules.note-optional": {
+		"defaultMessage": "Note (optional)"
+	},
+	"nyxguard.rules.note-placeholder": {
+		"defaultMessage": "Reason / label"
+	},
+	"nyxguard.rules.permanent": {
+		"defaultMessage": "Permanent"
+	},
+	"nyxguard.rules.rule-type": {
+		"defaultMessage": "Rule Type"
+	},
+	"nyxguard.rules.save-rule": {
+		"defaultMessage": "Save Rule"
+	},
+	"nyxguard.rules.subtitle": {
+		"defaultMessage": "Create allow/deny rules with instant enforcement (protected apps only). Rules can be permanent or expire automatically."
 	},
 	"object.actions-title": {
 		"defaultMessage": "{object} #{id}"
@@ -507,10 +933,10 @@
 		"defaultMessage": "Hostname / IP di Destinazione"
 	},
 	"proxy-hosts": {
-		"defaultMessage": "Proxy Hosts"
+		"defaultMessage": "Host Proxy NyxGuard"
 	},
 	"proxy-hosts.count": {
-		"defaultMessage": "{count} {count, plural, one {Host Proxy} other {Host Proxy}}"
+		"defaultMessage": "{count} {count, plural, one {Host Proxy NyxGuard} other {Host Proxy NyxGuard}}"
 	},
 	"public": {
 		"defaultMessage": "Pubblico"
@@ -530,6 +956,9 @@
 	"redirection-hosts.count": {
 		"defaultMessage": "{count} {count, plural, one {Host di Reindirizzamento} other {Host di Reindirizzamento}}"
 	},
+	"reset": {
+		"defaultMessage": "Reset"
+	},
 	"role.admin": {
 		"defaultMessage": "Amministratore"
 	},
@@ -544,6 +973,60 @@
 	},
 	"settings": {
 		"defaultMessage": "Impostazioni"
+	},
+	"settings.backup.current-version": {
+		"defaultMessage": "Versione {version}"
+	},
+	"settings.backup.export-button": {
+		"defaultMessage": "Esporta Configurazione"
+	},
+	"settings.backup.export-description": {
+		"defaultMessage": "Scarica tutti i dati e le configurazioni correnti in un unico file JSON."
+	},
+	"settings.backup.export-failed": {
+		"defaultMessage": "Esportazione configurazione non riuscita."
+	},
+	"settings.backup.export-success": {
+		"defaultMessage": "Configurazione esportata: {filename}"
+	},
+	"settings.backup.export-title": {
+		"defaultMessage": "Esporta Configurazione"
+	},
+	"settings.backup.file-required": {
+		"defaultMessage": "Seleziona prima un file JSON di backup."
+	},
+	"settings.backup.import-button": {
+		"defaultMessage": "Importa Configurazione"
+	},
+	"settings.backup.import-description": {
+		"defaultMessage": "Ripristina da un file JSON esportato in precedenza dalla stessa versione."
+	},
+	"settings.backup.import-failed": {
+		"defaultMessage": "Importazione configurazione non riuscita."
+	},
+	"settings.backup.import-success": {
+		"defaultMessage": "Importazione configurazione completata con successo."
+	},
+	"settings.backup.import-title": {
+		"defaultMessage": "Importa Configurazione"
+	},
+	"settings.backup.reboot-confirm": {
+		"defaultMessage": "Ripristino completato con successo. È richiesto il riavvio per applicare tutte le modifiche. Riavvia ora?"
+	},
+	"settings.backup.reboot-failed": {
+		"defaultMessage": "Impossibile avviare il riavvio."
+	},
+	"settings.backup.rebooting": {
+		"defaultMessage": "Riavvio avviato. Riconnessione in corso..."
+	},
+	"settings.backup.subtitle": {
+		"defaultMessage": "Esegui backup e ripristino della configurazione completa di NyxGuard Manager da questa pagina."
+	},
+	"settings.backup.version-lock-description": {
+		"defaultMessage": "I backup sono compatibili solo con questa versione esatta ({version})."
+	},
+	"settings.backup.version-lock-title": {
+		"defaultMessage": "Blocco versione"
 	},
 	"settings.default-site": {
 		"defaultMessage": "Sito Predefinito"
@@ -604,6 +1087,9 @@
 	},
 	"test": {
 		"defaultMessage": "Test"
+	},
+	"theme.label": {
+		"defaultMessage": "Tema"
 	},
 	"update-available": {
 		"defaultMessage": "Aggiornamento Disponibile: {latestVersion}"

@@ -16,6 +16,7 @@ import tokensRoutes from "./tokens.js";
 import usersRoutes from "./users.js";
 import versionRoutes from "./version.js";
 import nyxguardRoutes from "./nyxguard.js";
+import webThreatRoutes from "./web-threat.js";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -103,6 +104,7 @@ router.use("/reports", reportsRoutes);
 router.use("/settings", settingsRoutes);
 router.use("/version", versionRoutes);
 router.use("/nyxguard", nyxguardRoutes);
+router.use("/web-threat", webThreatRoutes);
 router.use("/nginx/proxy-hosts", proxyHostsRoutes);
 router.use("/nginx/redirection-hosts", redirectionHostsRoutes);
 router.use("/nginx/dead-hosts", deadHostsRoutes);

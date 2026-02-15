@@ -28,6 +28,19 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 	const [avatarFile, setAvatarFile] = useState<File | null>(null);
 	const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
+	const mergeUserCache = (queryKey: (string | number)[], updated: any) => {
+		qc.setQueryData(queryKey, (prev: any) => {
+			if (!prev) return updated;
+			return {
+				...prev,
+				...updated,
+				// Preserve permission/role shape if avatar endpoint returns partial payload.
+				roles: Array.isArray(updated?.roles) ? updated.roles : prev.roles,
+				permissions: updated?.permissions ?? prev.permissions,
+			};
+		});
+	};
+
 	const isCustomAvatar = useMemo(() => {
 		const a = data?.avatar || "";
 		return a.startsWith("/api/avatar/") || a.startsWith("/avatar/");
@@ -51,10 +64,12 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 		onSuccess: async (updated) => {
 			setAvatarFile(null);
 			setAvatarPreview(null);
-			qc.setQueryData(["user", id], updated);
+			mergeUserCache(["user", id], updated);
 			if (updated.id === currentUser?.id) {
-				qc.setQueryData(["user", "me"], updated);
+				mergeUserCache(["user", "me"], updated);
 			}
+			await qc.invalidateQueries({ queryKey: ["user", id] });
+			await qc.invalidateQueries({ queryKey: ["user", "me"] });
 			await qc.invalidateQueries({ queryKey: ["users"] });
 			await qc.invalidateQueries({ queryKey: ["audit-logs"] });
 			showSuccess("Profile picture updated.");
@@ -72,10 +87,12 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 		onSuccess: async (updated) => {
 			setAvatarFile(null);
 			setAvatarPreview(null);
-			qc.setQueryData(["user", id], updated);
+			mergeUserCache(["user", id], updated);
 			if (updated.id === currentUser?.id) {
-				qc.setQueryData(["user", "me"], updated);
+				mergeUserCache(["user", "me"], updated);
 			}
+			await qc.invalidateQueries({ queryKey: ["user", id] });
+			await qc.invalidateQueries({ queryKey: ["user", "me"] });
 			await qc.invalidateQueries({ queryKey: ["users"] });
 			await qc.invalidateQueries({ queryKey: ["audit-logs"] });
 			showSuccess("Profile picture removed.");
@@ -256,7 +273,7 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 													<div className="form-floating mb-3">
 														<input
 															id="name"
-															className={`form-control ${form.errors.name && form.touched.name ? "is-invalid" : ""}`}
+															className={`form-control nyx-user-input-strong ${form.errors.name && form.touched.name ? "is-invalid" : ""}`}
 															placeholder={intl.formatMessage({ id: "user.full-name" })}
 															{...field}
 														/>
@@ -282,7 +299,7 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 													<div className="form-floating mb-3">
 														<input
 															id="nickname"
-															className={`form-control ${form.errors.nickname && form.touched.nickname ? "is-invalid" : ""}`}
+															className={`form-control nyx-user-input-strong ${form.errors.nickname && form.touched.nickname ? "is-invalid" : ""}`}
 															placeholder={intl.formatMessage({ id: "user.nickname" })}
 															{...field}
 														/>
@@ -309,7 +326,7 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 												<input
 													id="email"
 													type="email"
-													className={`form-control ${form.errors.email && form.touched.email ? "is-invalid" : ""}`}
+													className={`form-control nyx-user-input-strong ${form.errors.email && form.touched.email ? "is-invalid" : ""}`}
 													placeholder={intl.formatMessage({ id: "email-address" })}
 													{...field}
 												/>

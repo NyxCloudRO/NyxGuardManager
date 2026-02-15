@@ -6,6 +6,7 @@ import internalAttackMonitor from "./internal/attack-monitor.js";
 import internalGeoIpUpdate from "./internal/geoip-update.js";
 import internalIpRanges from "./internal/ip_ranges.js";
 import internalNyxGuard from "./internal/nyxguard.js";
+import internalWebThreatMonitor from "./internal/web-threat-monitor.js";
 import { global as logger } from "./logger.js";
 import { migrateUp } from "./migrate.js";
 import { getCompiledSchema } from "./schema/index.js";
@@ -39,6 +40,7 @@ async function appStart() {
 			internalAttackMonitor.initTimer();
 			internalGeoIpUpdate.initTimer();
 			internalIpRanges.initTimer();
+			internalWebThreatMonitor.initTimer();
 
 			const server = app.listen(3000, () => {
 				logger.info(`Backend PID ${process.pid} listening on port 3000 ...`);

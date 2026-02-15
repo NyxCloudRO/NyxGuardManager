@@ -29,7 +29,9 @@ export default function TableWrapper() {
 						</div>
 					</div>
 				</div>
-				<Table data={data ?? []} isFetching={isFetching} onSelectItem={showEventDetailsModal} />
+				<div className="nyx-scroll-y nyx-scroll-theme" style={{ maxHeight: "calc(100vh - 280px)" }}>
+					<Table data={data ?? []} isFetching={isFetching} onSelectItem={showEventDetailsModal} />
+				</div>
 			</div>
 		</div>
 	);

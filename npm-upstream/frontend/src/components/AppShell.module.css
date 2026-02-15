@@ -1,18 +1,27 @@
 .shell {
 	display: flex;
-	align-items: flex-start;
+	align-items: stretch;
 	gap: 1rem;
+	height: 100%;
+	min-height: 0;
+	overflow: hidden;
 }
 
 .sidebarWrap {
 	flex: 0 0 280px;
 	width: 280px;
 	min-width: 240px;
+	min-height: 0;
+	overflow: auto;
+	overscroll-behavior: contain;
 }
 
 .main {
 	flex: 1 1 auto;
 	min-width: 0; /* allow children to shrink instead of causing horizontal overflow */
+	min-height: 0;
+	overflow: hidden;
+	overscroll-behavior: contain;
 }
 
 @media (max-width: 767.98px) {
@@ -25,4 +34,3 @@
 		min-width: 0;
 	}
 }
-

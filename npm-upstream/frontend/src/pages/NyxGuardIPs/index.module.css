@@ -1,6 +1,6 @@
 .page {
-  min-height: calc(100vh - 120px);
-  padding: 40px 0 60px;
+  min-height: 0;
+  padding: 0;
   color: var(--app-text-primary);
   background: var(--app-page-gradient);
 }
@@ -115,6 +115,10 @@
 .subtitle {
   margin: 0 0 18px;
   opacity: 0.85;
+}
+
+.tableViewport {
+  max-height: min(58vh, 760px);
 }
 
 .table {

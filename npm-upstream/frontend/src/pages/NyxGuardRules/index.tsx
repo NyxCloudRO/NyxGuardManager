@@ -5,12 +5,15 @@ import {
 	createNyxGuardCountryRule,
 	createNyxGuardIpRule,
 	deleteNyxGuardCountryRule,
+	deleteNyxGuardCountryRules,
 	deleteNyxGuardIpRule,
+	deleteNyxGuardIpRules,
 	getNyxGuardCountryRules,
 	getNyxGuardIpRules,
 	updateNyxGuardCountryRule,
 	updateNyxGuardIpRule,
 } from "src/api/backend";
+import { intl, T } from "src/locale";
 import { showError, showSuccess } from "src/notifications";
 import styles from "./index.module.css";
 
@@ -52,11 +55,11 @@ const NyxGuardRules = () => {
 				const items = Array.isArray(prev?.items) ? prev.items : [];
 				return { ...(prev ?? {}), items: [created, ...items] };
 			});
-			showSuccess("Rule added and active.");
+			showSuccess(intl.formatMessage({ id: "nyxguard.rules.added" }));
 			await qc.invalidateQueries({ queryKey: ["nyxguard", "rules", "ip"] });
 		},
 		onError: (err: any) => {
-			const msg = err instanceof Error ? err.message : "Failed to add IP rule.";
+			const msg = err instanceof Error ? err.message : intl.formatMessage({ id: "nyxguard.rules.add-ip-failed" });
 			showError(msg);
 		},
 	});
@@ -77,11 +80,11 @@ const NyxGuardRules = () => {
 				const items = Array.isArray(prev?.items) ? prev.items : [];
 				return { ...(prev ?? {}), items: [created, ...items] };
 			});
-			showSuccess("Rule added and active.");
+			showSuccess(intl.formatMessage({ id: "nyxguard.rules.added" }));
 			await qc.invalidateQueries({ queryKey: ["nyxguard", "rules", "country"] });
 		},
 		onError: (err: any) => {
-			const msg = err instanceof Error ? err.message : "Failed to add country rule.";
+			const msg = err instanceof Error ? err.message : intl.formatMessage({ id: "nyxguard.rules.add-country-failed" });
 			showError(msg);
 		},
 	});
@@ -106,17 +109,37 @@ const NyxGuardRules = () => {
 		mutationFn: (id: number) => deleteNyxGuardCountryRule(id),
 		onSuccess: () => qc.invalidateQueries({ queryKey: ["nyxguard", "rules", "country"] }),
 	});
+	const removeAllIpRules = useMutation({
+		mutationFn: () => deleteNyxGuardIpRules(),
+		onSuccess: async (res) => {
+			showSuccess(intl.formatMessage({ id: "nyxguard.rules.deleted-ip" }, { count: res.deleted }));
+			await qc.invalidateQueries({ queryKey: ["nyxguard", "rules", "ip"] });
+		},
+		onError: (err: any) => {
+			showError(err instanceof Error ? err.message : intl.formatMessage({ id: "nyxguard.rules.delete-ip-failed" }));
+		},
+	});
+	const removeAllCountryRules = useMutation({
+		mutationFn: () => deleteNyxGuardCountryRules(),
+		onSuccess: async (res) => {
+			showSuccess(intl.formatMessage({ id: "nyxguard.rules.deleted-country" }, { count: res.deleted }));
+			await qc.invalidateQueries({ queryKey: ["nyxguard", "rules", "country"] });
+		},
+		onError: (err: any) => {
+			showError(err instanceof Error ? err.message : intl.formatMessage({ id: "nyxguard.rules.delete-country-failed" }));
+		},
+	});
 
 	const hasError = useMemo(() => {
 		if (ruleType === "ip") {
 			const v = ipCidr.trim();
-			if (!v) return "Enter an IP or CIDR (example: 203.0.113.0/24)";
-			if (!/^[0-9a-fA-F:./]+$/.test(v)) return "Only IP/CIDR characters are allowed";
+			if (!v) return intl.formatMessage({ id: "nyxguard.rules.ip-required" });
+			if (!/^[0-9a-fA-F:./]+$/.test(v)) return intl.formatMessage({ id: "nyxguard.rules.ip-invalid" });
 			return null;
 		}
 		const v = countryCode.trim().toUpperCase();
-		if (!v) return "Enter a country code (example: MD)";
-		if (!/^[A-Z]{2}$/.test(v)) return "Country code must be 2 letters (example: FR)";
+		if (!v) return intl.formatMessage({ id: "nyxguard.rules.country-required" });
+		if (!/^[A-Z]{2}$/.test(v)) return intl.formatMessage({ id: "nyxguard.rules.country-invalid" });
 		return null;
 	}, [countryCode, ipCidr, ruleType]);
 
@@ -130,14 +153,16 @@ const NyxGuardRules = () => {
 		<div className={styles.page}>
 			<div className="container-xl">
 				<div className={styles.card}>
-					<h2 className={styles.title}>Rules (Allow / Deny)</h2>
+					<h2 className={styles.title}>
+						<T id="nyxguard-rules" />
+					</h2>
 					<p className={styles.subtitle}>
-						Create allow/deny rules with instant enforcement (protected apps only). Rules can be permanent or expire automatically.
+						<T id="nyxguard.rules.subtitle" />
 					</p>
 
 					<div className={styles.builder}>
 						<div>
-							<div className={styles.label}>Rule Type</div>
+							<div className={styles.label}><T id="nyxguard.rules.rule-type" /></div>
 							<div className={styles.row}>
 								<button
 									type="button"
@@ -151,7 +176,7 @@ const NyxGuardRules = () => {
 										});
 									}}
 								>
-									IP / Range
+									<T id="nyxguard.rules.ip-range" />
 								</button>
 								<button
 									type="button"
@@ -165,20 +190,20 @@ const NyxGuardRules = () => {
 										});
 									}}
 								>
-									Country
+									<T id="nyxguard.rules.country" />
 								</button>
 							</div>
 						</div>
 
 						<div>
-							<div className={styles.label}>Value</div>
+							<div className={styles.label}><T id="value" /></div>
 							{ruleType === "ip" ? (
 								<>
 									<input
 										className={styles.input}
 										value={ipCidr}
 										onChange={(e) => setIpCidr(e.target.value)}
-										placeholder="203.0.113.0/24"
+										placeholder={intl.formatMessage({ id: "nyxguard.rules.ip-placeholder" })}
 									/>
 									{hasError ? <div className="text-danger mt-2">{hasError}</div> : null}
 								</>
@@ -188,7 +213,7 @@ const NyxGuardRules = () => {
 										className={styles.input}
 										value={countryCode}
 										onChange={(e) => setCountryCode(e.target.value)}
-										placeholder="MD"
+										placeholder={intl.formatMessage({ id: "nyxguard.rules.country-placeholder" })}
 									/>
 									{hasError ? <div className="text-danger mt-2">{hasError}</div> : null}
 								</>
@@ -196,27 +221,27 @@ const NyxGuardRules = () => {
 						</div>
 
 						<div>
-							<div className={styles.label}>Action</div>
+							<div className={styles.label}><T id="action" /></div>
 							<div className={styles.row}>
 								<button
 									type="button"
 									className={action === "allow" ? styles.pillActiveBtn : styles.pillBtn}
 									onClick={() => setAction("allow")}
 								>
-									Allow
+									<T id="allow" />
 								</button>
 								<button
 									type="button"
 									className={action === "deny" ? styles.pillActiveBtn : styles.pillBtn}
 									onClick={() => setAction("deny")}
 								>
-									Deny
+									<T id="deny" />
 								</button>
 							</div>
 						</div>
 
 						<div>
-							<div className={styles.label}>Duration</div>
+							<div className={styles.label}><T id="duration" /></div>
 							<select
 								className={styles.input}
 								value={expiresInDays ?? ""}
@@ -225,23 +250,23 @@ const NyxGuardRules = () => {
 									setExpiresInDays(v === "" ? null : (Number.parseInt(v, 10) as 1 | 7 | 30 | 60 | 90 | 180));
 								}}
 							>
-								<option value="">Permanent</option>
-								<option value={1}>1 day</option>
-								<option value={7}>7 days</option>
-								<option value={30}>30 days</option>
-								<option value={60}>60 days</option>
-								<option value={90}>90 days</option>
-								<option value={180}>180 days</option>
+								<option value=""><T id="nyxguard.rules.permanent" /></option>
+								<option value={1}><T id="nyxguard.rules.days-1" /></option>
+								<option value={7}><T id="nyxguard.rules.days-7" /></option>
+								<option value={30}><T id="nyxguard.rules.days-30" /></option>
+								<option value={60}><T id="nyxguard.rules.days-60" /></option>
+								<option value={90}><T id="nyxguard.rules.days-90" /></option>
+								<option value={180}><T id="nyxguard.rules.days-180" /></option>
 							</select>
 						</div>
 
 						<div>
-							<div className={styles.label}>Note (optional)</div>
+							<div className={styles.label}><T id="nyxguard.rules.note-optional" /></div>
 							<input
 								className={styles.input}
 								value={note}
 								onChange={(e) => setNote(e.target.value)}
-								placeholder="Reason / label"
+								placeholder={intl.formatMessage({ id: "nyxguard.rules.note-placeholder" })}
 							/>
 						</div>
 
@@ -255,31 +280,57 @@ const NyxGuardRules = () => {
 									else createCountryRule.mutate();
 								}}
 							>
-								Save Rule
+								<T id="nyxguard.rules.save-rule" />
 							</button>
 						</div>
 					</div>
 
 					<div className={styles.rulesList}>
-						<div className={styles.label}>Active Rules</div>
+						<div className={styles.listHeader}>
+							<div className={styles.label}><T id="nyxguard.rules.active-rules" /></div>
+							<button
+								type="button"
+								className={styles.ghost}
+								disabled={
+									removeAllIpRules.isPending ||
+									removeAllCountryRules.isPending ||
+									(ruleType === "ip"
+										? (ipRules.data?.items?.length ?? 0) === 0
+										: (countryRules.data?.items?.length ?? 0) === 0)
+								}
+								onClick={() => {
+									if (ruleType === "ip") {
+										const count = ipRules.data?.items?.length ?? 0;
+										if (!window.confirm(intl.formatMessage({ id: "nyxguard.rules.delete-all-ip-confirm" }, { count }))) return;
+										removeAllIpRules.mutate();
+										return;
+									}
+									const count = countryRules.data?.items?.length ?? 0;
+									if (!window.confirm(intl.formatMessage({ id: "nyxguard.rules.delete-all-country-confirm" }, { count }))) return;
+									removeAllCountryRules.mutate();
+								}}
+							>
+								<T id="nyxguard.rules.delete-all" />
+							</button>
+						</div>
 					{ruleType === "ip" ? (
 						ipRules.isLoading ? (
-							<div className={styles.emptyState}>Loading…</div>
+							<div className={styles.emptyState}><T id="loading" /></div>
 						) : ipRules.isError ? (
-							<div className={styles.emptyState}>Unable to load rules.</div>
+							<div className={styles.emptyState}><T id="nyxguard.rules.load-error" /></div>
 						) : (ipRules.data?.items?.length ?? 0) === 0 ? (
-							<div className={styles.emptyState}>No IP rules yet.</div>
+							<div className={styles.emptyState}><T id="nyxguard.rules.no-ip-rules" /></div>
 						) : (
-							<div style={{ overflowX: "auto" }}>
+							<div className={`nyx-scroll-y nyx-scroll-theme ${styles.tableViewport}`}>
 								<table className="table table-sm table-vcenter">
 									<thead>
 										<tr>
-											<th>Enabled</th>
-											<th>Action</th>
+											<th><T id="enabled" /></th>
+											<th><T id="action" /></th>
 											<th>IP/CIDR</th>
 											<th>Note</th>
-											<th>Expires</th>
-											<th className="text-end">Actions</th>
+											<th><T id="expires" /></th>
+											<th className="text-end"><T id="actions" /></th>
 										</tr>
 									</thead>
 									<tbody>
@@ -309,7 +360,7 @@ const NyxGuardRules = () => {
 														disabled={removeIpRule.isPending}
 														onClick={() => removeIpRule.mutate(r.id)}
 													>
-														Delete
+														<T id="delete" />
 													</button>
 												</td>
 											</tr>
@@ -319,22 +370,22 @@ const NyxGuardRules = () => {
 							</div>
 						)
 					) : countryRules.isLoading ? (
-						<div className={styles.emptyState}>Loading…</div>
+						<div className={styles.emptyState}><T id="loading" /></div>
 					) : countryRules.isError ? (
-						<div className={styles.emptyState}>Unable to load rules.</div>
+						<div className={styles.emptyState}><T id="nyxguard.rules.load-error" /></div>
 					) : (countryRules.data?.items?.length ?? 0) === 0 ? (
-						<div className={styles.emptyState}>No country rules yet.</div>
+						<div className={styles.emptyState}><T id="nyxguard.rules.no-country-rules" /></div>
 					) : (
-						<div style={{ overflowX: "auto" }}>
+						<div className={`nyx-scroll-y nyx-scroll-theme ${styles.tableViewport}`}>
 							<table className="table table-sm table-vcenter">
 								<thead>
 									<tr>
-										<th>Enabled</th>
-										<th>Action</th>
+										<th><T id="enabled" /></th>
+										<th><T id="action" /></th>
 										<th>Country</th>
 										<th>Note</th>
-										<th>Expires</th>
-										<th className="text-end">Actions</th>
+										<th><T id="expires" /></th>
+										<th className="text-end"><T id="actions" /></th>
 									</tr>
 								</thead>
 								<tbody>
@@ -364,7 +415,7 @@ const NyxGuardRules = () => {
 													disabled={removeCountryRule.isPending}
 													onClick={() => removeCountryRule.mutate(r.id)}
 												>
-													Delete
+													<T id="delete" />
 												</button>
 											</td>
 										</tr>

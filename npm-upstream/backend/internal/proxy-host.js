@@ -9,6 +9,8 @@ import internalHost from "./host.js";
 import internalNginx from "./nginx.js";
 import internalNyxGuard from "./nyxguard.js";
 
+const ENFORCE_NYXGUARD_PROTECTION = process.env.NYXGUARD_ENFORCE_PROTECTION !== "0";
+
 function nyxguardMetaBool(meta, camelKey, snakeKey) {
 	if (!meta) return undefined;
 	const vCamel = meta[camelKey];
@@ -108,15 +110,13 @@ const internalProxyHost = {
 				});
 			})
 			.then((row) => {
-				// NyxGuard per-app toggles at creation time. Stored in meta to keep the API schema stable.
-				// Frontend decamelizes JSON bodies, so accept both camelCase and snake_case meta keys.
+				// NyxGuard protection is enforced for all apps by default.
+				// If enforcement is explicitly disabled, fallback to user-provided toggle values.
 				const meta = thisData?.meta || {};
-				const waf = !!nyxguardMetaBool(meta, "nyxguardWafEnabled", "nyxguard_waf_enabled");
-				const bot = waf && !!nyxguardMetaBool(meta, "nyxguardBotDefenseEnabled", "nyxguard_bot_defense_enabled");
-				const ddos = waf && !!nyxguardMetaBool(meta, "nyxguardDdosEnabled", "nyxguard_ddos_enabled");
-				const sqli = waf && !!nyxguardMetaBool(meta, "nyxguardSqliEnabled", "nyxguard_sqli_enabled");
-
-					if (!waf && !bot && !ddos && !sqli) return row;
+				const waf = ENFORCE_NYXGUARD_PROTECTION ? true : !!nyxguardMetaBool(meta, "nyxguardWafEnabled", "nyxguard_waf_enabled");
+				const bot = ENFORCE_NYXGUARD_PROTECTION ? true : waf && !!nyxguardMetaBool(meta, "nyxguardBotDefenseEnabled", "nyxguard_bot_defense_enabled");
+				const ddos = ENFORCE_NYXGUARD_PROTECTION ? true : waf && !!nyxguardMetaBool(meta, "nyxguardDdosEnabled", "nyxguard_ddos_enabled");
+				const sqli = ENFORCE_NYXGUARD_PROTECTION ? true : waf && !!nyxguardMetaBool(meta, "nyxguardSqliEnabled", "nyxguard_sqli_enabled");
 
 					let nextAdvanced = row.advanced_config ?? "";
 					nextAdvanced = internalNyxGuard.waf.applyAdvancedConfig(nextAdvanced, waf);

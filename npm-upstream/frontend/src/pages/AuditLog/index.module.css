@@ -1,0 +1,15 @@
+.page {
+	height: 100%;
+	min-height: 0;
+	padding: 0;
+	overflow: hidden;
+	background: var(--app-page-gradient);
+}
+
+.page :global(.container-xl) {
+	height: 100%;
+	min-height: 0;
+	overflow: auto;
+	overflow-x: hidden;
+	overscroll-behavior: contain;
+}

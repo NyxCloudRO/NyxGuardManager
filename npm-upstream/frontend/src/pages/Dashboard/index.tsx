@@ -1,12 +1,9 @@
 import {
 	IconActivityHeartbeat,
 	IconAlertTriangle,
-	IconArrowsCross,
 	IconArrowsUpDown,
 	IconBolt,
-	IconBoltOff,
 	IconChartLine,
-	IconDisc,
 	IconShieldCheck,
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
@@ -15,7 +12,7 @@ import { getNyxGuardAppsSummary, getNyxGuardAttacksSummary, getNyxGuardSummary }
 import { HasPermission } from "src/components";
 import { useHostReport } from "src/hooks";
 import { T } from "src/locale";
-import { DEAD_HOSTS, PROXY_HOSTS, REDIRECTION_HOSTS, STREAMS, VIEW } from "src/modules/Permissions";
+import { PROXY_HOSTS, VIEW } from "src/modules/Permissions";
 import styles from "./index.module.css";
 
 function formatBytes(bytes: number) {
@@ -108,10 +105,10 @@ const Dashboard = () => {
 											</div>
 											<div className="col">
 												<div className="font-weight-medium">
-													{appsSummary.data?.protectedCount?.toLocaleString?.() ?? "--"} Protected Apps
+													<T id="dashboard.protected-apps" data={{ count: appsSummary.data?.protectedCount?.toLocaleString?.() ?? "--" }} />
 												</div>
 												<div className="text-muted">
-													Total apps: {appsSummary.data?.totalApps?.toLocaleString?.() ?? "--"}
+													<T id="dashboard.total-apps" data={{ count: appsSummary.data?.totalApps?.toLocaleString?.() ?? "--" }} />
 												</div>
 											</div>
 										</div>
@@ -138,10 +135,10 @@ const Dashboard = () => {
 											</div>
 											<div className="col">
 												<div className="font-weight-medium">
-													Requests (1d): {traffic1d.data?.requests?.toLocaleString?.() ?? "--"}
+													<T id="dashboard.requests-1d" data={{ count: traffic1d.data?.requests?.toLocaleString?.() ?? "--" }} />
 												</div>
 												<div className="text-muted">
-													Blocked (1d): {traffic1d.data?.blocked?.toLocaleString?.() ?? "--"}
+													<T id="dashboard.blocked-1d" data={{ count: traffic1d.data?.blocked?.toLocaleString?.() ?? "--" }} />
 												</div>
 											</div>
 										</div>
@@ -168,10 +165,16 @@ const Dashboard = () => {
 											</div>
 											<div className="col">
 												<div className="font-weight-medium">
-													Traffic (1d): RX {typeof traffic1d.data?.rxBytes === "number" ? formatBytes(traffic1d.data.rxBytes) : "--"}
+													<T
+														id="dashboard.traffic-rx-1d"
+														data={{ bytes: typeof traffic1d.data?.rxBytes === "number" ? formatBytes(traffic1d.data.rxBytes) : "--" }}
+													/>
 												</div>
 												<div className="text-muted">
-													TX (1d): {typeof traffic1d.data?.txBytes === "number" ? formatBytes(traffic1d.data.txBytes) : "--"}
+													<T
+														id="dashboard.traffic-tx-1d"
+														data={{ bytes: typeof traffic1d.data?.txBytes === "number" ? formatBytes(traffic1d.data.txBytes) : "--" }}
+													/>
 												</div>
 											</div>
 										</div>
@@ -198,11 +201,19 @@ const Dashboard = () => {
 												</div>
 												<div className="col">
 													<div className="font-weight-medium">
-														Blocked Rate (1d): {Number.isFinite(blockedRate1d) ? `${blockedRate1d.toFixed(1)}%` : "--"}
+														<T
+															id="dashboard.blocked-rate-1d"
+															data={{ rate: Number.isFinite(blockedRate1d) ? `${blockedRate1d.toFixed(1)}%` : "--" }}
+														/>
 													</div>
 													<div className="text-muted">
-														Blocked: {traffic1d.data?.blocked?.toLocaleString?.() ?? "--"} / Requests:{" "}
-														{traffic1d.data?.requests?.toLocaleString?.() ?? "--"}
+														<T
+															id="dashboard.blocked-over-requests"
+															data={{
+																blocked: traffic1d.data?.blocked?.toLocaleString?.() ?? "--",
+																requests: traffic1d.data?.requests?.toLocaleString?.() ?? "--",
+															}}
+														/>
 													</div>
 												</div>
 											</div>
@@ -229,95 +240,22 @@ const Dashboard = () => {
 												</div>
 												<div className="col">
 													<div className="font-weight-medium">
-														Attacks (last 1d)
+														<T id="dashboard.attacks-last-1d" />
 													</div>
 													<div className="text-muted">
-														Total: {attacks1d.data?.total?.toLocaleString?.() ?? "--"} | SQL{" "}
-														{attacks1d.data?.byType?.sqli?.toLocaleString?.() ?? "--"} DDoS{" "}
-														{attacks1d.data?.byType?.ddos?.toLocaleString?.() ?? "--"} Bot{" "}
-														{attacks1d.data?.byType?.bot?.toLocaleString?.() ?? "--"}
+														<T
+															id="dashboard.attacks-breakdown"
+															data={{
+																total: attacks1d.data?.total?.toLocaleString?.() ?? "--",
+																sqli: attacks1d.data?.byType?.sqli?.toLocaleString?.() ?? "--",
+																ddos: attacks1d.data?.byType?.ddos?.toLocaleString?.() ?? "--",
+																bot: attacks1d.data?.byType?.bot?.toLocaleString?.() ?? "--",
+															}}
+														/>
 													</div>
 												</div>
 											</div>
 										</div>
-								</a>
-							</div>
-						</HasPermission>
-						<HasPermission section={REDIRECTION_HOSTS} permission={VIEW} hideError>
-							<div className="col-sm-6 col-lg-4">
-								<a
-									href="/nyxguard/redirection"
-									className="card card-sm card-link card-link-pop"
-									onClick={(e) => {
-										e.preventDefault();
-										navigate("/nyxguard/redirection");
-									}}
-								>
-									<div className="card-body">
-										<div className="row align-items-center">
-											<div className="col-auto">
-												<span className="bg-yellow text-white avatar">
-													<IconArrowsCross />
-												</span>
-											</div>
-											<div className="col">
-												<T
-													id="redirection-hosts.count"
-													data={{ count: hostReport?.redirection }}
-												/>
-											</div>
-										</div>
-									</div>
-								</a>
-							</div>
-						</HasPermission>
-						<HasPermission section={STREAMS} permission={VIEW} hideError>
-							<div className="col-sm-6 col-lg-4">
-								<a
-									href="/nyxguard/stream"
-									className="card card-sm card-link card-link-pop"
-									onClick={(e) => {
-										e.preventDefault();
-										navigate("/nyxguard/stream");
-									}}
-								>
-									<div className="card-body">
-										<div className="row align-items-center">
-											<div className="col-auto">
-												<span className="bg-blue text-white avatar">
-													<IconDisc />
-												</span>
-											</div>
-											<div className="col">
-												<T id="streams.count" data={{ count: hostReport?.stream }} />
-											</div>
-										</div>
-									</div>
-								</a>
-							</div>
-						</HasPermission>
-						<HasPermission section={DEAD_HOSTS} permission={VIEW} hideError>
-							<div className="col-sm-6 col-lg-4">
-								<a
-									href="/nyxguard/404"
-									className="card card-sm card-link card-link-pop"
-									onClick={(e) => {
-										e.preventDefault();
-										navigate("/nyxguard/404");
-									}}
-								>
-									<div className="card-body">
-										<div className="row align-items-center">
-											<div className="col-auto">
-												<span className="bg-red text-white avatar">
-													<IconBoltOff />
-												</span>
-											</div>
-											<div className="col">
-												<T id="dead-hosts.count" data={{ count: hostReport?.dead }} />
-											</div>
-										</div>
-									</div>
 								</a>
 							</div>
 						</HasPermission>

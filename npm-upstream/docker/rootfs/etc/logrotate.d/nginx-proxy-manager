@@ -1,8 +1,9 @@
 /data/logs/*_access.log /data/logs/*/access.log {
     su npm npm
     create 0644
-    weekly
-    rotate 4
+    daily
+    rotate 90
+    maxage 90
     missingok
     notifempty
     compress
@@ -15,8 +16,9 @@
 /data/logs/*_error.log /data/logs/*/error.log {
     su npm npm
     create 0644
-    weekly
-    rotate 10
+    daily
+    rotate 90
+    maxage 90
     missingok
     notifempty
     compress

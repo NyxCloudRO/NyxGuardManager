@@ -1,12 +1,19 @@
 .page {
-	min-height: calc(100vh - 120px);
-	padding: 28px 0;
+	height: 100%;
+	min-height: 0;
+	padding: 0;
+	overflow: hidden;
 	background: var(--app-page-gradient);
 	/* Hint browsers to render native form popovers (select, date, etc) in dark style when supported. */
 	color-scheme: dark;
 }
 
 .page :global(.container-xl) {
+	height: 100%;
+	min-height: 0;
+	overflow: auto;
+	overflow-x: hidden;
+	overscroll-behavior: contain;
 	position: relative;
 	border-radius: 24px;
 	padding: 16px;
@@ -103,6 +110,11 @@
 .field {
 	display: grid;
 	gap: 6px;
+}
+
+.inlineActions {
+	display: inline-flex;
+	gap: 8px;
 }
 
 .label {

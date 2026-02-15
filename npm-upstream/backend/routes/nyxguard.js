@@ -24,11 +24,19 @@ const router = express.Router({
 const DEFAULT_MINUTES = 15;
 const MAX_BYTES_PER_FILE = 2 * 1024 * 1024; // enough for many recent requests without scanning large logs
 const MAX_BYTES_PER_FILE_24H = 10 * 1024 * 1024;
-const MAX_MINUTES = 180 * 24 * 60;
+const MAX_LIVE_TRAFFIC_MINUTES = 30 * 24 * 60;
+const MAX_IPS_MINUTES = 90 * 24 * 60;
+const MAX_ATTACKS_MINUTES = 180 * 24 * 60;
 const MAX_TOTAL_SCAN_BYTES = 80 * 1024 * 1024; // safety cap for long windows
 const GEOIP_DIR = "/data/geoip";
 const GEOIP_COUNTRY_DB = path.join(GEOIP_DIR, "GeoLite2-Country.mmdb");
 const GEOIP_IP2LOCATION_DB = path.join(GEOIP_DIR, "IP2Location-Country.mmdb");
+const ENFORCE_NYXGUARD_PROTECTION = process.env.NYXGUARD_ENFORCE_PROTECTION !== "0";
+const SUMMARY_CACHE_TTL_MS = Number.parseInt(process.env.NYXGUARD_SUMMARY_CACHE_TTL_MS ?? "", 10) || 2000;
+const IPS_CACHE_TTL_MS = Number.parseInt(process.env.NYXGUARD_IPS_CACHE_TTL_MS ?? "", 10) || 2000;
+const ROUTE_CACHE_MAX_ENTRIES = 128;
+const routeResultCache = new Map(); // key -> { expiresAt: number, value: any }
+const routeInflight = new Map(); // key -> Promise<any>
 
 async function regenerateProxyHostConfig(access, hostId) {
 	// NyxGuard per-app toggles modify proxy_host.advanced_config which must be rendered into /data/nginx/proxy_host/<id>.conf.
@@ -42,6 +50,42 @@ async function regenerateProxyHostConfig(access, hostId) {
 	} catch (err) {
 		debug(logger, `nyxguard: failed regenerating proxy host config for ${hostId}: ${err}`);
 	}
+}
+
+function maybeCompactRouteCache() {
+	const now = Date.now();
+	for (const [key, item] of routeResultCache.entries()) {
+		if (!item || item.expiresAt <= now) routeResultCache.delete(key);
+	}
+	// Prevent unbounded growth from many query combinations.
+	if (routeResultCache.size <= ROUTE_CACHE_MAX_ENTRIES) return;
+	const entries = [...routeResultCache.entries()].sort((a, b) => a[1].expiresAt - b[1].expiresAt);
+	for (const [key] of entries) {
+		if (routeResultCache.size <= ROUTE_CACHE_MAX_ENTRIES) break;
+		routeResultCache.delete(key);
+	}
+}
+
+async function withRouteCache(key, ttlMs, producer) {
+	const now = Date.now();
+	const cached = routeResultCache.get(key);
+	if (cached && cached.expiresAt > now) return cached.value;
+
+	const inflight = routeInflight.get(key);
+	if (inflight) return inflight;
+
+	const p = (async () => {
+		try {
+			const value = await producer();
+			routeResultCache.set(key, { expiresAt: Date.now() + ttlMs, value });
+			maybeCompactRouteCache();
+			return value;
+		} finally {
+			routeInflight.delete(key);
+		}
+	})();
+	routeInflight.set(key, p);
+	return p;
 }
 
 function monthToIndex(mon) {
@@ -174,6 +218,48 @@ async function listProxyHostAccessLogFiles(logDir) {
 		.map((f) => f);
 }
 
+async function clearNyxGuardAccessLogs(logDir) {
+	let filesCleared = 0;
+	const clearFile = async (fp) => {
+		try {
+			if (fp.endsWith(".gz") || /\.\d+$/.test(fp)) {
+				await fs.unlink(fp);
+			} else {
+				await fs.truncate(fp, 0);
+			}
+			filesCleared += 1;
+		} catch {
+			// ignore per-file failures
+		}
+	};
+
+	const entries = await fs.readdir(logDir, { withFileTypes: true });
+	for (const entry of entries) {
+		const fp = path.join(logDir, entry.name);
+		if (entry.isFile()) {
+			const isAccessLog =
+				/(?:_access\.log(?:\.\d+)?(?:\.gz)?$)|(?:fallback_http_access\.log(?:\.\d+)?(?:\.gz)?$)/.test(entry.name);
+			if (isAccessLog) {
+				await clearFile(fp);
+			}
+			continue;
+		}
+		if (entry.isDirectory()) {
+			try {
+				const nested = await fs.readdir(fp, { withFileTypes: true });
+				for (const n of nested) {
+					if (!n.isFile()) continue;
+					if (!/^access\.log(?:\.\d+)?(?:\.gz)?$/.test(n.name)) continue;
+					await clearFile(path.join(fp, n.name));
+				}
+			} catch {
+				// ignore unreadable nested dirs
+			}
+		}
+	}
+	return filesCleared;
+}
+
 async function scanLogFile({ fp, size, sinceMs, maxBytes, onEvent }) {
 	// For non-gz logs we can tail for short windows. For long windows we may need full scan.
 	const isGz = fp.endsWith(".gz");
@@ -207,7 +293,7 @@ async function scanLogFile({ fp, size, sinceMs, maxBytes, onEvent }) {
 	});
 }
 
-async function buildSummary({ minutes, limit }) {
+async function buildSummary({ minutes, limit, offset = 0 }) {
 	const logDir = process.env.NYXGUARD_LOG_DIR || "/data/logs";
 	const now = Date.now();
 	const sinceMs = now - minutes * 60 * 1000;
@@ -225,12 +311,13 @@ async function buildSummary({ minutes, limit }) {
 	const recent = [];
 	let totalScanBytes = 0;
 
+	const recentKeepLimit = Math.min(5000, Math.max(200, (offset + limit) * 3));
 	const pushRecent = (ev) => {
 		recent.push(ev);
 		// Keep memory bounded for large windows.
-		if (recent.length > Math.max(200, limit * 6)) {
+		if (recent.length > recentKeepLimit) {
 			recent.sort((a, b) => b.ts - a.ts);
-			recent.splice(limit);
+			recent.splice(recentKeepLimit);
 		}
 	};
 
@@ -311,7 +398,7 @@ async function buildSummary({ minutes, limit }) {
 	}
 
 	recent.sort((a, b) => b.ts - a.ts);
-	const recentTrimmed = recent.slice(0, limit).map((e) => ({
+	const recentTrimmed = recent.slice(offset, offset + limit).map((e) => ({
 		ts: e.ts,
 		iso: new Date(e.ts).toISOString(),
 		host: e.host,
@@ -471,17 +558,21 @@ router
 				{
 					additionalProperties: false,
 					properties: {
-						minutes: { type: "integer", minimum: 1, maximum: MAX_MINUTES },
+						minutes: { type: "integer", minimum: 1, maximum: MAX_LIVE_TRAFFIC_MINUTES },
 						limit: { type: "integer", minimum: 1, maximum: 1000 },
+						offset: { type: "integer", minimum: 0, maximum: 100000 },
 					},
 				},
 				{
 					minutes: req.query.minutes ? Number.parseInt(String(req.query.minutes), 10) : DEFAULT_MINUTES,
 					limit: req.query.limit ? Number.parseInt(String(req.query.limit), 10) : 50,
+					offset: req.query.offset ? Number.parseInt(String(req.query.offset), 10) : 0,
 				},
 			);
-
-			const summary = await buildSummary({ minutes: data.minutes, limit: data.limit });
+			const cacheKey = `summary:${data.minutes}:${data.limit}:${data.offset}`;
+			const summary = await withRouteCache(cacheKey, SUMMARY_CACHE_TTL_MS, () =>
+				buildSummary({ minutes: data.minutes, limit: data.limit, offset: data.offset }),
+			);
 			res.status(200).send(summary);
 		} catch (err) {
 			debug(logger, `${req.method.toUpperCase()} ${req.path}: ${err}`);
@@ -628,7 +719,7 @@ router
 				{
 					additionalProperties: false,
 					properties: {
-						minutes: { type: "integer", minimum: 1, maximum: MAX_MINUTES },
+						minutes: { type: "integer", minimum: 1, maximum: MAX_IPS_MINUTES },
 						limit: { type: "integer", minimum: 1, maximum: 2000 },
 					},
 				},
@@ -637,7 +728,8 @@ router
 					limit: req.query.limit ? Number.parseInt(String(req.query.limit), 10) : 200,
 				},
 			);
-			const result = await buildIps(data);
+			const cacheKey = `ips:${data.minutes}:${data.limit}`;
+			const result = await withRouteCache(cacheKey, IPS_CACHE_TTL_MS, () => buildIps(data));
 			res.status(200).send(result);
 		} catch (err) {
 			debug(logger, `GET /api/nyxguard/ips: ${err}`);
@@ -658,7 +750,7 @@ router
 					{
 						additionalProperties: false,
 						properties: {
-							minutes: { type: "integer", minimum: 1, maximum: MAX_MINUTES },
+							minutes: { type: "integer", minimum: 1, maximum: MAX_ATTACKS_MINUTES },
 						},
 					},
 					{
@@ -936,6 +1028,57 @@ router
 				totalApps: rows.length,
 				protectedCount,
 			});
+
+	/**
+	 * /api/nyxguard/logs/clear
+	 */
+	router
+		.route("/logs/clear")
+		.options((_, res) => res.sendStatus(204))
+		.all(jwtdecode())
+		.post(async (req, res, next) => {
+			try {
+				await res.locals.access.can("proxy_hosts:update");
+				const body = req.body ?? {};
+				const data = await validator(
+					{
+						required: ["target"],
+						additionalProperties: false,
+						properties: {
+							target: { type: "string", enum: ["traffic", "ips", "attacks"] },
+							minutes: { type: "integer", minimum: 1, maximum: MAX_IPS_MINUTES },
+							days: { type: "integer", enum: [1, 7, 30, 60, 90] },
+						},
+					},
+					{
+						target: body.target,
+						minutes: body.minutes,
+						days: body.days,
+					},
+				);
+
+				let deletedRows = 0;
+				let clearedFiles = 0;
+				if (data.target === "attacks") {
+					const days = typeof data.days === "number" ? data.days : 1;
+					const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+					deletedRows = await db()("nyxguard_attack_event").where("created_on", ">=", since).del();
+				} else {
+					const logDir = process.env.NYXGUARD_LOG_DIR || "/data/logs";
+					clearedFiles = await clearNyxGuardAccessLogs(logDir);
+				}
+
+				routeResultCache.clear();
+				res.status(200).send({
+					target: data.target,
+					deletedRows,
+					clearedFiles,
+				});
+			} catch (err) {
+				debug(logger, `POST /api/nyxguard/logs/clear: ${err}`);
+				next(err);
+			}
+		});
 		} catch (err) {
 			debug(logger, `GET /api/nyxguard/apps/summary: ${err}`);
 			next(err);
@@ -976,11 +1119,11 @@ router
 			let updated = 0;
 			for (const r of rows) {
 				const currentWaf = internalNyxGuard.waf.isEnabledInAdvancedConfig(r.advanced_config);
-				if (currentWaf === data.enabled) continue;
+				if (currentWaf === enabled) continue;
 
 				// When WAF is disabled, also force-disable Bot/DDoS/SQLi at the app level.
-				let nextAdvanced = internalNyxGuard.waf.applyAdvancedConfig(r.advanced_config, data.enabled);
-				if (!data.enabled) {
+				let nextAdvanced = internalNyxGuard.waf.applyAdvancedConfig(r.advanced_config, enabled);
+				if (!enabled) {
 					nextAdvanced = internalNyxGuard.botDefense.applyAdvancedConfig(nextAdvanced, false);
 					nextAdvanced = internalNyxGuard.ddos.applyAdvancedConfig(nextAdvanced, false);
 					nextAdvanced = internalNyxGuard.sqli.applyAdvancedConfig(nextAdvanced, false);
@@ -991,12 +1134,12 @@ router
 					advanced_config: nextAdvanced,
 						meta: {
 							...(r.meta ?? {}),
-							nyxguardWafEnabled: !!data.enabled,
-							nyxguardBotDefenseEnabled: data.enabled
+							nyxguardWafEnabled: !!enabled,
+							nyxguardBotDefenseEnabled: enabled
 								? internalNyxGuard.botDefense.isEnabledInAdvancedConfig(nextAdvanced)
 								: false,
-							nyxguardDdosEnabled: data.enabled ? internalNyxGuard.ddos.isEnabledInAdvancedConfig(nextAdvanced) : false,
-							nyxguardSqliEnabled: data.enabled ? internalNyxGuard.sqli.isEnabledInAdvancedConfig(nextAdvanced) : false,
+							nyxguardDdosEnabled: enabled ? internalNyxGuard.ddos.isEnabledInAdvancedConfig(nextAdvanced) : false,
+							nyxguardSqliEnabled: enabled ? internalNyxGuard.sqli.isEnabledInAdvancedConfig(nextAdvanced) : false,
 						},
 					});
 				await regenerateProxyHostConfig(res.locals.access, r.id);
@@ -1006,13 +1149,13 @@ router
 					await db()("nyxguard_app")
 						.insert({
 							proxy_host_id: r.id,
-							waf_enabled: data.enabled ? 1 : 0,
+							waf_enabled: enabled ? 1 : 0,
 							created_on: db().fn.now(),
 							modified_on: db().fn.now(),
 						})
 						.onConflict("proxy_host_id")
 						.merge({
-							waf_enabled: data.enabled ? 1 : 0,
+							waf_enabled: enabled ? 1 : 0,
 							modified_on: db().fn.now(),
 						});
 				} catch {
@@ -1023,7 +1166,7 @@ router
 			}
 
 			await internalNyxGuard.nginx.apply(db());
-			res.status(200).send({ updated });
+			res.status(200).send({ updated, enforced: ENFORCE_NYXGUARD_PROTECTION, enabled: true });
 		} catch (err) {
 			debug(logger, `PUT /api/nyxguard/apps/waf: ${err}`);
 			next(err);
@@ -1057,11 +1200,12 @@ router
 					enabled: body.enabled,
 				},
 			);
+			const enabled = ENFORCE_NYXGUARD_PROTECTION ? true : data.enabled;
 
 			await internalNyxGuard.nginx.ensureFiles();
 
 			// Global toggle controls content of the include file; per-app include enables it per app.
-			await internalNyxGuard.settings.update(db(), { botDefenseEnabled: data.enabled });
+			await internalNyxGuard.settings.update(db(), { botDefenseEnabled: enabled });
 
 			const rows = await internalProxyHost.getAll(res.locals.access, null, null);
 
@@ -1072,12 +1216,12 @@ router
 				const currentWaf = internalNyxGuard.waf.isEnabledInAdvancedConfig(r.advanced_config);
 				const currentBot = internalNyxGuard.botDefense.isEnabledInAdvancedConfig(r.advanced_config);
 
-				if (data.enabled && !currentWaf) {
+				if (enabled && !currentWaf) {
 					skipped += 1;
 					continue;
 				}
 
-				const targetBot = data.enabled ? !!currentWaf : false;
+				const targetBot = enabled ? !!currentWaf : false;
 				if (currentBot === targetBot) continue;
 
 				let nextAdvanced = internalNyxGuard.botDefense.applyAdvancedConfig(r.advanced_config, targetBot);
@@ -1103,7 +1247,7 @@ router
 			}
 
 			await internalNyxGuard.nginx.apply(db());
-			res.status(200).send({ updated, skipped });
+			res.status(200).send({ updated, skipped, enforced: ENFORCE_NYXGUARD_PROTECTION, enabled: true });
 		} catch (err) {
 			debug(logger, `PUT /api/nyxguard/apps/bot: ${err}`);
 			next(err);
@@ -1137,10 +1281,11 @@ router
 					enabled: body.enabled,
 				},
 			);
+			const enabled = ENFORCE_NYXGUARD_PROTECTION ? true : data.enabled;
 
 			await internalNyxGuard.nginx.ensureFiles();
 
-			await internalNyxGuard.settings.update(db(), { ddosEnabled: data.enabled });
+			await internalNyxGuard.settings.update(db(), { ddosEnabled: enabled });
 
 			const rows = await internalProxyHost.getAll(res.locals.access, null, null);
 
@@ -1151,12 +1296,12 @@ router
 				const currentWaf = internalNyxGuard.waf.isEnabledInAdvancedConfig(r.advanced_config);
 				const currentDdos = internalNyxGuard.ddos.isEnabledInAdvancedConfig(r.advanced_config);
 
-				if (data.enabled && !currentWaf) {
+				if (enabled && !currentWaf) {
 					skipped += 1;
 					continue;
 				}
 
-				const targetDdos = data.enabled ? !!currentWaf : false;
+				const targetDdos = enabled ? !!currentWaf : false;
 				if (currentDdos === targetDdos) continue;
 
 				let nextAdvanced = internalNyxGuard.ddos.applyAdvancedConfig(r.advanced_config, targetDdos);
@@ -1182,7 +1327,7 @@ router
 			}
 
 			await internalNyxGuard.nginx.apply(db());
-			res.status(200).send({ updated, skipped });
+			res.status(200).send({ updated, skipped, enforced: ENFORCE_NYXGUARD_PROTECTION, enabled: true });
 		} catch (err) {
 			debug(logger, `PUT /api/nyxguard/apps/ddos: ${err}`);
 			next(err);
@@ -1216,10 +1361,11 @@ router
 						enabled: body.enabled,
 					},
 				);
+				const enabled = ENFORCE_NYXGUARD_PROTECTION ? true : data.enabled;
 
 				await internalNyxGuard.nginx.ensureFiles();
 
-				await internalNyxGuard.settings.update(db(), { sqliEnabled: data.enabled });
+				await internalNyxGuard.settings.update(db(), { sqliEnabled: enabled });
 
 				const rows = await internalProxyHost.getAll(res.locals.access, null, null);
 
@@ -1230,12 +1376,12 @@ router
 					const currentWaf = internalNyxGuard.waf.isEnabledInAdvancedConfig(r.advanced_config);
 					const currentSqli = internalNyxGuard.sqli.isEnabledInAdvancedConfig(r.advanced_config);
 
-					if (data.enabled && !currentWaf) {
+					if (enabled && !currentWaf) {
 						skipped += 1;
 						continue;
 					}
 
-					const targetSqli = data.enabled ? !!currentWaf : false;
+					const targetSqli = enabled ? !!currentWaf : false;
 					if (currentSqli === targetSqli) continue;
 
 					let nextAdvanced = internalNyxGuard.sqli.applyAdvancedConfig(r.advanced_config, targetSqli);
@@ -1261,7 +1407,7 @@ router
 				}
 
 				await internalNyxGuard.nginx.apply(db());
-				res.status(200).send({ updated, skipped });
+				res.status(200).send({ updated, skipped, enforced: ENFORCE_NYXGUARD_PROTECTION, enabled: true });
 			} catch (err) {
 				debug(logger, `PUT /api/nyxguard/apps/sqli: ${err}`);
 				next(err);
@@ -1310,7 +1456,7 @@ router
 
 			// Treat missing fields as "keep current value" so UI updates don't accidentally
 			// reset other per-app toggles.
-			const nextWaf = data.wafEnabled;
+			const nextWaf = ENFORCE_NYXGUARD_PROTECTION ? true : data.wafEnabled;
 			// When enabling WAF for the first time on an app, default Bot/DDoS to the global settings
 			// if the caller didn't explicitly pass values.
 			const globalSettings = await internalNyxGuard.settings.get(db());
@@ -1333,9 +1479,9 @@ router
 							? globalSettings.sqliEnabled
 							: currentSqli;
 
-				const bot = !!nextWaf && !!nextBotInput;
-				const ddos = !!nextWaf && !!nextDdosInput;
-				const sqli = !!nextWaf && !!nextSqliInput;
+				const bot = ENFORCE_NYXGUARD_PROTECTION ? true : !!nextWaf && !!nextBotInput;
+				const ddos = ENFORCE_NYXGUARD_PROTECTION ? true : !!nextWaf && !!nextDdosInput;
+				const sqli = ENFORCE_NYXGUARD_PROTECTION ? true : !!nextWaf && !!nextSqliInput;
 
 				let nextAdvanced = internalNyxGuard.waf.applyAdvancedConfig(row.advanced_config, nextWaf);
 				nextAdvanced = internalNyxGuard.botDefense.applyAdvancedConfig(nextAdvanced, bot);
@@ -1347,14 +1493,14 @@ router
 				await db()("nyxguard_app")
 					.insert({
 						proxy_host_id: row.id,
-						waf_enabled: data.wafEnabled ? 1 : 0,
+						waf_enabled: nextWaf ? 1 : 0,
 						auth_bypass_enabled: typeof data.authBypassEnabled === "boolean" ? (data.authBypassEnabled ? 1 : 0) : 1,
 						created_on: db().fn.now(),
 						modified_on: db().fn.now(),
 					})
 					.onConflict("proxy_host_id")
 					.merge({
-						waf_enabled: data.wafEnabled ? 1 : 0,
+						waf_enabled: nextWaf ? 1 : 0,
 						...(typeof data.authBypassEnabled === "boolean"
 							? { auth_bypass_enabled: data.authBypassEnabled ? 1 : 0 }
 							: {}),
@@ -1417,6 +1563,17 @@ router
 			res.status(200).send({ items });
 		} catch (err) {
 			debug(logger, `GET /api/nyxguard/rules/ip: ${err}`);
+			next(err);
+		}
+	})
+	.delete(async (_req, res, next) => {
+		try {
+			await res.locals.access.can("proxy_hosts:update");
+			const deleted = await db()("nyxguard_ip_rule").delete();
+			await internalNyxGuard.nginx.apply(db());
+			res.status(200).send({ deleted });
+		} catch (err) {
+			debug(logger, `DELETE /api/nyxguard/rules/ip: ${err}`);
 			next(err);
 		}
 	})
@@ -1541,6 +1698,17 @@ router
 			res.status(200).send({ items });
 		} catch (err) {
 			debug(logger, `GET /api/nyxguard/rules/country: ${err}`);
+			next(err);
+		}
+	})
+	.delete(async (_req, res, next) => {
+		try {
+			await res.locals.access.can("proxy_hosts:update");
+			const deleted = await db()("nyxguard_country_rule").delete();
+			await internalNyxGuard.nginx.apply(db());
+			res.status(200).send({ deleted });
+		} catch (err) {
+			debug(logger, `DELETE /api/nyxguard/rules/country: ${err}`);
 			next(err);
 		}
 	})

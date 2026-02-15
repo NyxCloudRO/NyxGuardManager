@@ -1,0 +1,19 @@
+.footer {
+	position: relative;
+	z-index: 1000;
+	height: 56px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-top: 1px solid color-mix(in srgb, var(--app-border) 86%, transparent);
+	background: color-mix(in srgb, var(--app-surface-2) 86%, transparent);
+	-webkit-backdrop-filter: blur(10px) saturate(120%);
+	backdrop-filter: blur(10px) saturate(120%);
+}
+
+.inner {
+	font-size: 16px;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+	color: color-mix(in srgb, var(--app-text-secondary) 84%, var(--app-text-primary) 16%);
+}

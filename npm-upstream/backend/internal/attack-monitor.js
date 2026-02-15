@@ -3,6 +3,7 @@ import path from "node:path";
 import net from "node:net";
 
 import internalNyxGuard from "./nyxguard.js";
+import { getTrustedSelfIpSet, isPrivateOrInternalIp } from "./trusted-ips.js";
 import { global as logger } from "../logger.js";
 import db from "../db.js";
 
@@ -11,10 +12,15 @@ const DEFAULT_POLL_MS = 15_000;
 const MAX_READ_BYTES = 4 * 1024 * 1024;
 const RETENTION_DAYS = 30;
 const DEFAULT_AUTOBAN_THRESHOLD = 5;
-const DEFAULT_AUTOBAN_WINDOW_SEC = 180;
+const DEFAULT_AUTOBAN_WINDOW_SEC = 120;
+const DEFAULT_AUTOBAN_BAN_HOURS = 24;
+const RECENT_COUNTS_PRUNE_EVERY_MS = 60_000;
+const RECENT_COUNTS_STALE_AFTER_MS = 30 * 60 * 1000;
+const RECENT_COUNTS_MAX_EVENTS_PER_KEY = 2048;
 
 let timer = null;
 let lastReloadMs = 0;
+let lastRecentCountsPruneMs = 0;
 const recentCounts = new Map(); // key: type|ip -> { tsMs: number[] }
 
 function isValidAttackType(t) {
@@ -22,10 +28,7 @@ function isValidAttackType(t) {
 }
 
 function shouldAutoBan(type) {
-	// DDoS is already handled by rate limiting (429). Auto-banning on 429s causes
-	// false positives for bursty but legitimate apps (eg. media apps doing parallel requests).
-	// If you really want ddos auto-bans, opt in via env var.
-	if (type === "ddos") return process.env.NYXGUARD_AUTOBAN_DDOS === "1";
+	if (process.env.NYXGUARD_AUTOBAN_FORCE_OFF === "1") return false;
 	if (type === "authfail") return process.env.NYXGUARD_AUTOBAN_AUTHFAIL !== "0";
 	return true;
 }
@@ -36,12 +39,32 @@ function recordAndShouldBan(type, ip, tsMs, { threshold, windowSec }) {
 	const key = `${type}|${ip}`;
 	const cur = recentCounts.get(key) || { tsMs: [] };
 	cur.tsMs.push(tsMs);
-	// Keep only timestamps within the window.
 	const cutoff = tsMs - windowMs;
-	cur.tsMs = cur.tsMs.filter((t) => t >= cutoff);
+	// Keep only timestamps within the window without allocating a new array every event.
+	let firstValidIdx = 0;
+	while (firstValidIdx < cur.tsMs.length && cur.tsMs[firstValidIdx] < cutoff) {
+		firstValidIdx += 1;
+	}
+	if (firstValidIdx > 0) cur.tsMs.splice(0, firstValidIdx);
+	// Bound per-key memory even under sustained attack traffic.
+	if (cur.tsMs.length > RECENT_COUNTS_MAX_EVENTS_PER_KEY) {
+		cur.tsMs.splice(0, cur.tsMs.length - RECENT_COUNTS_MAX_EVENTS_PER_KEY);
+	}
 	recentCounts.set(key, cur);
 
 	return cur.tsMs.length >= threshold;
+}
+
+function pruneRecentCounts(nowMs) {
+	if (nowMs - lastRecentCountsPruneMs < RECENT_COUNTS_PRUNE_EVERY_MS) return;
+	lastRecentCountsPruneMs = nowMs;
+	const staleCutoff = nowMs - RECENT_COUNTS_STALE_AFTER_MS;
+	for (const [key, value] of recentCounts.entries()) {
+		const ts = value?.tsMs;
+		if (!Array.isArray(ts) || ts.length === 0 || ts[ts.length - 1] < staleCutoff) {
+			recentCounts.delete(key);
+		}
+	}
 }
 
 function parseJsonLine(line) {
@@ -160,6 +183,7 @@ async function upsertAutoBanRule(knex, ip, type, banUntil) {
 
 async function pollOnce() {
 	const knex = db();
+	pruneRecentCounts(Date.now());
 	const logPath = process.env.NYXGUARD_ATTACK_LOG || DEFAULT_ATTACK_LOG;
 	let settings = null;
 	try {
@@ -227,6 +251,7 @@ async function pollOnce() {
 
 	const now = new Date();
 	const seen = new Set();
+	const trustedSelfIps = await getTrustedSelfIpSet();
 
 	let banChanged = false;
 	let inserted = 0;
@@ -261,6 +286,9 @@ async function pollOnce() {
 					// Never auto-ban traffic that appears authenticated (cookie/auth header present).
 					// If the user authenticated successfully, they may legitimately generate high traffic.
 					if (!ev.auth) {
+						// Never auto-ban internal/private or trusted-self source ranges.
+						if (isPrivateOrInternalIp(ev.ip) || trustedSelfIps.has(ev.ip)) continue;
+
 						const threshold =
 							ev.type === "authfail"
 								? Number.parseInt(String(settings?.authfailThreshold ?? ""), 10) || DEFAULT_AUTOBAN_THRESHOLD
@@ -271,8 +299,8 @@ async function pollOnce() {
 								: Number.parseInt(process.env.NYXGUARD_AUTOBAN_WINDOW_SEC ?? "", 10) || DEFAULT_AUTOBAN_WINDOW_SEC;
 						const banHours =
 							ev.type === "authfail"
-								? Number.parseInt(String(settings?.authfailBanHours ?? ""), 10) || 24
-								: 24;
+								? Number.parseInt(String(settings?.authfailBanHours ?? ""), 10) || DEFAULT_AUTOBAN_BAN_HOURS
+								: Number.parseInt(process.env.NYXGUARD_AUTOBAN_BAN_HOURS ?? "", 10) || DEFAULT_AUTOBAN_BAN_HOURS;
 						const banUntil = new Date(now.getTime() + banHours * 60 * 60 * 1000);
 
 						if (recordAndShouldBan(ev.type, ev.ip, ev.tsMs, { threshold, windowSec })) {

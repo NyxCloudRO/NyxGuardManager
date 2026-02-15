@@ -1,6 +1,6 @@
 .page {
-  min-height: calc(100vh - 120px);
-  padding: 40px 0 60px;
+  min-height: 0;
+  padding: 0;
   color: var(--app-text-primary);
   background: var(--app-page-gradient);
 }
@@ -141,6 +141,10 @@
   border-radius: 14px;
   background: color-mix(in srgb, var(--app-surface-2) 80%, var(--app-error) 20%);
   border: 1px solid color-mix(in srgb, var(--app-border) 70%, transparent);
+}
+
+.tableViewport {
+  max-height: min(56vh, 680px);
 }
 
 .table {

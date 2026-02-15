@@ -3,11 +3,18 @@ import internalProxyHost from "./proxy-host.js";
 import internalRedirectionHost from "./redirection-host.js";
 import internalStream from "./stream.js";
 import os from "node:os";
+import http from "node:http";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { readFile } from "node:fs/promises";
+import { getTrustedSelfIps } from "./trusted-ips.js";
 
 const execFileAsync = promisify(execFile);
+const DOCKER_SOCK = "/var/run/docker.sock";
+const DEFAULT_DOCKER_USAGE_CONTAINERS = ["nyxguard-manager", "nyxguard-db"];
+const HOSTS_REPORT_CACHE_TTL_MS = Number.parseInt(process.env.NYXGUARD_HOSTS_REPORT_CACHE_TTL_MS ?? "", 10) || 2000;
+const hostsReportCache = new Map(); // key -> { expiresAt: number, value: object }
+const hostsReportInflight = new Map(); // key -> Promise<object>
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -251,6 +258,246 @@ const getContainerMetrics = async () => {
 	};
 };
 
+const parseDockerStats = (stats) => {
+	const cpuTotal = Number(stats?.cpu_stats?.cpu_usage?.total_usage ?? 0);
+	const cpuTotalPrev = Number(stats?.precpu_stats?.cpu_usage?.total_usage ?? 0);
+	const systemTotal = Number(stats?.cpu_stats?.system_cpu_usage ?? 0);
+	const systemTotalPrev = Number(stats?.precpu_stats?.system_cpu_usage ?? 0);
+	const cpuDelta = cpuTotal - cpuTotalPrev;
+	const systemDelta = systemTotal - systemTotalPrev;
+	const onlineCpus =
+		Number(stats?.cpu_stats?.online_cpus ?? 0) ||
+		Number(stats?.cpu_stats?.cpu_usage?.percpu_usage?.length ?? 0) ||
+		1;
+	const cpuUsagePercent =
+		cpuDelta > 0 && systemDelta > 0 ? Number(((cpuDelta / systemDelta) * onlineCpus * 100).toFixed(2)) : null;
+
+	const memoryUsageRaw = Number(stats?.memory_stats?.usage ?? 0);
+	const inactiveFile =
+		Number(stats?.memory_stats?.stats?.inactive_file ?? 0) || Number(stats?.memory_stats?.stats?.total_inactive_file ?? 0);
+	// Match `docker stats` memory column semantics: working set = usage - inactive_file(cache).
+	const memoryUsageBytes = Math.max(0, memoryUsageRaw - (Number.isFinite(inactiveFile) ? inactiveFile : 0));
+	const memoryLimitRaw = Number(stats?.memory_stats?.limit ?? 0);
+	const memoryLimitBytes = Number.isFinite(memoryLimitRaw) && memoryLimitRaw > 0 ? memoryLimitRaw : null;
+	const memoryUsagePercent =
+		memoryLimitBytes && memoryLimitBytes > 0
+			? Number(((Math.max(0, memoryUsageBytes) / memoryLimitBytes) * 100).toFixed(2))
+			: null;
+
+	let rxBytes = 0;
+	let txBytes = 0;
+	for (const net of Object.values(stats?.networks ?? {})) {
+		const rx = Number(net?.rx_bytes ?? 0);
+		const tx = Number(net?.tx_bytes ?? 0);
+		if (Number.isFinite(rx)) rxBytes += rx;
+		if (Number.isFinite(tx)) txBytes += tx;
+	}
+
+	let readBytes = 0;
+	let writeBytes = 0;
+	for (const item of stats?.blkio_stats?.io_service_bytes_recursive ?? []) {
+		const op = String(item?.op ?? "").toUpperCase();
+		const value = Number(item?.value ?? 0);
+		if (!Number.isFinite(value)) continue;
+		if (op === "READ") readBytes += value;
+		if (op === "WRITE") writeBytes += value;
+	}
+
+	const rssRaw = Number(stats?.memory_stats?.stats?.rss ?? 0) || Number(stats?.memory_stats?.stats?.total_rss ?? 0);
+	// On cgroup v2 `rss` can be absent; `anon` is the closest equivalent to resident anonymous memory.
+	const rssFallback = Number(stats?.memory_stats?.stats?.anon ?? 0);
+	const rssBytes = Number.isFinite(rssRaw) && rssRaw > 0 ? rssRaw : Number.isFinite(rssFallback) && rssFallback > 0 ? rssFallback : 0;
+	const containerId = typeof stats?.id === "string" && stats.id ? stats.id.slice(0, 12) : null;
+
+	return {
+		containerId,
+		cpuUsagePercent,
+		memoryUsageBytes: Number.isFinite(memoryUsageBytes) && memoryUsageBytes > 0 ? memoryUsageBytes : 0,
+		memoryLimitBytes,
+		memoryUsagePercent,
+		rssBytes,
+		netIo: { rxBytes, txBytes },
+		blockIo: { readBytes, writeBytes },
+	};
+};
+
+const readDockerApiJson = (path) =>
+	new Promise((resolve, reject) => {
+		const apiVersion = (process.env.NYXGUARD_DOCKER_API_VERSION || "").trim().replace(/^\/+/, "");
+		const apiPrefix = apiVersion ? `/${apiVersion}` : "";
+		const req = http.request(
+			{
+				socketPath: DOCKER_SOCK,
+				path: `${apiPrefix}${path}`,
+				method: "GET",
+			},
+			(res) => {
+				const chunks = [];
+				res.on("data", (chunk) => chunks.push(chunk));
+				res.on("end", () => {
+					const raw = Buffer.concat(chunks).toString("utf8");
+					if (res.statusCode && res.statusCode >= 400) {
+						const err = new Error(`docker api ${path} failed with status ${res.statusCode}`);
+						err.statusCode = res.statusCode;
+						reject(err);
+						return;
+					}
+					if (!raw) {
+						resolve(null);
+						return;
+					}
+					try {
+						resolve(JSON.parse(raw));
+					} catch {
+						reject(new Error(`docker api ${path} returned invalid json`));
+					}
+				});
+			},
+		);
+		req.on("error", reject);
+		req.end();
+	});
+
+const getNamedDockerContainerMetrics = async (containerName) => {
+	try {
+		const encoded = encodeURIComponent(containerName);
+		const stats = await readDockerApiJson(`/containers/${encoded}/stats?stream=false`);
+		if (!stats || typeof stats !== "object") return null;
+		return {
+			name: containerName,
+			...parseDockerStats(stats),
+		};
+	} catch {
+		return null;
+	}
+};
+
+const getCombinedDockerContainerMetrics = async () => {
+	const containerNames = (process.env.NYXGUARD_DOCKER_USAGE_CONTAINERS || DEFAULT_DOCKER_USAGE_CONTAINERS.join(","))
+		.split(",")
+		.map((s) => s.trim())
+		.filter(Boolean);
+	if (!containerNames.length) return null;
+
+	const items = await Promise.all(containerNames.map((name) => getNamedDockerContainerMetrics(name)));
+	const present = items.filter(Boolean);
+	if (!present.length) return null;
+
+	const cpuUsagePercentRaw = present.reduce((sum, item) => sum + (Number(item.cpuUsagePercent) || 0), 0);
+	const memoryUsageBytes = present.reduce((sum, item) => sum + (Number(item.memoryUsageBytes) || 0), 0);
+	const memoryLimitBytesRaw = present.reduce(
+		(sum, item) => sum + (item.memoryLimitBytes && item.memoryLimitBytes > 0 ? item.memoryLimitBytes : 0),
+		0,
+	);
+	const rssBytes = present.reduce((sum, item) => sum + (Number(item.rssBytes) || 0), 0);
+	const netRxBytes = present.reduce((sum, item) => sum + (Number(item.netIo?.rxBytes) || 0), 0);
+	const netTxBytes = present.reduce((sum, item) => sum + (Number(item.netIo?.txBytes) || 0), 0);
+	const blockReadBytes = present.reduce((sum, item) => sum + (Number(item.blockIo?.readBytes) || 0), 0);
+	const blockWriteBytes = present.reduce((sum, item) => sum + (Number(item.blockIo?.writeBytes) || 0), 0);
+
+	const memoryLimitBytes = memoryLimitBytesRaw > 0 ? memoryLimitBytesRaw : null;
+	const memoryUsagePercent =
+		memoryLimitBytes && memoryLimitBytes > 0 ? Number(((memoryUsageBytes / memoryLimitBytes) * 100).toFixed(2)) : null;
+	const cpuUsagePercent = Number(cpuUsagePercentRaw.toFixed(2));
+
+	return {
+		containerId: present.map((item) => item.containerId).filter(Boolean).join(",") || null,
+		containerIds: present.map((item) => item.containerId).filter(Boolean),
+		containerNames,
+		missingContainerNames: containerNames.filter((name) => !present.find((item) => item.name === name)),
+		cpuUsagePercent,
+		memoryUsageBytes,
+		memoryLimitBytes,
+		memoryUsagePercent,
+		rssBytes,
+		netIo: { rxBytes: netRxBytes, txBytes: netTxBytes },
+		blockIo: { readBytes: blockReadBytes, writeBytes: blockWriteBytes },
+	};
+};
+
+function parseProcUptimeSeconds(raw) {
+	const s = String(raw ?? "").trim();
+	if (!s) return null;
+	const first = s.split(/\s+/)[0];
+	const n = Number.parseFloat(first);
+	return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+const getSystemUptimeSeconds = async () => {
+	// Prefer /proc/uptime so it also works without systemd privileges.
+	try {
+		const raw = await readFile("/proc/uptime", "utf8");
+		const secs = parseProcUptimeSeconds(raw);
+		if (secs !== null) return secs;
+	} catch {
+		// ignore
+	}
+	try {
+		return typeof os.uptime === "function" ? os.uptime() : null;
+	} catch {
+		return null;
+	}
+};
+
+const getHostLoadAverages = async () => {
+	try {
+		const [a1, a5, a15] = os.loadavg();
+		return {
+			one: Number.isFinite(a1) ? Number(a1.toFixed(2)) : null,
+			five: Number.isFinite(a5) ? Number(a5.toFixed(2)) : null,
+			fifteen: Number.isFinite(a15) ? Number(a15.toFixed(2)) : null,
+		};
+	} catch {
+		return { one: null, five: null, fifteen: null };
+	}
+};
+
+const getPendingUpdatesCount = async () => {
+	// Best-effort: works on Debian/Ubuntu images with apt.
+	// If apt isn't available, return null.
+	try {
+		const { stdout } = await execFileAsync("bash", [
+			"-lc",
+			"command -v apt-get >/dev/null 2>&1 || exit 0; apt-get -s upgrade 2>/dev/null | awk '/^Inst /{c++} END{print c+0}'",
+		]);
+		const n = Number.parseInt(String(stdout ?? "").trim(), 10);
+		return Number.isFinite(n) && n >= 0 ? n : null;
+	} catch {
+		return null;
+	}
+};
+
+const getDockerContainerStartedAt = async (containerName) => {
+	try {
+		const encoded = encodeURIComponent(containerName);
+		const info = await readDockerApiJson(`/containers/${encoded}/json`);
+		const startedAt = info?.State?.StartedAt;
+		return typeof startedAt === "string" && startedAt ? startedAt : null;
+	} catch {
+		return null;
+	}
+};
+
+const getDockerContainerUptimeSeconds = async () => {
+	const containerNames = (process.env.NYXGUARD_DOCKER_USAGE_CONTAINERS || DEFAULT_DOCKER_USAGE_CONTAINERS.join(","))
+		.split(",")
+		.map((s) => s.trim())
+		.filter(Boolean);
+	if (!containerNames.length) return null;
+
+	const startedAts = await Promise.all(containerNames.map((name) => getDockerContainerStartedAt(name)));
+	const nowMs = Date.now();
+	let maxSec = null;
+	for (const startedAt of startedAts) {
+		if (!startedAt) continue;
+		const ms = Date.parse(startedAt);
+		if (!Number.isFinite(ms)) continue;
+		const sec = Math.max(0, (nowMs - ms) / 1000);
+		if (maxSec === null || sec > maxSec) maxSec = sec;
+	}
+	return maxSec;
+};
+
 const internalReport = {
 	/**
 	 * @param  {Access}   access
@@ -266,37 +513,68 @@ const internalReport = {
 			accessData = { permission_visibility: "all" };
 		}
 		const userId = access.token.getUserId(1);
+		const visibility = accessData.permission_visibility ?? "all";
+		const cacheKey = `${userId}:${visibility}`;
+		const now = Date.now();
+		const cached = hostsReportCache.get(cacheKey);
+		if (cached && cached.expiresAt > now) return cached.value;
+		const inflight = hostsReportInflight.get(cacheKey);
+		if (inflight) return inflight;
 
-		const [proxy, redirection, stream, dead, cpuUsagePercent, disk, container] = await Promise.all([
-			internalProxyHost.getCount(userId, accessData.permission_visibility),
-			internalRedirectionHost.getCount(userId, accessData.permission_visibility),
-			internalStream.getCount(userId, accessData.permission_visibility),
-			internalDeadHost.getCount(userId, accessData.permission_visibility),
-			getCpuUsagePercent(),
-			getDiskMetrics(),
-			getContainerMetrics(),
-		]);
+		const compute = (async () => {
+			try {
+				const [proxy, redirection, stream, dead, cpuUsagePercent, disk, container, containersAggregate] = await Promise.all([
+					internalProxyHost.getCount(userId, visibility),
+					internalRedirectionHost.getCount(userId, visibility),
+					internalStream.getCount(userId, visibility),
+					internalDeadHost.getCount(userId, visibility),
+					getCpuUsagePercent(),
+					getDiskMetrics(),
+					getContainerMetrics(),
+					getCombinedDockerContainerMetrics(),
+				]);
+				const [systemUptimeSeconds, dockerContainerUptimeSeconds, loadAvg, pendingUpdatesCount, trustedSelfIps] = await Promise.all([
+					getSystemUptimeSeconds(),
+					getDockerContainerUptimeSeconds(),
+					getHostLoadAverages(),
+					getPendingUpdatesCount(),
+					getTrustedSelfIps(),
+				]);
 
-		const ramTotalBytes = os.totalmem();
-		const ramFreeBytes = os.freemem();
-		const ramUsedBytes = Math.max(0, ramTotalBytes - ramFreeBytes);
-		const ramUsedPercent = ramTotalBytes > 0 ? Number(((ramUsedBytes / ramTotalBytes) * 100).toFixed(1)) : 0;
+				const ramTotalBytes = os.totalmem();
+				const ramFreeBytes = os.freemem();
+				const ramUsedBytes = Math.max(0, ramTotalBytes - ramFreeBytes);
+				const ramUsedPercent = ramTotalBytes > 0 ? Number(((ramUsedBytes / ramTotalBytes) * 100).toFixed(1)) : 0;
 
-		return {
-			proxy,
-			redirection,
-			stream,
-			dead,
-			system: {
-				cpuUsagePercent,
-				ramTotalBytes,
-				ramUsedBytes,
-				ramFreeBytes,
-				ramUsedPercent,
-				disk,
-				container,
-			},
-		};
+				const value = {
+					proxy,
+					redirection,
+					stream,
+					dead,
+					system: {
+						cpuUsagePercent,
+						systemUptimeSeconds,
+						dockerContainerUptimeSeconds,
+						loadAvg,
+						pendingUpdatesCount,
+						trustedSelfIps,
+						ramTotalBytes,
+						ramUsedBytes,
+						ramFreeBytes,
+						ramUsedPercent,
+						disk,
+						container,
+						containersAggregate,
+					},
+				};
+				hostsReportCache.set(cacheKey, { expiresAt: Date.now() + HOSTS_REPORT_CACHE_TTL_MS, value });
+				return value;
+			} finally {
+				hostsReportInflight.delete(cacheKey);
+			}
+		})();
+		hostsReportInflight.set(cacheKey, compute);
+		return compute;
 	},
 };
 

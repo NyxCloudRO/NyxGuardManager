@@ -1,8 +1,50 @@
 .btn {
-	color: light-dark(var(--tblr-dark), var(--tblr-light)) !important;
+	width: auto;
+	min-width: 176px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	padding: 0.48rem 0.66rem;
+	color: var(--app-text-primary) !important;
+	background: color-mix(in srgb, var(--app-surface-2) 78%, transparent) !important;
+	border: 1px solid color-mix(in srgb, var(--app-border) 90%, transparent) !important;
 
 	&:hover {
-		border: var(--tblr-btn-border-width) solid transparent !important;
-		background: color-mix(in srgb, var(--tblr-btn-hover-bg) 10%, transparent) !important;
+		color: var(--app-text-primary) !important;
+		background: color-mix(in srgb, var(--app-surface-2) 92%, transparent) !important;
 	}
+}
+
+.compactBtn {
+	min-width: 156px;
+}
+
+.label {
+	display: inline-flex;
+	gap: 0.3rem;
+	align-items: baseline;
+	white-space: nowrap;
+	font-size: 0.8rem;
+	color: var(--app-text-secondary);
+}
+
+.label strong {
+	color: var(--app-text-primary);
+	font-weight: 700;
+	font-size: 0.82rem;
+}
+
+.menu {
+	min-width: 220px;
+	padding: 0.35rem;
+}
+
+.menu :global(.dropdown-item) {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	border-radius: 10px;
+	padding: 0.45rem 0.6rem;
+	color: var(--app-text-primary);
 }

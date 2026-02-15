@@ -1,0 +1,93 @@
+.pageWrap {
+	padding: 18px 0 24px;
+	background: var(--app-page-gradient);
+}
+
+.card {
+	border-radius: 20px;
+	padding: 22px;
+	background:
+		radial-gradient(120% 140% at 8% 0%, color-mix(in srgb, var(--app-primary) 18%, transparent), transparent 62%),
+		radial-gradient(120% 140% at 92% 100%, color-mix(in srgb, var(--app-secondary) 18%, transparent), transparent 58%),
+		linear-gradient(180deg, color-mix(in srgb, var(--app-surface-2) 88%, transparent), color-mix(in srgb, var(--app-surface) 94%, transparent));
+	border: 1px solid color-mix(in srgb, var(--app-border) 80%, transparent);
+	box-shadow: 0 24px 56px rgba(0, 0, 0, 0.34);
+}
+
+.headerRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
+.title {
+	margin: 0;
+	font-size: 2rem;
+}
+
+.versionTag {
+	padding: 6px 12px;
+	border-radius: 999px;
+	border: 1px solid color-mix(in srgb, var(--app-border) 92%, transparent);
+	background: color-mix(in srgb, var(--app-surface-2) 84%, transparent);
+	font-size: 0.86rem;
+	font-weight: 600;
+}
+
+.subtitle {
+	margin: 8px 0 14px;
+	opacity: 0.9;
+}
+
+.notice {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 12px 14px;
+	border-radius: 12px;
+	border: 1px solid color-mix(in srgb, var(--app-warning) 46%, var(--app-border));
+	background: color-mix(in srgb, var(--app-warning) 10%, var(--app-surface-2));
+	margin-bottom: 14px;
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 14px;
+}
+
+.panel {
+	padding: 16px;
+	border-radius: 14px;
+	border: 1px solid color-mix(in srgb, var(--app-border) 80%, transparent);
+	background: color-mix(in srgb, var(--app-surface-2) 86%, transparent);
+}
+
+.panelTitle {
+	margin: 0 0 6px;
+	font-size: 1.1rem;
+}
+
+.panelText {
+	margin: 0 0 12px;
+	opacity: 0.88;
+}
+
+.importRow {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 10px;
+	align-items: center;
+}
+
+@media (max-width: 992px) {
+	.grid {
+		grid-template-columns: 1fr;
+	}
+
+	.importRow {
+		grid-template-columns: 1fr;
+	}
+}

@@ -1,15 +1,17 @@
+import { IconCheck, IconLanguage } from "@tabler/icons-react";
 import cn from "classnames";
-import { Flag } from "src/components";
 import { useLocaleState } from "src/context";
-import { changeLocale, getFlagCodeForLocale, localeOptions, T } from "src/locale";
+import { changeLocale, intl, localeOptions } from "src/locale";
 import styles from "./LocalePicker.module.css";
 
 interface Props {
 	menuAlign?: "start" | "end";
+	compact?: boolean;
 }
 
-function LocalePicker({ menuAlign = "start" }: Props) {
+function LocalePicker({ menuAlign = "start", compact = false }: Props) {
 	const { locale, setLocale } = useLocaleState();
+	const selected = localeOptions.find((item) => item.code === (locale || "en").slice(0, 2)) || localeOptions[0];
 
 	const changeTo = (lang: string) => {
 		changeLocale(lang);
@@ -17,31 +19,33 @@ function LocalePicker({ menuAlign = "start" }: Props) {
 		location.reload();
 	};
 
-	const classes = ["btn", "dropdown-toggle", "btn-sm", styles.btn];
+	const classes = ["btn", "dropdown-toggle", "btn-sm", styles.btn, compact ? styles.compactBtn : ""];
 	const cns = cn(...classes, "btn-ghost-dark");
 
 	return (
 		<div className="dropdown">
-			<button type="button" className={cns} data-bs-toggle="dropdown">
-				<Flag countryCode={getFlagCodeForLocale(locale)} />
+			<button type="button" className={cns} data-bs-toggle="dropdown" aria-label="Select language">
+				<IconLanguage size={16} />
+				<span className={styles.label}>
+					{intl.formatMessage({ id: "language.label" })}
+					{compact ? "" : ":"} <strong>{selected.label}</strong>
+				</span>
 			</button>
 			<div
-				className={cn("dropdown-menu", {
+				className={cn("dropdown-menu", styles.menu, {
 					"dropdown-menu-end": menuAlign === "end",
 				})}
 			>
-				{localeOptions.map((item: any) => (
-					<a
+				{localeOptions.map((item) => (
+					<button
+						type="button"
 						className="dropdown-item"
-						href={`/locale/${item[0]}`}
-						key={`locale-${item[0]}`}
-						onClick={(e) => {
-							e.preventDefault();
-							changeTo(item[0]);
-						}}
+						key={`locale-${item.code}`}
+						onClick={() => changeTo(item.code)}
 					>
-						<Flag countryCode={getFlagCodeForLocale(item[0])} /> <T id={`locale-${item[1]}`} />
-					</a>
+						<span>{item.label}</span>
+						{selected.code === item.code ? <IconCheck size={14} /> : null}
+					</button>
 				))}
 			</div>
 		</div>

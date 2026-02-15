@@ -2,7 +2,7 @@ services:
   nyxguard-manager:
     container_name: nyxguard-manager
     # NyxGuard Manager v3.0.4 (stamp 2026-02-11T19:45:00Z)
-    image: nyxmael/nyxguardmanager:3.0.4
+    image: nyxmael/nyxguardmanager:4.0.0
     restart: unless-stopped
     ports:
       - "80:80"
@@ -23,9 +23,12 @@ services:
 
       # Optional: disable IP ranges fetch if your environment blocks outbound access
       # IP_RANGES_FETCH_ENABLED: "false"
+      NYXGUARD_DOCKER_USAGE_CONTAINERS: "${NYXGUARD_DOCKER_USAGE_CONTAINERS:-nyxguard-manager,nyxguard-db}"
+      NYXGUARD_DOCKER_API_VERSION: "${NYXGUARD_DOCKER_API_VERSION:-}"
     volumes:
       - nyxguard_data:/data
       - nyxguard_letsencrypt:/etc/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/localtime:/etc/localtime:ro
     depends_on:
       - db

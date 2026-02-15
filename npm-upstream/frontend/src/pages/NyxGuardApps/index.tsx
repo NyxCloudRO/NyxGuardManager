@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import cn from "classnames";
 import { HasPermission } from "src/components";
 import { getNyxGuardApps, getNyxGuardSettings, updateNyxGuardApp } from "src/api/backend";
+import { intl, T } from "src/locale";
 import { MANAGE, PROXY_HOSTS } from "src/modules/Permissions";
 import styles from "./index.module.css";
 
@@ -83,19 +84,17 @@ const NyxGuardApps = () => {
 		<div className={styles.page}>
 			<div className="container-xl">
 				<div className={styles.card}>
-					<h2 className={styles.title}>Protected Apps</h2>
-					<p className={styles.subtitle}>
-						Assign WAF profiles, enforce rules, and monitor app status.
-					</p>
+					<h2 className={styles.title}><T id="nyxguard.apps.title" /></h2>
+					<p className={styles.subtitle}><T id="nyxguard.apps.subtitle" /></p>
 					{apps.isLoading ? (
-						<div className={styles.emptyState}>Loading…</div>
+						<div className={styles.emptyState}><T id="nyxguard.apps.loading" /></div>
 					) : apps.isError ? (
-						<div className={styles.emptyState}>Unable to load proxy hosts.</div>
+						<div className={styles.emptyState}><T id="nyxguard.apps.load-error" /></div>
 					) : (apps.data?.items?.length ?? 0) === 0 ? (
-						<div className={styles.emptyState}>No proxy hosts found yet.</div>
+						<div className={styles.emptyState}><T id="nyxguard.apps.empty" /></div>
 						) : (
 							(apps.data?.items ?? []).map((app) => {
-								const name = app.domains?.[0] ?? `Proxy Host #${app.id}`;
+								const name = app.domains?.[0] ?? intl.formatMessage({ id: "nyxguard.apps.proxy-host-fallback" }, { id: app.id });
 								const isProtected = app.wafEnabled;
 								const botGlobal = settings.data?.botDefenseEnabled ?? false;
 								const ddosGlobal = settings.data?.ddosEnabled ?? false;
@@ -127,7 +126,9 @@ const NyxGuardApps = () => {
 												[styles.badgeGreen]: fullyProtected,
 											})}
 										>
-											{isProtected ? "Protected" : "Monitoring"}
+											{isProtected
+												? intl.formatMessage({ id: "nyxguard.apps.status.protected" })
+												: intl.formatMessage({ id: "nyxguard.apps.status.monitoring" })}
 										</span>
 										<div className={styles.actions}>
 										<HasPermission section={PROXY_HOSTS} permission={MANAGE} hideError>
@@ -142,7 +143,9 @@ const NyxGuardApps = () => {
 													})
 												}
 											>
-												{isProtected ? "Disable WAF" : "Enable WAF"}
+												{isProtected
+													? intl.formatMessage({ id: "nyxguard.apps.action.disable-waf" })
+													: intl.formatMessage({ id: "nyxguard.apps.action.enable-waf" })}
 												</button>
 												<button
 													className={cn(styles.toggle, { [styles.toggleDisabled]: !isProtected })}
@@ -150,10 +153,10 @@ const NyxGuardApps = () => {
 													disabled={!isProtected || botBlockedByGlobal || toggle.isPending}
 													title={
 														!isProtected
-															? "Enable WAF first"
+															? intl.formatMessage({ id: "nyxguard.apps.tooltip.enable-waf-first" })
 															: botBlockedByGlobal
-																? "Bot Defense is disabled globally (GlobalGate)."
-																: "Toggle Bot Defence"
+																? intl.formatMessage({ id: "nyxguard.apps.tooltip.bot-global-off" })
+																: intl.formatMessage({ id: "nyxguard.apps.tooltip.toggle-bot" })
 													}
 													onClick={() =>
 														toggle.mutate({
@@ -164,10 +167,10 @@ const NyxGuardApps = () => {
 													}
 												>
 													{botBlockedByGlobal
-														? "Bot Defence (Global OFF)"
+														? intl.formatMessage({ id: "nyxguard.apps.action.bot-global-off" })
 														: botEffective
-															? "Disable Bot Defence"
-															: "Enable Bot Defence"}
+															? intl.formatMessage({ id: "nyxguard.apps.action.disable-bot" })
+															: intl.formatMessage({ id: "nyxguard.apps.action.enable-bot" })}
 												</button>
 												<button
 													className={cn(styles.toggle, { [styles.toggleDisabled]: !isProtected })}
@@ -175,10 +178,10 @@ const NyxGuardApps = () => {
 													disabled={!isProtected || ddosBlockedByGlobal || toggle.isPending}
 													title={
 														!isProtected
-															? "Enable WAF first"
+															? intl.formatMessage({ id: "nyxguard.apps.tooltip.enable-waf-first" })
 															: ddosBlockedByGlobal
-																? "DDoS Shield is disabled globally (GlobalGate)."
-																: "Toggle DDoS Shield"
+																? intl.formatMessage({ id: "nyxguard.apps.tooltip.ddos-global-off" })
+																: intl.formatMessage({ id: "nyxguard.apps.tooltip.toggle-ddos" })
 													}
 													onClick={() =>
 														toggle.mutate({
@@ -188,7 +191,11 @@ const NyxGuardApps = () => {
 														})
 													}
 												>
-													{ddosBlockedByGlobal ? "DDoS (Global OFF)" : ddosEffective ? "Disable DDoS" : "Enable DDoS"}
+													{ddosBlockedByGlobal
+														? intl.formatMessage({ id: "nyxguard.apps.action.ddos-global-off" })
+														: ddosEffective
+															? intl.formatMessage({ id: "nyxguard.apps.action.disable-ddos" })
+															: intl.formatMessage({ id: "nyxguard.apps.action.enable-ddos" })}
 												</button>
 												<button
 													className={cn(styles.toggle, { [styles.toggleDisabled]: !isProtected })}
@@ -196,10 +203,10 @@ const NyxGuardApps = () => {
 													disabled={!isProtected || sqliBlockedByGlobal || toggle.isPending}
 													title={
 														!isProtected
-															? "Enable WAF first"
+															? intl.formatMessage({ id: "nyxguard.apps.tooltip.enable-waf-first" })
 															: sqliBlockedByGlobal
-																? "SQL Shield is disabled globally (GlobalGate)."
-																: "Toggle SQL Shield"
+																? intl.formatMessage({ id: "nyxguard.apps.tooltip.sqli-global-off" })
+																: intl.formatMessage({ id: "nyxguard.apps.tooltip.toggle-sqli" })
 													}
 													onClick={() =>
 														toggle.mutate({
@@ -210,10 +217,10 @@ const NyxGuardApps = () => {
 													}
 												>
 													{sqliBlockedByGlobal
-														? "SQL Shield (Global OFF)"
+														? intl.formatMessage({ id: "nyxguard.apps.action.sqli-global-off" })
 														: sqliEffective
-															? "Disable SQL Shield"
-															: "Enable SQL Shield"}
+															? intl.formatMessage({ id: "nyxguard.apps.action.disable-sqli" })
+															: intl.formatMessage({ id: "nyxguard.apps.action.enable-sqli" })}
 												</button>
 												<button
 													className={cn(styles.toggle, { [styles.toggleDisabled]: !isProtected })}
@@ -221,10 +228,10 @@ const NyxGuardApps = () => {
 													disabled={!isProtected || authBypassBlockedByGlobal || toggle.isPending}
 													title={
 														!isProtected
-															? "Enable WAF first"
+															? intl.formatMessage({ id: "nyxguard.apps.tooltip.enable-waf-first" })
 															: authBypassBlockedByGlobal
-																? "Authenticated Traffic Bypass is disabled globally (GlobalGate)."
-																: "If enabled, authenticated users are far less likely to be blocked by protections."
+																? intl.formatMessage({ id: "nyxguard.apps.tooltip.auth-global-off" })
+																: intl.formatMessage({ id: "nyxguard.apps.tooltip.auth-info" })
 													}
 													onClick={() =>
 														toggle.mutate({
@@ -235,10 +242,10 @@ const NyxGuardApps = () => {
 													}
 												>
 													{authBypassBlockedByGlobal
-														? "Auth Bypass (Global OFF)"
+														? intl.formatMessage({ id: "nyxguard.apps.action.auth-global-off" })
 														: authBypassEffective
-															? "Disable Auth Bypass"
-															: "Enable Auth Bypass"}
+															? intl.formatMessage({ id: "nyxguard.apps.action.disable-auth" })
+															: intl.formatMessage({ id: "nyxguard.apps.action.enable-auth" })}
 												</button>
 											</HasPermission>
 										</div>
@@ -247,7 +254,7 @@ const NyxGuardApps = () => {
 						})
 					)}
 					{toggle.isError ? (
-						<div className="text-danger mt-3">Unable to update WAF status.</div>
+						<div className="text-danger mt-3"><T id="nyxguard.apps.error.update-failed" /></div>
 					) : null}
 				</div>
 			</div>

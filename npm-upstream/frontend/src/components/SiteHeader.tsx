@@ -30,20 +30,13 @@ export function SiteHeader() {
 								<span className="navbar-toggler-icon" />
 							</button>
 						</div>
-						<div className={styles.brandCenter}>
-							<div className="navbar-brand navbar-brand-autodark p-0">
-								<div className={styles.magicBrand}>
-									<span className={styles.magicWordmark}>NyxGuard</span>
-									<span className={styles.magicSub}>Manager</span>
-								</div>
-							</div>
-						</div>
+						<div className={styles.brandCenter} aria-hidden="true" />
 						<div className={styles.brandRight}>
 							<div className={`navbar-nav flex-row ${styles.rightControls}`}>
 								<div className="nav-item">
-									<LocalePicker />
+									<LocalePicker compact />
 								</div>
-								<div className="nav-item d-none d-lg-flex">
+								<div className="nav-item d-flex">
 									<ThemeSwitcher compact />
 								</div>
 								<div className="nav-item d-md-flex">
@@ -68,21 +61,6 @@ export function SiteHeader() {
 											</div>
 										</a>
 										<div className="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-											<div className="d-md-none">
-												{/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: This div is not interactive. */}
-												<div className="p-2 pb-1 pe-1 d-flex align-items-center" onClick={e => e.stopPropagation()}>
-													<div className="ps-2 pe-1 me-auto">
-														<div>{currentUser?.nickname}</div>
-														<div className="mt-1 small text-secondary text-nowrap">
-															<T id={isAdmin ? "role.admin" : "role.standard-user"} />
-														</div>
-													</div>
-													<div className="d-flex align-items-center">
-														<LocalePicker menuAlign="end" />
-													</div>
-												</div>
-												<div className="dropdown-divider" />
-											</div>
 											<a
 												href="?"
 												className="dropdown-item"

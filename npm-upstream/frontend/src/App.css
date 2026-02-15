@@ -51,7 +51,13 @@
 html,
 body,
 #root {
+	height: 100%;
 	min-height: 100%;
+}
+
+html,
+body {
+	overflow: hidden;
 }
 
 body {
@@ -60,6 +66,14 @@ body {
 		radial-gradient(960px 480px at var(--app-body-overlay-b-pos), var(--app-body-overlay-b), transparent 55%),
 		linear-gradient(160deg, var(--app-background) 0%, color-mix(in srgb, var(--app-background) 82%, var(--app-secondary)) 100%);
 	color: var(--app-text-primary);
+}
+
+.app-main-scroll {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+	overflow-x: hidden;
+	overscroll-behavior: contain;
 }
 
 .modal-backdrop {
@@ -183,6 +197,90 @@ body {
 	background: color-mix(in srgb, var(--app-primary) 8%, transparent);
 }
 
+.nyx-scroll-y {
+	overflow: auto;
+	overscroll-behavior: contain;
+	border-radius: 14px;
+	border: 1px solid color-mix(in srgb, var(--app-border) 72%, transparent);
+	background: color-mix(in srgb, var(--app-surface-2) 36%, transparent);
+}
+
+.nyx-scroll-y .table {
+	margin-bottom: 0;
+}
+
+.nyx-scroll-y .table thead th {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	backdrop-filter: blur(8px) saturate(140%);
+}
+
+.nyx-scroll-theme {
+	scrollbar-width: thin;
+	scrollbar-color:
+		color-mix(in srgb, var(--app-primary) 60%, var(--app-secondary) 40%)
+		color-mix(in srgb, var(--app-surface-2) 88%, transparent);
+}
+
+.nyx-scroll-theme::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+.nyx-scroll-theme::-webkit-scrollbar-track {
+	background: color-mix(in srgb, var(--app-surface-2) 86%, transparent);
+	border-radius: 999px;
+}
+
+.nyx-scroll-theme::-webkit-scrollbar-thumb {
+	background:
+		linear-gradient(
+			180deg,
+			color-mix(in srgb, var(--app-primary) 72%, white 28%),
+			color-mix(in srgb, var(--app-secondary) 72%, white 28%)
+		);
+	border-radius: 999px;
+	border: 2px solid color-mix(in srgb, var(--app-surface-2) 92%, transparent);
+}
+
+.nyx-scroll-theme::-webkit-scrollbar-thumb:hover {
+	filter: brightness(1.08);
+}
+
+/* Shared pill/button polish for NyxGuard module controls (window/pill-style buttons). */
+button[class*="window"],
+button[class*="pill"],
+.btn[class*="window"],
+.btn[class*="pill"] {
+	transition:
+		transform 140ms ease,
+		box-shadow 180ms ease,
+		filter 180ms ease,
+		background-color 180ms ease,
+		border-color 180ms ease;
+	will-change: transform;
+}
+
+button[class*="window"]:hover,
+button[class*="pill"]:hover,
+.btn[class*="window"]:hover,
+.btn[class*="pill"]:hover {
+	transform: translateY(-1px);
+	box-shadow:
+		0 10px 20px color-mix(in srgb, var(--app-primary) 16%, transparent),
+		0 0 0 1px color-mix(in srgb, var(--app-border) 70%, transparent) inset;
+	filter: brightness(1.04);
+}
+
+button[class*="window"]:active,
+button[class*="pill"]:active,
+.btn[class*="window"]:active,
+.btn[class*="pill"]:active {
+	transform: scale(0.985);
+	filter: brightness(0.98);
+}
+
 .form-control,
 .form-select,
 .input-group-text {
@@ -193,6 +291,32 @@ body {
 
 .form-control::placeholder {
 	color: color-mix(in srgb, var(--app-text-secondary) 78%, transparent) !important;
+}
+
+.nyx-user-input-strong {
+	color: color-mix(in srgb, var(--app-text-primary) 98%, #ffffff 2%) !important;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+	text-shadow: none !important;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: geometricPrecision;
+}
+
+.nyx-user-input-strong::placeholder {
+	color: color-mix(in srgb, var(--app-text-secondary) 94%, #ffffff 6%) !important;
+	font-weight: 550;
+	opacity: 1 !important;
+	text-shadow: none !important;
+}
+
+/* Bootstrap floating labels require hidden placeholder text, otherwise
+ * placeholder and label overlap and look blurry/duplicated. */
+.form-floating > .form-control::placeholder,
+.form-floating > .form-control.nyx-user-input-strong::placeholder,
+.form-floating > .form-control-plaintext::placeholder,
+.form-floating > .form-select::placeholder {
+	color: transparent !important;
+	opacity: 0 !important;
 }
 
 .form-control:focus,
@@ -317,44 +441,96 @@ select.form-control option:hover {
 		color: var(--tblr-body-color);
 		background-color: var(--tblr-bg-forms);
 		border: var(--tblr-border-width) solid var(--tblr-border-color);
+		min-height: 42px;
 
 		.react-select__input {
 			color: var(--tblr-body-color) !important;
 		}
 
 		.react-select__single-value {
-			color: var(--tblr-body-color);
+			color: color-mix(in srgb, var(--app-text-primary) 96%, white 4%) !important;
 		}
 
 		.react-select__multi-value {
 			border: 1px solid var(--tblr-border-color);
-			background-color: var(--tblr-bg-surface-tertiary);
-			color: var(--tblr-secondary) !important;
+			background-color: color-mix(in srgb, var(--app-primary) 20%, var(--app-surface-2));
+			color: var(--app-text-primary) !important;
 
 			.react-select__multi-value__label {
-				color: var(--tblr-secondary) !important;
+				color: var(--app-text-primary) !important;
 			}
 		}
+	}
+
+	.react-select__control:hover {
+		border-color: color-mix(in srgb, var(--app-border) 100%, var(--app-primary)) !important;
+	}
+
+	.react-select__control--is-focused {
+		border-color: color-mix(in srgb, var(--app-primary) 75%, var(--app-border)) !important;
+		box-shadow: 0 0 0 2px color-mix(in srgb, var(--app-primary) 25%, transparent) !important;
 	}
 
 	.react-select__menu {
-		background-color: var(--tblr-bg-forms);
+		z-index: 2100;
+		background: color-mix(in srgb, var(--app-surface-2) 94%, black 6%);
+		border: 1px solid color-mix(in srgb, var(--app-border) 100%, transparent);
+		box-shadow: 0 14px 36px color-mix(in srgb, var(--app-background) 55%, black 45%);
+		backdrop-filter: blur(6px) saturate(130%);
+	}
 
-		.react-select__option {
-			background: color-mix(in srgb, var(--app-primary) 8%, transparent);
-			color: var(--app-text-primary) !important;
+	.react-select__menu-portal {
+		z-index: 2100;
+	}
 
-			&.react-select__option--is-focused {
-				background: color-mix(in srgb, var(--app-primary) 16%, transparent);
-			}
+	.react-select__menu-list {
+		max-height: 220px;
+		padding: 0.3rem;
+		overflow-x: hidden;
+	}
 
-			&.react-select__option--is-focused.react-select__option--is-selected {
-				background: color-mix(in srgb, var(--app-primary) 24%, transparent);
-			}
-		}
+	.react-select__option {
+		display: flex;
+		align-items: center;
+		min-height: 32px;
+		padding: 8px 10px;
+		margin: 0.08rem 0;
+		border-radius: 8px;
+		font-weight: 600;
+		letter-spacing: 0.01em;
+		line-height: 1.25;
+		background: color-mix(in srgb, var(--app-primary) 10%, transparent);
+		color: color-mix(in srgb, var(--app-text-primary) 96%, white 4%) !important;
+		transition: background-color 0.12s ease, color 0.12s ease;
+	}
+
+	.react-select__option--is-focused {
+		background: color-mix(in srgb, var(--app-primary) 24%, var(--app-surface-2));
+		color: color-mix(in srgb, var(--app-text-primary) 98%, white 2%) !important;
+	}
+
+	.react-select__option--is-selected {
+		background: color-mix(in srgb, var(--app-primary) 32%, var(--app-surface-2));
+		color: color-mix(in srgb, var(--app-text-primary) 98%, white 2%) !important;
+	}
+
+	.react-select__option--is-focused.react-select__option--is-selected {
+		background: color-mix(in srgb, var(--app-primary) 38%, var(--app-surface-2));
+	}
+
+	.react-select__option--is-disabled {
+		color: color-mix(in srgb, var(--app-text-secondary) 90%, transparent) !important;
+	}
+
+	.react-select__placeholder {
+		color: color-mix(in srgb, var(--app-text-secondary) 88%, transparent) !important;
+	}
+
+	.react-select__menu-notice--no-options,
+	.react-select__loading-message {
+		color: color-mix(in srgb, var(--app-text-secondary) 90%, white 10%) !important;
 	}
 }
-
 .textareaMono {
 	font-family: "Courier New", Courier, monospace !important;
 	resize: vertical;

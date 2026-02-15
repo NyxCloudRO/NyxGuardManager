@@ -5,6 +5,6 @@ services:
       context: ./npm-upstream
       dockerfile: docker/Dockerfile
       args:
-        BUILD_VERSION: "3.0.0"
+        BUILD_VERSION: "4.0.0"
         BUILD_COMMIT: "local"
-        BUILD_DATE: "2026-02-11"
+        BUILD_DATE: "2026-02-15"

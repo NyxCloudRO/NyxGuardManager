@@ -1,9 +1,8 @@
 import { Field, Form, Formik } from "formik";
 import { useEffect, useRef, useState } from "react";
 import Alert from "react-bootstrap/Alert";
-import { Button, LocalePicker, Page } from "src/components";
+import { Button, LocalePicker, Page, SiteFooter, ThemeSwitcher } from "src/components";
 import { useAuthState } from "src/context";
-import { useHealth } from "src/hooks";
 import { intl, T } from "src/locale";
 import { validateEmail, validateString } from "src/modules/Validations";
 import styles from "./index.module.css";
@@ -168,49 +167,21 @@ function LoginForm() {
 
 export default function Login() {
 	const { twoFactorChallenge } = useAuthState();
-	const health = useHealth();
-
-		const getVersion = () => {
-			if (!health.data) {
-				return "";
-			}
-		const build = health.data.build;
-		const v = health.data.version;
-
-		const version =
-			build?.version ||
-			(v && Number.isFinite(v.major) && Number.isFinite(v.minor) && Number.isFinite(v.revision)
-				? `${v.major}.${v.minor}.${v.revision}`
-				: "");
-
-			const parts: string[] = [];
-			if (version) {
-				parts.push(`NyxGuard Manager · v${version}`);
-			}
-			return parts.join(" · ");
-		};
 
 	return (
 		<Page className="page page-center">
+			<div className={styles.helperBtns}>
+				<LocalePicker compact />
+				<ThemeSwitcher compact />
+			</div>
 			<div className="container container-tight py-4">
-				<div className="d-flex justify-content-center align-items-center mb-4">
-					<div className={styles.brand}>
-						<div className={styles.brandText}>
-							<span className={styles.brandWordPrimary}>NyxGuard</span>
-							<span className={styles.brandWordSecondary}>Manager</span>
-						</div>
-					</div>
-				</div>
-				<div className={styles.brandControls}>
-					<LocalePicker />
-				</div>
 				<div className="card card-md">
 					<div className="card-body">
 						{twoFactorChallenge ? <TwoFactorForm /> : <LoginForm />}
 					</div>
 				</div>
-				<div className="text-center text-secondary mt-3">{getVersion()}</div>
 			</div>
+			<SiteFooter />
 		</Page>
 	);
 }

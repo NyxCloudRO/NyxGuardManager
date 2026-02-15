@@ -3,6 +3,8 @@ import net from "node:net";
 import path from "node:path";
 
 import internalNginx from "./nginx.js";
+import { getTrustedSelfIps } from "./trusted-ips.js";
+import proxyHostModel from "../models/proxy_host.js";
 
 const SETTINGS_ID = 1;
 
@@ -42,6 +44,13 @@ const SQLI_MARK_END = "# NyxGuard SQL INJECTION SHIELD END";
 const SQLI_BLOCK = `${SQLI_MARK_BEGIN}
 include /data/nginx/custom/nyxguard_sqli.conf;
 ${SQLI_MARK_END}`;
+
+const ENFORCE_PROTECTION = process.env.NYXGUARD_ENFORCE_PROTECTION !== "0";
+const DEFAULT_DDOS_RATE_RPS = 25;
+const DEFAULT_DDOS_BURST = 120;
+const DEFAULT_DDOS_CONN_LIMIT = 80;
+const DEFAULT_LOG_RETENTION_DAYS = 90;
+const ALLOWED_LOG_RETENTION_DAYS = [30, 60, 90, 180];
 
 async function writeAtomic(filePath, contents) {
 	const dir = path.dirname(filePath);
@@ -133,6 +142,12 @@ function clampInt(val, min, max, fallback) {
 	const n = Number.parseInt(String(val ?? ""), 10);
 	if (!Number.isFinite(n)) return fallback;
 	return Math.min(max, Math.max(min, n));
+}
+
+function normalizeLogRetentionDays(val, fallback = DEFAULT_LOG_RETENTION_DAYS) {
+	const n = Number.parseInt(String(val ?? ""), 10);
+	if (!Number.isFinite(n)) return fallback;
+	return ALLOWED_LOG_RETENTION_DAYS.includes(n) ? n : fallback;
 }
 
 function parseTokenList(text, { maxItems = 50, maxLen = 64 } = {}) {
@@ -227,14 +242,17 @@ const internalNyxGuard = {
 			get: async (db) => {
 				const row = await db("nyxguard_settings").where({ id: SETTINGS_ID }).first();
 					if (row) {
+						const ddosRateRps = clampInt(row.ddos_rate_rps, 1, 10000, DEFAULT_DDOS_RATE_RPS);
+						const ddosBurst = clampInt(row.ddos_burst, 0, 100000, DEFAULT_DDOS_BURST);
+						const ddosConnLimit = clampInt(row.ddos_conn_limit, 1, 100000, DEFAULT_DDOS_CONN_LIMIT);
 						return {
-							botDefenseEnabled: !!row.bot_defense_enabled,
-							ddosEnabled: !!row.ddos_enabled,
-							sqliEnabled: !!row.sqli_enabled,
-							logRetentionDays: row.log_retention_days ? Number.parseInt(String(row.log_retention_days), 10) : 30,
-							ddosRateRps: clampInt(row.ddos_rate_rps, 1, 10000, 10),
-							ddosBurst: clampInt(row.ddos_burst, 0, 100000, 50),
-							ddosConnLimit: clampInt(row.ddos_conn_limit, 1, 100000, 30),
+							botDefenseEnabled: ENFORCE_PROTECTION ? true : !!row.bot_defense_enabled,
+							ddosEnabled: ENFORCE_PROTECTION ? true : !!row.ddos_enabled,
+							sqliEnabled: ENFORCE_PROTECTION ? true : !!row.sqli_enabled,
+							logRetentionDays: normalizeLogRetentionDays(row.log_retention_days, DEFAULT_LOG_RETENTION_DAYS),
+							ddosRateRps: ENFORCE_PROTECTION ? Math.max(DEFAULT_DDOS_RATE_RPS, ddosRateRps) : ddosRateRps,
+							ddosBurst: ENFORCE_PROTECTION ? Math.max(DEFAULT_DDOS_BURST, ddosBurst) : ddosBurst,
+							ddosConnLimit: ENFORCE_PROTECTION ? Math.max(DEFAULT_DDOS_CONN_LIMIT, ddosConnLimit) : ddosConnLimit,
 							botUaTokens: row.bot_ua_tokens ?? "",
 							botPathTokens: row.bot_path_tokens ?? "",
 							sqliThreshold: clampInt(row.sqli_threshold, 1, 1000, 8),
@@ -242,21 +260,21 @@ const internalNyxGuard = {
 							sqliProbeMinScore: clampInt(row.sqli_probe_min_score, 0, 1000, 3),
 							sqliProbeBanScore: clampInt(row.sqli_probe_ban_score, 1, 100000, 20),
 							sqliProbeWindowSec: clampInt(row.sqli_probe_window_sec, 1, 600, 30),
-							authfailThreshold: clampInt(row.authfail_threshold, 1, 1000, 5),
-							authfailWindowSec: clampInt(row.authfail_window_sec, 5, 3600, 180),
-							authfailBanHours: clampInt(row.authfail_ban_hours, 1, 8760, 24),
+							authfailThreshold: 5,
+							authfailWindowSec: 120,
+							authfailBanHours: 24,
 							authBypassEnabled: typeof row.auth_bypass_enabled === "boolean" ? row.auth_bypass_enabled : !!row.auth_bypass_enabled,
 						};
 					}
 					await db("nyxguard_settings").insert({
 						id: SETTINGS_ID,
-						bot_defense_enabled: 0,
-						ddos_enabled: 0,
-						sqli_enabled: 0,
-						log_retention_days: 30,
-						ddos_rate_rps: 10,
-						ddos_burst: 50,
-						ddos_conn_limit: 30,
+						bot_defense_enabled: 1,
+						ddos_enabled: 1,
+						sqli_enabled: 1,
+						log_retention_days: DEFAULT_LOG_RETENTION_DAYS,
+						ddos_rate_rps: DEFAULT_DDOS_RATE_RPS,
+						ddos_burst: DEFAULT_DDOS_BURST,
+						ddos_conn_limit: DEFAULT_DDOS_CONN_LIMIT,
 						bot_ua_tokens: "curl\nwget\npython-requests\nlibwww-perl\nnikto\nsqlmap",
 						bot_path_tokens: "wp-login.php\nxmlrpc.php",
 						sqli_threshold: 8,
@@ -265,18 +283,18 @@ const internalNyxGuard = {
 						sqli_probe_ban_score: 20,
 						sqli_probe_window_sec: 30,
 						authfail_threshold: 5,
-						authfail_window_sec: 180,
+						authfail_window_sec: 120,
 						authfail_ban_hours: 24,
 						auth_bypass_enabled: 1,
 					});
 					return {
-						botDefenseEnabled: false,
-						ddosEnabled: false,
-						sqliEnabled: false,
-						logRetentionDays: 30,
-						ddosRateRps: 10,
-						ddosBurst: 50,
-						ddosConnLimit: 30,
+						botDefenseEnabled: true,
+						ddosEnabled: true,
+						sqliEnabled: true,
+							logRetentionDays: DEFAULT_LOG_RETENTION_DAYS,
+						ddosRateRps: DEFAULT_DDOS_RATE_RPS,
+						ddosBurst: DEFAULT_DDOS_BURST,
+						ddosConnLimit: DEFAULT_DDOS_CONN_LIMIT,
 						botUaTokens: "curl\nwget\npython-requests\nlibwww-perl\nnikto\nsqlmap",
 						botPathTokens: "wp-login.php\nxmlrpc.php",
 						sqliThreshold: 8,
@@ -285,7 +303,7 @@ const internalNyxGuard = {
 						sqliProbeBanScore: 20,
 						sqliProbeWindowSec: 30,
 						authfailThreshold: 5,
-						authfailWindowSec: 180,
+						authfailWindowSec: 120,
 						authfailBanHours: 24,
 						authBypassEnabled: true,
 					};
@@ -293,17 +311,26 @@ const internalNyxGuard = {
 				update: async (db, patch) => {
 					const current = await internalNyxGuard.settings.get(db);
 					const next = {
-					botDefenseEnabled:
-						typeof patch.botDefenseEnabled === "boolean"
+					botDefenseEnabled: ENFORCE_PROTECTION
+						? true
+						: typeof patch.botDefenseEnabled === "boolean"
 							? patch.botDefenseEnabled
 							: current.botDefenseEnabled,
-						ddosEnabled: typeof patch.ddosEnabled === "boolean" ? patch.ddosEnabled : current.ddosEnabled,
-						sqliEnabled: typeof patch.sqliEnabled === "boolean" ? patch.sqliEnabled : current.sqliEnabled,
-						logRetentionDays:
-							typeof patch.logRetentionDays === "number" ? patch.logRetentionDays : current.logRetentionDays,
-						ddosRateRps: typeof patch.ddosRateRps === "number" ? clampInt(patch.ddosRateRps, 1, 10000, current.ddosRateRps) : current.ddosRateRps,
-						ddosBurst: typeof patch.ddosBurst === "number" ? clampInt(patch.ddosBurst, 0, 100000, current.ddosBurst) : current.ddosBurst,
-						ddosConnLimit: typeof patch.ddosConnLimit === "number" ? clampInt(patch.ddosConnLimit, 1, 100000, current.ddosConnLimit) : current.ddosConnLimit,
+						ddosEnabled: ENFORCE_PROTECTION ? true : typeof patch.ddosEnabled === "boolean" ? patch.ddosEnabled : current.ddosEnabled,
+						sqliEnabled: ENFORCE_PROTECTION ? true : typeof patch.sqliEnabled === "boolean" ? patch.sqliEnabled : current.sqliEnabled,
+							logRetentionDays: normalizeLogRetentionDays(patch.logRetentionDays, current.logRetentionDays),
+						ddosRateRps: (() => {
+							const n = typeof patch.ddosRateRps === "number" ? clampInt(patch.ddosRateRps, 1, 10000, current.ddosRateRps) : current.ddosRateRps;
+							return ENFORCE_PROTECTION ? Math.max(DEFAULT_DDOS_RATE_RPS, n) : n;
+						})(),
+						ddosBurst: (() => {
+							const n = typeof patch.ddosBurst === "number" ? clampInt(patch.ddosBurst, 0, 100000, current.ddosBurst) : current.ddosBurst;
+							return ENFORCE_PROTECTION ? Math.max(DEFAULT_DDOS_BURST, n) : n;
+						})(),
+						ddosConnLimit: (() => {
+							const n = typeof patch.ddosConnLimit === "number" ? clampInt(patch.ddosConnLimit, 1, 100000, current.ddosConnLimit) : current.ddosConnLimit;
+							return ENFORCE_PROTECTION ? Math.max(DEFAULT_DDOS_CONN_LIMIT, n) : n;
+						})(),
 						botUaTokens: typeof patch.botUaTokens === "string" ? patch.botUaTokens : current.botUaTokens,
 						botPathTokens: typeof patch.botPathTokens === "string" ? patch.botPathTokens : current.botPathTokens,
 						sqliThreshold: typeof patch.sqliThreshold === "number" ? clampInt(patch.sqliThreshold, 1, 1000, current.sqliThreshold) : current.sqliThreshold,
@@ -316,6 +343,9 @@ const internalNyxGuard = {
 						authfailBanHours: typeof patch.authfailBanHours === "number" ? clampInt(patch.authfailBanHours, 1, 8760, current.authfailBanHours) : current.authfailBanHours,
 						authBypassEnabled: typeof patch.authBypassEnabled === "boolean" ? patch.authBypassEnabled : current.authBypassEnabled,
 					};
+					next.authfailThreshold = 5;
+					next.authfailWindowSec = 120;
+					next.authfailBanHours = 24;
 
 				await db("nyxguard_settings")
 					.where({ id: SETTINGS_ID })
@@ -525,6 +555,12 @@ const internalNyxGuard = {
 			await internalNyxGuard.nginx.ensureFiles();
 
 			const settings = await internalNyxGuard.settings.get(db);
+			const enforcedSettings = {
+				...settings,
+				botDefenseEnabled: true,
+				ddosEnabled: true,
+				sqliEnabled: true,
+			};
 			const rules = await internalNyxGuard.ipRules.list(db);
 			let countryRules = [];
 			try {
@@ -544,6 +580,16 @@ const internalNyxGuard = {
 
 			const allowSet = new Set(allowCidrs);
 			const denySet = new Set(denyCidrs);
+			const trustedSelfIps = await getTrustedSelfIps();
+			const trustedSelfSet = new Set();
+			for (const ip of trustedSelfIps) {
+				const cidr = sanitizeCidr(ip);
+				if (!cidr) continue;
+				trustedSelfSet.add(cidr);
+				allowSet.add(cidr);
+				denySet.delete(cidr);
+			}
+			const trustedSelfList = [...trustedSelfSet];
 			const allowList = [...allowSet];
 			const denyList = [...denySet];
 
@@ -669,6 +715,28 @@ const internalNyxGuard = {
 				httpLines.push(buildGeoBlock("nyxguard_allow", allowList));
 				httpLines.push("");
 				httpLines.push(buildGeoBlock("nyxguard_deny", denyList));
+				httpLines.push("");
+				httpLines.push("# Auto-detected local/public self IPs (never blocked by NyxGuard).");
+				httpLines.push(buildGeoBlock("nyxguard_trusted_self_ip", trustedSelfList));
+				httpLines.push("");
+				httpLines.push("# Trusted internal ranges (never treated as DDoS by default).");
+				httpLines.push("geo $nyxguard_internal_trusted {");
+				httpLines.push("\tdefault 0;");
+				httpLines.push("\t127.0.0.0/8 1;");
+				httpLines.push("\t10.0.0.0/8 1;");
+				httpLines.push("\t172.16.0.0/12 1;");
+				httpLines.push("\t192.168.0.0/16 1;");
+				httpLines.push("\t169.254.0.0/16 1;");
+				httpLines.push("\t::1/128 1;");
+				httpLines.push("\tfc00::/7 1;");
+				httpLines.push("\tfe80::/10 1;");
+				httpLines.push("}");
+				httpLines.push("");
+				httpLines.push("# Effective IP allow (manual allow OR trusted internal OR auto-detected self IP).");
+				httpLines.push("map \"$nyxguard_allow:$nyxguard_internal_trusted:$nyxguard_trusted_self_ip\" $nyxguard_allow_effective {");
+				httpLines.push("\tdefault 0;");
+				httpLines.push("\t~1 1;");
+				httpLines.push("}");
 				httpLines.push("");
 
 				// Login attempt detection for "failed login" auto-ban (authfail).
@@ -834,7 +902,7 @@ const internalNyxGuard = {
 				httpLines.push("");
 				httpLines.push("# For requests: allowlisted or authenticated traffic uses a per-request key to avoid 429s.");
 				httpLines.push("# Login endpoints should never be rate-limited; brute-force is handled by authfail autoban.");
-				httpLines.push("map \"$nyxguard_allow:$nyxguard_is_auth:$nyxguard_is_login\" $nyxguard_rl_req_key {");
+				httpLines.push("map \"$nyxguard_allow_effective:$nyxguard_is_auth:$nyxguard_is_login\" $nyxguard_rl_req_key {");
 				httpLines.push("\tdefault $binary_remote_addr;");
 				// Login endpoints: use a per-request key to effectively disable rate limiting on sign-in flows.
 				// (Empty string keys would collapse all traffic into one bucket, making rate limiting worse.)
@@ -843,14 +911,14 @@ const internalNyxGuard = {
 				httpLines.push("\t~^0:1: \"$msec$connection$connection_requests\";");
 				httpLines.push("}");
 				httpLines.push("# For connections: allowlisted or authenticated traffic uses a per-connection key.");
-				httpLines.push("map \"$nyxguard_allow:$nyxguard_is_auth:$nyxguard_is_login\" $nyxguard_rl_conn_key {");
+				httpLines.push("map \"$nyxguard_allow_effective:$nyxguard_is_auth:$nyxguard_is_login\" $nyxguard_rl_conn_key {");
 				httpLines.push("\tdefault $binary_remote_addr;");
 				// Login endpoints: use a per-connection key to avoid accidental 429s during auth flows.
 				httpLines.push("\t~^[01]:[01]:1$ \"$connection\";");
 				httpLines.push("\t~^1: \"$connection\";");
 				httpLines.push("\t~^0:1: \"$connection\";");
 				httpLines.push("}");
-				const ddosRate = clampInt(settings.ddosRateRps, 1, 10000, 10);
+				const ddosRate = clampInt(settings.ddosRateRps, 1, 10000, DEFAULT_DDOS_RATE_RPS);
 				httpLines.push(`limit_req_zone $nyxguard_rl_req_key zone=nyxguard_req:10m rate=${ddosRate}r/s;`);
 				httpLines.push('limit_conn_zone $nyxguard_rl_conn_key zone=nyxguard_conn:10m;');
 				httpLines.push("");
@@ -869,11 +937,11 @@ const internalNyxGuard = {
 					if (pathRe) httpLines.push(`\t~*(?:${pathRe}) 1;`);
 					httpLines.push("}");
 					httpLines.push("# Authenticated requests should not be blocked as bot traffic.");
-					httpLines.push("map \"$nyxguard_allow:$nyxguard_is_auth:$nyxguard_bot_ua_raw\" $nyxguard_bot_ua_block {");
+					httpLines.push("map \"$nyxguard_allow_effective:$nyxguard_is_auth:$nyxguard_bot_ua_raw\" $nyxguard_bot_ua_block {");
 					httpLines.push("\tdefault 0;");
 					httpLines.push("\t\"0:0:1\" 1;");
 				httpLines.push("}");
-				httpLines.push("map \"$nyxguard_allow:$nyxguard_is_auth:$nyxguard_bot_path_raw\" $nyxguard_bot_path_block {");
+				httpLines.push("map \"$nyxguard_allow_effective:$nyxguard_is_auth:$nyxguard_bot_path_raw\" $nyxguard_bot_path_block {");
 				httpLines.push("\tdefault 0;");
 				httpLines.push("\t\"0:0:1\" 1;");
 				httpLines.push("}");
@@ -887,8 +955,8 @@ const internalNyxGuard = {
 				// - ddos: generated when our rate limiter returns 429
 				// - authfail: 401/403 on likely login endpoint and request not authenticated
 				// - authfail can also be inferred from 302/303 redirects back to a login endpoint.
-					httpLines.push("map \"$status:$nyxguard_is_login:$nyxguard_is_auth:$nyxguard_login_redirect\" $nyxguard_attack_type_by_status {");
-					httpLines.push("\t~^429:0: ddos;");
+					httpLines.push("map \"$status:$nyxguard_is_login:$nyxguard_is_auth:$nyxguard_login_redirect:$nyxguard_allow_effective:$nyxguard_country_allow\" $nyxguard_attack_type_by_status {");
+					httpLines.push("\t~^429:0:[01]:[01]:0:0$ ddos;");
 					httpLines.push("\t~^(401|403):1:0: authfail;");
 					httpLines.push("\t~^(302|303):1:0:1$ authfail;");
 					httpLines.push('\tdefault "";');
@@ -900,7 +968,7 @@ const internalNyxGuard = {
 				httpLines.push("}");
 				httpLines.push("");
 				httpLines.push("# Never log allowlisted traffic as an 'attack' (even if it would otherwise match rules).");
-				httpLines.push("map \"$nyxguard_allow:$nyxguard_country_allow:$nyxguard_attack_type_final\" $nyxguard_attack_log {");
+				httpLines.push("map \"$nyxguard_allow_effective:$nyxguard_country_allow:$nyxguard_attack_type_final\" $nyxguard_attack_log {");
 				httpLines.push("\tdefault 1;");
 				httpLines.push("\t~^1: 0;");
 				httpLines.push("\t~^0:1: 0;");
@@ -920,16 +988,16 @@ const internalNyxGuard = {
 					httpLines.push("\tcountry_deny \"Access blocked\";");
 					httpLines.push("\tbot \"Automated traffic blocked\";");
 					httpLines.push("\tsqli \"Malicious request blocked\";");
-					httpLines.push("\tddos \"Too many requests\";");
+					httpLines.push("\tddos \"Rate limit protection\";");
 					httpLines.push("\tauthfail \"Too many failed sign-in attempts\";");
 					httpLines.push("}");
 					httpLines.push("map $nyxguard_attack_type_final $nyxguard_block_detail {");
-					httpLines.push("\tdefault \"This app is protected by NyxGuard Manager.\";");
+						httpLines.push("\tdefault \"This app is protected by NyxGuard Manager.\";");
 					httpLines.push("\tdeny \"Your IP address is currently blocked by a security rule.\";");
 					httpLines.push("\tcountry_deny \"Access from your country is blocked by a security rule.\";");
 					httpLines.push("\tbot \"Your request matched automated traffic detection.\";");
 					httpLines.push("\tsqli \"Your request matched SQL injection protection.\";");
-					httpLines.push("\tddos \"Your request rate exceeded the protection threshold.\";");
+					httpLines.push("\tddos \"Your request rate exceeded the protection threshold. Protected by NyxGuard Manager.\";");
 					httpLines.push("\tauthfail \"This IP was blocked due to repeated failed sign-in attempts.\";");
 					httpLines.push("}");
 					httpLines.push("");
@@ -970,7 +1038,7 @@ const internalNyxGuard = {
 			serverLines.push("set $nyxguard_block 0;");
 			serverLines.push("if ($nyxguard_deny = 1) { set $nyxguard_attack_type \"deny\"; set $nyxguard_block 1; }");
 			serverLines.push("if ($nyxguard_country_deny = 1) { set $nyxguard_attack_type \"country_deny\"; set $nyxguard_block 1; }");
-			serverLines.push("if ($nyxguard_allow = 1) { set $nyxguard_block 0; }");
+			serverLines.push("if ($nyxguard_allow_effective = 1) { set $nyxguard_block 0; }");
 			serverLines.push("if ($nyxguard_country_allow = 1) { set $nyxguard_block 0; }");
 			serverLines.push("if ($nyxguard_block = 1) { return 403; }");
 			serverLines.push("");
@@ -993,7 +1061,7 @@ const internalNyxGuard = {
 			serverLines.push("\tadd_header Cache-Control \"no-store\" always;");
 			serverLines.push("\tdefault_type text/html;");
 			serverLines.push(
-				"\treturn 403 '<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Blocked | NyxGuard</title><link rel=\"icon\" href=\"/_nyxguard/fav.png\"><style>html,body{height:100%}body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial;color:#e9edf6;background:radial-gradient(1200px 600px at 15% 10%,#2b62ff55 0%,transparent 60%),radial-gradient(900px 500px at 85% 15%,#ff2bbd33 0%,transparent 55%),linear-gradient(135deg,#0b1330 0%,#1a0e2b 55%,#190b22 100%)}.wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:28px}.card{width:min(760px,100%);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.10);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.45);overflow:hidden}.top{display:flex;gap:14px;align-items:center;padding:18px 18px 0}.mark{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.06);display:grid;place-items:center;border:1px solid rgba(255,255,255,.12)}.mark img{width:26px;height:26px;object-fit:contain}.brand{font-weight:700;letter-spacing:.2px}.body{padding:18px}.h1{margin:10px 0 6px;font-size:22px}.p{margin:0 0 14px;opacity:.92;line-height:1.45}.meta{display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px}.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08)}.k{opacity:.8}.v{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}.pill{margin-left:auto;padding:4px 10px;border-radius:999px;background:rgba(43,98,255,.18);border:1px solid rgba(43,98,255,.35);color:#dbe7ff;font-size:12px}.foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.10);opacity:.85;font-size:13px}</style></head><body><div class=\"wrap\"><div class=\"card\"><div class=\"top\"><div class=\"mark\"><img src=\"/_nyxguard/fav.png\" alt=\"NyxGuard\"></div><div><div class=\"brand\">NyxGuard Manager</div><div style=\"opacity:.8;font-size:13px\">Security Gateway</div></div></div><div class=\"body\"><div class=\"pill\">$nyxguard_block_reason</div><div class=\"h1\">Request blocked (403)</div><p class=\"p\">$nyxguard_block_detail</p><div class=\"meta\"><div class=\"row\"><span class=\"k\">Client IP</span><span class=\"v\">$remote_addr</span></div><div class=\"row\"><span class=\"k\">Host</span><span class=\"v\">$host</span></div><div class=\"row\"><span class=\"k\">Time</span><span class=\"v\">$time_iso8601</span></div><div class=\"row\"><span class=\"k\">Reference</span><span class=\"v\">CF-Ray:$http_cf_ray</span></div></div></div><div class=\"foot\">This app is protected by NyxGuard. If you believe this is an error, contact the administrator and provide the details above.</div></div></div></body></html>';"
+				"\treturn 403 '<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Blocked | NyxGuard</title><link rel=\"icon\" href=\"/_nyxguard/fav.png\"><style>html,body{height:100%}body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial;color:#e9edf6;background:radial-gradient(1200px 600px at 15% 10%,#2b62ff55 0%,transparent 60%),radial-gradient(900px 500px at 85% 15%,#ff2bbd33 0%,transparent 55%),linear-gradient(135deg,#0b1330 0%,#1a0e2b 55%,#190b22 100%)}.wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:28px}.card{width:min(760px,100%);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.10);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.45);overflow:hidden}.top{display:flex;gap:14px;align-items:center;padding:18px 18px 0}.mark{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.06);display:grid;place-items:center;border:1px solid rgba(255,255,255,.12)}.mark img{width:26px;height:26px;object-fit:contain}.brand{font-weight:700;letter-spacing:.2px}.body{padding:18px}.h1{margin:10px 0 6px;font-size:22px}.p{margin:0 0 14px;opacity:.92;line-height:1.45}.meta{display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px}.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08)}.k{opacity:.8}.v{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}.pill{margin-left:auto;padding:4px 10px;border-radius:999px;background:rgba(43,98,255,.18);border:1px solid rgba(43,98,255,.35);color:#dbe7ff;font-size:12px}.foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.10);opacity:.85;font-size:13px}</style></head><body><div class=\"wrap\"><div class=\"card\"><div class=\"top\"><div class=\"mark\"><img src=\"/_nyxguard/fav.png\" alt=\"NyxGuard\"></div><div><div class=\"brand\">NyxGuard Manager</div><div style=\"opacity:.8;font-size:13px\">Security Gateway</div></div></div><div class=\"body\"><div class=\"pill\">$nyxguard_block_reason</div><div class=\"h1\">Request blocked (403)</div><p class=\"p\">$nyxguard_block_detail</p><div class=\"meta\"><div class=\"row\"><span class=\"k\">Client IP</span><span class=\"v\">$remote_addr</span></div><div class=\"row\"><span class=\"k\">Host</span><span class=\"v\">$host</span></div><div class=\"row\"><span class=\"k\">Time</span><span class=\"v\">$time_iso8601</span></div><div class=\"row\"><span class=\"k\">Reference</span><span class=\"v\">CF-Ray:$http_cf_ray</span></div></div></div><div class=\"foot\">Protected by NyxGuard Manager.</div></div></div></body></html>';"
 			);
 			serverLines.push("}");
 			serverLines.push("");
@@ -1003,7 +1071,7 @@ const internalNyxGuard = {
 			serverLines.push("\tadd_header Cache-Control \"no-store\" always;");
 			serverLines.push("\tdefault_type text/html;");
 			serverLines.push(
-				"\treturn 429 '<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Too Many Requests | NyxGuard</title><link rel=\"icon\" href=\"/_nyxguard/fav.png\"><style>html,body{height:100%}body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial;color:#e9edf6;background:radial-gradient(1200px 600px at 15% 10%,#2b62ff55 0%,transparent 60%),radial-gradient(900px 500px at 85% 15%,#ff2bbd33 0%,transparent 55%),linear-gradient(135deg,#0b1330 0%,#1a0e2b 55%,#190b22 100%)}.wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:28px}.card{width:min(760px,100%);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.10);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.45);overflow:hidden}.top{display:flex;gap:14px;align-items:center;padding:18px 18px 0}.mark{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.06);display:grid;place-items:center;border:1px solid rgba(255,255,255,.12)}.mark img{width:26px;height:26px;object-fit:contain}.brand{font-weight:700;letter-spacing:.2px}.body{padding:18px}.h1{margin:10px 0 6px;font-size:22px}.p{margin:0 0 14px;opacity:.92;line-height:1.45}.meta{display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px}.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08)}.k{opacity:.8}.v{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}.pill{margin-left:auto;padding:4px 10px;border-radius:999px;background:rgba(255,60,100,.18);border:1px solid rgba(255,60,100,.35);color:#ffdbe3;font-size:12px}.foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.10);opacity:.85;font-size:13px}</style></head><body><div class=\"wrap\"><div class=\"card\"><div class=\"top\"><div class=\"mark\"><img src=\"/_nyxguard/fav.png\" alt=\"NyxGuard\"></div><div><div class=\"brand\">NyxGuard Manager</div><div style=\"opacity:.8;font-size:13px\">Security Gateway</div></div></div><div class=\"body\"><div class=\"pill\">$nyxguard_block_reason</div><div class=\"h1\">Too many requests (429)</div><p class=\"p\">Please slow down and try again. This limit protects the service from abuse.</p><div class=\"meta\"><div class=\"row\"><span class=\"k\">Client IP</span><span class=\"v\">$remote_addr</span></div><div class=\"row\"><span class=\"k\">Host</span><span class=\"v\">$host</span></div><div class=\"row\"><span class=\"k\">Time</span><span class=\"v\">$time_iso8601</span></div><div class=\"row\"><span class=\"k\">Reference</span><span class=\"v\">CF-Ray:$http_cf_ray</span></div></div></div><div class=\"foot\">This app is protected by NyxGuard. If you are a legitimate user and see this repeatedly, contact the administrator.</div></div></div></body></html>';"
+				"\treturn 429 '<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Too Many Requests | NyxGuard</title><link rel=\"icon\" href=\"/_nyxguard/fav.png\"><style>html,body{height:100%}body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial;color:#e9edf6;background:radial-gradient(1200px 600px at 15% 10%,#2b62ff55 0%,transparent 60%),radial-gradient(900px 500px at 85% 15%,#ff2bbd33 0%,transparent 55%),linear-gradient(135deg,#0b1330 0%,#1a0e2b 55%,#190b22 100%)}.wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:28px}.card{width:min(760px,100%);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.10);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.45);overflow:hidden}.top{display:flex;gap:14px;align-items:center;padding:18px 18px 0}.mark{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.06);display:grid;place-items:center;border:1px solid rgba(255,255,255,.12)}.mark img{width:26px;height:26px;object-fit:contain}.brand{font-weight:700;letter-spacing:.2px}.body{padding:18px}.h1{margin:10px 0 6px;font-size:22px}.p{margin:0 0 14px;opacity:.92;line-height:1.45}.meta{display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px}.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08)}.k{opacity:.8}.v{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}.pill{margin-left:auto;padding:4px 10px;border-radius:999px;background:rgba(255,60,100,.18);border:1px solid rgba(255,60,100,.35);color:#ffdbe3;font-size:12px}.foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.10);opacity:.85;font-size:13px}</style></head><body><div class=\"wrap\"><div class=\"card\"><div class=\"top\"><div class=\"mark\"><img src=\"/_nyxguard/fav.png\" alt=\"NyxGuard\"></div><div><div class=\"brand\">NyxGuard Manager</div><div style=\"opacity:.8;font-size:13px\">Security Gateway</div></div></div><div class=\"body\"><div class=\"pill\">$nyxguard_block_reason</div><div class=\"h1\">Too many requests (429)</div><p class=\"p\">Please slow down and try again.</p><div class=\"meta\"><div class=\"row\"><span class=\"k\">Client IP</span><span class=\"v\">$remote_addr</span></div><div class=\"row\"><span class=\"k\">Host</span><span class=\"v\">$host</span></div><div class=\"row\"><span class=\"k\">Time</span><span class=\"v\">$time_iso8601</span></div><div class=\"row\"><span class=\"k\">Reference</span><span class=\"v\">CF-Ray:$http_cf_ray</span></div></div></div><div class=\"foot\">Protected by NyxGuard Manager.</div></div></div></body></html>';"
 			);
 			serverLines.push("}");
 			serverLines.push("");
@@ -1014,7 +1082,7 @@ const internalNyxGuard = {
 				try {
 					const botLines = [];
 					botLines.push("# Managed by NyxGuard Manager");
-					if (settings.botDefenseEnabled) {
+					if (enforcedSettings.botDefenseEnabled) {
 						botLines.push("# Bot Defense (enabled globally)");
 						botLines.push('if ($nyxguard_bot_ua_block = 1) { set $nyxguard_attack_type "bot"; return 403; }');
 						botLines.push('if ($nyxguard_bot_path_block = 1) { set $nyxguard_attack_type "bot"; return 404; }');
@@ -1029,9 +1097,9 @@ const internalNyxGuard = {
 				try {
 					const ddosLines = [];
 					ddosLines.push("# Managed by NyxGuard Manager");
-					if (settings.ddosEnabled) {
-						const conn = clampInt(settings.ddosConnLimit, 1, 100000, 30);
-						const burst = clampInt(settings.ddosBurst, 0, 100000, 50);
+					if (enforcedSettings.ddosEnabled) {
+						const conn = clampInt(settings.ddosConnLimit, 1, 100000, DEFAULT_DDOS_CONN_LIMIT);
+						const burst = clampInt(settings.ddosBurst, 0, 100000, DEFAULT_DDOS_BURST);
 						ddosLines.push("# DDoS Shield (enabled globally)");
 						ddosLines.push("limit_req_status 429;");
 						ddosLines.push("limit_conn_status 429;");
@@ -1048,7 +1116,7 @@ const internalNyxGuard = {
 				try {
 					const sqliLines = [];
 					sqliLines.push("# Managed by NyxGuard Manager");
-						if (settings.sqliEnabled) {
+						if (enforcedSettings.sqliEnabled) {
 							sqliLines.push("# SQL Injection Shield (enabled globally)");
 							sqliLines.push("");
 							sqliLines.push("# SQLi detection (normalized + scored; includes small request body inspection).");
@@ -1064,7 +1132,7 @@ const internalNyxGuard = {
 								sqliLines.push("");
 								sqliLines.push("access_by_lua_block {");
 							// Allowlisted IPs and countries must bypass SQL Shield entirely.
-							sqliLines.push("  if ngx.var.nyxguard_allow == \"1\" or ngx.var.nyxguard_country_allow == \"1\" then return end");
+							sqliLines.push("  if ngx.var.nyxguard_allow_effective == \"1\" or ngx.var.nyxguard_country_allow == \"1\" then return end");
 							// Authenticated requests should not be blocked by SQL Shield (avoid breaking legitimate logged-in usage).
 							sqliLines.push("  if ngx.var.nyxguard_is_auth == \"1\" then return end");
 							sqliLines.push("  local threshold = tonumber(ngx.var.nyxguard_sqli_threshold) or 8");
@@ -1311,13 +1379,14 @@ const internalNyxGuard = {
 				// Apply log retention to NPM's logrotate configuration.
 				// This controls how long the nginx access/error logs are kept on disk.
 				try {
-				const days = [30, 60, 90, 180].includes(settings.logRetentionDays) ? settings.logRetentionDays : 30;
+					const days = normalizeLogRetentionDays(settings.logRetentionDays, DEFAULT_LOG_RETENTION_DAYS);
 				const logrotateConf =
 					`/data/logs/*_access.log /data/logs/*/access.log {\n` +
 					`    su npm npm\n` +
 					`    create 0644\n` +
 					`    daily\n` +
 					`    rotate ${days}\n` +
+					`    maxage ${days}\n` +
 					`    missingok\n` +
 					`    notifempty\n` +
 					`    compress\n` +
@@ -1331,6 +1400,7 @@ const internalNyxGuard = {
 					`    create 0644\n` +
 					`    daily\n` +
 					`    rotate ${days}\n` +
+					`    maxage ${days}\n` +
 					`    missingok\n` +
 					`    notifempty\n` +
 					`    compress\n` +
@@ -1360,6 +1430,67 @@ const internalNyxGuard = {
 				await fs.writeFile("/etc/nginx/conf.d/include/log-proxy.conf", logProxyConf, { encoding: "utf8" });
 			} catch {
 				// ignore
+			}
+
+			// Enforce NyxGuard protection on all proxy hosts (current and future).
+			// This keeps WAF/Bot/DDoS/SQLi active across every app consistently.
+			try {
+				const hosts = await proxyHostModel.query().where("is_deleted", 0);
+				const changedHosts = [];
+				for (const host of hosts) {
+					let nextAdvanced = host.advanced_config ?? "";
+					nextAdvanced = internalNyxGuard.waf.applyAdvancedConfig(nextAdvanced, true);
+					nextAdvanced = internalNyxGuard.botDefense.applyAdvancedConfig(nextAdvanced, true);
+					nextAdvanced = internalNyxGuard.ddos.applyAdvancedConfig(nextAdvanced, true);
+					nextAdvanced = internalNyxGuard.sqli.applyAdvancedConfig(nextAdvanced, true);
+
+					if (nextAdvanced !== (host.advanced_config ?? "")) {
+						const nextMeta = {
+							...(host.meta ?? {}),
+							nyxguardWafEnabled: true,
+							nyxguardBotDefenseEnabled: true,
+							nyxguardDdosEnabled: true,
+							nyxguardSqliEnabled: true,
+						};
+						await proxyHostModel
+							.query()
+							.patch({
+								advanced_config: nextAdvanced,
+								meta: nextMeta,
+							})
+							.where({ id: host.id });
+						changedHosts.push({ ...host, advanced_config: nextAdvanced, meta: nextMeta });
+					}
+
+					try {
+						await db("nyxguard_app")
+							.insert({
+								proxy_host_id: host.id,
+								waf_enabled: 1,
+								auth_bypass_enabled: 1,
+								created_on: db.fn.now(),
+								modified_on: db.fn.now(),
+							})
+							.onConflict("proxy_host_id")
+							.merge({
+								waf_enabled: 1,
+								modified_on: db.fn.now(),
+							});
+					} catch {
+						// ignore when table/column is unavailable
+					}
+				}
+				if (changedHosts.length) {
+					const changedHostIds = changedHosts.map((h) => h.id);
+					const fullHosts = await proxyHostModel
+						.query()
+						.whereIn("id", changedHostIds)
+						.withGraphFetched("[certificate,access_list.[clients,items]]");
+
+					await internalNginx.bulkGenerateConfigs("proxy_host", fullHosts);
+				}
+			} catch {
+				// ignore; do not block global nginx apply
 			}
 
 			// Reload nginx to apply changes.

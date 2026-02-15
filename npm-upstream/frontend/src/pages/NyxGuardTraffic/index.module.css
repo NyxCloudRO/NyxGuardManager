@@ -1,6 +1,6 @@
 .page {
-  min-height: calc(100vh - 120px);
-  padding: 40px 0 60px;
+  min-height: 0;
+  padding: 0;
   color: var(--app-text-primary);
   background: var(--app-page-gradient);
 }
@@ -54,6 +54,25 @@
   gap: 12px;
 }
 
+.controlsRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.pageSizeGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.controlsLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.72;
+}
+
 .windowButtons {
   display: flex;
   gap: 8px;
@@ -86,6 +105,34 @@
 .subtitle {
   margin: 0 0 18px;
   opacity: 0.85;
+}
+
+.tableViewport {
+  max-height: min(54vh, 640px);
+}
+
+.hostTableViewport {
+  margin-top: 16px;
+  max-height: min(32vh, 360px);
+}
+
+.paginationRow {
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.paginationMeta {
+  font-size: 12px;
+  opacity: 0.82;
+}
+
+.paginationActions {
+  display: inline-flex;
+  gap: 8px;
 }
 
 .placeholder {

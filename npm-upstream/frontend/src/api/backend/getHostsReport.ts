@@ -10,26 +10,38 @@ export interface HostSystemDiskMetrics {
 
 export interface HostSystemMetrics {
 	cpuUsagePercent: number | null;
+	systemUptimeSeconds?: number | null;
+	dockerContainerUptimeSeconds?: number | null;
+	loadAvg?: { one: number | null; five: number | null; fifteen: number | null };
+	pendingUpdatesCount?: number | null;
+	trustedSelfIps?: string[];
 	ramTotalBytes: number;
 	ramUsedBytes: number;
 	ramFreeBytes: number;
 	ramUsedPercent: number;
 	disk: HostSystemDiskMetrics | null;
-	container?: {
-		containerId: string | null;
-		cpuUsagePercent: number | null;
-		memoryUsageBytes: number;
-		memoryLimitBytes: number | null;
-		memoryUsagePercent: number | null;
-		rssBytes: number;
-		netIo: {
-			rxBytes: number;
-			txBytes: number;
-		};
-		blockIo: {
-			readBytes: number;
-			writeBytes: number;
-		};
+	container?: HostContainerMetrics;
+	containersAggregate?: HostContainerMetrics & {
+		containerIds?: string[];
+		containerNames?: string[];
+		missingContainerNames?: string[];
+	};
+}
+
+export interface HostContainerMetrics {
+	containerId: string | null;
+	cpuUsagePercent: number | null;
+	memoryUsageBytes: number;
+	memoryLimitBytes: number | null;
+	memoryUsagePercent: number | null;
+	rssBytes: number;
+	netIo: {
+		rxBytes: number;
+		txBytes: number;
+	};
+	blockIo: {
+		readBytes: number;
+		writeBytes: number;
 	};
 }
 

@@ -9,13 +9,34 @@ cd /app || exit 1
 
 log_info 'Starting backend ...'
 
+BACKEND_UID="$PUID"
+BACKEND_GID="$PGID"
+BACKEND_GROUPS="$PGID"
+if [ -S /var/run/docker.sock ] && [ -n "${NYXGUARD_DOCKER_USAGE_CONTAINERS:-}" ]; then
+	SOCK_GID="$(stat -c '%g' /var/run/docker.sock 2>/dev/null || true)"
+	if [[ "$SOCK_GID" =~ ^[0-9]+$ ]] && [ "$SOCK_GID" -gt 0 ]; then
+		if [ "$SOCK_GID" != "$PGID" ]; then
+			BACKEND_GROUPS="$PGID,$SOCK_GID"
+		fi
+		log_info "Docker usage enabled; backend will run as $BACKEND_UID:$BACKEND_GID groups=$BACKEND_GROUPS"
+	fi
+fi
+
+run_as_backend() {
+	if [ "$BACKEND_GROUPS" != "$BACKEND_GID" ] && command -v setpriv >/dev/null 2>&1; then
+		setpriv --reuid="$BACKEND_UID" --regid="$BACKEND_GID" --groups="$BACKEND_GROUPS" "$@"
+	else
+		s6-setuidgid "$BACKEND_UID:$BACKEND_GID" "$@"
+	fi
+}
+
 if [ "${DEVELOPMENT:-}" = 'true' ]; then
-	s6-setuidgid "$PUID:$PGID" yarn install
-	exec s6-setuidgid "$PUID:$PGID" bash -c "export HOME=$NPMHOME;node --max_old_space_size=250 --abort_on_uncaught_exception node_modules/nodemon/bin/nodemon.js"
+	run_as_backend yarn install
+	exec run_as_backend bash -c "export HOME=$NPMHOME;node --max_old_space_size=250 --abort_on_uncaught_exception node_modules/nodemon/bin/nodemon.js"
 else
 	while :
 	do
-		s6-setuidgid "$PUID:$PGID" bash -c "export HOME=$NPMHOME;node --abort_on_uncaught_exception --max_old_space_size=250 index.js"
+		run_as_backend bash -c "export HOME=$NPMHOME;node --abort_on_uncaught_exception --max_old_space_size=250 index.js"
 		sleep 1
 	done
 fi

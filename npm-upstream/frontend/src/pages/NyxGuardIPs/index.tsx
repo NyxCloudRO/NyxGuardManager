@@ -1,47 +1,49 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import {
+	clearNyxGuardLogs,
 	clearNyxGuardGeoipUpdateConfig,
 	getNyxGuardGeoip,
 	getNyxGuardIps,
 	getNyxGuardSettings,
 	setNyxGuardGeoipUpdateConfig,
-	updateNyxGuardSettings,
 	uploadNyxGuardGeoip,
+	updateNyxGuardSettings,
 } from "src/api/backend";
 import type { NyxGuardSettings } from "src/api/backend";
 import type { GeoipProvider } from "src/api/backend/getNyxGuardGeoip";
+import { intl, T } from "src/locale";
 import styles from "./index.module.css";
 
 const NyxGuardIPs = () => {
 	const [windowMinutes, setWindowMinutes] = useState(15);
 	const qc = useQueryClient();
-	const [retentionDraft, setRetentionDraft] = useState<30 | 60 | 90 | 180>(60);
 	const [geoipFile, setGeoipFile] = useState<File | null>(null);
 	const [geoipProvider, setGeoipProvider] = useState<GeoipProvider>("maxmind");
 	const [mmAccountId, setMmAccountId] = useState("");
 	const [mmLicenseKey, setMmLicenseKey] = useState("");
+	const [retentionDays, setRetentionDays] = useState<30 | 60 | 90 | 180>(90);
 
 	const windowLabel = (() => {
 		switch (windowMinutes) {
 			case 15:
-				return "15 minutes";
+				return intl.formatMessage({ id: "nyxguard.ips.window.15m" });
 			case 30:
-				return "30 minutes";
+				return intl.formatMessage({ id: "nyxguard.ips.window.30m" });
 			case 60:
-				return "60 minutes";
+				return intl.formatMessage({ id: "nyxguard.ips.window.60m" });
 			case 1440:
-				return "1 day";
+				return intl.formatMessage({ id: "nyxguard.ips.window.1d" });
 			case 10080:
-				return "7 days";
+				return intl.formatMessage({ id: "nyxguard.ips.window.7d" });
 			case 43200:
-				return "30 days";
+				return intl.formatMessage({ id: "nyxguard.ips.window.30d" });
 			case 86400:
-				return "60 days";
+				return intl.formatMessage({ id: "nyxguard.ips.window.60d" });
 			case 129600:
-				return "90 days";
+				return intl.formatMessage({ id: "nyxguard.ips.window.90d" });
 			default:
-				return `${windowMinutes} minutes`;
+				return intl.formatMessage({ id: "nyxguard.ips.window.minutes" }, { minutes: windowMinutes });
 		}
 	})();
 
@@ -51,13 +53,12 @@ const NyxGuardIPs = () => {
 		refetchInterval: 60000,
 	});
 	useEffect(() => {
-		if (settings.data?.logRetentionDays) {
-			setRetentionDraft(settings.data.logRetentionDays);
-		}
-	}, [settings.data?.logRetentionDays]);
+		if (!settings.data) return;
+		setRetentionDays(settings.data.logRetentionDays);
+	}, [settings.data]);
 
-	const saveRetention = useMutation({
-		mutationFn: (logRetentionDays: 30 | 60 | 90 | 180) => updateNyxGuardSettings({ logRetentionDays }),
+	const applyRetention = useMutation({
+		mutationFn: () => updateNyxGuardSettings({ logRetentionDays: retentionDays }),
 		onSuccess: async () => {
 			await qc.invalidateQueries({ queryKey: ["nyxguard", "settings"] });
 		},
@@ -105,6 +106,13 @@ const NyxGuardIPs = () => {
 		queryFn: () => getNyxGuardIps(windowMinutes, windowMinutes >= 43200 ? 800 : windowMinutes >= 10080 ? 400 : 200),
 		refetchInterval: windowMinutes <= 60 ? 15000 : 60000,
 	});
+	const clearLogs = useMutation({
+		mutationFn: () => clearNyxGuardLogs({ target: "ips", minutes: windowMinutes }),
+		onSuccess: async () => {
+			await qc.invalidateQueries({ queryKey: ["nyxguard", "summary"] });
+			await qc.invalidateQueries({ queryKey: ["nyxguard", "ips"] });
+		},
+	});
 
 	const exportIpsJson = () => {
 		if (!ips.data?.items?.length) return;
@@ -125,139 +133,148 @@ const NyxGuardIPs = () => {
 		setTimeout(() => URL.revokeObjectURL(url), 1000);
 	};
 
-	const retention = settings.data?.logRetentionDays ?? 30;
-	const retentionChanged = retentionDraft !== retention;
-
 	return (
 		<div className={styles.page}>
 			<div className="container-xl">
 				<div className={styles.card}>
 					<div className={styles.headerRow}>
-						<h2 className={styles.title}>IPs & Locations</h2>
+						<h2 className={styles.title}><T id="nyxguard.ips.title" /></h2>
 						<div className={styles.windowButtons}>
 							<button
 								type="button"
 								className={windowMinutes === 15 ? styles.windowActive : styles.window}
 								onClick={() => setWindowMinutes(15)}
 							>
-								Last 15m
+								<T id="nyxguard.ips.window.last-15m" />
 							</button>
 							<button
 								type="button"
 								className={windowMinutes === 30 ? styles.windowActive : styles.window}
 								onClick={() => setWindowMinutes(30)}
 							>
-								Last 30m
+								<T id="nyxguard.ips.window.last-30m" />
 							</button>
 							<button
 								type="button"
 								className={windowMinutes === 60 ? styles.windowActive : styles.window}
 								onClick={() => setWindowMinutes(60)}
 							>
-								Last 60m
+								<T id="nyxguard.ips.window.last-60m" />
 							</button>
 							<button
 								type="button"
 								className={windowMinutes === 1440 ? styles.windowActive : styles.window}
 								onClick={() => setWindowMinutes(1440)}
 							>
-								Last 1d
+								<T id="nyxguard.ips.window.last-1d" />
 							</button>
 							<button
 								type="button"
 								className={windowMinutes === 10080 ? styles.windowActive : styles.window}
 								onClick={() => setWindowMinutes(10080)}
 							>
-								Last 7d
+								<T id="nyxguard.ips.window.last-7d" />
 							</button>
 							<button
 								type="button"
 								className={windowMinutes === 43200 ? styles.windowActive : styles.window}
 								onClick={() => setWindowMinutes(43200)}
 							>
-								Last 30d
+								<T id="nyxguard.ips.window.last-30d" />
 							</button>
 							<button
 								type="button"
 								className={windowMinutes === 86400 ? styles.windowActive : styles.window}
 								onClick={() => setWindowMinutes(86400)}
 							>
-								Last 60d
+								<T id="nyxguard.ips.window.last-60d" />
 							</button>
 							<button
 								type="button"
 								className={windowMinutes === 129600 ? styles.windowActive : styles.window}
 								onClick={() => setWindowMinutes(129600)}
 							>
-								Last 90d
+								<T id="nyxguard.ips.window.last-90d" />
 							</button>
 							<button
 								type="button"
 								className={`${styles.window} ${styles.exportButton}`}
 								disabled={!ips.data?.items?.length || ips.isLoading}
 								onClick={exportIpsJson}
-								title={ips.data?.items?.length ? "Download current table as JSON" : "No data to export"}
+								title={
+									ips.data?.items?.length
+										? intl.formatMessage({ id: "nyxguard.ips.export.tooltip" })
+										: intl.formatMessage({ id: "nyxguard.ips.export.no-data" })
+								}
 							>
-								Export JSON
+								<T id="nyxguard.ips.export-json" />
+							</button>
+							<button
+								type="button"
+								className={styles.window}
+								disabled={clearLogs.isPending}
+								onClick={() => {
+									const ok = window.confirm(
+										intl.formatMessage({ id: "nyxguard.ips.clear-confirm" }, { window: windowLabel }),
+									);
+									if (!ok) return;
+									clearLogs.mutate();
+								}}
+							>
+								<T id="nyxguard.ips.clear-logs" />
 							</button>
 						</div>
 					</div>
 					<p className={styles.subtitle}>
-						Full IP visibility with country, requests, and decision status.
+						<T id="nyxguard.ips.subtitle" />
 					</p>
 
 					<div className="d-flex align-items-center gap-2 mb-3 flex-wrap">
 						<div className="text-secondary text-uppercase" style={{ fontSize: 11, letterSpacing: "0.08em" }}>
-							Log Retention
+							<T id="nyxguard.ips.log-retention" />
 						</div>
 						<select
-							value={retentionDraft}
-							disabled={settings.isLoading || saveRetention.isPending}
-							onChange={(e) =>
-								setRetentionDraft(Number.parseInt(e.target.value, 10) as 30 | 60 | 90 | 180)
-							}
+							value={retentionDays}
+							onChange={(e) => setRetentionDays(Number.parseInt(e.target.value, 10) as 30 | 60 | 90 | 180)}
 							className="form-select form-select-sm"
 							style={{ width: 140 }}
 						>
-							<option value={30}>30 days</option>
-							<option value={60}>60 days</option>
-							<option value={90}>90 days</option>
-							<option value={180}>180 days</option>
+							<option value={30}>{intl.formatMessage({ id: "nyxguard.ips.days" }, { days: 30 })}</option>
+							<option value={60}>{intl.formatMessage({ id: "nyxguard.ips.days" }, { days: 60 })}</option>
+							<option value={90}>{intl.formatMessage({ id: "nyxguard.ips.days" }, { days: 90 })}</option>
+							<option value={180}>{intl.formatMessage({ id: "nyxguard.ips.days" }, { days: 180 })}</option>
 						</select>
 						<button
 							type="button"
 							className={styles.applyBtn}
-							disabled={!retentionChanged || saveRetention.isPending || settings.isLoading}
-							onClick={() => saveRetention.mutate(retentionDraft)}
+							disabled={applyRetention.isPending || retentionDays === (settings.data?.logRetentionDays ?? 90)}
+							onClick={() => applyRetention.mutate()}
 						>
-							Apply
+							<T id="apply" />
 						</button>
-						{saveRetention.isError ? (
-							<div className="text-danger">Failed to save retention.</div>
-						) : null}
 					</div>
 
 					<div className="d-flex align-items-center gap-2 mb-3 flex-wrap">
 						<div className="text-secondary text-uppercase" style={{ fontSize: 11, letterSpacing: "0.08em" }}>
-							GeoIP DB
+							<T id="nyxguard.ips.geoip-db" />
 						</div>
 						<div className="text-secondary">
 							{geoip.isLoading
-								? "Checking…"
+								? intl.formatMessage({ id: "nyxguard.ips.status.checking" })
 								: geoipProvider === "ip2location"
 									? installedIp2
-										? "Installed"
-										: "Not installed"
+										? intl.formatMessage({ id: "nyxguard.ips.status.installed" })
+										: intl.formatMessage({ id: "nyxguard.ips.status.not-installed" })
 									: installedMaxMind
-										? "Installed"
-										: "Not installed"}
+										? intl.formatMessage({ id: "nyxguard.ips.status.installed" })
+										: intl.formatMessage({ id: "nyxguard.ips.status.not-installed" })}
 						</div>
 						<select
 							value={geoipProvider}
 							onChange={(e) => setGeoipProvider(e.target.value as GeoipProvider)}
 							className="form-select form-select-sm"
 							style={{ width: 190 }}
-							title="Choose which GeoIP database you are uploading"
+							title={intl.formatMessage({ id: "nyxguard.ips.geoip-provider-title" })}
 						>
 							<option value="maxmind">MaxMind GeoLite2</option>
 							<option value="ip2location">IP2Location (.mmdb)</option>
@@ -275,21 +292,26 @@ const NyxGuardIPs = () => {
 							disabled={!geoipFile || uploadGeoip.isPending}
 							onClick={() => uploadGeoip.mutate()}
 						>
-							Upload
+							<T id="nyxguard.ips.upload" />
 						</button>
 						{uploadGeoip.isError ? (
 							<div className="text-danger">
-								Upload failed{uploadGeoip.error instanceof Error ? `: ${uploadGeoip.error.message}` : "."}
+								{intl.formatMessage({ id: "nyxguard.ips.upload-failed" })}
+								{uploadGeoip.error instanceof Error ? `: ${uploadGeoip.error.message}` : "."}
 							</div>
 						) : null}
 					</div>
 
 					<div className="d-flex align-items-center gap-2 mb-3 flex-wrap">
 						<div className="text-secondary text-uppercase" style={{ fontSize: 11, letterSpacing: "0.08em" }}>
-							Auto-update
+							<T id="nyxguard.ips.auto-update" />
 						</div>
 						<div className="text-secondary">
-							{geoip.isLoading ? "Checking…" : geoip.data?.updateConfigured ? "Configured" : "Not configured"}
+							{geoip.isLoading
+								? intl.formatMessage({ id: "nyxguard.ips.status.checking" })
+								: geoip.data?.updateConfigured
+									? intl.formatMessage({ id: "nyxguard.ips.status.configured" })
+									: intl.formatMessage({ id: "nyxguard.ips.status.not-configured" })}
 						</div>
 						{geoip.data?.updateConfigured ? (
 							<button
@@ -298,21 +320,21 @@ const NyxGuardIPs = () => {
 								disabled={clearGeoipConfig.isPending}
 								onClick={() => clearGeoipConfig.mutate()}
 							>
-								Clear
+								<T id="nyxguard.ips.clear" />
 							</button>
 						) : (
 							<>
 								<input
 									value={mmAccountId}
 									onChange={(e) => setMmAccountId(e.target.value)}
-									placeholder="MaxMind AccountID"
+									placeholder={intl.formatMessage({ id: "nyxguard.ips.maxmind-account-id" })}
 									className="form-control form-control-sm"
 									style={{ width: 180 }}
 								/>
 								<input
 									value={mmLicenseKey}
 									onChange={(e) => setMmLicenseKey(e.target.value)}
-									placeholder="MaxMind LicenseKey"
+									placeholder={intl.formatMessage({ id: "nyxguard.ips.maxmind-license-key" })}
 									type="password"
 									className="form-control form-control-sm"
 									style={{ width: 260 }}
@@ -323,37 +345,38 @@ const NyxGuardIPs = () => {
 									disabled={!mmAccountId.trim() || !mmLicenseKey.trim() || saveGeoipConfig.isPending}
 									onClick={() => saveGeoipConfig.mutate()}
 								>
-									Save
+									<T id="save" />
 								</button>
 							</>
 						)}
 						{saveGeoipConfig.isError ? (
 							<div className="text-danger">
-								Save failed{saveGeoipConfig.error instanceof Error ? `: ${saveGeoipConfig.error.message}` : "."}
+								{intl.formatMessage({ id: "nyxguard.ips.save-failed" })}
+								{saveGeoipConfig.error instanceof Error ? `: ${saveGeoipConfig.error.message}` : "."}
 							</div>
 						) : null}
 					</div>
 
 					{ips.isLoading ? (
-						<div className={styles.emptyState}>Loading…</div>
+						<div className={styles.emptyState}><T id="loading" /></div>
 					) : ips.isError ? (
-						<div className={styles.emptyState}>Unable to load IP data.</div>
+						<div className={styles.emptyState}><T id="nyxguard.ips.load-error" /></div>
 					) : (ips.data?.items?.length ?? 0) === 0 ? (
 						<div className={styles.emptyState}>
-							No IP data found in the last {windowLabel}.
+							{intl.formatMessage({ id: "nyxguard.ips.empty-window" }, { window: windowLabel })}
 						</div>
 					) : (
-						<div style={{ overflowX: "auto" }}>
+						<div className={`nyx-scroll-y nyx-scroll-theme ${styles.tableViewport}`}>
 							<table className="table table-sm table-vcenter">
 								<thead>
 									<tr>
-										<th>IP</th>
-										<th>Country</th>
-										<th className="text-end">Requests</th>
-										<th className="text-end">Blocked</th>
-										<th className="text-end">Allowed</th>
-										<th>Last Seen</th>
-										<th>Hosts</th>
+										<th><T id="nyxguard.ips.table.ip" /></th>
+										<th><T id="nyxguard.ips.table.country" /></th>
+										<th className="text-end"><T id="nyxguard.ips.table.requests" /></th>
+										<th className="text-end"><T id="nyxguard.ips.table.blocked" /></th>
+										<th className="text-end"><T id="nyxguard.ips.table.allowed" /></th>
+										<th><T id="nyxguard.ips.table.last-seen" /></th>
+										<th><T id="nyxguard.ips.table.hosts" /></th>
 									</tr>
 								</thead>
 								<tbody>

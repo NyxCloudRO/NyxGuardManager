@@ -11,6 +11,9 @@ test/node_modules
 docker/dev/dnsrouter-config.json.tmp
 docker/dev/resolv.conf
 
+# Stray local folder (not part of the repo's runtime/build).
+/backend/
+
 # Local artifacts (never commit)
 DailyBackup/
 security-reports/

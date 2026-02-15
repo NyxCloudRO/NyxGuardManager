@@ -69,14 +69,14 @@ function Router() {
 							<Routes>
 								<Route path="*" element={<ErrorNotFound />} />
 								<Route path="/nyxguard" element={<NyxGuard />} />
-									<Route path="/nyxguard/traffic" element={<NyxGuardTraffic />} />
-									<Route path="/nyxguard/ips" element={<NyxGuardIPs />} />
-									<Route path="/nyxguard/rules" element={<NyxGuardRules />} />
-									<Route path="/nyxguard/ddos" element={<Navigate to="/nyxguard/globalgate" replace />} />
-									<Route path="/nyxguard/bot" element={<Navigate to="/nyxguard/globalgate" replace />} />
-									<Route path="/nyxguard/apps" element={<NyxGuardApps />} />
-									<Route path="/nyxguard/attacks" element={<NyxGuardAttacks />} />
-									<Route path="/nyxguard/globalgate" element={<NyxGuardGlobalGate />} />
+								<Route path="/nyxguard/traffic" element={<NyxGuardTraffic />} />
+								<Route path="/nyxguard/ips" element={<NyxGuardIPs />} />
+								<Route path="/nyxguard/rules" element={<NyxGuardRules />} />
+								<Route path="/nyxguard/ddos" element={<Navigate to="/nyxguard/globalgate" replace />} />
+								<Route path="/nyxguard/bot" element={<Navigate to="/nyxguard/globalgate" replace />} />
+								<Route path="/nyxguard/apps" element={<NyxGuardApps />} />
+								<Route path="/nyxguard/attacks" element={<NyxGuardAttacks />} />
+								<Route path="/nyxguard/globalgate" element={<NyxGuardGlobalGate />} />
 								<Route path="/certificates" element={<Certificates />} />
 								<Route path="/access" element={<Access />} />
 								<Route path="/audit-log" element={<AuditLog />} />

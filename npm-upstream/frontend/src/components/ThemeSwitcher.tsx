@@ -1,6 +1,7 @@
 import { IconCheck, IconPalette } from "@tabler/icons-react";
 import cn from "classnames";
 import { useTheme } from "src/hooks";
+import { intl } from "src/locale";
 import styles from "./ThemeSwitcher.module.css";
 
 interface Props {
@@ -21,7 +22,8 @@ function ThemeSwitcher({ className, compact = false }: Props) {
 			>
 				<IconPalette size={16} />
 				<span className={styles.switcherLabel}>
-					Theme{compact ? "" : ":"} <strong>{currentTheme.displayName}</strong>
+					{intl.formatMessage({ id: "theme.label" })}
+					{compact ? "" : ":"} <strong>{currentTheme.displayName}</strong>
 				</span>
 			</button>
 			<div className={cn("dropdown-menu", "dropdown-menu-end", styles.switcherMenu)}>

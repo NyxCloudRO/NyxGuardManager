@@ -90,10 +90,10 @@
 		"defaultMessage": "{users} {users, plural, one {User} other {Users}}, {rules} {rules, plural, one {Rule} other {Rules}} - Created: {date}"
 	},
 	"access-lists": {
-		"defaultMessage": "Access Lists"
+		"defaultMessage": "Liste de Acces"
 	},
 	"action": {
-		"defaultMessage": "Action"
+		"defaultMessage": "Actiune"
 	},
 	"action.add": {
 		"defaultMessage": "Add"
@@ -135,16 +135,16 @@
 		"defaultMessage": "View Details"
 	},
 	"actions": {
-		"defaultMessage": "Actions"
+		"defaultMessage": "Actiuni"
 	},
 	"allow": {
-		"defaultMessage": "Allow"
+		"defaultMessage": "Permite"
 	},
 	"apply": {
-		"defaultMessage": "Apply"
+		"defaultMessage": "Aplica"
 	},
 	"auditlogs": {
-		"defaultMessage": "Audit Logs"
+		"defaultMessage": "Jurnale Audit"
 	},
 	"auto": {
 		"defaultMessage": "Auto"
@@ -183,7 +183,7 @@
 		"defaultMessage": "Renew Certificate"
 	},
 	"certificates": {
-		"defaultMessage": "Certificates"
+		"defaultMessage": "Certificate"
 	},
 	"certificates.custom": {
 		"defaultMessage": "Custom Certificate"
@@ -330,37 +330,37 @@
 		"defaultMessage": "Created: {date}"
 	},
 	"dashboard": {
-		"defaultMessage": "Dashboard"
+		"defaultMessage": "Panou de Control"
 	},
 	"dashboard.attacks-breakdown": {
 		"defaultMessage": "Total: {total} | SQL {sqli} DDoS {ddos} Bot {bot}"
 	},
 	"dashboard.attacks-last-1d": {
-		"defaultMessage": "Attacks (last 1d)"
+		"defaultMessage": "Atacuri (ultimele 1z)"
 	},
 	"dashboard.blocked-1d": {
-		"defaultMessage": "Blocked (1d): {count}"
+		"defaultMessage": "Blocate (1z): {count}"
 	},
 	"dashboard.blocked-over-requests": {
-		"defaultMessage": "Blocked: {blocked} / Requests: {requests}"
+		"defaultMessage": "Blocate: {blocked} / Cereri: {requests}"
 	},
 	"dashboard.blocked-rate-1d": {
-		"defaultMessage": "Blocked Rate (1d): {rate}"
+		"defaultMessage": "Rata blocare (1z): {rate}"
 	},
 	"dashboard.protected-apps": {
-		"defaultMessage": "{count} Protected Apps"
+		"defaultMessage": "{count} Aplicatii Protejate"
 	},
 	"dashboard.requests-1d": {
-		"defaultMessage": "Requests (1d): {count}"
+		"defaultMessage": "Cereri (1z): {count}"
 	},
 	"dashboard.total-apps": {
-		"defaultMessage": "Total apps: {count}"
+		"defaultMessage": "Aplicatii totale: {count}"
 	},
 	"dashboard.traffic-rx-1d": {
-		"defaultMessage": "Traffic (1d): RX {bytes}"
+		"defaultMessage": "Trafic (1z): RX {bytes}"
 	},
 	"dashboard.traffic-tx-1d": {
-		"defaultMessage": "TX (1d): {bytes}"
+		"defaultMessage": "TX (1z): {bytes}"
 	},
 	"dead-host": {
 		"defaultMessage": "404 Host"
@@ -372,10 +372,10 @@
 		"defaultMessage": "{count} {count, plural, one {404 Host} other {404 Hosts}}"
 	},
 	"delete": {
-		"defaultMessage": "Delete"
+		"defaultMessage": "Sterge"
 	},
 	"deny": {
-		"defaultMessage": "Deny"
+		"defaultMessage": "Blocheaza"
 	},
 	"disabled": {
 		"defaultMessage": "Disabled"
@@ -411,7 +411,7 @@
 		"defaultMessage": "Use DNS Challenge"
 	},
 	"duration": {
-		"defaultMessage": "Duration"
+		"defaultMessage": "Durata"
 	},
 	"email-address": {
 		"defaultMessage": "Email address"
@@ -462,7 +462,7 @@
 		"defaultMessage": "This is required"
 	},
 	"expires": {
-		"defaultMessage": "Expires"
+		"defaultMessage": "Expira"
 	},
 	"expires.on": {
 		"defaultMessage": "Expires: {date}"
@@ -498,7 +498,7 @@
 		"defaultMessage": "HTTP Only"
 	},
 	"language.label": {
-		"defaultMessage": "Language"
+		"defaultMessage": "Limba"
 	},
 	"lets-encrypt": {
 		"defaultMessage": "Let's Encrypt"
@@ -576,10 +576,10 @@
 		"defaultMessage": "NyxGuard"
 	},
 	"nyxguard-apps": {
-		"defaultMessage": "Applications"
+		"defaultMessage": "Aplicatii"
 	},
 	"nyxguard-attacks": {
-		"defaultMessage": "Threat Activity"
+		"defaultMessage": "Activitate Amenintari"
 	},
 	"nyxguard-bot": {
 		"defaultMessage": "Bot Defense"
@@ -588,22 +588,22 @@
 		"defaultMessage": "DDoS Protection"
 	},
 	"nyxguard-globalgate": {
-		"defaultMessage": "GlobalGate Shieldwall"
+		"defaultMessage": "Scut GlobalGate"
 	},
 	"nyxguard-ips": {
-		"defaultMessage": "IPs & Geo"
+		"defaultMessage": "IP si Geo"
 	},
 	"nyxguard-rules": {
-		"defaultMessage": "Traffic Rules"
+		"defaultMessage": "Reguli Trafic"
 	},
 	"nyxguard-traffic": {
-		"defaultMessage": "Live Traffic"
+		"defaultMessage": "Trafic in timp real"
 	},
 	"nyxguard.allowed-window": {
-		"defaultMessage": "Allowed ({window})"
+		"defaultMessage": "Permise ({window})"
 	},
 	"nyxguard.apps.action.auth-global-off": {
-		"defaultMessage": "Auth Bypass (Global OFF)"
+		"defaultMessage": "Bypass Auth (Global OFF)"
 	},
 	"nyxguard.apps.action.bot-global-off": {
 		"defaultMessage": "Bot Defence (Global OFF)"
@@ -612,169 +612,154 @@
 		"defaultMessage": "DDoS (Global OFF)"
 	},
 	"nyxguard.apps.action.disable-auth": {
-		"defaultMessage": "Disable Auth Bypass"
+		"defaultMessage": "Dezactiveaza Bypass Auth"
 	},
 	"nyxguard.apps.action.disable-bot": {
-		"defaultMessage": "Disable Bot Defence"
+		"defaultMessage": "Dezactiveaza Protectia Bot"
 	},
 	"nyxguard.apps.action.disable-ddos": {
-		"defaultMessage": "Disable DDoS"
+		"defaultMessage": "Dezactiveaza DDoS"
 	},
 	"nyxguard.apps.action.disable-sqli": {
-		"defaultMessage": "Disable SQL Shield"
+		"defaultMessage": "Dezactiveaza Scut SQL"
 	},
 	"nyxguard.apps.action.disable-waf": {
-		"defaultMessage": "Disable WAF"
+		"defaultMessage": "Dezactiveaza WAF"
 	},
 	"nyxguard.apps.action.enable-auth": {
-		"defaultMessage": "Enable Auth Bypass"
+		"defaultMessage": "Activeaza Bypass Auth"
 	},
 	"nyxguard.apps.action.enable-bot": {
-		"defaultMessage": "Enable Bot Defence"
+		"defaultMessage": "Activeaza Protectia Bot"
 	},
 	"nyxguard.apps.action.enable-ddos": {
-		"defaultMessage": "Enable DDoS"
+		"defaultMessage": "Activeaza DDoS"
 	},
 	"nyxguard.apps.action.enable-sqli": {
-		"defaultMessage": "Enable SQL Shield"
+		"defaultMessage": "Activeaza Scut SQL"
 	},
 	"nyxguard.apps.action.enable-waf": {
-		"defaultMessage": "Enable WAF"
+		"defaultMessage": "Activeaza WAF"
 	},
 	"nyxguard.apps.action.sqli-global-off": {
-		"defaultMessage": "SQL Shield (Global OFF)"
+		"defaultMessage": "Scut SQL (Global OFF)"
 	},
 	"nyxguard.apps.empty": {
-		"defaultMessage": "No proxy hosts found yet."
+		"defaultMessage": "Nu exista hosturi proxy inca."
 	},
 	"nyxguard.apps.error.update-failed": {
-		"defaultMessage": "Unable to update WAF status."
+		"defaultMessage": "Actualizarea statusului WAF a esuat."
 	},
 	"nyxguard.apps.load-error": {
-		"defaultMessage": "Unable to load proxy hosts."
+		"defaultMessage": "Nu s-au putut incarca hosturile proxy."
 	},
 	"nyxguard.apps.loading": {
-		"defaultMessage": "Loading..."
+		"defaultMessage": "Se incarca..."
 	},
 	"nyxguard.apps.proxy-host-fallback": {
 		"defaultMessage": "Proxy Host #{id}"
 	},
 	"nyxguard.apps.status.monitoring": {
-		"defaultMessage": "Monitoring"
+		"defaultMessage": "Monitorizare"
 	},
 	"nyxguard.apps.status.protected": {
-		"defaultMessage": "Protected"
+		"defaultMessage": "Protejat"
 	},
 	"nyxguard.apps.subtitle": {
-		"defaultMessage": "Assign WAF profiles, enforce rules, and monitor app status."
+		"defaultMessage": "Atribuie profile WAF, aplica reguli si monitorizeaza statusul aplicatiilor."
 	},
 	"nyxguard.apps.title": {
-		"defaultMessage": "Protected Apps"
+		"defaultMessage": "Aplicatii protejate"
 	},
 	"nyxguard.apps.tooltip.auth-global-off": {
-		"defaultMessage": "Authenticated Traffic Bypass is disabled globally (GlobalGate)."
+		"defaultMessage": "Bypass trafic autentificat este dezactivat global (GlobalGate)."
 	},
 	"nyxguard.apps.tooltip.auth-info": {
-		"defaultMessage": "If enabled, authenticated users are far less likely to be blocked by protections."
+		"defaultMessage": "Daca este activat, utilizatorii autentificati au sanse mult mai mici sa fie blocati de protectii."
 	},
 	"nyxguard.apps.tooltip.bot-global-off": {
-		"defaultMessage": "Bot Defense is disabled globally (GlobalGate)."
+		"defaultMessage": "Protectia Bot este dezactivata global (GlobalGate)."
 	},
 	"nyxguard.apps.tooltip.ddos-global-off": {
-		"defaultMessage": "DDoS Shield is disabled globally (GlobalGate)."
+		"defaultMessage": "Protectia DDoS este dezactivata global (GlobalGate)."
 	},
 	"nyxguard.apps.tooltip.enable-waf-first": {
-		"defaultMessage": "Enable WAF first"
+		"defaultMessage": "Activeaza WAF mai intai"
 	},
 	"nyxguard.apps.tooltip.sqli-global-off": {
-		"defaultMessage": "SQL Shield is disabled globally (GlobalGate)."
+		"defaultMessage": "Protectia SQL este dezactivata global (GlobalGate)."
 	},
 	"nyxguard.apps.tooltip.toggle-bot": {
-		"defaultMessage": "Toggle Bot Defence"
+		"defaultMessage": "Comuta Protectia Bot"
 	},
 	"nyxguard.apps.tooltip.toggle-ddos": {
-		"defaultMessage": "Toggle DDoS Shield"
+		"defaultMessage": "Comuta Protectia DDoS"
 	},
 	"nyxguard.apps.tooltip.toggle-sqli": {
-		"defaultMessage": "Toggle SQL Shield"
+		"defaultMessage": "Comuta Protectia SQL"
 	},
 	"nyxguard.attacks-window": {
-		"defaultMessage": "Attacks ({window})"
-	},
-	"nyxguard.attacks.clear-confirm": {
-		"defaultMessage": "Clear attack logs for the current last {days} day(s) window?"
+		"defaultMessage": "Atacuri ({window})"
 	},
 	"nyxguard.attacks.clear-logs": {
-		"defaultMessage": "Clear Logs"
+		"defaultMessage": "Curata Loguri"
 	},
 	"nyxguard.attacks.day-1": {
-		"defaultMessage": "1 day"
+		"defaultMessage": "1 zi"
 	},
 	"nyxguard.attacks.day-30": {
-		"defaultMessage": "30 days"
+		"defaultMessage": "30 zile"
 	},
 	"nyxguard.attacks.day-7": {
-		"defaultMessage": "7 days"
+		"defaultMessage": "7 zile"
 	},
 	"nyxguard.attacks.duration-24h": {
-		"defaultMessage": "24 hours"
+		"defaultMessage": "24 ore"
 	},
 	"nyxguard.attacks.duration-30d": {
-		"defaultMessage": "30 days"
+		"defaultMessage": "30 zile"
 	},
 	"nyxguard.attacks.duration-permanent": {
 		"defaultMessage": "Permanent"
 	},
 	"nyxguard.attacks.empty": {
-		"defaultMessage": "No attacks detected in this window."
-	},
-	"nyxguard.attacks.failed-clear": {
-		"defaultMessage": "Failed to clear attack logs."
-	},
-	"nyxguard.attacks.failed-update-ban": {
-		"defaultMessage": "Failed to update ban."
-	},
-	"nyxguard.attacks.load-error": {
-		"defaultMessage": "Unable to load attacks (API error)."
-	},
-	"nyxguard.attacks.logs-cleared": {
-		"defaultMessage": "Attack logs cleared"
+		"defaultMessage": "Nu au fost detectate atacuri in acest interval."
 	},
 	"nyxguard.attacks.set-ban": {
-		"defaultMessage": "Set ban..."
+		"defaultMessage": "Seteaza ban..."
 	},
 	"nyxguard.attacks.status.banned": {
-		"defaultMessage": "Banned"
+		"defaultMessage": "Blocat"
 	},
 	"nyxguard.attacks.status.not-banned": {
-		"defaultMessage": "Not banned"
+		"defaultMessage": "Neblocat"
 	},
 	"nyxguard.attacks.status.permanent": {
 		"defaultMessage": "Permanent"
 	},
 	"nyxguard.attacks.status.until": {
-		"defaultMessage": "Until {date}"
+		"defaultMessage": "Pana la {date}"
 	},
 	"nyxguard.attacks.subtitle": {
-		"defaultMessage": "Recent bot, DDoS, and SQL threat activity detected by NyxGuard."
+		"defaultMessage": "Activitate recenta bot, DDoS si SQL detectata de NyxGuard."
 	},
 	"nyxguard.attacks.table.adjust": {
-		"defaultMessage": "Adjust"
+		"defaultMessage": "Ajustare"
 	},
 	"nyxguard.attacks.table.ban": {
 		"defaultMessage": "Ban"
 	},
 	"nyxguard.attacks.table.count": {
-		"defaultMessage": "Count"
+		"defaultMessage": "Numar"
 	},
 	"nyxguard.attacks.table.ip": {
 		"defaultMessage": "IP"
 	},
 	"nyxguard.attacks.table.last-seen": {
-		"defaultMessage": "Last Seen"
+		"defaultMessage": "Ultima aparitie"
 	},
 	"nyxguard.attacks.table.type": {
-		"defaultMessage": "Type"
+		"defaultMessage": "Tip"
 	},
 	"nyxguard.attacks.type.bot": {
 		"defaultMessage": "Bot"
@@ -785,86 +770,83 @@
 	"nyxguard.attacks.type.sql": {
 		"defaultMessage": "SQL"
 	},
-	"nyxguard.attacks.updated-ban": {
-		"defaultMessage": "Updated ban for {ip}"
-	},
 	"nyxguard.blocked-window": {
-		"defaultMessage": "Blocked ({window})"
+		"defaultMessage": "Blocate ({window})"
 	},
 	"nyxguard.cpu-usage": {
-		"defaultMessage": "CPU Usage"
+		"defaultMessage": "Utilizare CPU"
 	},
 	"nyxguard.geo-source": {
-		"defaultMessage": "Geo Source"
+		"defaultMessage": "Sursa Geo"
 	},
 	"nyxguard.globalgate.auth-bypass": {
-		"defaultMessage": "Authenticated Traffic Bypass"
+		"defaultMessage": "Bypass Trafic Autentificat"
 	},
 	"nyxguard.globalgate.auth-bypass-help": {
-		"defaultMessage": "If enabled, authenticated users are far less likely to be blocked by bot/SQL/DDoS protections."
+		"defaultMessage": "Daca este activat, utilizatorii autentificati au sanse mult mai mici sa fie blocati de protectiile bot/SQL/DDoS."
 	},
 	"nyxguard.globalgate.ban-duration-hours": {
-		"defaultMessage": "Ban duration (hours)"
+		"defaultMessage": "Durata ban (ore)"
 	},
 	"nyxguard.globalgate.block-threshold": {
-		"defaultMessage": "Block threshold (score)"
+		"defaultMessage": "Prag blocare (scor)"
 	},
 	"nyxguard.globalgate.bot-defense": {
-		"defaultMessage": "Bot Defense"
+		"defaultMessage": "Protectie Bot"
 	},
 	"nyxguard.globalgate.bot-tuning": {
-		"defaultMessage": "Bot Defense Tuning"
+		"defaultMessage": "Tuning Protectie Bot"
 	},
 	"nyxguard.globalgate.burst": {
 		"defaultMessage": "Burst"
 	},
 	"nyxguard.globalgate.burst-help": {
-		"defaultMessage": "Extra requests allowed during spikes."
+		"defaultMessage": "Cereri suplimentare permise in varfuri."
 	},
 	"nyxguard.globalgate.connection-limit": {
-		"defaultMessage": "Connection limit"
+		"defaultMessage": "Limita conexiuni"
 	},
 	"nyxguard.globalgate.connection-limit-help": {
 		"defaultMessage": "limit_conn nyxguard_conn."
 	},
 	"nyxguard.globalgate.ddos-shield": {
-		"defaultMessage": "DDoS Shield"
+		"defaultMessage": "Scut DDoS"
 	},
 	"nyxguard.globalgate.ddos-tuning": {
-		"defaultMessage": "DDoS Shield Tuning"
+		"defaultMessage": "Tuning Scut DDoS"
 	},
 	"nyxguard.globalgate.default-24-hours": {
-		"defaultMessage": "Default is 24 hours."
+		"defaultMessage": "Implicit este 24 de ore."
 	},
 	"nyxguard.globalgate.disable-waf-all": {
-		"defaultMessage": "Disable WAF for all proxy hosts"
+		"defaultMessage": "Dezactiveaza WAF pentru toate hosturile proxy"
 	},
 	"nyxguard.globalgate.enable-waf-all": {
-		"defaultMessage": "Enable WAF for all proxy hosts"
+		"defaultMessage": "Activeaza WAF pentru toate hosturile proxy"
 	},
 	"nyxguard.globalgate.failed-login-auto-ban": {
-		"defaultMessage": "Failed Login Auto-Ban"
+		"defaultMessage": "Auto-Ban Login Esuat"
 	},
 	"nyxguard.globalgate.global-toggles": {
-		"defaultMessage": "Global Toggles"
+		"defaultMessage": "Comutatoare Globale"
 	},
 	"nyxguard.globalgate.loading": {
-		"defaultMessage": "Loading GlobalGate Security Layer..."
+		"defaultMessage": "Se incarca stratul de securitate GlobalGate..."
 	},
 	"nyxguard.globalgate.log-retention": {
-		"defaultMessage": "Log Retention"
+		"defaultMessage": "Retentie Loguri"
 	},
 	"nyxguard.globalgate.log-retention-days": {
-		"defaultMessage": "NyxGuard log retention (days)"
+		"defaultMessage": "Retentie loguri NyxGuard (zile)"
 	},
 	"nyxguard.globalgate.log-retention-help": {
-		"defaultMessage": "Controls how long proxy access/error logs are kept on disk."
+		"defaultMessage": "Controleaza cat timp sunt pastrate pe disk logurile de acces/eroare proxy."
 	},
 	"nyxguard.globalgate.max-body-inspect": {
-		"defaultMessage": "Max body inspect (bytes)"
+		"defaultMessage": "Inspectie maxima body (bytes)"
 	},
 	"nyxguard.globalgate.no-proxy-hosts": {
-		"defaultMessage": "No proxy hosts found yet."
+		"defaultMessage": "Nu exista hosturi proxy inca."
 	},
 	"nyxguard.globalgate.off": {
 		"defaultMessage": "OFF"
@@ -876,115 +858,115 @@
 		"defaultMessage": "PARTIAL"
 	},
 	"nyxguard.globalgate.path-help": {
-		"defaultMessage": "Used to block common automated scanning paths. One token per line. Case-insensitive substring match against the request URI. Examples: wp-login.php, xmlrpc.php, .env, phpmyadmin."
+		"defaultMessage": "Folosit pentru blocarea cailor comune de scanare automata. Un token pe linie. Potrivire substring fara sensibilitate la litere mari/mici pe URI request. Exemple: wp-login.php, xmlrpc.php, .env, phpmyadmin."
 	},
 	"nyxguard.globalgate.path-tokens": {
-		"defaultMessage": "Path tokens (one per line)"
+		"defaultMessage": "Tokeni cale (cate unul pe linie)"
 	},
 	"nyxguard.globalgate.probe-ban-score": {
-		"defaultMessage": "Probe ban score"
+		"defaultMessage": "Scor banare proba"
 	},
 	"nyxguard.globalgate.probe-min-score": {
-		"defaultMessage": "Probe min score"
+		"defaultMessage": "Scor minim proba"
 	},
 	"nyxguard.globalgate.probe-min-score-help": {
-		"defaultMessage": "Scores above this count toward correlation."
+		"defaultMessage": "Scorurile peste aceasta valoare contribuie la corelare."
 	},
 	"nyxguard.globalgate.probe-window-seconds": {
-		"defaultMessage": "Probe window (seconds)"
+		"defaultMessage": "Fereastra proba (secunde)"
 	},
 	"nyxguard.globalgate.rate-help": {
-		"defaultMessage": "Global limit_req_zone rate."
+		"defaultMessage": "Rata globala limit_req_zone."
 	},
 	"nyxguard.globalgate.rate-rps": {
-		"defaultMessage": "Rate (requests/sec)"
+		"defaultMessage": "Rata (cereri/sec)"
 	},
 	"nyxguard.globalgate.save-error": {
-		"defaultMessage": "Unable to save settings. Check API and try again."
+		"defaultMessage": "Setarile nu au putut fi salvate. Verifica API si incearca din nou."
 	},
 	"nyxguard.globalgate.save-settings": {
-		"defaultMessage": "Save GlobalGate Settings"
+		"defaultMessage": "Salveaza Setarile GlobalGate"
 	},
 	"nyxguard.globalgate.sql-shield": {
-		"defaultMessage": "SQL Shield"
+		"defaultMessage": "Scut SQL"
 	},
 	"nyxguard.globalgate.sqli-tuning": {
-		"defaultMessage": "SQL Shield Tuning"
+		"defaultMessage": "Tuning Scut SQL"
 	},
 	"nyxguard.globalgate.subtitle": {
-		"defaultMessage": "GlobalGate is the central control surface for NyxGuard's global protections. Changes apply instantly after nginx reload and affect all protected applications."
+		"defaultMessage": "GlobalGate este suprafata centrala de control pentru protectiile globale NyxGuard. Modificarile se aplica instant dupa reload nginx si afecteaza toate aplicatiile protejate."
 	},
 	"nyxguard.globalgate.threshold-attempts": {
-		"defaultMessage": "Threshold (attempts)"
+		"defaultMessage": "Prag (incercari)"
 	},
 	"nyxguard.globalgate.title": {
-		"defaultMessage": "GlobalGate Security Layer"
+		"defaultMessage": "Stratul de Securitate GlobalGate"
 	},
 	"nyxguard.globalgate.user-agent-help": {
-		"defaultMessage": "Used to identify known bot tools by their User-Agent. One token per line. Case-insensitive substring match. Examples: sqlmap, nikto, python-requests, curl."
+		"defaultMessage": "Folosit pentru identificarea instrumentelor bot dupa User-Agent. Un token pe linie. Potrivire substring fara sensibilitate la litere mari/mici. Exemple: sqlmap, nikto, python-requests, curl."
 	},
 	"nyxguard.globalgate.user-agent-tokens": {
-		"defaultMessage": "User-Agent tokens (one per line)"
+		"defaultMessage": "Tokeni User-Agent (cate unul pe linie)"
 	},
 	"nyxguard.globalgate.waf-protection": {
-		"defaultMessage": "WAF Protection"
+		"defaultMessage": "Protectie WAF"
 	},
 	"nyxguard.globalgate.window-seconds": {
-		"defaultMessage": "Window (seconds)"
+		"defaultMessage": "Fereastra (secunde)"
 	},
 	"nyxguard.hdd-free": {
-		"defaultMessage": "HDD Free"
+		"defaultMessage": "HDD Liber"
 	},
 	"nyxguard.hdd-total": {
 		"defaultMessage": "HDD Total"
 	},
 	"nyxguard.hdd-used": {
-		"defaultMessage": "HDD Used"
+		"defaultMessage": "HDD Folosit"
 	},
 	"nyxguard.host-resources": {
-		"defaultMessage": "Host Resources"
+		"defaultMessage": "Resurse Gazda"
 	},
 	"nyxguard.host-resources-subtitle": {
-		"defaultMessage": "CPU, RAM, and disk usage from the server running this app."
+		"defaultMessage": "Utilizare CPU, RAM si disc pentru serverul pe care ruleaza aplicatia."
 	},
 	"nyxguard.ips.auto-update": {
-		"defaultMessage": "Auto-Update"
+		"defaultMessage": "Auto-Actualizare"
 	},
 	"nyxguard.ips.clear": {
-		"defaultMessage": "Clear"
+		"defaultMessage": "Goleste"
 	},
 	"nyxguard.ips.clear-confirm": {
-		"defaultMessage": "Clear IP/location logs for the current {window} view?"
+		"defaultMessage": "Golesti logurile IP/locatie pentru fereastra curenta {window}?"
 	},
 	"nyxguard.ips.clear-logs": {
-		"defaultMessage": "Clear Logs"
+		"defaultMessage": "Goleste Loguri"
 	},
 	"nyxguard.ips.days": {
-		"defaultMessage": "{days} days"
+		"defaultMessage": "{days} zile"
 	},
 	"nyxguard.ips.empty-window": {
-		"defaultMessage": "No IP data found in the last {window}."
+		"defaultMessage": "Nu exista date IP in ultimele {window}."
 	},
 	"nyxguard.ips.export-json": {
 		"defaultMessage": "Export JSON"
 	},
 	"nyxguard.ips.export.no-data": {
-		"defaultMessage": "No data to export"
+		"defaultMessage": "Nu exista date pentru export"
 	},
 	"nyxguard.ips.export.tooltip": {
-		"defaultMessage": "Download current table as JSON"
+		"defaultMessage": "Descarca tabelul curent ca JSON"
 	},
 	"nyxguard.ips.geoip-db": {
-		"defaultMessage": "GeoIP DB"
+		"defaultMessage": "Baza GeoIP"
 	},
 	"nyxguard.ips.geoip-provider-title": {
-		"defaultMessage": "Choose which GeoIP database you are uploading"
+		"defaultMessage": "Alege baza GeoIP pe care o incarci"
 	},
 	"nyxguard.ips.load-error": {
-		"defaultMessage": "Unable to load IP data."
+		"defaultMessage": "Nu se pot incarca datele IP."
 	},
 	"nyxguard.ips.log-retention": {
-		"defaultMessage": "Log Retention"
+		"defaultMessage": "Retentie Loguri"
 	},
 	"nyxguard.ips.maxmind-account-id": {
 		"defaultMessage": "MaxMind AccountID"
@@ -993,337 +975,304 @@
 		"defaultMessage": "MaxMind LicenseKey"
 	},
 	"nyxguard.ips.save-failed": {
-		"defaultMessage": "Save failed"
+		"defaultMessage": "Salvare esuata"
 	},
 	"nyxguard.ips.status.checking": {
-		"defaultMessage": "Checking..."
+		"defaultMessage": "Verificare..."
 	},
 	"nyxguard.ips.status.configured": {
-		"defaultMessage": "Configured"
+		"defaultMessage": "Configurat"
 	},
 	"nyxguard.ips.status.installed": {
-		"defaultMessage": "Installed"
+		"defaultMessage": "Instalat"
 	},
 	"nyxguard.ips.status.not-configured": {
-		"defaultMessage": "Not configured"
+		"defaultMessage": "Neconfigurat"
 	},
 	"nyxguard.ips.status.not-installed": {
-		"defaultMessage": "Not installed"
+		"defaultMessage": "Neinstalat"
 	},
 	"nyxguard.ips.subtitle": {
-		"defaultMessage": "Full IP visibility with country, requests, and decision status."
+		"defaultMessage": "Vizibilitate completa IP cu tara, cereri si status decizie."
 	},
 	"nyxguard.ips.table.allowed": {
-		"defaultMessage": "Allowed"
+		"defaultMessage": "Permise"
 	},
 	"nyxguard.ips.table.blocked": {
-		"defaultMessage": "Blocked"
+		"defaultMessage": "Blocate"
 	},
 	"nyxguard.ips.table.country": {
-		"defaultMessage": "Country"
+		"defaultMessage": "Tara"
 	},
 	"nyxguard.ips.table.hosts": {
-		"defaultMessage": "Hosts"
+		"defaultMessage": "Hosturi"
 	},
 	"nyxguard.ips.table.ip": {
 		"defaultMessage": "IP"
 	},
 	"nyxguard.ips.table.last-seen": {
-		"defaultMessage": "Last Seen"
+		"defaultMessage": "Ultima Data"
 	},
 	"nyxguard.ips.table.requests": {
-		"defaultMessage": "Requests"
+		"defaultMessage": "Cereri"
 	},
 	"nyxguard.ips.title": {
-		"defaultMessage": "IPs & Locations"
+		"defaultMessage": "IP-uri si Locatii"
 	},
 	"nyxguard.ips.upload": {
-		"defaultMessage": "Upload"
+		"defaultMessage": "Incarca"
 	},
 	"nyxguard.ips.upload-failed": {
-		"defaultMessage": "Upload failed"
+		"defaultMessage": "Incarcare esuata"
 	},
 	"nyxguard.ips.window.15m": {
-		"defaultMessage": "15 minutes"
+		"defaultMessage": "15 minute"
 	},
 	"nyxguard.ips.window.1d": {
-		"defaultMessage": "1 day"
+		"defaultMessage": "1 zi"
 	},
 	"nyxguard.ips.window.30d": {
-		"defaultMessage": "30 days"
+		"defaultMessage": "30 zile"
 	},
 	"nyxguard.ips.window.30m": {
-		"defaultMessage": "30 minutes"
+		"defaultMessage": "30 minute"
 	},
 	"nyxguard.ips.window.60d": {
-		"defaultMessage": "60 days"
+		"defaultMessage": "60 zile"
 	},
 	"nyxguard.ips.window.60m": {
-		"defaultMessage": "60 minutes"
+		"defaultMessage": "60 minute"
 	},
 	"nyxguard.ips.window.7d": {
-		"defaultMessage": "7 days"
+		"defaultMessage": "7 zile"
 	},
 	"nyxguard.ips.window.90d": {
-		"defaultMessage": "90 days"
+		"defaultMessage": "90 zile"
 	},
 	"nyxguard.ips.window.last-15m": {
-		"defaultMessage": "Last 15m"
+		"defaultMessage": "Ultimele 15m"
 	},
 	"nyxguard.ips.window.last-1d": {
-		"defaultMessage": "Last 1d"
+		"defaultMessage": "Ultima 1z"
 	},
 	"nyxguard.ips.window.last-30d": {
-		"defaultMessage": "Last 30d"
+		"defaultMessage": "Ultimele 30z"
 	},
 	"nyxguard.ips.window.last-30m": {
-		"defaultMessage": "Last 30m"
+		"defaultMessage": "Ultimele 30m"
 	},
 	"nyxguard.ips.window.last-60d": {
-		"defaultMessage": "Last 60d"
+		"defaultMessage": "Ultimele 60z"
 	},
 	"nyxguard.ips.window.last-60m": {
-		"defaultMessage": "Last 60m"
+		"defaultMessage": "Ultimele 60m"
 	},
 	"nyxguard.ips.window.last-7d": {
-		"defaultMessage": "Last 7d"
+		"defaultMessage": "Ultimele 7z"
 	},
 	"nyxguard.ips.window.last-90d": {
-		"defaultMessage": "Last 90d"
+		"defaultMessage": "Ultimele 90z"
 	},
 	"nyxguard.ips.window.minutes": {
-		"defaultMessage": "{minutes} minutes"
+		"defaultMessage": "{minutes} minute"
 	},
 	"nyxguard.last-15m": {
-		"defaultMessage": "Last 15m"
+		"defaultMessage": "Ultimele 15m"
 	},
 	"nyxguard.last-24h": {
-		"defaultMessage": "Last 24h"
+		"defaultMessage": "Ultimele 24h"
 	},
 	"nyxguard.last-30d": {
-		"defaultMessage": "Last 30d"
+		"defaultMessage": "Ultimele 30z"
 	},
 	"nyxguard.last-7d": {
-		"defaultMessage": "Last 7d"
+		"defaultMessage": "Ultimele 7z"
 	},
 	"nyxguard.last.15m": {
-		"defaultMessage": "Last 15m"
+		"defaultMessage": "Ultimele 15m"
 	},
 	"nyxguard.last.180d": {
-		"defaultMessage": "Last 180d"
+		"defaultMessage": "Ultimele 180z"
 	},
 	"nyxguard.last.1d": {
-		"defaultMessage": "Last 1d"
+		"defaultMessage": "Ultima 1z"
 	},
 	"nyxguard.last.30d": {
-		"defaultMessage": "Last 30d"
+		"defaultMessage": "Ultimele 30z"
 	},
 	"nyxguard.last.60d": {
-		"defaultMessage": "Last 60d"
+		"defaultMessage": "Ultimele 60z"
 	},
 	"nyxguard.last.7d": {
-		"defaultMessage": "Last 7d"
+		"defaultMessage": "Ultimele 7z"
 	},
 	"nyxguard.last.90d": {
-		"defaultMessage": "Last 90d"
+		"defaultMessage": "Ultimele 90z"
 	},
 	"nyxguard.last.mins": {
-		"defaultMessage": "Last {minutes}m"
+		"defaultMessage": "Ultimele {minutes}m"
 	},
 	"nyxguard.live-traffic": {
-		"defaultMessage": "Live Traffic"
+		"defaultMessage": "Trafic in timp real"
 	},
 	"nyxguard.live-traffic-subtitle": {
-		"defaultMessage": "Requests per minute with burst detection."
+		"defaultMessage": "Cereri pe minut cu detectie de burst."
 	},
 	"nyxguard.no-disk-info": {
-		"defaultMessage": "No disk info"
+		"defaultMessage": "Fara info disc"
 	},
 	"nyxguard.path": {
-		"defaultMessage": "Path: {path}"
+		"defaultMessage": "Cale: {path}"
 	},
 	"nyxguard.ram-usage": {
-		"defaultMessage": "RAM Usage"
+		"defaultMessage": "Utilizare RAM"
 	},
 	"nyxguard.realtime": {
 		"defaultMessage": "Realtime"
 	},
 	"nyxguard.requests-window": {
-		"defaultMessage": "Requests ({window})"
+		"defaultMessage": "Cereri ({window})"
 	},
 	"nyxguard.rules.active-rules": {
-		"defaultMessage": "Active Rules"
-	},
-	"nyxguard.rules.add-country-failed": {
-		"defaultMessage": "Failed to add country rule."
-	},
-	"nyxguard.rules.add-ip-failed": {
-		"defaultMessage": "Failed to add IP rule."
-	},
-	"nyxguard.rules.added": {
-		"defaultMessage": "Rule added and active."
+		"defaultMessage": "Reguli Active"
 	},
 	"nyxguard.rules.country": {
-		"defaultMessage": "Country"
-	},
-	"nyxguard.rules.country-invalid": {
-		"defaultMessage": "Country code must be 2 letters (example: FR)"
+		"defaultMessage": "Tara"
 	},
 	"nyxguard.rules.country-placeholder": {
-		"defaultMessage": "MD"
+		"defaultMessage": "RO"
 	},
 	"nyxguard.rules.country-required": {
-		"defaultMessage": "Enter a country code (example: MD)"
+		"defaultMessage": "Introdu cod de tara (exemplu: RO)"
 	},
 	"nyxguard.rules.days-1": {
-		"defaultMessage": "1 day"
+		"defaultMessage": "1 zi"
 	},
 	"nyxguard.rules.days-180": {
-		"defaultMessage": "180 days"
+		"defaultMessage": "180 zile"
 	},
 	"nyxguard.rules.days-30": {
-		"defaultMessage": "30 days"
+		"defaultMessage": "30 zile"
 	},
 	"nyxguard.rules.days-60": {
-		"defaultMessage": "60 days"
+		"defaultMessage": "60 zile"
 	},
 	"nyxguard.rules.days-7": {
-		"defaultMessage": "7 days"
+		"defaultMessage": "7 zile"
 	},
 	"nyxguard.rules.days-90": {
-		"defaultMessage": "90 days"
+		"defaultMessage": "90 zile"
 	},
 	"nyxguard.rules.delete-all": {
-		"defaultMessage": "Delete All"
-	},
-	"nyxguard.rules.delete-all-country-confirm": {
-		"defaultMessage": "Delete all {count} country rule(s)? This cannot be undone."
-	},
-	"nyxguard.rules.delete-all-ip-confirm": {
-		"defaultMessage": "Delete all {count} IP rule(s)? This cannot be undone."
-	},
-	"nyxguard.rules.delete-country-failed": {
-		"defaultMessage": "Failed to delete all country rules."
-	},
-	"nyxguard.rules.delete-ip-failed": {
-		"defaultMessage": "Failed to delete all IP rules."
-	},
-	"nyxguard.rules.deleted-country": {
-		"defaultMessage": "Deleted {count} country rule(s)."
-	},
-	"nyxguard.rules.deleted-ip": {
-		"defaultMessage": "Deleted {count} IP rule(s)."
-	},
-	"nyxguard.rules.ip-invalid": {
-		"defaultMessage": "Only IP/CIDR characters are allowed"
+		"defaultMessage": "Sterge Tot"
 	},
 	"nyxguard.rules.ip-placeholder": {
 		"defaultMessage": "203.0.113.0/24"
 	},
 	"nyxguard.rules.ip-range": {
-		"defaultMessage": "IP / Range"
+		"defaultMessage": "IP / Interval"
 	},
 	"nyxguard.rules.ip-required": {
-		"defaultMessage": "Enter an IP or CIDR (example: 203.0.113.0/24)"
+		"defaultMessage": "Introdu un IP sau CIDR (exemplu: 203.0.113.0/24)"
 	},
 	"nyxguard.rules.load-error": {
-		"defaultMessage": "Unable to load rules."
+		"defaultMessage": "Regulile nu au putut fi incarcate."
 	},
 	"nyxguard.rules.no-country-rules": {
-		"defaultMessage": "No country rules yet."
+		"defaultMessage": "Nu exista reguli pe tari inca."
 	},
 	"nyxguard.rules.no-ip-rules": {
-		"defaultMessage": "No IP rules yet."
+		"defaultMessage": "Nu exista reguli IP inca."
 	},
 	"nyxguard.rules.note-optional": {
-		"defaultMessage": "Note (optional)"
+		"defaultMessage": "Nota (optional)"
 	},
 	"nyxguard.rules.note-placeholder": {
-		"defaultMessage": "Reason / label"
+		"defaultMessage": "Motiv / eticheta"
 	},
 	"nyxguard.rules.permanent": {
 		"defaultMessage": "Permanent"
 	},
 	"nyxguard.rules.rule-type": {
-		"defaultMessage": "Rule Type"
+		"defaultMessage": "Tip Regula"
 	},
 	"nyxguard.rules.save-rule": {
-		"defaultMessage": "Save Rule"
+		"defaultMessage": "Salveaza Regula"
 	},
 	"nyxguard.rules.subtitle": {
-		"defaultMessage": "Create allow/deny rules with instant enforcement (protected apps only). Rules can be permanent or expire automatically."
+		"defaultMessage": "Creeaza reguli allow/deny cu aplicare instant (doar aplicatii protejate). Regulile pot fi permanente sau pot expira automat."
 	},
 	"nyxguard.subtitle": {
-		"defaultMessage": "Live traffic, IP intelligence, geo insights, and action-ready rules."
+		"defaultMessage": "Trafic live, inteligenta IP, informatii geo si reguli aplicabile instant."
 	},
 	"nyxguard.title": {
 		"defaultMessage": "NyxGuard WAF"
 	},
 	"nyxguard.traffic.attacks": {
-		"defaultMessage": "Attacks"
+		"defaultMessage": "Atacuri"
 	},
 	"nyxguard.traffic.clear-confirm": {
-		"defaultMessage": "Clear traffic logs for the current {window} view?"
+		"defaultMessage": "Golesti logurile de trafic pentru fereastra curenta {window}?"
 	},
 	"nyxguard.traffic.clear-logs": {
-		"defaultMessage": "Clear Logs"
+		"defaultMessage": "Goleste Loguri"
 	},
 	"nyxguard.traffic.empty-window": {
-		"defaultMessage": "No recent traffic found in the last {window}."
+		"defaultMessage": "Nu exista trafic recent in ultimele {window}."
 	},
 	"nyxguard.traffic.hosts.allowed": {
-		"defaultMessage": "Allowed"
+		"defaultMessage": "Permise"
 	},
 	"nyxguard.traffic.hosts.blocked": {
-		"defaultMessage": "Blocked"
+		"defaultMessage": "Blocate"
 	},
 	"nyxguard.traffic.hosts.host": {
 		"defaultMessage": "Host"
 	},
 	"nyxguard.traffic.hosts.requests": {
-		"defaultMessage": "Requests"
+		"defaultMessage": "Cereri"
 	},
 	"nyxguard.traffic.hosts.unique-ips": {
-		"defaultMessage": "Unique IPs"
+		"defaultMessage": "IP-uri Unice"
 	},
 	"nyxguard.traffic.last-15m": {
-		"defaultMessage": "Last 15m"
+		"defaultMessage": "Ultimele 15m"
 	},
 	"nyxguard.traffic.last-24h": {
-		"defaultMessage": "Last 24h"
+		"defaultMessage": "Ultimele 24h"
 	},
 	"nyxguard.traffic.last-30d": {
-		"defaultMessage": "Last 30d"
+		"defaultMessage": "Ultimele 30z"
 	},
 	"nyxguard.traffic.last-7d": {
-		"defaultMessage": "Last 7d"
+		"defaultMessage": "Ultimele 7z"
 	},
 	"nyxguard.traffic.load-error": {
-		"defaultMessage": "Unable to load traffic (API error)."
+		"defaultMessage": "Nu se poate incarca traficul (eroare API)."
 	},
 	"nyxguard.traffic.next": {
-		"defaultMessage": "Next"
+		"defaultMessage": "Urmator"
 	},
 	"nyxguard.traffic.pagination": {
-		"defaultMessage": "Showing {from}-{to} of {total} events"
+		"defaultMessage": "Afisare {from}-{to} din {total} evenimente"
 	},
 	"nyxguard.traffic.prev": {
-		"defaultMessage": "Prev"
+		"defaultMessage": "Anterior"
 	},
 	"nyxguard.traffic.realtime": {
-		"defaultMessage": "Realtime"
+		"defaultMessage": "Timp Real"
 	},
 	"nyxguard.traffic.req": {
-		"defaultMessage": "req"
+		"defaultMessage": "cereri"
 	},
 	"nyxguard.traffic.rows": {
-		"defaultMessage": "Rows"
+		"defaultMessage": "Randuri"
 	},
 	"nyxguard.traffic.subtitle": {
-		"defaultMessage": "Streaming requests per minute with burst detection and anomaly bands."
+		"defaultMessage": "Cereri pe minut in flux continuu cu detectie burst si anomalii."
 	},
 	"nyxguard.traffic.table.country": {
-		"defaultMessage": "Country"
+		"defaultMessage": "Tara"
 	},
 	"nyxguard.traffic.table.host": {
 		"defaultMessage": "Host"
@@ -1332,58 +1281,58 @@
 		"defaultMessage": "IP"
 	},
 	"nyxguard.traffic.table.request": {
-		"defaultMessage": "Request"
+		"defaultMessage": "Cerere"
 	},
 	"nyxguard.traffic.table.status": {
 		"defaultMessage": "Status"
 	},
 	"nyxguard.traffic.table.time": {
-		"defaultMessage": "Time"
+		"defaultMessage": "Timp"
 	},
 	"nyxguard.traffic.title": {
-		"defaultMessage": "Live Traffic"
+		"defaultMessage": "Trafic in timp real"
 	},
 	"nyxguard.traffic.window.15m": {
-		"defaultMessage": "15 minutes"
+		"defaultMessage": "15 minute"
 	},
 	"nyxguard.traffic.window.24h": {
-		"defaultMessage": "24 hours"
+		"defaultMessage": "24 ore"
 	},
 	"nyxguard.traffic.window.30d": {
-		"defaultMessage": "30 days"
+		"defaultMessage": "30 zile"
 	},
 	"nyxguard.traffic.window.5m": {
-		"defaultMessage": "5 minutes"
+		"defaultMessage": "5 minute"
 	},
 	"nyxguard.traffic.window.7d": {
-		"defaultMessage": "7 days"
+		"defaultMessage": "7 zile"
 	},
 	"nyxguard.traffic.window.minutes": {
-		"defaultMessage": "{minutes} minutes"
+		"defaultMessage": "{minutes} minute"
 	},
 	"nyxguard.unique-ips-window": {
-		"defaultMessage": "Unique IPs ({window})"
+		"defaultMessage": "IP-uri Unice ({window})"
 	},
 	"nyxguard.used-suffix": {
-		"defaultMessage": "{value} used"
+		"defaultMessage": "{value} utilizat"
 	},
 	"nyxguard.window.15m": {
-		"defaultMessage": "15 minutes"
+		"defaultMessage": "15 minute"
 	},
 	"nyxguard.window.24h": {
-		"defaultMessage": "24 hours"
+		"defaultMessage": "24 ore"
 	},
 	"nyxguard.window.30d": {
-		"defaultMessage": "30 days"
+		"defaultMessage": "30 zile"
 	},
 	"nyxguard.window.5m": {
-		"defaultMessage": "5 minutes"
+		"defaultMessage": "5 minute"
 	},
 	"nyxguard.window.7d": {
-		"defaultMessage": "7 days"
+		"defaultMessage": "7 zile"
 	},
 	"nyxguard.window.mins": {
-		"defaultMessage": "{minutes} minutes"
+		"defaultMessage": "{minutes} minute"
 	},
 	"object.actions-title": {
 		"defaultMessage": "{object} #{id}"
@@ -1467,7 +1416,7 @@
 		"defaultMessage": "Forward Hostname / IP"
 	},
 	"proxy-hosts": {
-		"defaultMessage": "NyxGuard Proxy Hosts"
+		"defaultMessage": "Hosturi Proxy NyxGuard"
 	},
 	"proxy-hosts.count": {
 		"defaultMessage": "{count} {count, plural, one {NyxGuard Proxy Host} other {NyxGuard Proxy Hosts}}"
@@ -1509,7 +1458,7 @@
 		"defaultMessage": "308 Permanent redirect"
 	},
 	"reset": {
-		"defaultMessage": "Reset"
+		"defaultMessage": "Reseteaza"
 	},
 	"role.admin": {
 		"defaultMessage": "Administrator"
@@ -1518,7 +1467,7 @@
 		"defaultMessage": "Standard User"
 	},
 	"rows": {
-		"defaultMessage": "Rows"
+		"defaultMessage": "Randuri"
 	},
 	"save": {
 		"defaultMessage": "Save"
@@ -1527,61 +1476,61 @@
 		"defaultMessage": "Setting"
 	},
 	"settings": {
-		"defaultMessage": "Settings"
+		"defaultMessage": "Setari"
 	},
 	"settings.backup.current-version": {
-		"defaultMessage": "Version {version}"
+		"defaultMessage": "Versiune {version}"
 	},
 	"settings.backup.export-button": {
-		"defaultMessage": "Export Configuration"
+		"defaultMessage": "Export Configuratie"
 	},
 	"settings.backup.export-description": {
-		"defaultMessage": "Download all current data and configuration into one JSON backup file."
+		"defaultMessage": "Descarca toate datele si configurarile curente intr-un singur fisier JSON."
 	},
 	"settings.backup.export-failed": {
-		"defaultMessage": "Failed to export configuration."
+		"defaultMessage": "Exportul configuratiei a esuat."
 	},
 	"settings.backup.export-success": {
-		"defaultMessage": "Configuration exported: {filename}"
+		"defaultMessage": "Configuratie exportata: {filename}"
 	},
 	"settings.backup.export-title": {
-		"defaultMessage": "Export Configuration"
+		"defaultMessage": "Export Configuratie"
 	},
 	"settings.backup.file-required": {
-		"defaultMessage": "Please select a backup JSON file first."
+		"defaultMessage": "Selecteaza mai intai un fisier JSON de backup."
 	},
 	"settings.backup.import-button": {
-		"defaultMessage": "Import Configuration"
+		"defaultMessage": "Import Configuratie"
 	},
 	"settings.backup.import-description": {
-		"defaultMessage": "Restore from a previously exported JSON backup file from the same version."
+		"defaultMessage": "Restaureaza dintr-un fisier JSON exportat anterior din aceeasi versiune."
 	},
 	"settings.backup.import-failed": {
-		"defaultMessage": "Failed to import configuration."
+		"defaultMessage": "Importul configuratiei a esuat."
 	},
 	"settings.backup.import-success": {
-		"defaultMessage": "Configuration import completed successfully."
+		"defaultMessage": "Importul configuratiei a fost finalizat cu succes."
 	},
 	"settings.backup.import-title": {
-		"defaultMessage": "Import Configuration"
+		"defaultMessage": "Import Configuratie"
 	},
 	"settings.backup.reboot-confirm": {
-		"defaultMessage": "Restore completed successfully. A reboot is required for all changes to take effect. Reboot now?"
+		"defaultMessage": "Restaurare finalizata cu succes. Este necesara repornirea pentru aplicarea tuturor schimbarilor. Repornesti acum?"
 	},
 	"settings.backup.reboot-failed": {
-		"defaultMessage": "Failed to trigger reboot."
+		"defaultMessage": "Nu s-a putut porni repornirea."
 	},
 	"settings.backup.rebooting": {
-		"defaultMessage": "Reboot started. Reconnecting..."
+		"defaultMessage": "Repornire pornita. Reconectare..."
 	},
 	"settings.backup.subtitle": {
-		"defaultMessage": "Backup and restore the full NyxGuard Manager configuration from this page."
+		"defaultMessage": "Exporta si restaureaza configuratia completa NyxGuard Manager din aceasta pagina."
 	},
 	"settings.backup.version-lock-description": {
-		"defaultMessage": "Backups are compatible only with this exact app version ({version})."
+		"defaultMessage": "Backup-urile sunt compatibile doar cu aceeasi versiune exacta ({version})."
 	},
 	"settings.backup.version-lock-title": {
-		"defaultMessage": "Version lock"
+		"defaultMessage": "Blocare versiune"
 	},
 	"settings.default-site": {
 		"defaultMessage": "Default Site"
@@ -1644,13 +1593,13 @@
 		"defaultMessage": "UDP"
 	},
 	"support-nyxguard": {
-		"defaultMessage": "Support NyxGuard"
+		"defaultMessage": "Suport NyxGuard"
 	},
 	"test": {
 		"defaultMessage": "Test"
 	},
 	"theme.label": {
-		"defaultMessage": "Theme"
+		"defaultMessage": "Tema"
 	},
 	"update-available": {
 		"defaultMessage": "Update Available: {latestVersion}"
@@ -1704,10 +1653,10 @@
 		"defaultMessage": "Username"
 	},
 	"users": {
-		"defaultMessage": "Users"
+		"defaultMessage": "Utilizatori"
 	},
 	"value": {
-		"defaultMessage": "Value"
+		"defaultMessage": "Valoare"
 	},
 	"waf-dashboard": {
 		"defaultMessage": "WAF Dashboard"
