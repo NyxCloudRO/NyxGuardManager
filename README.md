@@ -219,6 +219,9 @@ This release is validated in production-style deployments on Ubuntu 24 and Debia
 
 NyxGuard Manager is free to use for both personal and enterprise deployments.
 
+You can support the project here: 
+https://buymeacoffee.com/nyxmael
+
 The project is distributed under the NyxGuard Manager Proprietary License (NMPLA).
 
 Use is permitted for internal personal and commercial environments.
