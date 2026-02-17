@@ -230,10 +230,11 @@ See the full license in the [LICENSE](LICENSE.md) file.
 
 **Vlad-Eusebiu Cardei**
 
-✓ Founder ✓
-
 - https://nyxcloud.ro/
 - https://billcore.ro/
 - https://m.youtube.com/@NyxGuardManager
 
-Contact: VladCardei@live.com
+Contact: 
+VladCardei@live.com
+Vlad.Cardei@NyxCloud.ro
+Vlad.Cardei@Billcore.ro
