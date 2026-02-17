@@ -123,7 +123,7 @@ Actual resource usage depends heavily on traffic volume, number of protected app
 
 - Baseline we observed on a clean Ubuntu 24 VM (idle, fresh install, NyxGuard Manager + DB running):
   - CPU: ~0.04% (on an 8 vCPU VM)
-  - RAM: ~519 MiB
+  - RAM: ~219 MiB
   - Disk: ~3.81 GiB used (on an ~78 GiB disk)
 - Minimum (small install / short retention):
   - 2 vCPU
