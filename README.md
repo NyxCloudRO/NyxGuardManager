@@ -233,5 +233,6 @@ Founder of NyxGuard Manager / BillCore / NyxCloud
 
 - https://nyxcloud.ro/
 - https://billcore.ro/
+- https://m.youtube.com/@NyxGuardManager
 
 Contact: VladCardei@live.com
