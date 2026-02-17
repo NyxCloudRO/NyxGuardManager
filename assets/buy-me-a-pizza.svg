@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="140" viewBox="0 0 520 140" role="img" aria-label="Buy me a pizza">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a7bff"/>
+      <stop offset="0.55" stop-color="#8b5cff"/>
+      <stop offset="1" stop-color="#ff2bd6"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Button base -->
+  <rect x="20" y="22" width="480" height="96" rx="18" fill="url(#g)" filter="url(#shadow)"/>
+
+  <!-- Pizza icon -->
+  <g transform="translate(56 44)">
+    <circle cx="34" cy="34" r="34" fill="#111827" opacity="0.18"/>
+    <path d="M34 6c-10.7 0-20.1 5.8-25.1 14.4L34 62 59.1 20.4C54.1 11.8 44.7 6 34 6z" fill="#ffe8a3"/>
+    <path d="M8.9 20.4C6.5 24.7 5.1 29.6 5.1 34.9 5.1 49.7 14.6 62.2 27.8 66.8L34 62 8.9 20.4z" fill="#ffd166"/>
+    <path d="M59.1 20.4 34 62l6.2 4.8c13.2-4.6 22.7-17.1 22.7-31.9 0-5.3-1.4-10.2-3.8-14.5z" fill="#ffb703"/>
+    <circle cx="26" cy="33" r="4.2" fill="#e11d48"/>
+    <circle cx="41" cy="29" r="4.2" fill="#e11d48"/>
+    <circle cx="34" cy="43" r="4.2" fill="#e11d48"/>
+    <path d="M34 62 27.8 66.8c2 0.7 4.1 1.1 6.2 1.1s4.2-0.4 6.2-1.1L34 62z" fill="#f8fafc" opacity="0.9"/>
+  </g>
+
+  <!-- Text -->
+  <g font-family="ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="800">
+    <text x="150" y="82" font-size="44" fill="#ffffff" letter-spacing="0.5">Buy me a pizza</text>
+  </g>
+</svg>

@@ -1,0 +1,65 @@
+services:
+  nyxguard-manager:
+    container_name: nyxguard-manager
+    # NyxGuard Manager v3.0.4
+    image: nyxmael/nyxguardmanager:3.0.4
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "81:81"
+      - "443:443"
+      - "8443:8443"
+    environment:
+      TZ: "${TZ:-UTC}"
+      PUID: "${PUID:-1000}"
+      PGID: "${PGID:-1000}"
+      FORCE_COLOR: "1"
+
+      # Database (MariaDB)
+      DB_MYSQL_HOST: "db"
+      DB_MYSQL_PORT: "3306"
+      DB_MYSQL_USER: "${DB_MYSQL_USER:-nyxguard}"
+      DB_MYSQL_PASSWORD: "${DB_MYSQL_PASSWORD}"
+      DB_MYSQL_NAME: "${DB_MYSQL_NAME:-nyxguard}"
+
+      # Optional: disable IP ranges fetch if your environment blocks outbound access
+      # IP_RANGES_FETCH_ENABLED: "false"
+      NYXGUARD_DOCKER_USAGE_CONTAINERS: "${NYXGUARD_DOCKER_USAGE_CONTAINERS:-nyxguard-manager,nyxguard-db}"
+      NYXGUARD_DOCKER_API_VERSION: "${NYXGUARD_DOCKER_API_VERSION:-}"
+    volumes:
+      - nyxguard_data:/data
+      - nyxguard_letsencrypt:/etc/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - db
+
+  db:
+    container_name: nyxguard-db
+    image: jc21/mariadb-aria
+    restart: unless-stopped
+    environment:
+      TZ: "${TZ:-UTC}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${DB_MYSQL_NAME:-nyxguard}"
+      MYSQL_USER: "${DB_MYSQL_USER:-nyxguard}"
+      MYSQL_PASSWORD: "${DB_MYSQL_PASSWORD}"
+    volumes:
+      - nyxguard_db:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+
+volumes:
+  # Named volumes (persist across container re-creates/reboots).
+  # Optional migration: point these at existing volumes via .env, e.g.
+  # NYXGUARD_DATA_VOLUME=npm2dev_core_data
+  # NYXGUARD_LETSENCRYPT_VOLUME=npm2dev_le_data
+  # NYXGUARD_DB_VOLUME=npm2dev_db_data
+  nyxguard_data:
+    name: "${NYXGUARD_DATA_VOLUME:-nyxguard_data}"
+    external: "${NYXGUARD_DATA_EXTERNAL:-false}"
+  nyxguard_letsencrypt:
+    name: "${NYXGUARD_LETSENCRYPT_VOLUME:-nyxguard_letsencrypt}"
+    external: "${NYXGUARD_LETSENCRYPT_EXTERNAL:-false}"
+  nyxguard_db:
+    name: "${NYXGUARD_DB_VOLUME:-nyxguard_db}"
+    external: "${NYXGUARD_DB_EXTERNAL:-false}"
