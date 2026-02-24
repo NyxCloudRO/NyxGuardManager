@@ -534,7 +534,7 @@
 	display: flex;
 	align-items: center;
 	gap: 0.28rem;
-	font-size: 0.62rem;
+	font-size: 0.58rem;
 	font-weight: 700;
 	letter-spacing: 0.07em;
 	text-transform: uppercase;
@@ -565,17 +565,17 @@
 }
 
 .prefsRowLabel {
-	font-size: 0.78rem;
+	font-size: 0.72rem;
 	font-weight: 650;
 	color: var(--sm-text-hover, var(--app-text-primary));
 	white-space: normal;
-	line-height: 1.15;
+	line-height: 1.1;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
 .prefsRowHint {
-	font-size: 0.64rem;
+	font-size: 0.58rem;
 	color: var(--sm-text, var(--app-text-secondary));
 	opacity: 0.48;
 	white-space: nowrap;
@@ -606,7 +606,7 @@
 		color-mix(in srgb, var(--app-text-primary) 4%, transparent)
 	);
 	color: var(--sm-text-hover, var(--app-text-primary));
-	font-size: 0.73rem;
+	font-size: 0.68rem;
 	font-weight: 600;
 	cursor: pointer;
 	text-align: left;
@@ -658,7 +658,7 @@
 	border: 1px solid color-mix(in srgb, var(--sm-accent, var(--app-primary)) 24%, var(--app-border));
 	box-shadow: 0 20px 46px rgba(0, 0, 0, 0.44), 0 8px 20px rgba(0, 0, 0, 0.28);
 	border-radius: 10px;
-	padding: 6px;
+	padding: 5px;
 	overflow-y: auto;
 	overscroll-behavior: contain;
 	animation: prefsListIn 140ms ease forwards;
@@ -687,15 +687,15 @@
 	display: flex;
 	align-items: center;
 	width: 100%;
-	padding: 9px 10px;
+	padding: 8px 9px;
 	padding-right: 10px;
 	border-radius: 7px;
 	border: none;
 	background: transparent;
 	color: var(--sm-text-hover, var(--app-text-primary));
-	font-size: 0.8rem;
+	font-size: 0.72rem;
 	font-weight: 500;
-	line-height: 1.25;
+	line-height: 1.15;
 	text-align: left;
 	cursor: pointer;
 	box-sizing: border-box;
@@ -705,13 +705,8 @@
 .prefsSelectItemText {
 	flex: 1 1 0;
 	min-width: 0;
-	/* Allow wrapping with a compact two-line cap */
-	white-space: normal;
-	word-break: break-word;
-	display: -webkit-box;
-	-webkit-box-orient: vertical;
-	-webkit-line-clamp: 2;
-	line-clamp: 2;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 	overflow: hidden;
 }
 
