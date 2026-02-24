@@ -150,7 +150,38 @@ export function FloatingSelect({
 			</button>
 
 			{open ? (
-				portalRoot ? (
+				strategy === "absolute" ? (
+					<div
+						ref={refs.setFloating}
+						className={classNames.list}
+						style={floatingStyles}
+						{...getFloatingProps()}
+					>
+						{options.map((option, index) => (
+							<button
+								key={option.value}
+								ref={(node) => {
+									listRef.current[index] = node;
+								}}
+								type="button"
+								role="option"
+								aria-selected={option.value === value}
+								className={cn(classNames.item, {
+									[classNames.itemActive]: option.value === value,
+								})}
+								tabIndex={activeIndex === index ? 0 : -1}
+								{...getItemProps({
+									onClick: () => {
+										onChange(option.value);
+										setOpen(false);
+									},
+								})}
+							>
+								<span className={classNames.itemText}>{option.label}</span>
+							</button>
+						))}
+					</div>
+				) : portalRoot ? (
 					<FloatingPortal root={portalRoot}>
 						<div
 							ref={refs.setFloating}
@@ -183,37 +214,6 @@ export function FloatingSelect({
 							))}
 						</div>
 					</FloatingPortal>
-				) : strategy === "absolute" ? (
-					<div
-						ref={refs.setFloating}
-						className={classNames.list}
-						style={floatingStyles}
-						{...getFloatingProps()}
-					>
-						{options.map((option, index) => (
-							<button
-								key={option.value}
-								ref={(node) => {
-									listRef.current[index] = node;
-								}}
-								type="button"
-								role="option"
-								aria-selected={option.value === value}
-								className={cn(classNames.item, {
-									[classNames.itemActive]: option.value === value,
-								})}
-								tabIndex={activeIndex === index ? 0 : -1}
-								{...getItemProps({
-									onClick: () => {
-										onChange(option.value);
-										setOpen(false);
-									},
-								})}
-							>
-								<span className={classNames.itemText}>{option.label}</span>
-							</button>
-						))}
-					</div>
 				) : (
 					<FloatingPortal>
 						<div
