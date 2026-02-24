@@ -47,10 +47,17 @@ function PreferencesDropdown() {
 		if (!btnRef.current) return;
 		const rect = btnRef.current.getBoundingClientRect();
 		const panelH = panelRef.current?.offsetHeight ?? 160;
-		const maxPanelW = Math.max(248, window.innerWidth - 16);
-		const panelW = Math.min(Math.max(rect.width, 248), maxPanelW);
+		const sidebarEl = btnRef.current.closest(`.${headerStyles.sideMenu}`) as HTMLElement | null;
+		const sidebarRect = sidebarEl?.getBoundingClientRect();
+		const containerMinX = sidebarRect ? sidebarRect.left + 8 : 8;
+		const containerMaxX = sidebarRect ? sidebarRect.right - 8 : window.innerWidth - 8;
+		const containerWidth = Math.max(180, containerMaxX - containerMinX);
+		const panelW = Math.min(Math.max(rect.width, 220), containerWidth);
 		const leftIdeal = rect.right - panelW;
-		const left = Math.min(Math.max(8, leftIdeal), Math.max(8, window.innerWidth - panelW - 8));
+		const left = Math.min(
+			Math.max(containerMinX, leftIdeal),
+			Math.max(containerMinX, containerMaxX - panelW),
+		);
 		setPanelStyle({
 			position: "fixed",
 			left,
