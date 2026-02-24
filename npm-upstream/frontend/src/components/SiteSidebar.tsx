@@ -48,8 +48,9 @@ function PreferencesDropdown() {
 		const rect = btnRef.current.getBoundingClientRect();
 		const panelH = panelRef.current?.offsetHeight ?? 160;
 		const maxPanelW = Math.max(220, window.innerWidth - 16);
-		const panelW = Math.min(Math.max(rect.width, 272), maxPanelW);
-		const left = Math.min(Math.max(8, rect.left), Math.max(8, window.innerWidth - panelW - 8));
+		const panelW = Math.min(Math.max(rect.width, 220), maxPanelW);
+		const leftIdeal = rect.right - panelW;
+		const left = Math.min(Math.max(8, leftIdeal), Math.max(8, window.innerWidth - panelW - 8));
 		setPanelStyle({
 			position: "fixed",
 			left,
@@ -114,8 +115,8 @@ function PreferencesDropdown() {
 					strategy="absolute"
 					portalRoot={panelRef.current}
 					placement="top-end"
-					minWidth={180}
-					maxWidth={240}
+					minWidth={0}
+					maxWidth={196}
 					maxHeight={176}
 					open={openSelect === "language"}
 					onOpenChange={(next) => setOpenSelect(next ? "language" : null)}
@@ -146,8 +147,8 @@ function PreferencesDropdown() {
 					strategy="absolute"
 					portalRoot={panelRef.current}
 					placement="top-end"
-					minWidth={180}
-					maxWidth={240}
+					minWidth={0}
+					maxWidth={196}
 					maxHeight={176}
 					open={openSelect === "theme"}
 					onOpenChange={(next) => setOpenSelect(next ? "theme" : null)}
