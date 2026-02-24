@@ -1,0 +1,33 @@
+.helpPill {
+	min-width: 34px;
+	height: 34px;
+	padding: 0 10px;
+	border-radius: 999px !important;
+	border: 1px solid color-mix(in srgb, var(--app-primary) 44%, rgba(255, 255, 255, 0.14)) !important;
+	background:
+		linear-gradient(
+			135deg,
+			color-mix(in srgb, var(--app-primary) 34%, var(--app-surface-2) 66%),
+			color-mix(in srgb, var(--app-secondary) 24%, var(--app-surface-2) 76%)
+		) !important;
+	color: color-mix(in srgb, var(--app-text-primary) 92%, white 8%) !important;
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.helpPill:hover,
+.helpPill:focus-visible {
+	transform: translateY(-1px);
+	border-color: color-mix(in srgb, var(--app-primary) 66%, rgba(255, 255, 255, 0.2)) !important;
+	box-shadow:
+		0 10px 24px color-mix(in srgb, var(--app-primary) 24%, rgba(0, 0, 0, 0.56)),
+		inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.helpPill:focus-visible {
+	outline: 2px solid color-mix(in srgb, var(--app-primary) 56%, white 8%);
+	outline-offset: 2px;
+}

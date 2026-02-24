@@ -9,6 +9,7 @@ import { T } from "src/locale";
 import { showDeleteConfirmModal, showHelpModal, showProxyHostModal } from "src/modals";
 import { MANAGE, PROXY_HOSTS } from "src/modules/Permissions";
 import { showObjectSuccess } from "src/notifications";
+import styles from "./TableWrapper.module.css";
 import Table from "./Table";
 
 export default function TableWrapper() {
@@ -41,6 +42,8 @@ export default function TableWrapper() {
 		filtered = data?.filter(
 			(item) =>
 				item.domainNames.some((domain: string) => domain.toLowerCase().includes(search)) ||
+				(typeof (item?.meta?.nyxguardAppName ?? item?.meta?.nyxguard_app_name) === "string" &&
+					String(item.meta.nyxguardAppName ?? item.meta.nyxguard_app_name).toLowerCase().includes(search)) ||
 				item.forwardHost.toLowerCase().includes(search) ||
 				`${item.forwardPort}`.includes(search),
 		);
@@ -50,8 +53,7 @@ export default function TableWrapper() {
 	}
 
 	return (
-		<div className="card mt-4">
-			<div className="card-status-top bg-lime" />
+		<div className="card nyx-legacy-card">
 			<div className="card-table">
 				<div className="card-header">
 					<div className="row w-full">
@@ -76,8 +78,13 @@ export default function TableWrapper() {
 										/>
 									</div>
 								) : null}
-								<Button size="sm" onClick={() => showHelpModal("ProxyHosts", "lime")}>
-									<IconHelp size={20} />
+								<Button
+									size="sm"
+									className={styles.helpPill}
+									onClick={() => showHelpModal("ProxyHosts", "lime")}
+									aria-label="Open NyxGuard Proxy Host help"
+								>
+									<IconHelp size={16} stroke={1.9} />
 								</Button>
 								<HasPermission section={PROXY_HOSTS} permission={MANAGE} hideError>
 									{data?.length ? (

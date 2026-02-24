@@ -1,7 +1,12 @@
-## Was ist ein Proxy-Host?
+## Was ist ein NyxGuard Proxy-Host?
 
-Ein Proxy-Host ist der eingehende Endpunkt für einen Webdienst, den Sie weiterleiten möchten.
+Ein NyxGuard Proxy-Host ist der sichere öffentliche Einstiegspunkt für eine interne Anwendung oder einen Dienst.
 
-Er bietet optionale SSL-Terminierung für Ihren Dienst, der möglicherweise keine integrierte SSL-Unterstützung hat.
+Er verbindet Ihre Domain mit einem Upstream-Ziel, aktiviert TLS (SSL) und leitet den Traffic durch NyxGuard-Schutzfunktionen.
 
-Proxy-Hosts sind die häufigste Verwendung für den Nginx Proxy Manager.
+### Was ist enthalten
+
+- Domain-zu-Service-Weiterleitung (Reverse Proxy).
+- SSL-Zertifikat-Zuweisung und HTTPS-Erzwingung.
+- Mehrstufige Sicherheitsoptionen wie Zugriffskontrolle und Bedrohungsschutz.
+- Sichtbarkeit in NyxGuard für sicheres Verwalten, Auditieren und Anpassen.

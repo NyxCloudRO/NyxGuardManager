@@ -1,7 +1,12 @@
-## ¿Qué es un Host Proxy?
+## ¿Qué es un NyxGuard Proxy Host?
 
-Un Host Proxy es el punto de entrada para un servicio web que deseas reenviar.
+Un NyxGuard Proxy Host es el punto de entrada público y seguro para una aplicación o servicio interno.
 
-Proporciona terminación SSL opcional para tu servicio que podría no tener soporte SSL integrado.
+Conecta tu dominio con un destino upstream, aplica TLS (SSL) y enruta el tráfico mediante los controles de NyxGuard.
 
-Los Hosts Proxy son el uso más común del Nginx Proxy Manager.
+### Qué incluye
+
+- Reenvío de dominio a servicio (proxy inverso).
+- Asignación de certificado SSL y aplicación de HTTPS.
+- Opciones de seguridad en capas, como control de acceso y protección ante amenazas.
+- Visibilidad en NyxGuard para administrar, auditar y ajustar la exposición con seguridad.
