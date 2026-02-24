@@ -183,6 +183,7 @@
 	justify-self: end;
 	display: flex;
 	align-items: center;
+	min-width: 0;
 }
 
 .menuRow {
@@ -209,17 +210,25 @@
 }
 
 .sideMenu {
-	/* Shares the same palette as the top menu, but is rendered as a left sidebar. */
-	padding: 0.45rem 0.4rem;
-	border-radius: 18px;
-	border: 1px solid color-mix(in srgb, var(--app-border) 100%, transparent);
-	box-shadow:
-		0 18px 46px rgba(0, 0, 0, 0.28),
-		0 1px 0 rgba(255, 255, 255, 0.03) inset;
+	/* ── Enterprise sidebar — structural, flush, token-driven ──
+	   This is a navigation panel, not a card.
+	   No rounded blob. No heavy shadow. No thick border.
+	   All colour decisions flow through --sm-* tokens only.
+	   Theme overrides change ONLY these variable values. */
 
-	/* Keep the palette vars in sync with `.menuRow` so the menu looks identical. */
-	--nav-bg-top: var(--app-sidebar-top);
-	--nav-bg-bot: var(--app-sidebar-bottom);
+	/* Semi-transparent default — page atmosphere shows through backdrop-filter */
+	--sm-bg:            color-mix(in srgb, var(--app-sidebar-top) 70%, transparent);
+	--sm-divider:       var(--app-border);
+	--sm-text:          color-mix(in srgb, var(--app-text-primary) 68%, transparent);
+	--sm-text-hover:    color-mix(in srgb, var(--app-text-primary) 92%, transparent);
+	--sm-text-active:   var(--app-text-primary);
+	--sm-hover-bg:      color-mix(in srgb, var(--app-text-primary) 5%, transparent);
+	--sm-active-bg:     color-mix(in srgb, var(--app-primary) 10%, var(--app-surface-2));
+	--sm-active-border: color-mix(in srgb, var(--app-primary) 20%, var(--app-border));
+	--sm-accent:        var(--app-primary);
+	--sm-item-radius:   6px;
+
+	/* Keep nav-* vars in sync for dropdown rules that still reference them */
 	--nav-fg: var(--app-text-primary);
 	--nav-fg-strong: color-mix(in srgb, var(--app-text-primary) 95%, #ffffff);
 	--nav-fg-muted: var(--app-text-secondary);
@@ -229,26 +238,695 @@
 	--nav-accent-a: var(--app-primary);
 	--nav-accent-b: var(--app-secondary);
 
-	/* Transparent sidebar: let the dashboard background show through. */
-	background: transparent;
-	backdrop-filter: none;
+	/* Structural: fills the sidebar wrapper flush — no card inset, no pill blob */
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	padding: 0.5rem 0.5rem;
+	border-radius: 0;
+	border: none;
+	/* One thin right divider — structural separation, not decoration */
+	border-right: 1px solid var(--sm-divider);
+	box-shadow: none;
+	/* Semi-transparent: sidebar participates in the page gradient atmosphere */
+	background: var(--sm-bg);
+	isolation: isolate;
+	position: relative;
+	overflow: visible;
 }
 
-/* Nyx Aurora only: darken the left sidebar menu backdrop for stronger contrast. */
-:global(html[data-app-theme="nyx-aurora"]) .sideMenu {
-	background:
-		radial-gradient(760px 260px at 8% 0%, color-mix(in srgb, var(--app-primary) 34%, transparent), transparent 62%),
-		radial-gradient(740px 260px at 98% 100%, color-mix(in srgb, var(--app-secondary) 26%, transparent), transparent 64%),
-		linear-gradient(
-			165deg,
-			color-mix(in srgb, var(--app-surface-2) 74%, var(--app-primary) 26%),
-			color-mix(in srgb, var(--app-surface-2) 72%, var(--app-secondary) 28%)
-		);
+.sideMenu::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	pointer-events: none;
+	z-index: -1;
+	backdrop-filter: blur(16px) saturate(160%);
+	-webkit-backdrop-filter: blur(16px) saturate(160%);
+}
+
+/* ── Sidebar nav scroll area ─────────────────────────────────────────────
+   The nav items live in a scrollable region; the bottom panel is sticky.   */
+.sideMenuNav {
+	flex: 1 1 auto;
+	overflow-y: auto;
+	overflow-x: hidden;
+	overscroll-behavior: contain;
+	min-height: 0;
+	padding-bottom: 0.25rem;
+}
+
+/* ── Sidebar footer (enterprise, integrated) ─────────────────────────────
+   Sticky panel at the bottom. All dropdowns open UPWARD (dropup + Popper).
+   Parent has overflow:visible so menus are never clipped.
+   No box-in-box: transparent bg, only a thin top separator line.          */
+.sidebarFooter {
+	flex: 0 0 auto;
+	position: relative;
+	z-index: 20;
+	isolation: isolate;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 10px 6px 8px;
+	/* Single thin line — structural, not decorative */
+	border-top: 1px solid color-mix(in srgb, var(--sm-divider, var(--app-border)) 60%, transparent);
+	/* Fully transparent: inherits sidebar atmosphere, no "card" effect */
+	background: transparent;
+}
+
+/* Update badge in sidebar — spans full width, amber accent */
+.sideUpdateBadge {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	width: 100%;
+	min-height: 36px;
+	padding: 0.38rem 0.65rem;
+	border-radius: 8px;
+	border: 1px solid color-mix(in srgb, var(--app-warning) 48%, var(--app-border));
+	background: color-mix(in srgb, var(--app-warning) 12%, transparent);
+	color: color-mix(in srgb, var(--sm-text, var(--app-text-primary)) 96%, #ffffff);
+	font-size: 0.72rem;
+	font-weight: 700;
+	line-height: 1;
+	white-space: nowrap;
+	text-align: left;
+	cursor: pointer;
+	transition:
+		background-color 140ms ease,
+		border-color 140ms ease;
+}
+
+.sideUpdateBadge:hover {
+	background: color-mix(in srgb, var(--app-warning) 20%, transparent);
+	border-color: color-mix(in srgb, var(--app-warning) 64%, var(--app-border));
+}
+
+/* ── Section A: User card row ──────────────────────────────────────────── */
+.userCard {
+	position: relative;
+	width: 100%;
+}
+
+/* Full-width trigger: avatar + name/role + dots-icon */
+.userCardTrigger {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+	width: 100%;
+	min-height: 40px;
+	padding: 0.42rem 0.6rem;
+	border-radius: 8px;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	text-align: left;
+	color: var(--sm-text, var(--app-text-primary));
+	transition: background-color 130ms ease;
+}
+
+.userCardTrigger:hover,
+.userCardTrigger:focus-visible {
+	background: var(--sm-hover-bg, rgba(255, 255, 255, 0.07));
+	outline: none;
+}
+
+.userCardAvatar {
+	flex-shrink: 0;
+	width: 28px !important;
+	height: 28px !important;
+	border-radius: 8px !important;
+	border: 1px solid color-mix(in srgb, var(--sm-divider, var(--app-border)) 60%, transparent) !important;
+	box-shadow: none !important;
+}
+
+.userCardInfo {
+	flex: 1 1 auto;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+}
+
+.userCardName {
+	font-size: 0.8rem;
+	font-weight: 650;
+	line-height: 1.1;
+	color: var(--sm-text-hover, var(--app-text-primary));
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.userCardRole {
+	font-size: 0.68rem;
+	line-height: 1.1;
+	color: var(--sm-text, var(--app-text-secondary));
+	opacity: 0.75;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.userCardChevron {
+	flex-shrink: 0;
+	opacity: 0.45;
+	color: var(--sm-text, var(--app-text-secondary));
+}
+
+/* User card dropdown — floats upward above footer, flat surface, subtle shadow */
+.userCard :global(.dropdown-menu) {
+	position: absolute !important;
+	width: 100% !important;
+	min-width: unset !important;
+	bottom: calc(100% + 4px) !important;
+	top: auto !important;
+	left: 0 !important;
+	right: 0 !important;
+	z-index: 9999 !important;
+	transform: translateY(-4px) !important;
+
+	/* Flat sidebar-tinted surface — no gradient overload */
+	background: color-mix(in srgb, var(--sm-bg, var(--app-sidebar-top)) 96%, var(--app-surface-2));
 	backdrop-filter: blur(12px) saturate(140%);
-	border-color: color-mix(in srgb, var(--app-border) 84%, var(--app-primary) 16%);
-	box-shadow:
-		0 16px 38px rgba(8, 12, 36, 0.30),
-		0 1px 0 rgba(255, 255, 255, 0.045) inset;
+	border: 1px solid color-mix(in srgb, var(--sm-divider, var(--app-border)) 80%, transparent);
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22);
+	border-radius: 8px;
+	padding: 0.25rem;
+
+	opacity: 0;
+	transition:
+		opacity 120ms ease,
+		transform 120ms ease;
+}
+
+.userCard :global(.dropdown-menu.show) {
+	opacity: 1;
+	transform: translateY(0) !important;
+}
+
+.userCard :global(.dropdown-item) {
+	border-radius: 5px;
+	color: var(--sm-text, var(--nav-fg));
+	padding: 0.45rem 0.6rem;
+	font-weight: 500;
+	font-size: 0.82rem;
+}
+
+.userCard :global(.dropdown-item:hover),
+.userCard :global(.dropdown-item:focus-visible) {
+	color: var(--sm-text-hover, var(--nav-fg-strong));
+	background: color-mix(in srgb, var(--app-text-primary) 8%, transparent);
+	outline: none;
+}
+
+/* ── Section B: Preferences (Language + Theme) ───────────────────────────
+   Trigger: a compact footer button.
+   Panel: React portal → document.body, position:fixed, zero layout shift.
+   ──────────────────────────────────────────────────────────────────────── */
+
+.prefsDropdown {
+	position: relative;
+	width: 100%;
+	margin-top: 10px;
+}
+
+/* Trigger button — matches sidebar item density */
+.prefsToggle {
+	display: flex;
+	align-items: center;
+	gap: 0.38rem;
+	width: 100%;
+	min-height: 32px;
+	padding: 0 0.6rem;
+	border-radius: 6px;
+	border: 1px solid color-mix(in srgb, var(--sm-divider, var(--app-border)) 45%, transparent);
+	background: color-mix(in srgb, var(--app-text-primary) 4%, transparent);
+	color: var(--sm-text, var(--app-text-secondary));
+	font-size: 0.72rem;
+	font-weight: 500;
+	text-align: left;
+	cursor: pointer;
+	transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.prefsToggle:hover,
+.prefsToggle:focus-visible {
+	background: color-mix(in srgb, var(--app-text-primary) 8%, transparent);
+	border-color: color-mix(in srgb, var(--sm-divider, var(--app-border)) 70%, transparent);
+	color: var(--sm-text-hover, var(--app-text-primary));
+	outline: none;
+}
+
+.prefsIcon {
+	flex-shrink: 0;
+	opacity: 0.55;
+}
+
+.prefsLabel {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.prefsChevron {
+	flex-shrink: 0;
+	opacity: 0.40;
+	transition: transform 120ms ease;
+}
+
+/* ── Compact panel — portal, fixed, upward ── */
+.prefsPanel {
+	/* position/left/top/width/z-index set inline by React */
+	background: color-mix(in srgb, var(--app-surface-2) 96%, var(--app-surface));
+	/* Very low-contrast border — structural, not heavy */
+	border: 1px solid color-mix(in srgb, var(--app-border) 45%, transparent);
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22);
+	border-radius: 8px;
+	padding: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	/* overflow:visible so absolute-positioned sub-lists can escape the panel bounds */
+	overflow: visible;
+	position: relative;
+	isolation: isolate;
+}
+
+.prefsPanel::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	pointer-events: none;
+	z-index: -1;
+	backdrop-filter: blur(18px) saturate(160%);
+	-webkit-backdrop-filter: blur(18px) saturate(160%);
+}
+
+/* Subtle "PREFERENCES" header — small, dimmed */
+.prefsPanelHeader {
+	display: flex;
+	align-items: center;
+	gap: 0.28rem;
+	font-size: 0.62rem;
+	font-weight: 700;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+	color: var(--sm-text, var(--app-text-secondary));
+	opacity: 0.38;
+	user-select: none;
+	padding-bottom: 8px;
+	border-bottom: 1px solid color-mix(in srgb, var(--sm-divider, var(--app-border)) 30%, transparent);
+}
+
+.prefsPanelHeaderIcon {
+	opacity: 0.6;
+}
+
+/* Each row: label stack (shrinks) on left, select (fixed width) on right */
+.prefsRow {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.prefsRowMeta {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+
+.prefsRowLabel {
+	font-size: 0.78rem;
+	font-weight: 650;
+	color: var(--sm-text-hover, var(--app-text-primary));
+	white-space: normal;
+	line-height: 1.15;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.prefsRowHint {
+	font-size: 0.64rem;
+	color: var(--sm-text, var(--app-text-secondary));
+	opacity: 0.48;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* ── CompactSelect wrapper — position:relative so the list is scoped ── */
+.prefsSelectWrap {
+	position: relative;
+	flex-shrink: 0;
+	width: clamp(112px, 46%, 148px);
+}
+
+/* ── CompactSelect trigger — premium control ── */
+.prefsSelectTrigger {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	width: 100%;
+	height: 34px;
+	padding: 0 9px;
+	border-radius: 7px;
+	border: 1px solid color-mix(in srgb, var(--sm-divider, var(--app-border)) 50%, transparent);
+	background: linear-gradient(
+		180deg,
+		color-mix(in srgb, var(--app-text-primary) 8%, transparent),
+		color-mix(in srgb, var(--app-text-primary) 4%, transparent)
+	);
+	color: var(--sm-text-hover, var(--app-text-primary));
+	font-size: 0.73rem;
+	font-weight: 600;
+	cursor: pointer;
+	text-align: left;
+	transition:
+		background-color 110ms ease,
+		border-color 110ms ease,
+		box-shadow 110ms ease;
+}
+
+.prefsSelectTrigger:hover {
+	background: color-mix(in srgb, var(--app-text-primary) 9%, transparent);
+	border-color: color-mix(in srgb, var(--sm-accent, var(--app-primary)) 35%, var(--app-border));
+}
+
+.prefsSelectTrigger:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--sm-accent, var(--app-primary)) 35%, transparent);
+	border-color: color-mix(in srgb, var(--sm-accent, var(--app-primary)) 50%, var(--app-border));
+}
+
+.prefsSelectValue {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.prefsSelectChevron {
+	flex-shrink: 0;
+	opacity: 0.40;
+	transition: transform 120ms ease;
+}
+
+/* ── CompactSelect list — portal, fixed, animated ── */
+@keyframes prefsListIn {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}
+
+.prefsSelectList {
+	/* position/left/top/width/zIndex/maxHeight set by Floating UI */
+	box-sizing: border-box;
+	z-index: 99999;
+	background:
+		radial-gradient(180px 120px at 0% 0%, color-mix(in srgb, var(--sm-accent, var(--app-primary)) 12%, transparent), transparent 70%),
+		linear-gradient(180deg, color-mix(in srgb, var(--app-surface-2) 96%, #000000), color-mix(in srgb, var(--app-surface) 98%, #000000));
+	opacity: 1;
+	border: 1px solid color-mix(in srgb, var(--sm-accent, var(--app-primary)) 24%, var(--app-border));
+	box-shadow: 0 20px 46px rgba(0, 0, 0, 0.44), 0 8px 20px rgba(0, 0, 0, 0.28);
+	border-radius: 10px;
+	padding: 6px;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	animation: prefsListIn 140ms ease forwards;
+	backdrop-filter: blur(16px) saturate(135%);
+	-webkit-backdrop-filter: blur(16px) saturate(135%);
+	scrollbar-width: thin;
+	scrollbar-color: color-mix(in srgb, var(--sm-accent, var(--app-primary)) 55%, rgba(255, 255, 255, 0.5)) transparent;
+}
+
+.prefsSelectList::-webkit-scrollbar {
+	width: 8px;
+}
+
+.prefsSelectList::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.prefsSelectList::-webkit-scrollbar-thumb {
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--sm-accent, var(--app-primary)) 50%, rgba(255, 255, 255, 0.52));
+	border: 2px solid transparent;
+	background-clip: padding-box;
+}
+
+.prefsSelectItem {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	padding: 9px 10px;
+	padding-right: 10px;
+	border-radius: 7px;
+	border: none;
+	background: transparent;
+	color: var(--sm-text-hover, var(--app-text-primary));
+	font-size: 0.8rem;
+	font-weight: 500;
+	line-height: 1.25;
+	text-align: left;
+	cursor: pointer;
+	box-sizing: border-box;
+	transition: background-color 80ms ease, color 80ms ease;
+}
+
+.prefsSelectItemText {
+	flex: 1 1 0;
+	min-width: 0;
+	/* Allow wrapping with a compact two-line cap */
+	white-space: normal;
+	word-break: break-word;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	overflow: hidden;
+}
+
+.prefsSelectItem:hover {
+	background: color-mix(in srgb, var(--sm-accent, var(--app-primary)) 18%, transparent);
+	color: var(--sm-text-active, var(--app-text-primary));
+}
+
+.prefsSelectItem:focus-visible {
+	outline: none;
+	background: color-mix(in srgb, var(--sm-accent, var(--app-primary)) 20%, transparent);
+	color: var(--sm-text-active, var(--app-text-primary));
+}
+
+.prefsSelectItemActive {
+	background: linear-gradient(
+		90deg,
+		color-mix(in srgb, var(--sm-accent, var(--app-primary)) 28%, transparent),
+		color-mix(in srgb, var(--sm-accent, var(--app-primary)) 12%, transparent)
+	);
+	color: var(--sm-text-active, var(--app-text-primary));
+	font-weight: 600;
+}
+
+/* ── Per-theme sidebar token overrides ────────────────────────────────────
+   All rules use :global(html[data-app-theme="X"] [class*="sideMenu"]) to
+   preserve the html[...] qualifier through the Vite CSS Modules build.
+   Only --sm-* tokens + background/backdrop-filter are touched here.
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* ── Category A: Bright/Vibrant — deep ink bg, frosted glass ── */
+
+/* Nyx Aurora — transparent + left-to-right contrast scrim for readability */
+:global(html[data-app-theme="nyx-aurora"] [class*="sideMenu"]) {
+	--sm-bg:            transparent;
+	--sm-divider:       transparent;
+	--sm-text:          rgba(255, 255, 255, 0.87);
+	--sm-text-hover:    rgba(255, 255, 255, 0.96);
+	--sm-text-active:   color-mix(in srgb, white 92%, color-mix(in srgb, #4f8eff 60%, #f038c6));
+	--sm-hover-bg:      rgba(255, 255, 255, 0.08);
+	--sm-active-bg:     rgba(255, 255, 255, 0.10);
+	--sm-accent:        color-mix(in srgb, #4f8eff 60%, #f038c6);
+	background:         transparent;
+	backdrop-filter:    none;
+	-webkit-backdrop-filter: none;
+	box-shadow:         none;
+	border-right:       none;
+}
+:global(html[data-app-theme="nyx-aurora"] [class*="sideMenu"])::before {
+	content:            "";
+	position:           absolute;
+	inset:              0;
+	/* Scrim: 18% black at left edge, fades fully to transparent at right */
+	background:         linear-gradient(to right, rgba(0, 0, 0, 0.18) 0%, transparent 100%);
+	pointer-events:     none;
+	z-index:            0;
+}
+/* Nyx Aurora — 4px accent bar on active item (base is 3px) */
+:global(html[data-app-theme="nyx-aurora"] [class*="sideMenu"] .navbar-nav .nav-link.active::before),
+:global(html[data-app-theme="nyx-aurora"] [class*="sideMenu"] .navbar-nav .nav-link.show::before) {
+	width: 4px;
+}
+
+/* Cobalt Eclipse — deep navy frost over cobalt-to-violet gradient */
+:global(html[data-app-theme="cobalt-eclipse"] [class*="sideMenu"]) {
+	--sm-bg:            rgba(5, 14, 38, 0.60);
+	--sm-divider:       rgba(255, 255, 255, 0.09);
+	--sm-text:          rgba(255, 255, 255, 0.72);
+	--sm-text-hover:    rgba(255, 255, 255, 0.93);
+	--sm-text-active:   #ffffff;
+	--sm-hover-bg:      rgba(255, 255, 255, 0.07);
+	--sm-active-bg:     rgba(255, 255, 255, 0.13);
+	--sm-accent:        #4385ff;
+	background:         rgba(5, 14, 38, 0.60);
+	backdrop-filter:    blur(18px) saturate(165%);
+	-webkit-backdrop-filter: blur(18px) saturate(165%);
+}
+
+/* ── Category B: Ultra Dark — near-opaque, structural separation ── */
+
+/* Obsidian Guard — GitHub-style dark, solid surface */
+:global(html[data-app-theme="obsidian-guard"] [class*="sideMenu"]) {
+	--sm-bg:            #111827;
+	--sm-divider:       rgba(148, 163, 184, 0.15);
+	--sm-text:          rgba(230, 237, 243, 0.72);
+	--sm-text-hover:    rgba(230, 237, 243, 0.94);
+	--sm-text-active:   #e6edf3;
+	--sm-hover-bg:      rgba(148, 163, 184, 0.08);
+	--sm-active-bg:     rgba(59, 130, 246, 0.14);
+	--sm-accent:        #3b82f6;
+	background:         #111827;
+	backdrop-filter:    none;
+	-webkit-backdrop-filter: none;
+}
+
+/* Void Black — crisp flat dark, Vercel/Linear style */
+:global(html[data-app-theme="void-black"] [class*="sideMenu"]) {
+	--sm-bg:            #111111;
+	--sm-divider:       rgba(255, 255, 255, 0.16);
+	--sm-text:          rgba(255, 255, 255, 0.80);
+	--sm-text-hover:    rgba(255, 255, 255, 0.96);
+	--sm-text-active:   #ffffff;
+	--sm-hover-bg:      rgba(255, 255, 255, 0.11);
+	--sm-active-bg:     rgba(255, 255, 255, 0.16);
+	--sm-accent:        #5cd4d4;
+	background:         #111111;
+	backdrop-filter:    none;
+	-webkit-backdrop-filter: none;
+}
+
+/* ── Category C: Warm/Tinted Dark — tinted ink base, frosted ── */
+
+/* Ember Forge — deep amber-brown ink, warm tint */
+:global(html[data-app-theme="nyx-ember"] [class*="sideMenu"]) {
+	--sm-bg:            rgba(30, 14, 6, 0.72);
+	--sm-divider:       rgba(255, 188, 120, 0.14);
+	--sm-text:          rgba(255, 242, 220, 0.74);
+	--sm-text-hover:    rgba(255, 242, 220, 0.94);
+	--sm-text-active:   rgba(255, 248, 235, 1);
+	--sm-hover-bg:      rgba(255, 168, 80, 0.08);
+	--sm-active-bg:     rgba(255, 159, 26, 0.15);
+	--sm-accent:        #ff9f1a;
+	background:         rgba(30, 14, 6, 0.72);
+	backdrop-filter:    blur(16px) saturate(155%);
+	-webkit-backdrop-filter: blur(16px) saturate(155%);
+}
+
+/* Forest Core — deep green ink, natural tint */
+:global(html[data-app-theme="forest"] [class*="sideMenu"]) {
+	--sm-bg:            rgba(7, 22, 14, 0.72);
+	--sm-divider:       rgba(116, 214, 162, 0.14);
+	--sm-text:          rgba(220, 248, 233, 0.74);
+	--sm-text-hover:    rgba(220, 248, 233, 0.94);
+	--sm-text-active:   rgba(230, 252, 241, 1);
+	--sm-hover-bg:      rgba(61, 187, 121, 0.08);
+	--sm-active-bg:     rgba(61, 187, 121, 0.15);
+	--sm-accent:        #3dbb79;
+	background:         rgba(7, 22, 14, 0.72);
+	backdrop-filter:    blur(16px) saturate(155%);
+	-webkit-backdrop-filter: blur(16px) saturate(155%);
+}
+
+/* Midnight Steel — cool blue-grey ink, muted palette */
+:global(html[data-app-theme="midnight"] [class*="sideMenu"]) {
+	--sm-bg:            rgba(16, 20, 30, 0.74);
+	--sm-divider:       rgba(153, 169, 197, 0.16);
+	--sm-text:          rgba(225, 232, 248, 0.74);
+	--sm-text-hover:    rgba(225, 232, 248, 0.94);
+	--sm-text-active:   rgba(236, 241, 251, 1);
+	--sm-hover-bg:      rgba(142, 160, 191, 0.08);
+	--sm-active-bg:     rgba(142, 160, 191, 0.15);
+	--sm-accent:        #8ea0bf;
+	background:         rgba(16, 20, 30, 0.74);
+	backdrop-filter:    blur(16px) saturate(145%);
+	-webkit-backdrop-filter: blur(16px) saturate(145%);
+}
+
+/* Oceanic Pulse — deep teal-navy ink, cyan tint */
+:global(html[data-app-theme="oceanic"] [class*="sideMenu"]) {
+	--sm-bg:            rgba(4, 20, 28, 0.72);
+	--sm-divider:       rgba(123, 222, 235, 0.14);
+	--sm-text:          rgba(215, 246, 252, 0.74);
+	--sm-text-hover:    rgba(215, 246, 252, 0.94);
+	--sm-text-active:   rgba(228, 250, 255, 1);
+	--sm-hover-bg:      rgba(0, 200, 180, 0.08);
+	--sm-active-bg:     rgba(0, 200, 180, 0.15);
+	--sm-accent:        #00c8b4;
+	background:         rgba(4, 20, 28, 0.72);
+	backdrop-filter:    blur(16px) saturate(155%);
+	-webkit-backdrop-filter: blur(16px) saturate(155%);
+}
+
+/* Crimson Noir — deep garnet ink, rose tint */
+:global(html[data-app-theme="crimson-noir"] [class*="sideMenu"]) {
+	--sm-bg:            rgba(24, 8, 13, 0.74);
+	--sm-divider:       rgba(244, 141, 163, 0.14);
+	--sm-text:          rgba(255, 228, 236, 0.74);
+	--sm-text-hover:    rgba(255, 228, 236, 0.94);
+	--sm-text-active:   rgba(255, 236, 242, 1);
+	--sm-hover-bg:      rgba(191, 54, 88, 0.08);
+	--sm-active-bg:     rgba(191, 54, 88, 0.15);
+	--sm-accent:        #bf3658;
+	background:         rgba(24, 8, 13, 0.74);
+	backdrop-filter:    blur(16px) saturate(155%);
+	-webkit-backdrop-filter: blur(16px) saturate(155%);
+}
+
+/* Frost Glyph — deep ice-navy ink, pale cyan tint */
+:global(html[data-app-theme="frost-glyph"] [class*="sideMenu"]) {
+	--sm-bg:            rgba(12, 26, 38, 0.72);
+	--sm-divider:       rgba(154, 206, 230, 0.14);
+	--sm-text:          rgba(218, 240, 252, 0.74);
+	--sm-text-hover:    rgba(218, 240, 252, 0.94);
+	--sm-text-active:   rgba(233, 247, 255, 1);
+	--sm-hover-bg:      rgba(126, 212, 238, 0.08);
+	--sm-active-bg:     rgba(126, 212, 238, 0.14);
+	--sm-accent:        #7ed4ee;
+	background:         rgba(12, 26, 38, 0.72);
+	backdrop-filter:    blur(16px) saturate(155%);
+	-webkit-backdrop-filter: blur(16px) saturate(155%);
+}
+
+/* Velvet Singularity — deep violet-black ink, purple frost */
+:global(html[data-app-theme="velvet-singularity"] [class*="sideMenu"]) {
+	--sm-bg:            rgba(14, 6, 28, 0.60);
+	--sm-divider:       rgba(197, 139, 255, 0.12);
+	--sm-text:          rgba(248, 236, 255, 0.74);
+	--sm-text-hover:    rgba(248, 236, 255, 0.94);
+	--sm-text-active:   rgba(251, 241, 255, 1);
+	--sm-hover-bg:      rgba(157, 112, 255, 0.08);
+	--sm-active-bg:     rgba(157, 112, 255, 0.14);
+	--sm-accent:        color-mix(in srgb, #9d70ff 62%, #ff3ec6);
+	background:         rgba(14, 6, 28, 0.60);
+	backdrop-filter:    blur(18px) saturate(160%);
+	-webkit-backdrop-filter: blur(18px) saturate(160%);
 }
 
 .menuRow :global(.navbar-collapse) {
@@ -261,6 +939,8 @@
 	align-items: stretch;
 	justify-content: flex-start;
 	overflow: visible;
+	width: 100%;
+	flex: 1;
 }
 
 .menuRow :global(.navbar-nav) {
@@ -270,7 +950,12 @@
 
 .sideMenu :global(.navbar-nav) {
 	flex-wrap: nowrap;
-	gap: 0.12rem;
+	gap: 0.08rem;
+	width: 100%;
+}
+
+.sideMenu :global(.navbar-nav > .nav-item) {
+	width: 100%;
 }
 
 .menuRow :global(.navbar-nav .nav-link) {
@@ -293,44 +978,46 @@
 
 .sideMenu :global(.navbar-nav .nav-link) {
 	position: relative;
-	color: var(--nav-fg);
-	/* Cleaner type, closer to the dashboard card typography. */
+	display: flex;
+	width: 100%;
+	align-items: center;
+	gap: 0.6rem;
+	color: var(--sm-text);
 	text-shadow: none;
-	border-radius: 12px;
-	padding: 0.42rem 0.65rem;
-	font-weight: 600;
-	letter-spacing: 0.005em;
-	line-height: 1.15;
-	--item-accent-a: var(--nav-accent-a);
+	border-radius: var(--sm-item-radius);
+	border: none;
+	padding: 0.52rem 0.75rem;
+	font-weight: 500;
+	font-size: 0.875rem;
+	letter-spacing: 0.008em;
+	line-height: 1.25;
+	--item-accent-a: var(--sm-accent);
 	--item-accent-b: var(--nav-accent-b);
 	transition:
-		background-color 140ms ease,
-		border-color 140ms ease,
-		color 140ms ease,
-		transform 140ms ease,
-		box-shadow 180ms ease;
+		background-color 120ms ease,
+		color 120ms ease;
 }
 
 .sideMenu :global(.navbar-nav .nav-link:active) {
-	transform: translateY(0) scale(0.985);
+	opacity: 0.80;
 }
 
 .menuRow :global(.navbar-nav .nav-link .nav-link-icon) {
-	opacity: 0.92;
+	opacity: 0.85;
 	transition: opacity 140ms ease, transform 140ms ease;
 }
 
 .sideMenu :global(.navbar-nav .nav-link .nav-link-icon) {
-	opacity: 0.92;
-	transition: opacity 140ms ease, transform 140ms ease;
+	flex-shrink: 0;
+	opacity: 0.50;
+	transition: opacity 120ms ease, color 120ms ease;
 }
 
 .sideMenu :global(.navbar-nav .nav-link .nav-link-title) {
-	/* Override the global `.navbar .nav-link-title` small uppercase styling for the sidebar. */
 	text-transform: none;
-	font-size: 0.86rem;
-	letter-spacing: 0.005em;
-	font-weight: 600;
+	font-size: 0.875rem;
+	letter-spacing: 0.008em;
+	font-weight: 500;
 }
 
 .menuRow :global(.navbar-nav .nav-link:hover),
@@ -343,10 +1030,10 @@
 
 .sideMenu :global(.navbar-nav .nav-link:hover),
 .sideMenu :global(.navbar-nav .nav-link:focus-visible) {
-	color: var(--nav-fg-strong);
-	background: var(--nav-item-bg);
+	color: var(--sm-text-hover);
+	background: var(--sm-hover-bg);
 	outline: none;
-	transform: translateY(-1px);
+	/* No transform, no slide — structural */
 }
 
 .menuRow :global(.navbar-nav .nav-link:hover .nav-link-icon),
@@ -357,8 +1044,7 @@
 
 .sideMenu :global(.navbar-nav .nav-link:hover .nav-link-icon),
 .sideMenu :global(.navbar-nav .nav-link:focus-visible .nav-link-icon) {
-	opacity: 1;
-	transform: translateY(-1px);
+	opacity: 0.70;
 }
 
 .menuRow :global(.navbar-nav .nav-link.active),
@@ -373,12 +1059,10 @@
 
 .sideMenu :global(.navbar-nav .nav-link.active),
 .sideMenu :global(.navbar-nav .nav-link.show) {
-	color: var(--nav-fg-strong);
-	background: var(--nav-item-bg-strong);
-	border: 1px solid var(--nav-item-border);
-	box-shadow:
-		0 14px 28px rgba(0, 0, 0, 0.25),
-		0 2px 0 color-mix(in srgb, var(--app-border) 30%, transparent) inset;
+	color: var(--sm-text-active);
+	background: var(--sm-active-bg);
+	font-weight: 600;
+	box-shadow: none;
 }
 
 .menuRow :global(.navbar-nav .nav-link.active::after),
@@ -396,26 +1080,31 @@
 		0 10px 26px color-mix(in srgb, var(--item-accent-a) 24%, transparent);
 }
 
-.sideMenu :global(.navbar-nav .nav-link.active::after),
-.sideMenu :global(.navbar-nav .nav-link.show::after) {
+.sideMenu :global(.navbar-nav .nav-link.active::before),
+.sideMenu :global(.navbar-nav .nav-link.show::before) {
 	content: "";
 	position: absolute;
-	left: 12px;
-	right: 12px;
-	bottom: 6px;
-	height: 2px;
-	border-radius: 999px;
-	background: linear-gradient(90deg, var(--item-accent-a), var(--item-accent-b));
-	box-shadow:
-		0 0 0 1px color-mix(in srgb, var(--app-border) 65%, transparent),
-		0 10px 26px color-mix(in srgb, var(--item-accent-a) 24%, transparent);
+	left: 0;
+	top: 22%;
+	bottom: 22%;
+	width: 3px;
+	border-radius: 0 2px 2px 0;
+	background: var(--sm-accent);
+	/* No glow — enterprise/structured, not neon */
 }
 
-/* Per-section accents from theme tokens */
+.sideMenu :global(.navbar-nav .nav-link.active .nav-link-icon),
+.sideMenu :global(.navbar-nav .nav-link.show .nav-link-icon) {
+	opacity: 1;
+	color: var(--sm-accent);
+}
+
+/* Per-section accents — set both --item-accent-a (top menuRow) and --sm-accent (sideMenu) */
 .menuRow :global(li[data-menu="dashboard"] > .nav-link),
 .sideMenu :global(li[data-menu="dashboard"] > .nav-link) {
 	--item-accent-a: color-mix(in srgb, var(--app-secondary) 30%, var(--app-primary));
 	--item-accent-b: color-mix(in srgb, var(--app-primary) 82%, #ffffff);
+	--sm-accent: color-mix(in srgb, var(--app-secondary) 30%, var(--app-primary));
 }
 
 .menuRow :global(li[data-menu="nyxguard"] > .nav-link),
@@ -428,6 +1117,7 @@
 .sideMenu :global(li[data-menu="nyxguard-globalgate"] > .nav-link) {
 	--item-accent-a: var(--app-primary);
 	--item-accent-b: var(--app-secondary);
+	--sm-accent: var(--app-primary);
 }
 
 .menuRow :global(li[data-menu="hosts"] > .nav-link),
@@ -442,42 +1132,56 @@
 .sideMenu :global(li[data-menu="dead-hosts"] > .nav-link) {
 	--item-accent-a: color-mix(in srgb, var(--app-primary) 70%, var(--app-success));
 	--item-accent-b: color-mix(in srgb, var(--app-primary) 88%, #ffffff);
+	--sm-accent: color-mix(in srgb, var(--app-primary) 70%, var(--app-success));
 }
 
 .menuRow :global(li[data-menu="access-lists"] > .nav-link),
 .sideMenu :global(li[data-menu="access-lists"] > .nav-link) {
 	--item-accent-a: color-mix(in srgb, var(--app-secondary) 44%, var(--app-primary));
 	--item-accent-b: var(--app-primary);
+	--sm-accent: color-mix(in srgb, var(--app-secondary) 44%, var(--app-primary));
 }
 
 .menuRow :global(li[data-menu="certificates"] > .nav-link),
 .sideMenu :global(li[data-menu="certificates"] > .nav-link) {
 	--item-accent-a: var(--app-warning);
 	--item-accent-b: color-mix(in srgb, var(--app-warning) 35%, var(--app-secondary));
+	--sm-accent: var(--app-warning);
 }
 
 .menuRow :global(li[data-menu="users"] > .nav-link),
 .sideMenu :global(li[data-menu="users"] > .nav-link) {
 	--item-accent-a: color-mix(in srgb, var(--app-success) 70%, #ffffff);
 	--item-accent-b: color-mix(in srgb, var(--app-success) 40%, var(--app-primary));
+	--sm-accent: color-mix(in srgb, var(--app-success) 70%, #ffffff);
 }
 
 .menuRow :global(li[data-menu="auditlogs"] > .nav-link),
 .sideMenu :global(li[data-menu="auditlogs"] > .nav-link) {
 	--item-accent-a: color-mix(in srgb, var(--app-error) 75%, var(--app-warning));
 	--item-accent-b: color-mix(in srgb, var(--app-error) 55%, var(--app-secondary));
+	--sm-accent: color-mix(in srgb, var(--app-error) 75%, var(--app-warning));
+}
+
+.menuRow :global(li[data-menu="changelogs"] > .nav-link),
+.sideMenu :global(li[data-menu="changelogs"] > .nav-link) {
+	--item-accent-a: color-mix(in srgb, var(--app-primary) 76%, #ffffff);
+	--item-accent-b: color-mix(in srgb, var(--app-secondary) 52%, var(--app-primary));
+	--sm-accent: color-mix(in srgb, var(--app-primary) 76%, #ffffff);
 }
 
 .menuRow :global(li[data-menu="settings"] > .nav-link),
 .sideMenu :global(li[data-menu="settings"] > .nav-link) {
 	--item-accent-a: color-mix(in srgb, var(--app-text-secondary) 88%, #ffffff);
 	--item-accent-b: color-mix(in srgb, var(--app-secondary) 32%, var(--app-primary));
+	--sm-accent: color-mix(in srgb, var(--app-text-secondary) 88%, #ffffff);
 }
 
 .menuRow :global(li[data-menu="support-nyxguard"] > .nav-link),
 .sideMenu :global(li[data-menu="support-nyxguard"] > .nav-link) {
 	--item-accent-a: color-mix(in srgb, var(--app-success) 85%, #6affc1);
 	--item-accent-b: color-mix(in srgb, var(--app-success) 55%, var(--app-primary));
+	--sm-accent: color-mix(in srgb, var(--app-success) 85%, #6affc1);
 }
 
 /* Make each active/open item feel "tagged" by its accent */
@@ -492,12 +1196,9 @@
 
 .sideMenu :global(.navbar-nav li[data-menu] > .nav-link.active),
 .sideMenu :global(.navbar-nav li[data-menu] > .nav-link.show) {
-	box-shadow:
-		0 16px 34px rgba(0, 0, 0, 0.26),
-		0 0 0 1px color-mix(in srgb, var(--app-border) 60%, transparent) inset,
-		0 0 22px color-mix(in srgb, var(--app-primary) 24%, transparent),
-		0 0 22px color-mix(in srgb, var(--app-secondary) 18%, transparent);
-	animation: menuLinkPop 220ms ease-out;
+	/* No glow, no animation — enterprise look */
+	box-shadow: none;
+	animation: none;
 }
 
 @keyframes menuLinkPop {
@@ -544,8 +1245,8 @@
 	transform: translateY(0) scale(1);
 }
 
-.sideMenu :global(.dropdown-menu) {
-	/* Sidebar dropdowns are inline (see earlier `position: static`), but keep the same glass styling. */
+/* Nav dropdown-menus in the sidebar are inline (expand in-place inside the scroll region) */
+.sideMenu :global(.navbar-nav .dropdown-menu) {
 	position: static;
 	float: none;
 	transform: none !important;
@@ -567,11 +1268,29 @@
 	overflow: auto;
 }
 
-.sideMenu :global(.dropdown-menu.show) {
+:global(html[data-app-theme="velvet-singularity"]) .menuRow :global(.dropdown-menu),
+:global(html[data-app-theme="velvet-singularity"]) .sideMenu :global(.dropdown-menu) {
+	background:
+		radial-gradient(640px 300px at 18% 0%, color-mix(in srgb, var(--app-primary) 28%, transparent), transparent 62%),
+		radial-gradient(520px 280px at 84% 16%, color-mix(in srgb, var(--app-secondary) 30%, transparent), transparent 60%),
+		color-mix(in srgb, var(--app-dropdown-bg) 92%, #10081f);
+	border-color: color-mix(in srgb, var(--app-secondary) 24%, var(--app-border));
+}
+
+:global(html[data-app-theme="cobalt-eclipse"]) .menuRow :global(.dropdown-menu),
+:global(html[data-app-theme="cobalt-eclipse"]) .sideMenu :global(.dropdown-menu) {
+	background:
+		radial-gradient(640px 300px at 16% 0%, color-mix(in srgb, var(--app-primary) 30%, transparent), transparent 62%),
+		radial-gradient(520px 280px at 86% 14%, color-mix(in srgb, var(--app-secondary) 20%, transparent), transparent 64%),
+		color-mix(in srgb, var(--app-dropdown-bg) 92%, #071739);
+	border-color: color-mix(in srgb, var(--app-primary) 24%, var(--app-border));
+}
+
+.sideMenu :global(.navbar-nav .dropdown-menu.show) {
 	display: block;
 }
 
-.sideMenu :global(.dropdown-menu .dropdown-item) {
+.sideMenu :global(.navbar-nav .dropdown-menu .dropdown-item) {
 	border-radius: 10px;
 }
 
@@ -622,11 +1341,57 @@
 .userMenu {
 	position: relative;
 	z-index: 1060;
-	border: 1px solid color-mix(in srgb, var(--app-border) 80%, transparent);
-	border-radius: 999px;
-	padding: 4px 10px;
-	background: color-mix(in srgb, var(--app-surface-2) 80%, transparent);
-	margin-left: 0.25rem;
+	height: 34px;
+	display: inline-flex;
+	align-items: center;
+	border: 0;
+	border-radius: 10px;
+	padding: 0 0.5rem;
+	background: transparent;
+	box-shadow: none;
+	backdrop-filter: none;
+	margin-left: 0;
+	transition:
+		background-color 140ms ease,
+		border-color 140ms ease,
+		box-shadow 180ms ease,
+		transform 140ms ease;
+}
+
+.userMenu:hover {
+	background: transparent;
+	border-color: transparent;
+	transform: none;
+}
+
+.userMenu :global(.nav-link) {
+	height: 100%;
+	display: inline-flex !important;
+	align-items: center;
+	gap: 0.42rem;
+	color: var(--app-text-primary) !important;
+	padding: 0 !important;
+}
+
+.userMenu :global(.avatar-sm) {
+	width: 24px;
+	height: 24px;
+	border-radius: 7px;
+	border: 1px solid color-mix(in srgb, var(--app-border) 40%, transparent);
+	box-shadow: none;
+}
+
+.userMenu :global(.d-none.d-xl-block > div:first-child) {
+	font-size: 0.78rem;
+	font-weight: 650;
+	line-height: 1.05;
+}
+
+.userMenu :global(.small.text-secondary) {
+	color: var(--app-text-secondary) !important;
+	line-height: 1.05;
+	font-size: 0.7rem;
+	margin-top: 0.14rem !important;
 }
 
 .userMenu :global(.dropdown-menu) {
@@ -638,7 +1403,14 @@
 .rightControls {
 	align-items: center;
 	flex-wrap: nowrap !important;
-	gap: 0.25rem;
+	gap: 0.24rem;
+	min-width: 0;
+	background: transparent;
+}
+
+.toolbarControl {
+	align-items: center;
+	min-width: 0;
 }
 
 @media (max-width: 767.98px) {
@@ -647,4 +1419,326 @@
 		top: 100% !important;
 		bottom: auto !important;
 	}
+}
+
+@media (max-width: 720px) {
+	/* On narrow viewports, hide text labels for Language/Theme, keep icons + chevrons */
+	.toolbarControl :global(.dropdown-toggle span) {
+		display: none;
+	}
+}
+
+.updateBadge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.36rem;
+	height: 34px;
+	padding: 0 0.62rem;
+	border-radius: 10px;
+	border: 1px solid color-mix(in srgb, var(--app-warning) 48%, var(--app-border));
+	background: color-mix(in srgb, var(--app-warning) 14%, transparent);
+	color: color-mix(in srgb, var(--app-text-primary) 94%, #ffffff);
+	font-size: 0.72rem;
+	font-weight: 700;
+	line-height: 1;
+	white-space: nowrap;
+	transition:
+		background-color 140ms ease,
+		border-color 140ms ease,
+		transform 140ms ease,
+		box-shadow 180ms ease;
+}
+
+.updateBadge:hover {
+	background: color-mix(in srgb, var(--app-warning) 22%, transparent);
+	border-color: color-mix(in srgb, var(--app-warning) 66%, var(--app-border));
+	box-shadow: 0 10px 24px color-mix(in srgb, var(--app-warning) 18%, transparent);
+	transform: translateY(-1px);
+}
+
+.restartReminder {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.6rem;
+	flex-wrap: wrap;
+	padding: 0.44rem 0.9rem;
+	border-top: 1px solid color-mix(in srgb, var(--app-warning) 24%, transparent);
+	border-bottom: 1px solid color-mix(in srgb, var(--app-warning) 24%, transparent);
+	background: color-mix(in srgb, var(--app-warning) 10%, transparent);
+	backdrop-filter: blur(8px) saturate(125%);
+}
+
+.restartText {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.36rem;
+	font-size: 0.76rem;
+	font-weight: 600;
+}
+
+.restartActions {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.36rem;
+}
+
+.updateModalBackdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 4000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 1rem;
+	background: rgba(7, 10, 24, 0.55);
+	backdrop-filter: blur(8px);
+}
+
+.updateModal {
+	width: min(860px, 100%);
+	max-height: calc(100vh - 2rem);
+	overflow: auto;
+	border-radius: 16px;
+	border: 1px solid var(--app-border);
+	padding: 1rem;
+	background:
+		radial-gradient(760px 340px at 14% 0%, color-mix(in srgb, var(--app-primary) 20%, transparent), transparent 58%),
+		radial-gradient(760px 340px at 86% 100%, color-mix(in srgb, var(--app-secondary) 20%, transparent), transparent 62%),
+		color-mix(in srgb, var(--app-surface-2) 94%, black 6%);
+	box-shadow:
+		0 26px 72px rgba(0, 0, 0, 0.52),
+		0 0 0 1px color-mix(in srgb, var(--app-border) 60%, transparent) inset;
+}
+
+.updateModalHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.8rem;
+	margin-bottom: 0.75rem;
+}
+
+.updateModalHeader h3 {
+	margin: 0;
+	font-size: 1.15rem;
+}
+
+.updateMeta {
+	display: flex;
+	align-items: center;
+	gap: 0.65rem;
+	flex-wrap: wrap;
+	margin-bottom: 0.75rem;
+	font-size: 0.82rem;
+}
+
+.updateStep {
+	margin-top: 0.75rem;
+	padding: 0.75rem;
+	border-radius: 12px;
+	border: 1px solid color-mix(in srgb, var(--app-border) 84%, transparent);
+	background: color-mix(in srgb, var(--app-surface) 84%, transparent);
+}
+
+.updateStep h4 {
+	margin: 0 0 0.35rem;
+	font-size: 0.94rem;
+}
+
+.updateStep p {
+	margin: 0;
+	font-size: 0.8rem;
+	opacity: 0.9;
+}
+
+.updateActions {
+	margin-top: 0.55rem;
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+	flex-wrap: wrap;
+}
+
+.ok {
+	font-size: 0.76rem;
+	font-weight: 650;
+	color: color-mix(in srgb, var(--app-success) 84%, #a1ffca);
+}
+
+.checkboxRow {
+	margin-top: 0.55rem;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.42rem;
+	font-size: 0.76rem;
+	opacity: 0.88;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VOID BLACK — flat surface overrides
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:global(html[data-app-theme="void-black"]) .menuRow {
+	background: #0c0c0c;
+	backdrop-filter: none;
+}
+
+:global(html[data-app-theme="void-black"]) .topNav {
+	background: #080808;
+	backdrop-filter: none;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* void-black .sideMenu tokens moved to :global([class*="sideMenu"]) block above */
+
+:global(html[data-app-theme="void-black"]) .sideMenu :global(.dropdown-menu) {
+	background: #111111;
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	box-shadow: none;
+	backdrop-filter: none;
+}
+
+:global(html[data-app-theme="void-black"]) .magicWordmark {
+	background: none;
+	-webkit-background-clip: unset;
+	background-clip: unset;
+	color: #f0f0f0;
+	filter: none;
+}
+
+:global(html[data-app-theme="void-black"]) .magicSub {
+	background: none;
+	-webkit-background-clip: unset;
+	background-clip: unset;
+	color: rgba(255, 255, 255, 0.45);
+	filter: none;
+}
+
+.terminal {
+	margin-top: 0.55rem;
+	border-radius: 12px;
+	border: 1px solid color-mix(in srgb, var(--app-border) 78%, transparent);
+	background: color-mix(in srgb, var(--app-surface-2) 94%, black 6%);
+	overflow: hidden;
+}
+
+.terminalTitle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	width: 100%;
+	padding: 0.45rem 0.6rem;
+	border-bottom: 1px solid color-mix(in srgb, var(--app-border) 76%, transparent);
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+.terminal pre {
+	margin: 0;
+	padding: 0.6rem;
+	max-height: 240px;
+	overflow: auto;
+	font-size: 0.74rem;
+	line-height: 1.4;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.postActions {
+	margin-top: 0.6rem;
+	padding-top: 0.6rem;
+	border-top: 1px solid color-mix(in srgb, var(--app-border) 76%, transparent);
+	font-size: 0.79rem;
+}
+
+.failedText {
+	margin-top: 0.6rem;
+	font-size: 0.79rem;
+	font-weight: 650;
+	color: color-mix(in srgb, var(--app-error) 82%, #ffd4e4);
+}
+
+.whatsNewOverlay {
+	position: fixed;
+	inset: 0;
+	z-index: 4100;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 1.1rem;
+	background:
+		radial-gradient(1000px 460px at 20% 0%, rgba(28, 88, 255, 0.24), transparent 62%),
+		radial-gradient(980px 480px at 86% 100%, rgba(200, 35, 148, 0.24), transparent 64%),
+		rgba(4, 6, 16, 0.78);
+	backdrop-filter: blur(10px) saturate(132%);
+}
+
+.whatsNewCard {
+	width: min(980px, 100%);
+	max-height: calc(100vh - 2.2rem);
+	overflow: auto;
+	padding: 1rem;
+	border-radius: 16px;
+	border: 1px solid color-mix(in srgb, var(--app-border) 80%, var(--app-primary) 20%);
+	background:
+		radial-gradient(860px 320px at 12% 0%, rgba(28, 88, 255, 0.22), transparent 58%),
+		radial-gradient(820px 320px at 88% 100%, rgba(200, 35, 148, 0.22), transparent 60%),
+		linear-gradient(165deg, #090d1f, #150f2c 58%, #260f38);
+	box-shadow:
+		0 34px 86px rgba(0, 0, 0, 0.62),
+		0 0 0 1px rgba(112, 149, 255, 0.16) inset;
+}
+
+.whatsNewTop {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.28rem 0.6rem;
+	border-radius: 999px;
+	border: 1px solid rgba(120, 146, 255, 0.38);
+	background: rgba(47, 78, 180, 0.25);
+	font-size: 0.7rem;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	font-weight: 700;
+}
+
+.whatsNewCard h2 {
+	margin: 0.7rem 0 0.3rem;
+	font-size: 1.42rem;
+}
+
+.whatsNewSub {
+	margin: 0;
+	font-size: 0.82rem;
+	opacity: 0.9;
+}
+
+.whatsNewPreview {
+	margin-top: 0.72rem;
+	border-radius: 12px;
+	border: 1px solid rgba(111, 135, 243, 0.24);
+	background: rgba(8, 12, 28, 0.52);
+}
+
+.whatsNewPreview pre {
+	margin: 0;
+	padding: 0.7rem;
+	max-height: 52vh;
+	overflow: auto;
+	font-size: 0.76rem;
+	line-height: 1.45;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.whatsNewActions {
+	margin-top: 0.72rem;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.45rem;
+	flex-wrap: wrap;
 }
