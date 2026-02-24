@@ -1,4 +1,3 @@
-import gravatar from "gravatar";
 import _ from "lodash";
 import errs from "../lib/error.js";
 import utils from "../lib/utils.js";
@@ -12,10 +11,40 @@ const omissions = () => {
 	return ["is_deleted", "permissions.id", "permissions.user_id", "permissions.created_on", "permissions.modified_on"];
 };
 
-const DEFAULT_AVATAR = gravatar.url("admin@example.com", { default: "mm" });
+// Palette of background colours used for initials avatars (index = char code % length)
+const AVATAR_PALETTE = [
+	"#4f46e5", "#7c3aed", "#0369a1", "#0f766e", "#15803d",
+	"#b45309", "#c2410c", "#be185d", "#6d28d9", "#0e7490",
+];
+
+/**
+ * Generates a local SVG data-URI avatar from a name or email string.
+ * No external requests are ever made.
+ */
+function generateInitialsAvatar(nameOrEmail) {
+	const str = (nameOrEmail || "?").trim();
+	// Derive up to two initials from words (or a single char for email-like strings)
+	const parts = str.split(/[\s@._\-+]+/).filter(Boolean);
+	let initials;
+	if (parts.length >= 2) {
+		initials = (parts[0][0] + parts[1][0]).toUpperCase();
+	} else {
+		initials = (parts[0] || "?").slice(0, 2).toUpperCase();
+	}
+	const colorIdx = str.charCodeAt(0) % AVATAR_PALETTE.length;
+	const bg = AVATAR_PALETTE[colorIdx];
+	const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="${bg}"/><text x="32" y="32" dy=".35em" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="24" font-weight="600">${initials}</text></svg>`;
+	return "data:image/svg+xml;base64," + Buffer.from(svg).toString("base64");
+}
+
+const DEFAULT_AVATAR = generateInitialsAvatar("Admin");
 
 function isGravatarAvatar(url) {
 	return typeof url === "string" && url.includes("gravatar.com/avatar/");
+}
+
+function isInitialsAvatar(url) {
+	return typeof url === "string" && url.startsWith("data:image/svg+xml;base64,");
 }
 
 function isCustomAvatar(url) {
@@ -43,7 +72,14 @@ const internalUser = {
 		}
 
 		await access.can("users:create", data);
-		data.avatar = gravatar.url(data.email, { default: "mm" });
+		if (typeof data.email === "string") {
+			data.email = data.email.toLowerCase().trim();
+			const available = await internalUser.isEmailAvailable(data.email);
+			if (!available) {
+				throw new errs.ValidationError(`Email address already in use - ${data.email}`);
+			}
+		}
+		data.avatar = generateInitialsAvatar(data.name || data.email);
 
 		let user = await userModel.query().insertAndFetch(data).then(utils.omitRow(omissions()));
 		if (auth) {
@@ -126,9 +162,11 @@ const internalUser = {
 					);
 				}
 
-				// Preserve a user's custom uploaded avatar. If they are using gravatar, keep it in sync with email.
-				if (!isCustomAvatar(user.avatar) && (user.avatar === "" || isGravatarAvatar(user.avatar))) {
-					data.avatar = gravatar.url(data.email || user.email, { default: "mm" });
+				// Preserve a user's custom uploaded avatar.
+				// Regenerate initials avatar if the current avatar is a Gravatar URL (migration),
+				// an old initials SVG, or empty.
+				if (!isCustomAvatar(user.avatar) && (user.avatar === "" || isGravatarAvatar(user.avatar) || isInitialsAvatar(user.avatar))) {
+					data.avatar = generateInitialsAvatar(data.name || user.name || data.email || user.email);
 				} else {
 					delete data.avatar;
 				}
@@ -174,7 +212,7 @@ const internalUser = {
 	},
 
 	/**
-	 * Clear a custom avatar and revert to gravatar for the user's email.
+	 * Clear a custom avatar and revert to the locally-generated initials avatar.
 	 *
 	 * @param {Access} access
 	 * @param {{id: number}} data
@@ -183,7 +221,7 @@ const internalUser = {
 	clearAvatar: async (access, data) => {
 		await access.can("users:update", data.id);
 		const user = await internalUser.get(access, { id: data.id });
-		const avatar = gravatar.url(user.email, { default: "mm" });
+		const avatar = generateInitialsAvatar(user.name || user.email);
 		await userModel.query().patchAndFetchById(user.id, { avatar }).then(utils.omitRow(omissions()));
 		const updated = await internalUser.get(access, { id: user.id });
 		await internalAuditLog.add(access, {
@@ -307,11 +345,9 @@ const internalUser = {
 	},
 
 	deleteAll: async () => {
-		await userModel
-			.query()
-			.patch({
-				is_deleted: 1,
-			});
+		await userModel.query().patch({
+			is_deleted: 1,
+		});
 	},
 
 	/**

@@ -57,7 +57,7 @@ const useSetRedirectionHost = () => {
 			}));
 			return () => queryClient.setQueryData(["redirection-host", values.id], previousObject);
 		},
-		onError: (_, __, rollback: any) => rollback(),
+		onError: (_, __, rollback: any) => rollback?.(),
 		onSuccess: async ({ id }: RedirectionHost) => {
 			queryClient.invalidateQueries({ queryKey: ["redirection-host", id] });
 			queryClient.invalidateQueries({ queryKey: ["redirection-hosts"] });

@@ -18,6 +18,36 @@ const showUserModal = (id: number | "me" | "new") => {
 interface Props extends InnerModalProps {
 	id: number | "me" | "new";
 }
+
+const firstFormikError = (errors: any): string | null => {
+	if (!errors || typeof errors !== "object") return null;
+	for (const value of Object.values(errors)) {
+		if (typeof value === "string" && value.trim()) return value;
+		if (Array.isArray(value)) {
+			for (const item of value) {
+				if (typeof item === "string" && item.trim()) return item;
+				const nested = firstFormikError(item);
+				if (nested) return nested;
+			}
+		} else if (value && typeof value === "object") {
+			const nested = firstFormikError(value);
+			if (nested) return nested;
+		}
+	}
+	return null;
+};
+
+const touchAllFields = (value: any): any => {
+	if (Array.isArray(value)) return value.map((item) => touchAllFields(item));
+	if (value && typeof value === "object") {
+		return Object.keys(value).reduce((acc: any, key) => {
+			acc[key] = touchAllFields(value[key]);
+			return acc;
+		}, {});
+	}
+	return true;
+};
+
 const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 	const { data, isLoading, error } = useUser(id);
 	const { data: currentUser, isLoading: currentIsLoading } = useUser("me");
@@ -209,7 +239,7 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 					}
 					onSubmit={onSubmit}
 				>
-					{({ values, setFieldValue }) => (
+					{({ values, setFieldValue, validateForm, submitForm, setTouched }) => (
 						<Form>
 							<Modal.Header closeButton>
 								<Modal.Title>
@@ -229,7 +259,7 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 									/>
 									<div className="flex-grow-1" style={{ minWidth: 260 }}>
 										<div className="text-secondary text-uppercase" style={{ fontSize: 11, letterSpacing: "0.08em" }}>
-											Profile Picture
+											{intl.formatMessage({ id: "user.profile-picture" })}
 										</div>
 										<div className="d-flex align-items-center gap-2 mt-2 flex-wrap">
 											<input
@@ -247,7 +277,7 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 												isLoading={avatarUpload.isPending}
 												onClick={() => avatarFile && avatarUpload.mutate(avatarFile)}
 											>
-												Upload
+												<T id="user.upload" />
 											</Button>
 											{isCustomAvatar ? (
 												<Button
@@ -256,12 +286,12 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 													isLoading={avatarClear.isPending}
 													onClick={() => avatarClear.mutate()}
 												>
-													Remove
+													<T id="user.remove" />
 												</Button>
 											) : null}
 										</div>
 										<div className="text-secondary mt-2" style={{ fontSize: 12, opacity: 0.85 }}>
-											PNG/JPEG/WebP, max 2MB.
+											{intl.formatMessage({ id: "user.avatar-hint" })}
 										</div>
 									</div>
 								</div>
@@ -378,7 +408,7 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 											</div>
 											<div>
 												<label className="row" htmlFor="isNyxAgent">
-													<span className="col">NyxAgent (Monitoring only)</span>
+													<span className="col">{intl.formatMessage({ id: "user.nyx-agent" })}</span>
 													<span className="col-auto">
 														<Field name="isNyxAgent" type="checkbox">
 															{({ field }: any) => (
@@ -431,11 +461,19 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 									<T id="cancel" />
 								</Button>
 								<Button
-									type="submit"
+									type="button"
 									className="ms-auto btn-orange"
-									data-bs-dismiss="modal"
 									isLoading={isSubmitting}
 									disabled={isSubmitting}
+									onClick={async () => {
+										const errors = await validateForm();
+										if (errors && Object.keys(errors).length > 0) {
+											await setTouched(touchAllFields(values), true);
+											setErrorMsg(firstFormikError(errors) || intl.formatMessage({ id: "error.required" }));
+											return;
+										}
+										submitForm();
+									}}
 								>
 									<T id="save" />
 								</Button>

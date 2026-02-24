@@ -44,11 +44,12 @@ export function SSLCertificateField({
 }: Props) {
 	const { locale } = useLocaleState();
 	const { isLoading, isError, error, data } = useCertificates();
-	const { values, setFieldValue } = useFormikContext();
+	const { values, setFieldValue, setFieldTouched } = useFormikContext<any>();
 	const v: any = values || {};
 
 	const handleChange = (newValue: any, _actionMeta: ActionMeta<CertOption>) => {
 		setFieldValue(name, newValue?.value);
+		setFieldTouched(name, true, false);
 		const {
 			sslForced,
 			http2Support,
@@ -116,7 +117,7 @@ export function SSLCertificateField({
 						<Select
 							className="react-select-container"
 							classNamePrefix="react-select"
-							defaultValue={options.find((o) => o.value === field.value) || options[0]}
+							value={options.find((o) => o.value === field.value) || null}
 							options={options}
 							components={{ Option }}
 							styles={{
@@ -129,9 +130,7 @@ export function SSLCertificateField({
 						/>
 					) : null}
 					{form.errors[field.name] ? (
-						<div className="invalid-feedback">
-							{form.errors[field.name] && form.touched[field.name] ? form.errors[field.name] : null}
-						</div>
+						<div className="invalid-feedback d-block">{form.errors[field.name]}</div>
 					) : null}
 				</div>
 			)}

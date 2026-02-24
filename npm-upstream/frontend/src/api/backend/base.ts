@@ -50,7 +50,14 @@ async function processResponse(response: Response) {
 	// Many API endpoints return 204 No Content. Also, some errors might not return JSON.
 	// Read as text first, then parse when present.
 	const raw = await response.text();
-	const payload = raw ? (JSON.parse(raw) as any) : null;
+	let payload: any = null;
+	if (raw) {
+		try {
+			payload = JSON.parse(raw);
+		} catch {
+			payload = null;
+		}
+	}
 	if (!response.ok) {
 		if (response.status === 401) {
 			// Force logout user and reload the page if Unauthorized
@@ -59,8 +66,10 @@ async function processResponse(response: Response) {
 			window.location.reload();
 		}
 		const msg =
+			payload?.error?.message_i18n ??
 			payload?.error?.messageI18n ??
 			payload?.error?.message ??
+			payload?.message ??
 			(raw || `Request failed (${response.status})`);
 		throw new Error(msg);
 	}

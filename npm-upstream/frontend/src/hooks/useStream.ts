@@ -42,7 +42,7 @@ const useSetStream = () => {
 			}));
 			return () => queryClient.setQueryData(["stream", values.id], previousObject);
 		},
-		onError: (_, __, rollback: any) => rollback(),
+		onError: (_, __, rollback: any) => rollback?.(),
 		onSuccess: async ({ id }: Stream) => {
 			queryClient.invalidateQueries({ queryKey: ["stream", id] });
 			queryClient.invalidateQueries({ queryKey: ["streams"] });
