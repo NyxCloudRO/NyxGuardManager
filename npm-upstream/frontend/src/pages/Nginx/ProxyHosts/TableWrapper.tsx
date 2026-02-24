@@ -9,7 +9,6 @@ import { T } from "src/locale";
 import { showDeleteConfirmModal, showHelpModal, showProxyHostModal } from "src/modals";
 import { MANAGE, PROXY_HOSTS } from "src/modules/Permissions";
 import { showObjectSuccess } from "src/notifications";
-import styles from "./TableWrapper.module.css";
 import Table from "./Table";
 
 export default function TableWrapper() {
@@ -80,11 +79,11 @@ export default function TableWrapper() {
 								) : null}
 								<Button
 									size="sm"
-									className={styles.helpPill}
+									className="nyx-help-pill"
 									onClick={() => showHelpModal("ProxyHosts", "lime")}
 									aria-label="Open NyxGuard Proxy Host help"
 								>
-									<IconHelp size={16} stroke={1.9} />
+									<IconHelp size={15} stroke={2} />
 								</Button>
 								<HasPermission section={PROXY_HOSTS} permission={MANAGE} hideError>
 									{data?.length ? (

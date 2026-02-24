@@ -57,7 +57,7 @@ const CustomCertificateModal = EasyModal.create(({ visible, remove }: InnerModal
 	};
 
 	return (
-		<Modal show={visible} onHide={remove}>
+		<Modal show={visible} onHide={remove} centered>
 			<Formik
 				initialValues={
 					{

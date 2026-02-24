@@ -74,8 +74,13 @@ export default function TableWrapper() {
 										/>
 									</div>
 								) : null}
-								<Button size="sm" onClick={() => showHelpModal("DeadHosts", "red")}>
-									<IconHelp size={20} />
+								<Button
+									size="sm"
+									className="nyx-help-pill"
+									onClick={() => showHelpModal("DeadHosts", "red")}
+									aria-label="Open dead host help"
+								>
+									<IconHelp size={15} stroke={2} />
 								</Button>
 								<HasPermission section={DEAD_HOSTS} permission={MANAGE} hideError>
 									{data?.length ? (

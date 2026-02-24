@@ -29,10 +29,40 @@
 	--app-focus-ring: rgba(43, 98, 255, 0.16);
 	--app-cta-gradient: linear-gradient(120deg, #4b8bff, #ff2bbd);
 	--app-cta-text: #f7fbff;
+	--app-cta-gradient-soft:
+		linear-gradient(
+			120deg,
+			color-mix(in srgb, var(--app-primary) 56%, var(--app-surface-2) 44%),
+			color-mix(in srgb, var(--app-secondary) 48%, var(--app-surface-2) 52%)
+		);
+	--app-cta-shadow-soft: 0 8px 18px rgba(0, 0, 0, 0.2);
+	--app-content-top-gap: 12px;
+	/* Native <select> popup fallback colors (used by browsers that ignore themed option backgrounds). */
+	--app-native-option-bg: color-mix(in srgb, var(--app-surface-2) 96%, black 4%);
+	--app-native-option-fg: color-mix(in srgb, var(--app-text-primary) 94%, white 6%);
+	--app-native-option-active-bg: color-mix(in srgb, var(--app-primary) 36%, var(--app-surface-2));
+	--app-native-option-active-fg: color-mix(in srgb, var(--app-text-primary) 96%, white 4%);
 }
 
 :root,
 [data-app-theme] {
+	--bg-base: var(--app-background);
+	--bg-surface-1: var(--app-surface);
+	--bg-surface-2: var(--app-surface-2);
+	--bg-elevated: color-mix(in srgb, var(--app-surface-2) 96%, black 4%);
+	--border-subtle: color-mix(in srgb, var(--app-border) 76%, transparent);
+	--border-strong: color-mix(in srgb, var(--app-border) 100%, transparent);
+	--text-primary: var(--app-text-primary);
+	--text-secondary: var(--app-text-secondary);
+	--text-muted: color-mix(in srgb, var(--app-text-secondary) 70%, transparent);
+	--accent: var(--app-primary);
+	--accent-hover: color-mix(in srgb, var(--app-primary) 78%, white 22%);
+	--accent-active: color-mix(in srgb, var(--app-primary) 80%, black 20%);
+	--focus-ring: var(--app-focus-ring);
+	--danger: var(--app-error);
+	--warning: var(--app-warning);
+	--success: var(--app-success);
+	--info: color-mix(in srgb, var(--app-primary) 72%, #5ecbff 28%);
 	--tblr-body-color: var(--app-text-primary);
 	--tblr-secondary-color: var(--app-text-secondary);
 	--tblr-border-color: color-mix(in srgb, var(--app-border) 100%, transparent);
@@ -55,6 +85,12 @@ body,
 	min-height: 100%;
 }
 
+/* Use a single global background source (body). All page/layout wrappers inside
+   #root should be transparent to avoid stacked gradient seams and banding. */
+#root {
+	--app-page-gradient: transparent;
+}
+
 html,
 body {
 	overflow: hidden;
@@ -62,10 +98,365 @@ body {
 
 body {
 	background:
+		var(--app-page-gradient),
 		radial-gradient(1200px 500px at var(--app-body-overlay-a-pos), var(--app-body-overlay-a), transparent 58%),
 		radial-gradient(960px 480px at var(--app-body-overlay-b-pos), var(--app-body-overlay-b), transparent 55%),
 		linear-gradient(160deg, var(--app-background) 0%, color-mix(in srgb, var(--app-background) 82%, var(--app-secondary)) 100%);
 	color: var(--app-text-primary);
+	background-attachment: fixed;
+	background-size: cover;
+}
+
+[data-app-theme="obsidian-guard"] body {
+	background: linear-gradient(180deg, var(--bg-base) 0%, color-mix(in srgb, var(--bg-base) 88%, #111827) 100%);
+}
+
+/* ── Void Black: flat, gradient-free overrides ───────────────────────────── */
+/*
+ * Remap the "decorative" CSS variables that module-level CSS uses for
+ * color-tinted gradients to neutral surface tones.  This single block
+ * fixes every page card/container/pill that mixes --app-error /
+ * --app-warning / --app-secondary into its background, without touching
+ * any of the 12 module CSS files.
+ *
+ * The real semantic colours (status badges, alert text, icons) are kept
+ * via the --app-success / --app-warning / --app-error tokens which are
+ * NOT remapped here — they are only used for text/icon colouring, not
+ * for background gradients in the module files.
+ */
+html[data-app-theme="void-black"] {
+	/*
+	 * In module-level CSS files, --app-primary / --app-secondary / --app-error /
+	 * --app-warning are mixed (typically 8–22%) into card/container backgrounds
+	 * to produce their colored tints.  We remap them to neutral dark tones so
+	 * color-mix() returns near-surface colors instead of vivid red/orange/teal.
+	 *
+	 * Buttons, focus rings, and active nav items are re-applied with explicit
+	 * [data-app-theme="void-black"] rules below, so remapping here is safe.
+	 */
+	--app-primary:   #141414;
+	--app-secondary: #111111;
+	--app-error:     #111111;
+	--app-warning:   #141414;
+
+	--app-success:   #00c896;
+	--app-cta-text:  #080808;
+
+	/* Page-level: solid black, no gradient blobs */
+	--app-page-gradient: #080808;
+	--app-body-overlay-a: rgba(0,0,0,0);
+	--app-body-overlay-b: rgba(0,0,0,0);
+
+	/* Surfaces */
+	--app-surface:    #0f0f0f;
+	--app-surface-2:  #141414;
+	--app-card-start: #0f0f0f;
+	--app-card-end:   #0f0f0f;
+
+	/* Borders */
+	--app-border: rgba(255,255,255,0.09);
+
+	/* CTA / focus use real accent — these override --app-primary for buttons */
+	--app-cta-gradient:      #00d4aa;
+	--app-cta-gradient-soft: #00d4aa;
+	--app-cta-shadow-soft:   none;
+	--app-focus-ring:        rgba(0,212,170,0.22);
+}
+
+[data-app-theme="void-black"] body {
+	background: #080808;
+}
+
+[data-app-theme="void-black"] .app-page-shell {
+	background: transparent;
+}
+
+/* Page container: no color-bleed radial gradients */
+[data-app-theme="void-black"] .app-page-container-framed {
+	background: #0f0f0f;
+	border: 1px solid rgba(255,255,255,0.08);
+	box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+	backdrop-filter: none;
+}
+
+/* Cards: flat, no gradient tint */
+[data-app-theme="void-black"] .card {
+	background: #0f0f0f;
+	border: 1px solid rgba(255,255,255,0.08);
+	box-shadow: 0 4px 16px rgba(0,0,0,0.40);
+	backdrop-filter: none;
+}
+
+[data-app-theme="void-black"] .nyx-legacy-card {
+	background: #0f0f0f;
+	border: 1px solid rgba(255,255,255,0.08);
+	box-shadow: 0 4px 16px rgba(0,0,0,0.40);
+}
+
+[data-app-theme="void-black"] .card-header {
+	background: #111111;
+	border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Modal */
+[data-app-theme="void-black"] .modal-content {
+	background: #111111 !important;
+	border: 1px solid rgba(255,255,255,0.10) !important;
+	box-shadow: 0 24px 56px rgba(0,0,0,0.60) !important;
+	backdrop-filter: none;
+}
+
+[data-app-theme="void-black"] .modal-header,
+[data-app-theme="void-black"] .modal-footer {
+	background: #141414;
+	border-color: rgba(255,255,255,0.08);
+}
+
+[data-app-theme="void-black"] .modal .card,
+[data-app-theme="void-black"] .modal .card-header,
+[data-app-theme="void-black"] .modal .card-body,
+[data-app-theme="void-black"] .modal .card-footer {
+	background: #141414;
+}
+
+/* Dropdowns: solid, no blur */
+[data-app-theme="void-black"] .dropdown-menu {
+	background: #111111;
+	border: 1px solid rgba(255,255,255,0.10);
+	box-shadow: 0 16px 40px rgba(0,0,0,0.65);
+	backdrop-filter: none;
+}
+
+/* Scrollbar: subtle neutral instead of accent gradient */
+[data-app-theme="void-black"] .nyx-scroll-theme {
+	scrollbar-color: rgba(255,255,255,0.18) transparent;
+}
+
+[data-app-theme="void-black"] .nyx-scroll-theme::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+[data-app-theme="void-black"] .nyx-scroll-theme::-webkit-scrollbar-thumb {
+	background: rgba(255,255,255,0.18);
+	border: none;
+}
+
+[data-app-theme="void-black"] .nyx-scroll-theme::-webkit-scrollbar-thumb:hover {
+	background: rgba(255,255,255,0.28);
+	filter: none;
+}
+
+/* nyx-scroll-y wrapper */
+[data-app-theme="void-black"] .nyx-scroll-y {
+	border-color: rgba(255,255,255,0.08);
+	background: #111111;
+}
+
+/* Table */
+[data-app-theme="void-black"] .table thead th {
+	background: #111111;
+	color: rgba(255,255,255,0.45);
+}
+
+[data-app-theme="void-black"] .table tbody tr:hover {
+	background: rgba(255,255,255,0.04);
+}
+
+/* Buttons: flat accent, no soft gradient */
+[data-app-theme="void-black"] .btn-primary,
+[data-app-theme="void-black"] .btn.btn-primary,
+[data-app-theme="void-black"] .btn.btn-pink,
+[data-app-theme="void-black"] .btn.btn-blue,
+[data-app-theme="void-black"] .btn.btn-cyan,
+[data-app-theme="void-black"] .btn.btn-lime,
+[data-app-theme="void-black"] .btn.btn-orange,
+[data-app-theme="void-black"] .btn.btn-yellow,
+[data-app-theme="void-black"] .btn.btn-azure,
+[data-app-theme="void-black"] .btn.btn-indigo,
+[data-app-theme="void-black"] .btn.btn-purple {
+	background: #00d4aa !important;
+	color: #080808 !important;
+	border-color: #00b894 !important;
+	box-shadow: none !important;
+}
+
+[data-app-theme="void-black"] .btn-primary:hover,
+[data-app-theme="void-black"] .btn.btn-primary:hover {
+	background: #00e8ba !important;
+	border-color: #00d4aa !important;
+}
+
+[data-app-theme="void-black"] .btn-primary:active,
+[data-app-theme="void-black"] .btn.btn-primary:active {
+	background: #00b894 !important;
+}
+
+[data-app-theme="void-black"] .btn-secondary,
+[data-app-theme="void-black"] .btn-outline-secondary,
+[data-app-theme="void-black"] .btn-light,
+[data-app-theme="void-black"] .btn-outline-light,
+[data-app-theme="void-black"] .btn-outline-primary,
+[data-app-theme="void-black"] .btn.btn-action,
+[data-app-theme="void-black"] .btn.btn-ghost {
+	background: #1a1a1a !important;
+	border-color: rgba(255,255,255,0.12) !important;
+	color: rgba(255,255,255,0.75) !important;
+	box-shadow: none !important;
+}
+
+[data-app-theme="void-black"] .btn-secondary:hover,
+[data-app-theme="void-black"] .btn-outline-secondary:hover,
+[data-app-theme="void-black"] .btn-outline-primary:hover,
+[data-app-theme="void-black"] .btn.btn-action:hover,
+[data-app-theme="void-black"] .btn.btn-ghost:hover {
+	background: #222222 !important;
+	border-color: rgba(255,255,255,0.20) !important;
+	color: #f0f0f0 !important;
+}
+
+/* Inputs */
+[data-app-theme="void-black"] .form-control,
+[data-app-theme="void-black"] .form-select,
+[data-app-theme="void-black"] .input-group-text {
+	background-color: #111111 !important;
+	border-color: rgba(255,255,255,0.12) !important;
+	color: #f0f0f0 !important;
+}
+
+[data-app-theme="void-black"] .form-control:focus,
+[data-app-theme="void-black"] .form-select:focus {
+	border-color: rgba(0,212,170,0.60) !important;
+	box-shadow: 0 0 0 3px rgba(0,212,170,0.18) !important;
+}
+
+/* React-select menu */
+[data-app-theme="void-black"] .react-select-container .react-select__menu {
+	background: #111111;
+	border: 1px solid rgba(255,255,255,0.10);
+	backdrop-filter: none;
+}
+
+[data-app-theme="void-black"] .react-select-container .react-select__option {
+	background: transparent;
+}
+
+[data-app-theme="void-black"] .react-select-container .react-select__option--is-focused {
+	background: rgba(0,212,170,0.12);
+}
+
+[data-app-theme="void-black"] .react-select-container .react-select__option--is-selected {
+	background: rgba(0,212,170,0.20);
+}
+
+[data-app-theme="void-black"] .react-select-container .react-select__multi-value {
+	background-color: rgba(0,212,170,0.15);
+	border-color: rgba(0,212,170,0.25);
+}
+
+/* Sidebar active nav link */
+[data-app-theme="void-black"] .navbar .nav-link.active {
+	background: rgba(0,212,170,0.12);
+}
+
+/* Modal nav tabs */
+[data-app-theme="void-black"] .modal .nav-tabs .nav-link.active {
+	background: rgba(0,212,170,0.14);
+}
+
+/* Pill hover shadow: neutral, no accent glow */
+[data-app-theme="void-black"] button[class*="window"]:hover,
+[data-app-theme="void-black"] button[class*="pill"]:hover,
+[data-app-theme="void-black"] .btn[class*="window"]:hover,
+[data-app-theme="void-black"] .btn[class*="pill"]:hover {
+	box-shadow: 0 6px 16px rgba(0,0,0,0.40);
+}
+
+/* Nyx Aurora native popup fallback:
+   Some platforms render <select> menus with light OS popups and ignore option background,
+   so force dark readable text colors while keeping an Aurora-tinted palette when supported. */
+html[data-app-theme="nyx-aurora"] {
+	--app-native-option-bg: #dbe5ff;
+	--app-native-option-fg: #111b3f;
+	--app-native-option-active-bg: #b9cbff;
+	--app-native-option-active-fg: #0b1333;
+}
+
+.app-page-shell {
+	height: 100%;
+	min-height: 0;
+	padding: 0 0 24px;
+	overflow: auto;
+	overflow-x: hidden;
+	overscroll-behavior: contain;
+	background: var(--app-page-gradient);
+}
+
+.app-page-container {
+	height: auto;
+	min-height: 0;
+}
+
+.app-page-container-framed {
+	position: relative;
+	border-radius: 24px;
+	padding: 16px;
+	background:
+		radial-gradient(
+			120% 130% at 2% 0%,
+			color-mix(in srgb, var(--app-primary) 20%, transparent),
+			transparent 62%
+		),
+		radial-gradient(
+			120% 130% at 98% 100%,
+			color-mix(in srgb, var(--app-secondary) 20%, transparent),
+			transparent 58%
+		),
+		linear-gradient(
+			180deg,
+			color-mix(in srgb, var(--app-surface-2) 86%, transparent),
+			color-mix(in srgb, var(--app-surface) 92%, transparent)
+		);
+	border: 1px solid color-mix(in srgb, var(--app-border) 78%, transparent);
+	box-shadow:
+		0 34px 90px rgba(0, 0, 0, 0.36),
+		inset 0 1px 0 color-mix(in srgb, var(--app-text-primary) 12%, transparent);
+	backdrop-filter: blur(12px) saturate(140%);
+}
+
+[data-app-theme="obsidian-guard"] .app-page-container-framed {
+	background: var(--bg-surface-2);
+	border: 1px solid var(--border-subtle);
+	box-shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
+	backdrop-filter: none;
+}
+
+@media (max-width: 960px) {
+	.app-page-container-framed {
+		border-radius: 18px;
+		padding: 12px;
+	}
+}
+
+[data-app-theme="obsidian-guard"] .app-page-shell {
+	background: transparent;
+}
+
+[data-app-theme="velvet-singularity"] body {
+	background:
+		radial-gradient(1400px 640px at 16% -6%, color-mix(in srgb, var(--app-primary) 44%, transparent), transparent 60%),
+		radial-gradient(1200px 760px at 92% 12%, color-mix(in srgb, var(--app-secondary) 42%, transparent), transparent 63%),
+		radial-gradient(980px 560px at 50% 104%, color-mix(in srgb, var(--app-secondary) 28%, transparent), transparent 64%),
+		var(--app-page-gradient),
+		linear-gradient(158deg, var(--app-background) 0%, color-mix(in srgb, var(--app-background) 76%, var(--app-secondary)) 100%);
+}
+
+[data-app-theme="cobalt-eclipse"] body {
+	background:
+		radial-gradient(1450px 700px at 8% -8%, color-mix(in srgb, var(--app-primary) 46%, transparent), transparent 60%),
+		radial-gradient(1080px 640px at 88% 8%, color-mix(in srgb, var(--app-secondary) 30%, transparent), transparent 66%),
+		radial-gradient(1200px 740px at 52% 108%, color-mix(in srgb, var(--app-primary) 22%, transparent), transparent 68%),
+		var(--app-page-gradient),
+		linear-gradient(160deg, var(--app-background) 0%, color-mix(in srgb, var(--app-background) 80%, var(--app-primary)) 100%);
 }
 
 .app-main-scroll {
@@ -91,6 +482,13 @@ body {
 	backdrop-filter: blur(10px) saturate(130%);
 }
 
+[data-app-theme="obsidian-guard"] .modal-content {
+	background: var(--bg-elevated) !important;
+	border: 1px solid var(--border-subtle) !important;
+	box-shadow: 0 24px 56px rgba(0, 0, 0, 0.45) !important;
+	backdrop-filter: none;
+}
+
 .modal-header,
 .modal-footer {
 	background: color-mix(in srgb, var(--app-surface-2) 84%, transparent);
@@ -112,6 +510,64 @@ body {
 	background: color-mix(in srgb, var(--app-primary) 18%, var(--app-surface-2));
 	color: var(--app-text-primary);
 	border-color: color-mix(in srgb, var(--app-border) 100%, transparent);
+}
+
+.nyx-help-pill {
+	width: 36px;
+	height: 36px;
+	min-width: 36px;
+	padding: 0 !important;
+	border-radius: 999px !important;
+	border: 1px solid color-mix(in srgb, var(--app-primary) 46%, rgba(255, 255, 255, 0.18)) !important;
+	background:
+		radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.20), transparent 52%),
+		linear-gradient(
+			145deg,
+			color-mix(in srgb, var(--app-primary) 38%, var(--app-surface-2) 62%),
+			color-mix(in srgb, var(--app-secondary) 20%, var(--app-surface-2) 80%)
+		) !important;
+	color: color-mix(in srgb, var(--app-text-primary) 94%, white 6%) !important;
+	box-shadow:
+		0 10px 24px color-mix(in srgb, var(--app-primary) 16%, rgba(0, 0, 0, 0.56)),
+		inset 0 1px 0 rgba(255, 255, 255, 0.16);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.nyx-help-pill:hover,
+.nyx-help-pill:focus-visible {
+	transform: translateY(-1px);
+	border-color: color-mix(in srgb, var(--app-primary) 68%, rgba(255, 255, 255, 0.2)) !important;
+	box-shadow:
+		0 14px 28px color-mix(in srgb, var(--app-primary) 24%, rgba(0, 0, 0, 0.62)),
+		inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.nyx-help-pill:focus-visible {
+	outline: 2px solid color-mix(in srgb, var(--app-primary) 52%, white 8%);
+	outline-offset: 2px;
+}
+
+.nyx-help-dialog {
+	max-width: min(840px, calc(100vw - 2rem));
+}
+
+.nyx-help-body {
+	max-height: min(62vh, 620px);
+	overflow-y: auto;
+	padding-top: 1rem;
+}
+
+.nyx-help-body p {
+	color: var(--app-text-primary);
+	line-height: 1.5;
+}
+
+.nyx-help-body h3 {
+	font-size: 1.25rem;
+	margin-top: 1rem;
 }
 
 .domain-name {
@@ -157,6 +613,47 @@ body {
 	backdrop-filter: blur(14px) saturate(140%);
 }
 
+[data-app-theme="obsidian-guard"] .card {
+	background: var(--bg-surface-2);
+	border: 1px solid var(--border-subtle);
+	box-shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
+	backdrop-filter: none;
+}
+
+.nyx-legacy-card {
+	margin-top: 0 !important;
+	border-radius: 18px;
+	overflow: visible;
+	border: 1px solid color-mix(in srgb, var(--app-border) 82%, transparent);
+	background:
+		linear-gradient(
+			156deg,
+			color-mix(in srgb, var(--app-surface-2) 84%, var(--app-primary) 16%),
+			color-mix(in srgb, var(--app-surface-2) 90%, var(--app-secondary) 10%)
+		);
+	box-shadow:
+		0 24px 60px rgba(8, 6, 26, 0.35),
+		inset 0 1px 0 color-mix(in srgb, var(--app-text-primary) 12%, transparent);
+}
+
+.nyx-legacy-card .card-status-top {
+	display: none;
+}
+
+.nyx-legacy-card .card-header {
+	background: color-mix(in srgb, var(--app-surface) 92%, transparent);
+	border-bottom: 1px solid color-mix(in srgb, var(--app-border) 86%, transparent);
+}
+
+.nyx-legacy-card .table-responsive {
+	overflow-x: auto;
+	overflow-y: visible;
+}
+
+.nyx-legacy-card .table-responsive .dropdown {
+	position: static;
+}
+
 .card-header {
 	background: color-mix(in srgb, var(--app-surface) 92%, transparent);
 	border-bottom: 1px solid color-mix(in srgb, var(--app-border) 90%, transparent);
@@ -189,12 +686,21 @@ body {
 	background: color-mix(in srgb, var(--app-surface) 90%, transparent);
 }
 
+[data-app-theme="obsidian-guard"] .table thead th {
+	background: color-mix(in srgb, var(--bg-elevated) 94%, transparent);
+	color: var(--text-secondary);
+}
+
 .table tbody tr {
 	border-color: color-mix(in srgb, var(--app-border) 60%, transparent);
 }
 
 .table tbody tr:hover {
 	background: color-mix(in srgb, var(--app-primary) 8%, transparent);
+}
+
+[data-app-theme="obsidian-guard"] .table tbody tr:hover {
+	background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .nyx-scroll-y {
@@ -214,6 +720,11 @@ body {
 	top: 0;
 	z-index: 2;
 	backdrop-filter: blur(8px) saturate(140%);
+}
+
+[data-app-theme="obsidian-guard"] .nyx-scroll-y {
+	border-color: var(--border-subtle);
+	background: color-mix(in srgb, var(--bg-elevated) 76%, transparent);
 }
 
 .nyx-scroll-theme {
@@ -289,8 +800,50 @@ button[class*="pill"]:active,
 	color: var(--app-text-primary) !important;
 }
 
+[data-app-theme="obsidian-guard"] .form-control,
+[data-app-theme="obsidian-guard"] .form-select,
+[data-app-theme="obsidian-guard"] .input-group-text {
+	background-color: var(--bg-elevated) !important;
+	border-color: var(--border-subtle) !important;
+	color: var(--text-primary) !important;
+}
+
 .form-control::placeholder {
 	color: color-mix(in srgb, var(--app-text-secondary) 78%, transparent) !important;
+}
+
+[data-app-theme="obsidian-guard"] .btn-primary,
+[data-app-theme="obsidian-guard"] .btn.btn-primary,
+[data-app-theme="obsidian-guard"] .btn[class*="btn-"][class*="primary"] {
+	background: var(--accent) !important;
+	border-color: color-mix(in srgb, var(--accent) 84%, black 16%) !important;
+	color: #eaf2ff !important;
+}
+
+[data-app-theme="obsidian-guard"] .btn-primary:hover,
+[data-app-theme="obsidian-guard"] .btn.btn-primary:hover {
+	background: var(--accent-hover) !important;
+	border-color: color-mix(in srgb, var(--accent-hover) 84%, black 16%) !important;
+}
+
+[data-app-theme="obsidian-guard"] .btn-primary:active,
+[data-app-theme="obsidian-guard"] .btn.btn-primary:active {
+	background: var(--accent-active) !important;
+}
+
+[data-app-theme="obsidian-guard"] .btn-secondary,
+[data-app-theme="obsidian-guard"] .btn-outline-secondary,
+[data-app-theme="obsidian-guard"] .btn-light,
+[data-app-theme="obsidian-guard"] .btn-outline-light {
+	background: color-mix(in srgb, var(--bg-elevated) 90%, transparent) !important;
+	border-color: var(--border-subtle) !important;
+	color: var(--text-secondary) !important;
+}
+
+[data-app-theme="obsidian-guard"] .form-control:focus,
+[data-app-theme="obsidian-guard"] .form-select:focus {
+	border-color: color-mix(in srgb, var(--accent) 62%, var(--border-strong)) !important;
+	box-shadow: 0 0 0 0.2rem var(--focus-ring) !important;
 }
 
 .nyx-user-input-strong {
@@ -325,6 +878,15 @@ button[class*="pill"]:active,
 	box-shadow: 0 0 0 3px var(--app-focus-ring) !important;
 }
 
+/* Global button size normalisation — Bootstrap defaults are too large for a dense UI.
+   Applies across all themes and all pages. btn-sm / btn-lg still work as overrides. */
+.btn:not(.btn-lg):not([class*="btn-lg"]) {
+	padding: 0.28rem 0.72rem;
+	font-size: 0.82rem;
+	line-height: 1.5;
+	border-radius: 6px;
+}
+
 .btn-primary,
 .btn.btn-pink,
 .btn.btn-blue,
@@ -335,10 +897,10 @@ button[class*="pill"]:active,
 .btn.btn-azure,
 .btn.btn-indigo,
 .btn.btn-purple {
-	background: var(--app-cta-gradient) !important;
+	background: var(--app-cta-gradient-soft) !important;
 	color: var(--app-cta-text) !important;
 	border-color: color-mix(in srgb, var(--app-border) 100%, transparent) !important;
-	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.28);
+	box-shadow: var(--app-cta-shadow-soft);
 }
 
 .btn-primary:hover,
@@ -351,7 +913,7 @@ button[class*="pill"]:active,
 .btn.btn-azure:hover,
 .btn.btn-indigo:hover,
 .btn.btn-purple:hover {
-	filter: brightness(1.06);
+	filter: brightness(1.03);
 }
 
 .btn-outline-primary {
@@ -408,17 +970,21 @@ select.form-control {
 .form-select option,
 .form-select optgroup,
 select.form-control option,
-select.form-control optgroup {
-	background: color-mix(in srgb, var(--app-surface-2) 96%, black 4%) !important;
-	color: color-mix(in srgb, var(--app-text-primary) 94%, white 6%) !important;
+select.form-control optgroup,
+select option,
+select optgroup {
+	background: var(--app-native-option-bg) !important;
+	color: var(--app-native-option-fg) !important;
 }
 
 .form-select option:checked,
 .form-select option:hover,
 select.form-control option:checked,
-select.form-control option:hover {
-	background: color-mix(in srgb, var(--app-primary) 36%, var(--app-surface-2)) !important;
-	color: color-mix(in srgb, var(--app-text-primary) 96%, white 4%) !important;
+select.form-control option:hover,
+select option:checked,
+select option:hover {
+	background: var(--app-native-option-active-bg) !important;
+	color: var(--app-native-option-active-fg) !important;
 }
 
 @media (max-width: 1200px) {
@@ -473,14 +1039,14 @@ select.form-control option:hover {
 
 	.react-select__menu {
 		z-index: 2100;
-		background: color-mix(in srgb, var(--app-surface-2) 94%, black 6%);
+		background: color-mix(in srgb, var(--app-background) 88%, #101a3c 12%);
 		border: 1px solid color-mix(in srgb, var(--app-border) 100%, transparent);
 		box-shadow: 0 14px 36px color-mix(in srgb, var(--app-background) 55%, black 45%);
-		backdrop-filter: blur(6px) saturate(130%);
+		backdrop-filter: blur(10px) saturate(140%);
 	}
 
 	.react-select__menu-portal {
-		z-index: 2100;
+		z-index: 3200;
 	}
 
 	.react-select__menu-list {
@@ -499,7 +1065,7 @@ select.form-control option:hover {
 		font-weight: 600;
 		letter-spacing: 0.01em;
 		line-height: 1.25;
-		background: color-mix(in srgb, var(--app-primary) 10%, transparent);
+		background: color-mix(in srgb, var(--app-surface-2) 92%, transparent);
 		color: color-mix(in srgb, var(--app-text-primary) 96%, white 4%) !important;
 		transition: background-color 0.12s ease, color 0.12s ease;
 	}
@@ -529,6 +1095,11 @@ select.form-control option:hover {
 	.react-select__menu-notice--no-options,
 	.react-select__loading-message {
 		color: color-mix(in srgb, var(--app-text-secondary) 90%, white 10%) !important;
+	}
+
+	.react-select-option-sublabel {
+		color: color-mix(in srgb, var(--app-text-secondary) 96%, white 4%) !important;
+		font-size: 0.82rem;
 	}
 }
 .textareaMono {

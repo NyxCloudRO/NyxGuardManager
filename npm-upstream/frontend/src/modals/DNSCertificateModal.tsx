@@ -36,7 +36,7 @@ const DNSCertificateModal = EasyModal.create(({ visible, remove }: InnerModalPro
 	};
 
 	return (
-		<Modal show={visible} onHide={remove}>
+		<Modal show={visible} onHide={remove} centered>
 			<Formik
 				initialValues={
 					{

@@ -38,8 +38,7 @@ export default function TableWrapper() {
 	}
 
 	return (
-		<div className="card mt-4">
-			<div className="card-status-top bg-cyan" />
+		<div className="card nyx-legacy-card" style={{ overflow: "visible" }}>
 			<div className="card-table">
 				<div className="card-header">
 					<div className="row w-full">
@@ -65,8 +64,13 @@ export default function TableWrapper() {
 										/>
 									</div>
 								) : null}
-								<Button size="sm" onClick={() => showHelpModal("AccessLists", "cyan")}>
-									<IconHelp size={20} />
+								<Button
+									size="sm"
+									className="nyx-help-pill"
+									onClick={() => showHelpModal("AccessLists", "cyan")}
+									aria-label="Open access list help"
+								>
+									<IconHelp size={15} stroke={2} />
 								</Button>
 								<HasPermission section={ACCESS_LISTS} permission={MANAGE} hideError>
 									{data?.length ? (

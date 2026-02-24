@@ -109,7 +109,7 @@ const HTTPCertificateModal = EasyModal.create(({ visible, remove }: InnerModalPr
 	};
 
 	return (
-		<Modal show={visible} onHide={remove}>
+		<Modal show={visible} onHide={remove} centered>
 			<Formik
 				initialValues={
 					{

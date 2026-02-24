@@ -218,7 +218,7 @@ const UserModal = EasyModal.create(({ id, visible, remove }: Props) => {
 	};
 
 	return (
-		<Modal show={visible} onHide={remove}>
+		<Modal show={visible} onHide={remove} centered>
 			{!isLoading && error && (
 				<Alert variant="danger" className="m-3">
 					{error?.message || "Unknown error"}

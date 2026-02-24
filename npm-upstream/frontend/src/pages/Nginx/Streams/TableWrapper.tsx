@@ -78,8 +78,13 @@ export default function TableWrapper() {
 										/>
 									</div>
 								) : null}
-								<Button size="sm" onClick={() => showHelpModal("Streams", "blue")}>
-									<IconHelp size={20} />
+								<Button
+									size="sm"
+									className="nyx-help-pill"
+									onClick={() => showHelpModal("Streams", "blue")}
+									aria-label="Open streams help"
+								>
+									<IconHelp size={15} stroke={2} />
 								</Button>
 								<HasPermission section={STREAMS} permission={MANAGE} hideError>
 									{data?.length ? (

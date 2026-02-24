@@ -76,8 +76,13 @@ export default function TableWrapper() {
 										/>
 									</div>
 								) : null}
-								<Button size="sm" onClick={() => showHelpModal("RedirectionHosts", "yellow")}>
-									<IconHelp size={20} />
+								<Button
+									size="sm"
+									className="nyx-help-pill"
+									onClick={() => showHelpModal("RedirectionHosts", "yellow")}
+									aria-label="Open redirection host help"
+								>
+									<IconHelp size={15} stroke={2} />
 								</Button>
 								<HasPermission section={REDIRECTION_HOSTS} permission={MANAGE} hideError>
 									{data?.length ? (

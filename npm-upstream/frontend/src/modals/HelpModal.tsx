@@ -1,6 +1,6 @@
 import cn from "classnames";
 import EasyModal, { type InnerModalProps } from "ez-modal-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Modal from "react-bootstrap/Modal";
 import ReactMarkdown from "react-markdown";
 import { Button } from "src/components";
@@ -19,6 +19,13 @@ const showHelpModal = (section: string, color?: string) => {
 const HelpModal = EasyModal.create(({ section, color, visible, remove }: Props) => {
 	const [markdownText, setMarkdownText] = useState("");
 	const lang = getLocale(true);
+	const parsedDoc = useMemo(() => {
+		const raw = markdownText.trim();
+		const headingMatch = raw.match(/^##\s+(.+?)\s*(?:\r?\n|$)/);
+		const title = headingMatch?.[1]?.trim() || "Help";
+		const body = headingMatch ? raw.slice(headingMatch[0].length).trim() : raw;
+		return { title, body };
+	}, [markdownText]);
 
 	useEffect(() => {
 		try {
@@ -32,9 +39,12 @@ const HelpModal = EasyModal.create(({ section, color, visible, remove }: Props) 
 	}, [lang, section]);
 
 	return (
-		<Modal show={visible} onHide={remove}>
-			<Modal.Body>
-				<ReactMarkdown>{markdownText}</ReactMarkdown>
+		<Modal show={visible} onHide={remove} centered dialogClassName="nyx-help-dialog">
+			<Modal.Header closeButton>
+				<Modal.Title>{parsedDoc.title}</Modal.Title>
+			</Modal.Header>
+			<Modal.Body className="nyx-help-body">
+				<ReactMarkdown>{parsedDoc.body}</ReactMarkdown>
 			</Modal.Body>
 			<Modal.Footer>
 				<Button

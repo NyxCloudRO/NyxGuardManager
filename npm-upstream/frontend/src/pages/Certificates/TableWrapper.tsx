@@ -61,8 +61,7 @@ export default function TableWrapper() {
 	}
 
 	return (
-		<div className="card mt-4">
-			<div className="card-status-top bg-pink" />
+		<div className="card nyx-legacy-card">
 			<div className="card-table">
 				<div className="card-header">
 					<div className="row w-full">
@@ -87,8 +86,13 @@ export default function TableWrapper() {
 										/>
 									</div>
 								) : null}
-								<Button size="sm" onClick={() => showHelpModal("Certificates", "pink")}>
-									<IconHelp size={20} />
+								<Button
+									size="sm"
+									className="nyx-help-pill"
+									onClick={() => showHelpModal("Certificates", "pink")}
+									aria-label="Open certificates help"
+								>
+									<IconHelp size={15} stroke={2} />
 								</Button>
 								<HasPermission section={CERTIFICATES} permission={MANAGE} hideError>
 									{data?.length ? (
