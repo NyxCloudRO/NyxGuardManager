@@ -10,15 +10,6 @@
 	backdrop-filter: blur(10px);
 }
 
-.helperBtns {
-	position: absolute;
-	top: 10px;
-	right: 10px;
-	z-index: 1000;
-	display: flex;
-	gap: 0.4rem;
-}
-
 .brandText {
 	display: inline-flex;
 	align-items: center;
@@ -49,4 +40,50 @@
 	color: transparent;
 	filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.22));
 	opacity: 0.92;
+}
+
+.ssoDivider {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 14px 0 10px;
+}
+
+.ssoDivider::before,
+.ssoDivider::after {
+	content: "";
+	flex: 1;
+	height: 1px;
+	background: rgba(128, 128, 128, 0.3);
+}
+
+.ssoDividerText {
+	font-size: 12px;
+	color: rgba(128, 128, 128, 0.7);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.ssoBtn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	width: 100%;
+	padding: 9px 16px;
+	border-radius: 8px;
+	border: 1px solid rgba(128, 128, 255, 0.35);
+	background: linear-gradient(120deg, rgba(74, 44, 128, 0.25), rgba(30, 20, 80, 0.35));
+	color: rgba(210, 195, 255, 0.9);
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: none;
+	transition: background 0.15s, border-color 0.15s;
+}
+
+.ssoBtn:hover {
+	background: linear-gradient(120deg, rgba(100, 60, 180, 0.35), rgba(50, 30, 120, 0.45));
+	border-color: rgba(160, 130, 255, 0.6);
+	color: #e0d0ff;
+	text-decoration: none;
 }
