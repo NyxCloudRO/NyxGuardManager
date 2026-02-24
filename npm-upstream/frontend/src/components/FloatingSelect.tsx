@@ -90,7 +90,7 @@ export function FloatingSelect({
 					});
 				},
 			}),
-			shift({ padding: 8 }),
+			...(strategy === "fixed" ? [shift({ padding: 8 })] : []),
 		],
 	});
 

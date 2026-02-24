@@ -114,7 +114,7 @@ function PreferencesDropdown() {
 				<FloatingSelect
 					strategy="absolute"
 					portalRoot={panelRef.current}
-					placement="top-end"
+					placement="top-start"
 					minWidth={0}
 					maxWidth={176}
 					maxHeight={176}
@@ -146,7 +146,7 @@ function PreferencesDropdown() {
 				<FloatingSelect
 					strategy="absolute"
 					portalRoot={panelRef.current}
-					placement="top-end"
+					placement="top-start"
 					minWidth={0}
 					maxWidth={176}
 					maxHeight={176}
