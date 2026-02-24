@@ -1,0 +1,9 @@
+.git
+.github
+**/node_modules
+**/.cache
+**/.DS_Store
+**/*.log
+test
+docs
+scripts
