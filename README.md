@@ -128,16 +128,16 @@ Actual resource usage depends heavily on traffic volume, number of protected app
 - Minimum (small install / short retention):
   - 2 vCPU
   - 2 GB RAM
-  - 40 GB disk
+  - 25 GB disk
 - Recommended (multiple apps / longer retention):
   - 4 vCPU
-  - 8 GB RAM
-  - 60 GB disk
+  - 4 GB RAM
+  - 40 GB disk
 
 Notes:
 - Prefer SSD storage (log-heavy workloads are disk I/O sensitive).
 - If you plan 60-180 days retention and/or high traffic, allocate more disk.
-- If you plan to use NyxGuard for long term - 60 GB should be more then sufficient. 
+- If you plan to use NyxGuard for long term - 40 GB should be more then sufficient. 
 
 ## Update (In-Place)
 
