@@ -89,7 +89,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Token-based metrics endpoint compatible with Prometheus scraping.
 - Metrics include: attack counters by type and window, traffic totals, active host count, and protection status.
 - Integration tokens with rotation support.
-- Grafana dashboard JSON included for quick import.
+- Ready-to-import Grafana dashboard JSON provided: panels for attack counters (24h/7d/30d/90d windows), traffic RX/TX, active hosts, and protection status per app.
+- Full setup guide available at https://nyxcloud.ro/nyxguard/observability.html
 
 #### Update Manager
 - Built-in Update Manager in the UI: check for new versions, view changelog, and apply updates.
@@ -261,8 +262,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ---
 
 > **Community & Support**
-> NyxGuard Manager now has a dedicated project website and a Discord support server.
-> - Website: https://nyxcloud.ro/nyxguard
+> NyxGuard Manager has a dedicated project website with full documentation, installation guides, feature breakdowns, architecture overview, and observability setup instructions.
+> - Website & Docs: https://nyxcloud.ro/nyxguard
+> - Install guide: https://nyxcloud.ro/nyxguard/install.html
 > - Discord: join via the support link on the website for community help, feature requests, and release announcements.
 > - Docker Hub: https://hub.docker.com/r/nyxmael/nyxguardmanager
 
