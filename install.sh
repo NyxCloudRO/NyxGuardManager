@@ -1,17 +1,12 @@
 #!/usr/bin/env bash
-# NyxGuard Manager v3.0.4
+# NyxGuard Manager installer (Docker-only, auto-latest)
+# Intended usage:
+#   curl -fsSL <install.sh-url> | sudo bash
 set -euo pipefail
 
-REPO_URL="${REPO_URL:-https://github.com/NyxCloudRO/NyxGuardManager.git}"
-REF="${REF:-main}"
 INSTALL_DIR="${INSTALL_DIR:-/opt/nyxguardmanager}"
-# Default published image (Docker Hub). Override if you publish elsewhere.
 IMAGE_REPO="${IMAGE_REPO:-nyxmael/nyxguardmanager}"
-# App version used for the local Docker image tag.
-# Note: do NOT rely on a variable named VERSION because /etc/os-release defines VERSION
-# (e.g. Debian "13 (trixie)"), which would break Docker tag formatting.
-DEFAULT_APP_VERSION="3.0.4"
-APP_VERSION="${APP_VERSION:-${VERSION:-${DEFAULT_APP_VERSION}}}"
+APP_TAG="${APP_TAG:-}" # Optional override (example: 4.0.0). If empty, auto-detect latest.
 
 need_root() {
   if [[ "${EUID}" -ne 0 ]]; then
@@ -22,74 +17,22 @@ need_root() {
 
 have_cmd() { command -v "$1" >/dev/null 2>&1; }
 
-wait_http_200() {
-  local url="$1"
-  local timeout_s="${2:-120}"
-
-  if ! have_cmd curl; then
-    # Installer already installs curl, but don't hard-fail if user modified it.
-    return 0
-  fi
-
-  local start
-  start="$(date +%s)"
-
-  while true; do
-    # Don't let failures trip `set -e`.
-    local code="000"
-    code="$(curl -fsS -o /dev/null -m 2 -w '%{http_code}' "${url}" 2>/dev/null || true)"
-    if [[ "${code}" == "200" ]]; then
-      return 0
-    fi
-
-    local now elapsed
-    now="$(date +%s)"
-    elapsed=$((now - start))
-    if (( elapsed >= timeout_s )); then
-      echo "WARN: Timed out waiting for ${url} to become ready (${timeout_s}s)."
-      return 1
-    fi
-
-    sleep 2
-  done
-}
-
-set_compose_image() {
-  local compose_file="$1"
-  local image="$2"
-
-  [[ -f "${compose_file}" ]] || return 0
-
-  # Keep this portable across sed variants by using awk + atomic replace.
-  local tmp
-  tmp="$(mktemp)"
-  awk -v img="${image}" '
-    {
-      if ($0 ~ /^[[:space:]]*image:[[:space:]]*/ && $0 ~ /nyxguardmanager:/) {
-        match($0, /^[[:space:]]*/)
-        indent = substr($0, RSTART, RLENGTH)
-        $0 = indent "image: " img
-      }
-      print
-    }
-  ' "${compose_file}" > "${tmp}"
-  mv -f "${tmp}" "${compose_file}"
-}
-
-rand() {
-  # 32 chars, URL-safe-ish
+rand32() {
   tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32 || true
 }
 
-install_packages() {
+require_apt() {
   if ! have_cmd apt-get; then
     echo "ERROR: This installer currently supports Debian/Ubuntu (apt-get)." >&2
     exit 1
   fi
+}
 
+install_base_packages() {
+  require_apt
   export DEBIAN_FRONTEND=noninteractive
   apt-get update -y
-  apt-get install -y ca-certificates curl git rsync jq gnupg
+  apt-get install -y ca-certificates curl jq gnupg
 }
 
 install_docker() {
@@ -99,10 +42,10 @@ install_docker() {
 
   echo "Installing Docker..."
 
-  # Prefer Docker's official apt repository (more likely to have compose v2 plugin)
-  # Fallback to distro packages if this fails.
   if [[ -r /etc/os-release ]] && have_cmd dpkg; then
+    # shellcheck source=/etc/os-release
     . /etc/os-release
+    local arch codename os_id
     arch="$(dpkg --print-architecture)"
     codename="${VERSION_CODENAME:-}"
     os_id="${ID:-}"
@@ -111,38 +54,27 @@ install_docker() {
       mkdir -p /etc/apt/keyrings
       if curl -fsSL "https://download.docker.com/linux/${os_id}/gpg" | gpg --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null; then
         chmod a+r /etc/apt/keyrings/docker.gpg || true
-        cat > /etc/apt/sources.list.d/docker.list <<EOF
+        cat >/etc/apt/sources.list.d/docker.list <<SRC
+
 deb [arch=${arch} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/${os_id} ${codename} stable
-EOF
+SRC
         apt-get update -y
-        if apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin; then
-          # Compose v2 plugin is optional; some mirrors/distros might not have it.
-          apt-get install -y docker-compose-plugin || true
-          systemctl enable --now docker >/dev/null 2>&1 || true
-          if docker compose version >/dev/null 2>&1 || have_cmd docker-compose; then
-            return
-          fi
-        fi
+        apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin || true
+        apt-get install -y docker-compose-plugin || true
       fi
     fi
   fi
 
-  # Fallback: distro packages
-  apt-get install -y docker.io || true
-  # Some distros don't have docker-compose-plugin in their repo.
-  if apt-cache show docker-compose-plugin >/dev/null 2>&1; then
+  if ! have_cmd docker; then
+    apt-get install -y docker.io || true
+  fi
+
+  if ! (docker compose version >/dev/null 2>&1); then
     apt-get install -y docker-compose-plugin || true
   fi
-  # Final fallback: docker-compose v1 package (we'll use docker-compose command if present).
-  if ! (docker compose version >/dev/null 2>&1); then
-    apt-get install -y docker-compose || true
-  fi
-  # Extra fallback: pip docker-compose (v1). Useful on some minimal distros.
+
   if ! (docker compose version >/dev/null 2>&1) && ! have_cmd docker-compose; then
-    apt-get install -y python3-pip python3-setuptools python3-wheel || true
-    if have_cmd pip3; then
-      pip3 install --no-cache-dir docker-compose || true
-    fi
+    apt-get install -y docker-compose || true
   fi
 
   systemctl enable --now docker >/dev/null 2>&1 || true
@@ -152,30 +84,80 @@ EOF
     exit 1
   fi
   if ! (docker compose version >/dev/null 2>&1 || have_cmd docker-compose); then
-    echo "ERROR: Docker Compose is not available (docker compose / docker-compose)." >&2
+    echo "ERROR: Docker Compose is not available." >&2
     exit 1
   fi
 }
 
-clone_repo() {
-  rm -rf "${INSTALL_DIR}"
-  mkdir -p "$(dirname "${INSTALL_DIR}")"
+is_semver() {
+  [[ "$1" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]
+}
 
-  echo "Cloning ${REPO_URL} (${REF})..."
-  git clone --depth 1 --branch "${REF}" "${REPO_URL}" "${INSTALL_DIR}"
+normalize_semver() {
+  local t="$1"
+  echo "${t#v}"
+}
+
+dockerhub_latest_tag() {
+  local repo="$1"
+
+  if [[ "${repo}" != */* ]]; then
+    echo "ERROR: IMAGE_REPO must be in '<namespace>/<name>' format." >&2
+    return 1
+  fi
+
+  local ns name url json next
+  ns="${repo%%/*}"
+  name="${repo##*/}"
+  url="https://hub.docker.com/v2/repositories/${ns}/${name}/tags?page_size=100"
+
+  local semver_tags=""
+
+  while [[ -n "${url}" && "${url}" != "null" ]]; do
+    json="$(curl -fsSL "${url}")"
+
+    while IFS= read -r tag; do
+      if is_semver "${tag}"; then
+        semver_tags+="${tag}"$'\n'
+      fi
+    done < <(echo "${json}" | jq -r '.results[].name')
+
+    next="$(echo "${json}" | jq -r '.next')"
+    url="${next}"
+  done
+
+  if [[ -z "${semver_tags}" ]]; then
+    echo "latest"
+    return 0
+  fi
+
+  local best_norm best_tag
+  best_norm="$(printf '%s' "${semver_tags}" | sed '/^$/d;s/^v//' | sort -V | tail -n 1)"
+
+  if printf '%s' "${semver_tags}" | grep -qx "${best_norm}"; then
+    best_tag="${best_norm}"
+  else
+    best_tag="v${best_norm}"
+  fi
+
+  echo "${best_tag}"
+}
+
+ensure_install_dir() {
+  mkdir -p "${INSTALL_DIR}"
+  chmod 755 "${INSTALL_DIR}" || true
 }
 
 ensure_env() {
-  cd "${INSTALL_DIR}"
-  if [[ -f .env ]]; then
+  if [[ -f "${INSTALL_DIR}/.env" ]]; then
     return
   fi
 
   local db_pass root_pass
-  db_pass="$(rand)"
-  root_pass="$(rand)"
+  db_pass="$(rand32)"
+  root_pass="$(rand32)"
 
-  cat > .env <<EOF
+  cat >"${INSTALL_DIR}/.env" <<ENV
 TZ=UTC
 PUID=1000
 PGID=1000
@@ -184,61 +166,137 @@ DB_MYSQL_USER=nyxguard
 DB_MYSQL_NAME=nyxguard
 DB_MYSQL_PASSWORD=${db_pass}
 MYSQL_ROOT_PASSWORD=${root_pass}
-EOF
+ENV
 
-  chmod 600 .env || true
-  echo "Generated ${INSTALL_DIR}/.env"
+  chmod 600 "${INSTALL_DIR}/.env" || true
 }
 
-ensure_image() {
-  cd "${INSTALL_DIR}"
-  local version
-  version="$(head -n 1 .version 2>/dev/null || true)"
-  if [[ -z "${version}" ]]; then
-    version="${APP_VERSION}"
-  fi
+write_compose_file() {
+  local image_ref="$1"
 
-  # Docker tag sanity: spaces/parentheses from OS VERSION would be invalid here.
-  if [[ ! "${version}" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$ ]]; then
-    echo "ERROR: Invalid app version for Docker tag: '${version}'" >&2
-    echo "Tip: set APP_VERSION to something like '3.0.4'." >&2
-    exit 1
-  fi
+  cat >"${INSTALL_DIR}/docker-compose.yml" <<'YAML'
+services:
+  nyxguard-manager:
+    container_name: nyxguard-manager
+    image: __IMAGE_REF__
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8443:8443"
+    environment:
+      TZ: "${TZ:-UTC}"
+      PUID: "${PUID:-1000}"
+      PGID: "${PGID:-1000}"
+      DB_MYSQL_HOST: "db"
+      DB_MYSQL_PORT: "3306"
+      DB_MYSQL_USER: "${DB_MYSQL_USER:-nyxguard}"
+      DB_MYSQL_PASSWORD: "${DB_MYSQL_PASSWORD}"
+      DB_MYSQL_NAME: "${DB_MYSQL_NAME:-nyxguard}"
+      SKIP_CERTBOT_OWNERSHIP: "true"
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    volumes:
+      - nyxguard_data:/data
+      - nyxguard_letsencrypt:/etc/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /proc/1/net/arp:/host/proc/net/arp:ro
+    depends_on:
+      - db
 
-  echo "Pulling Docker image ${IMAGE_REPO}:${version}..."
-  docker pull "${IMAGE_REPO}:${version}"
+  db:
+    container_name: nyxguard-db
+    image: jc21/mariadb-aria:latest
+    restart: unless-stopped
+    environment:
+      TZ: "${TZ:-UTC}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${DB_MYSQL_NAME:-nyxguard}"
+      MYSQL_USER: "${DB_MYSQL_USER:-nyxguard}"
+      MYSQL_PASSWORD: "${DB_MYSQL_PASSWORD}"
+    volumes:
+      - nyxguard_db:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
 
-  # Ensure compose uses the desired image.
-  cd "${INSTALL_DIR}"
-  set_compose_image docker-compose.yml "${IMAGE_REPO}:${version}"
+volumes:
+  nyxguard_data:
+    name: nyxguard_data
+  nyxguard_letsencrypt:
+    name: nyxguard_letsencrypt
+  nyxguard_db:
+    name: nyxguard_db
+YAML
+
+  sed -i "s|__IMAGE_REF__|${image_ref}|g" "${INSTALL_DIR}/docker-compose.yml"
 }
 
-start_stack() {
-  cd "${INSTALL_DIR}"
-  echo "Starting stack..."
-  if docker compose version >/dev/null 2>&1; then
-    docker compose --env-file .env up -d
-  else
-    docker-compose --env-file .env up -d
-  fi
+write_version_file() {
+  local tag="$1"
+  echo "${tag}" >"${INSTALL_DIR}/.version"
+}
+
+install_systemd_unit() {
+  cat >/etc/systemd/system/nyxguardmanager.service <<UNIT
+[Unit]
+Description=NyxGuard Manager (Docker Compose)
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=${INSTALL_DIR}
+ExecStart=/usr/bin/docker compose --env-file ${INSTALL_DIR}/.env -f ${INSTALL_DIR}/docker-compose.yml up -d --remove-orphans
+ExecStop=/usr/bin/docker compose --env-file ${INSTALL_DIR}/.env -f ${INSTALL_DIR}/docker-compose.yml down
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+  systemctl daemon-reload
+  systemctl enable --now nyxguardmanager.service
 }
 
 main() {
   need_root
-  install_packages
+  install_base_packages
   install_docker
-  clone_repo
+  ensure_install_dir
   ensure_env
-  ensure_image
-  start_stack
 
-  echo "Waiting for NyxGuard Manager to become ready (http://127.0.0.1:81/api/) ..."
-  wait_http_200 "http://127.0.0.1:81/api/" 180 || true
+  local selected_tag image_ref
+  if [[ -n "${APP_TAG}" ]]; then
+    selected_tag="${APP_TAG}"
+  else
+    echo "Detecting latest published NyxGuard Manager image tag from Docker Hub..."
+    selected_tag="$(dockerhub_latest_tag "${IMAGE_REPO}")"
+  fi
+
+  image_ref="${IMAGE_REPO}:${selected_tag}"
+  echo "Using image: ${image_ref}"
+
+  write_compose_file "${image_ref}"
+  write_version_file "${selected_tag}"
+
+  echo "Pulling image..."
+  docker pull "${image_ref}"
+
+  echo "Starting stack..."
+  docker compose --env-file "${INSTALL_DIR}/.env" -f "${INSTALL_DIR}/docker-compose.yml" up -d
+
+  install_systemd_unit
 
   echo
-  echo "NyxGuard Manager is installing/running."
-  echo "Open: http://$(hostname -I 2>/dev/null | awk '{print $1}'):81/"
-  echo
+  echo "Install complete."
+  echo "NyxGuard Manager image: ${image_ref}"
+  echo "Data is stored in Docker volumes (nyxguard_data, nyxguard_letsencrypt, nyxguard_db)."
 }
 
 main "$@"
