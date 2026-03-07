@@ -316,7 +316,6 @@ See the full license in the [LICENSE](LICENSE.md) file.
 
 - https://nyxcloud.ro/
 - https://billcore.ro/
-- https://m.youtube.com/@NyxGuardManager
 
 Contact: 
 VladCardei@live.com
