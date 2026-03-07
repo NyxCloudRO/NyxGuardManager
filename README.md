@@ -89,15 +89,11 @@ Why this method is recommended:
 
 Then run the installer:
 
-If you are logged in as root (common on Debian/minimal VMs):
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | bash
 ```
 
-If you are a non-root user with sudo:
-```bash
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | sudo bash
-```
+> Run as root or prefix with `sudo bash` if you are a non-root user.
 
 By default the installer:
 - detects the latest published image tag from Docker Hub
