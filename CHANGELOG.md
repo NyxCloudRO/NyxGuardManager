@@ -90,7 +90,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Metrics include: attack counters by type and window, traffic totals, active host count, and protection status.
 - Integration tokens with rotation support.
 - Ready-to-import Grafana dashboard JSON provided: panels for attack counters (24h/7d/30d/90d windows), traffic RX/TX, active hosts, and protection status per app.
-- Full setup guide available at https://nyxcloud.ro/nyxguard/observability.html
+- Full setup guide available at https://nyxcloud.ro/nyxguard/install.html
 
 #### Update Manager
 - Built-in Update Manager in the UI: check for new versions, view changelog, and apply updates.
