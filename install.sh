@@ -293,10 +293,25 @@ main() {
 
   install_systemd_unit
 
+  local host_ip
+  host_ip="$(hostname -I 2>/dev/null | awk '{print $1}')"
+
   echo
-  echo "Install complete."
-  echo "NyxGuard Manager image: ${image_ref}"
-  echo "Data is stored in Docker volumes (nyxguard_data, nyxguard_letsencrypt, nyxguard_db)."
+  echo "============================================================"
+  echo "  Install complete."
+  echo "  NyxGuard Manager ${selected_tag} is up and running."
+  echo ""
+  echo "  Access the admin panel at:"
+  echo "  https://${host_ip}:8443/"
+  echo ""
+  echo "  Note: The admin panel uses a self-signed certificate on"
+  echo "  first launch. Your browser will show a security warning"
+  echo "  -- accept it to proceed."
+  echo ""
+  echo "  Data is stored in Docker volumes and will be preserved"
+  echo "  across updates."
+  echo "============================================================"
+  echo
 }
 
 main "$@"
