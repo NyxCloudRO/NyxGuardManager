@@ -89,6 +89,12 @@ Why this method is recommended:
 
 Then run the installer:
 
+If you are logged in as root (common on Debian/minimal VMs):
+```bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | bash
+```
+
+If you are a non-root user with sudo:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | sudo bash
 ```
@@ -225,6 +231,12 @@ Use this if you already have NyxGuard Manager running and want to update without
 
 This is the default path when you installed via `install.sh`.
 
+As root:
+```bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | bash
+```
+
+As non-root with sudo:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | sudo bash
 ```
