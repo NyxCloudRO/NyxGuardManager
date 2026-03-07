@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # NyxGuard Manager installer (Docker-only, auto-latest)
 # Intended usage:
- sudo bash| sudo bash
+#   curl -fsSL <install.sh-url> | sudo bash
 set -euo pipefail
 
 INSTALL_DIR="${INSTALL_DIR:-/opt/nyxguardmanager}"
@@ -10,7 +10,7 @@ APP_TAG="${APP_TAG:-}" # Optional override (example: 4.0.0). If empty, auto-dete
 
 need_root() {
   if [[ "${EUID}" -ne 0 ]]; then
-    echo "ERROR: Must run as root. Use: sudo bash, or run as root directly." >&2
+    echo "ERROR: Run as root (or with sudo)." >&2
     exit 1
   fi
 }
