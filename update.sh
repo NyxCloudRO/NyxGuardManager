@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# NyxGuard Manager v3.0.4
+# NyxGuard Manager updater (Docker-only, auto-latest)
+# Intended usage:
+#   curl -fsSL <update.sh-url> | sudo bash
 set -euo pipefail
 
-REPO_URL="${REPO_URL:-https://github.com/NyxCloudRO/NyxGuardManager.git}"
-REF="${REF:-main}"
 INSTALL_DIR="${INSTALL_DIR:-/opt/nyxguardmanager}"
 IMAGE_REPO="${IMAGE_REPO:-nyxmael/nyxguardmanager}"
+FORCE_TAG="${FORCE_TAG:-}"        # Optional explicit target tag override.
+AUTO_YES="${NYXGUARD_AUTO_YES:-0}" # Set to 1 for non-interactive mode.
 
 need_root() {
   if [[ "${EUID}" -ne 0 ]]; then
@@ -16,175 +18,223 @@ need_root() {
 
 have_cmd() { command -v "$1" >/dev/null 2>&1; }
 
-wait_http_200() {
-  local url="$1"
-  local timeout_s="${2:-120}"
+is_semver() {
+  [[ "$1" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]
+}
 
-  if ! have_cmd curl; then
+normalize_semver() {
+  local t="$1"
+  echo "${t#v}"
+}
+
+dockerhub_latest_tag() {
+  local repo="$1"
+
+  if [[ "${repo}" != */* ]]; then
+    echo "ERROR: IMAGE_REPO must be in '<namespace>/<name>' format." >&2
+    return 1
+  fi
+
+  local ns name url json next
+  ns="${repo%%/*}"
+  name="${repo##*/}"
+  url="https://hub.docker.com/v2/repositories/${ns}/${name}/tags?page_size=100"
+
+  local semver_tags=""
+
+  while [[ -n "${url}" && "${url}" != "null" ]]; do
+    json="$(curl -fsSL "${url}")"
+
+    while IFS= read -r tag; do
+      if is_semver "${tag}"; then
+        semver_tags+="${tag}"$'\n'
+      fi
+    done < <(echo "${json}" | jq -r '.results[].name')
+
+    next="$(echo "${json}" | jq -r '.next')"
+    url="${next}"
+  done
+
+  if [[ -z "${semver_tags}" ]]; then
+    echo "latest"
     return 0
   fi
 
-  local start
-  start="$(date +%s)"
+  local best_norm best_tag
+  best_norm="$(printf '%s' "${semver_tags}" | sed '/^$/d;s/^v//' | sort -V | tail -n 1)"
 
-  while true; do
-    local code="000"
-    code="$(curl -fsS -o /dev/null -m 2 -w '%{http_code}' "${url}" 2>/dev/null || true)"
-    if [[ "${code}" == "200" ]]; then
-      return 0
-    fi
+  if printf '%s' "${semver_tags}" | grep -qx "${best_norm}"; then
+    best_tag="${best_norm}"
+  else
+    best_tag="v${best_norm}"
+  fi
 
-    local now elapsed
-    now="$(date +%s)"
-    elapsed=$((now - start))
-    if (( elapsed >= timeout_s )); then
-      echo "WARN: Timed out waiting for ${url} to become ready (${timeout_s}s)."
-      return 1
-    fi
-
-    sleep 2
-  done
+  echo "${best_tag}"
 }
 
-set_compose_image() {
-  local compose_file="$1"
-  local image="$2"
-
-  [[ -f "${compose_file}" ]] || return 0
-
-  # Keep this portable across sed variants by using awk + atomic replace.
-  local tmp
-  tmp="$(mktemp)"
-  awk -v img="${image}" '
-    {
-      if ($0 ~ /^[[:space:]]*image:[[:space:]]*/ && $0 ~ /nyxguardmanager:/) {
-        match($0, /^[[:space:]]*/)
-        indent = substr($0, RSTART, RLENGTH)
-        $0 = indent "image: " img
-      }
-      print
-    }
-  ' "${compose_file}" > "${tmp}"
-  mv -f "${tmp}" "${compose_file}"
-}
-
-require_cmds() {
+require_commands() {
   local missing=0
-  for c in git docker; do
+  for c in curl jq docker; do
     if ! have_cmd "$c"; then
       echo "ERROR: Missing required command: $c" >&2
       missing=1
     fi
   done
+
   if [[ "$missing" -ne 0 ]]; then
     exit 1
   fi
+
   if ! (docker compose version >/dev/null 2>&1 || have_cmd docker-compose); then
-    echo "ERROR: Docker Compose is not available (docker compose / docker-compose)." >&2
+    echo "ERROR: Docker Compose is not available." >&2
     exit 1
   fi
 }
 
-ts() { date -u '+%Y%m%d_%H%M%S'; }
+require_install_files() {
+  if [[ ! -f "${INSTALL_DIR}/docker-compose.yml" ]]; then
+    echo "ERROR: ${INSTALL_DIR}/docker-compose.yml not found." >&2
+    echo "Run install.sh first." >&2
+    exit 1
+  fi
 
-bootstrap_repo_if_needed() {
-  # If INSTALL_DIR isn't a git clone (manual install), bootstrap it into one
-  # while preserving .env. Docker volumes keep the actual data/config.
-  if [[ -d "${INSTALL_DIR}/.git" ]]; then
+  if [[ ! -f "${INSTALL_DIR}/.env" ]]; then
+    echo "ERROR: ${INSTALL_DIR}/.env not found." >&2
+    echo "Run install.sh first." >&2
+    exit 1
+  fi
+}
+
+read_current_image_ref() {
+  awk '
+    $1 == "image:" && $2 ~ /nyxguardmanager:/ {
+      print $2
+      exit
+    }
+  ' "${INSTALL_DIR}/docker-compose.yml"
+}
+
+update_compose_image_ref() {
+  local new_ref="$1"
+  local tmp
+  tmp="$(mktemp)"
+
+  awk -v img="${new_ref}" '
+    {
+      if (!done && $1 == "image:" && $2 ~ /nyxguardmanager:/) {
+        match($0, /^[[:space:]]*/)
+        indent = substr($0, RSTART, RLENGTH)
+        print indent "image: " img
+        done = 1
+      } else {
+        print
+      }
+    }
+  ' "${INSTALL_DIR}/docker-compose.yml" >"${tmp}"
+
+  mv -f "${tmp}" "${INSTALL_DIR}/docker-compose.yml"
+}
+
+version_is_newer() {
+  local current="$1"
+  local target="$2"
+
+  if [[ "${current}" == "${target}" ]]; then
+    return 1
+  fi
+
+  if is_semver "${current}" && is_semver "${target}"; then
+    local c t
+    c="$(normalize_semver "${current}")"
+    t="$(normalize_semver "${target}")"
+    [[ "$(printf '%s\n%s\n' "${c}" "${t}" | sort -V | tail -n1)" == "${t}" ]] && [[ "${c}" != "${t}" ]]
+    return
+  fi
+
+  # Fallback for non-semver tags: treat changed tag as newer.
+  return 0
+}
+
+confirm_update() {
+  local current_ref="$1"
+  local target_ref="$2"
+
+  echo ""
+  echo "IMPORTANT NOTE"
+  echo "- This update preserves existing production data."
+  echo "- It does NOT remove Docker volumes (DB/config/certs stay intact)."
+  echo "- Only container image/service version is updated."
+  echo ""
+  echo "Current image: ${current_ref}"
+  echo "Target image : ${target_ref}"
+
+  if [[ "${AUTO_YES}" == "1" ]]; then
     return 0
   fi
 
-  if [[ -d "${INSTALL_DIR}" ]]; then
-    echo "WARN: ${INSTALL_DIR} is not a git repo. Bootstrapping a fresh repo clone (preserving .env) ..."
-  else
-    echo "Bootstrapping repo clone into ${INSTALL_DIR} ..."
-  fi
-
-  local prev_env=""
-  if [[ -f "${INSTALL_DIR}/.env" ]]; then
-    prev_env="${INSTALL_DIR}/.env"
-  fi
-
-  local tmp backup
-  tmp="$(mktemp -d)"
-  git clone --depth 1 --branch "${REF}" "${REPO_URL}" "${tmp}"
-
-  if [[ -n "${prev_env}" ]]; then
-    cp -a "${prev_env}" "${tmp}/.env"
-    chmod 600 "${tmp}/.env" >/dev/null 2>&1 || true
-  fi
-
-  if [[ -d "${INSTALL_DIR}" ]]; then
-    backup="${INSTALL_DIR}_backup_$(ts)"
-    mv "${INSTALL_DIR}" "${backup}"
-    echo "Backup created: ${backup}"
-  fi
-
-  mv "${tmp}" "${INSTALL_DIR}"
-
-  if [[ ! -f "${INSTALL_DIR}/.env" ]]; then
-    echo "WARN: ${INSTALL_DIR}/.env is missing. Copying from .env.example (you must set strong DB passwords)."
-    if [[ -f "${INSTALL_DIR}/.env.example" ]]; then
-      cp -a "${INSTALL_DIR}/.env.example" "${INSTALL_DIR}/.env"
-      chmod 600 "${INSTALL_DIR}/.env" >/dev/null 2>&1 || true
-    else
-      echo "ERROR: Missing .env and .env.example; cannot continue." >&2
-      exit 1
-    fi
-  fi
-}
-
-update_repo() {
-  bootstrap_repo_if_needed
-
-  cd "${INSTALL_DIR}"
-  git remote set-url origin "${REPO_URL}" >/dev/null 2>&1 || true
-  echo "Fetching ${REPO_URL} (${REF})..."
-  git fetch --depth 1 origin "${REF}"
-
-  # Keep it simple and predictable: local tree becomes exactly the selected ref.
-  git checkout -f -B "${REF}" "origin/${REF}"
-}
-
-ensure_image() {
-  cd "${INSTALL_DIR}"
-  local version
-  # Only read the first line so we can include comments/metadata below it.
-  version="$(head -n 1 .version 2>/dev/null || true)"
-  if [[ -z "${version}" ]]; then
-    version="unknown"
-  fi
-
-  echo "Pulling Docker image ${IMAGE_REPO}:${version}..."
-  docker pull "${IMAGE_REPO}:${version}"
-
-  # Ensure compose points at the current local tag.
-  cd "${INSTALL_DIR}"
-  set_compose_image docker-compose.yml "${IMAGE_REPO}:${version}"
-}
-
-restart_stack() {
-  cd "${INSTALL_DIR}"
-  echo "Restarting stack..."
-  if docker compose version >/dev/null 2>&1; then
-    docker compose --env-file .env up -d
-  else
-    docker-compose --env-file .env up -d
-  fi
+  local answer
+  read -r -p "Proceed with update? [y/N]: " answer
+  case "${answer}" in
+    y|Y|yes|YES) return 0 ;;
+    *)
+      echo "Update cancelled by user."
+      return 1
+      ;;
+  esac
 }
 
 main() {
   need_root
-  require_cmds
-  update_repo
-  ensure_image
-  restart_stack
+  require_commands
+  require_install_files
 
-  echo "Waiting for NyxGuard Manager to become ready (http://127.0.0.1:81/api/) ..."
-  wait_http_200 "http://127.0.0.1:81/api/" 180 || true
+  local current_ref current_repo current_tag latest_tag target_tag target_ref
 
-  echo
+  current_ref="$(read_current_image_ref)"
+  if [[ -z "${current_ref}" ]]; then
+    echo "ERROR: Could not detect current NyxGuard image in docker-compose.yml." >&2
+    exit 1
+  fi
+
+  current_repo="${current_ref%:*}"
+  current_tag="${current_ref##*:}"
+  if [[ "${current_repo}" == "${current_ref}" ]]; then
+    current_repo="${IMAGE_REPO}"
+    current_tag="latest"
+  fi
+
+  if [[ -n "${FORCE_TAG}" ]]; then
+    target_tag="${FORCE_TAG}"
+  else
+    echo "Checking Docker Hub for latest published NyxGuard Manager version..."
+    latest_tag="$(dockerhub_latest_tag "${IMAGE_REPO}")"
+    target_tag="${latest_tag}"
+  fi
+
+  target_ref="${IMAGE_REPO}:${target_tag}"
+
+  if ! version_is_newer "${current_tag}" "${target_tag}"; then
+    echo "No newer release found."
+    echo "Current: ${current_ref}"
+    echo "Latest : ${target_ref}"
+    exit 0
+  fi
+
+  confirm_update "${current_ref}" "${target_ref}" || exit 0
+
+  echo "Pulling ${target_ref}..."
+  docker pull "${target_ref}"
+
+  echo "Updating compose image reference..."
+  update_compose_image_ref "${target_ref}"
+  echo "${target_tag}" >"${INSTALL_DIR}/.version"
+
+  echo "Applying update (in-place, data preserved)..."
+  docker compose --env-file "${INSTALL_DIR}/.env" -f "${INSTALL_DIR}/docker-compose.yml" up -d --remove-orphans
+
+  echo ""
   echo "Update complete."
+  echo "Now running: ${target_ref}"
 }
 
 main "$@"

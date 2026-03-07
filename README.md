@@ -17,17 +17,29 @@ Operator-grade reverse proxy manager for self-hosted infrastructure. NyxGuard Ma
 ## What You Get
 
 ### Reverse Proxy Manager
-- Proxy Hosts (HTTP), Redirection Hosts, Streams (TCP/UDP), 404 Hosts
-- Let's Encrypt certificates: HTTP-01 and DNS providers
-- Access Lists, Users, Audit Logs, Settings
+- Proxy Hosts (HTTP), Redirection Hosts, Streams (TCP/UDP), and 404 Hosts
+- Per-host SSL controls, access policies, advanced/custom Nginx controls, and custom locations
+- Let's Encrypt certificates (HTTP-01 and DNS providers), certificate management, and renew flows
+- Access Lists, Users/Roles, and full audit logging
+- Setup wizard, dashboard, and system settings panels for day-2 operations
 
 ### NyxGuard Security Layer
 - Per-proxy toggles: WAF, Bot Defence, DDoS Shield, SQL Shield, Auth Bypass
 - Global toggles (GlobalGate): Bot Defence (master), DDoS Shield (master), SQL Shield (master), Auth Bypass (master)
-- Dashboard: live status pills, live traffic view, active hosts summary + traffic analytics (RX/TX)
-- Attacks: centralized attack stream and counters (SQLi / Bot / DDoS / AuthFail) with ban actions
-- IPs & Locations: 15m / 1h / 1d / 7d windows, retention 30 / 60 / 90 / 180 days
-- Rules: allow/deny by IP/CIDR or Country (ISO), optional expiry 1 / 7 / 30 / 60 / 90 / 180 days
+- Web Controls policy engine with versioning, activate/rollback, and effective-policy visibility
+- WAF custom rule management with live Nginx apply
+- Dashboard + Traffic: live service posture, active hosts, and RX/TX analytics
+- Attacks center: centralized stream and counters (SQLi / Bot / DDoS / AuthFail) with response actions
+- IPs & Locations: 15m / 1h / 1d / 7d windows, GeoIP attribution, and retention controls
+- Rules engine: allow/deny by IP/CIDR or Country (ISO), with optional expiries
+
+### Operations & Integrations
+- Event Center to review and clear operational, security, and change activity streams
+- Notification channels (Webhook, Slack, Email) with per-event selection and test-send
+- Integrations with token-based metrics endpoint for Prometheus/Grafana pipelines
+- Built-in Update Manager (check/download/apply workflow, changelog, What's New acknowledgements)
+- SSO (OIDC/Auth provider flow) and local-account mapping controls
+- LAN Access controls with ARP-assisted host discovery and IP/MAC rule management
 
 ### GeoIP Country (Optional)
 NyxGuard can show the **country code** for each IP (RO/FR/GB/etc). For accurate results you need a local GeoIP database.
@@ -78,14 +90,18 @@ Why this method is recommended:
 Then run the installer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | sudo APP_VERSION=3.0.4 bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | sudo bash
 ```
 
-By default the installer pulls `nyxmael/nyxguardmanager:<version>` and starts the stack with Docker Compose.
+By default the installer:
+- detects the latest published image tag from Docker Hub
+- pulls `nyxmael/nyxguardmanager:<latest>`
+- creates the local Docker Compose stack in `/opt/nyxguardmanager`
+- starts the stack and enables reboot persistence via systemd
 
 Optional:
 - Use a different image/repo: `IMAGE_REPO=youruser/nyxguardmanager`
-- Install a specific version: `APP_VERSION=3.0.4`
+- Install a specific version: `APP_TAG=4.0.0`
 
 ### Install Via Docker (Compose)
 
@@ -96,19 +112,81 @@ sudo mkdir -p /opt/nyxguardmanager
 cd /opt/nyxguardmanager
 ```
 
-2. Download the compose file and create `.env`:
+2. Create `docker-compose.yml` locally (Docker image only):
 
 ```bash
-curl -fsSLO https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/docker-compose.yml
-curl -fsSLO https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/.env.example
-cp .env.example .env
-```
+cat > docker-compose.yml <<'YAML'
+services:
+  nyxguard-manager:
+    container_name: nyxguard-manager
+    image: nyxmael/nyxguardmanager:4.0.0
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8443:8443"
+    environment:
+      TZ: "${TZ:-UTC}"
+      PUID: "${PUID:-1000}"
+      PGID: "${PGID:-1000}"
+      DB_MYSQL_HOST: "db"
+      DB_MYSQL_PORT: "3306"
+      DB_MYSQL_USER: "${DB_MYSQL_USER:-nyxguard}"
+      DB_MYSQL_PASSWORD: "${DB_MYSQL_PASSWORD}"
+      DB_MYSQL_NAME: "${DB_MYSQL_NAME:-nyxguard}"
+      SKIP_CERTBOT_OWNERSHIP: "true"
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    volumes:
+      - nyxguard_data:/data
+      - nyxguard_letsencrypt:/etc/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /proc/1/net/arp:/host/proc/net/arp:ro
+    depends_on:
+      - db
 
-`docker-compose.yml` is pinned to `nyxmael/nyxguardmanager:3.0.4`. To use a different version, edit the `image:` tag in `docker-compose.yml`.
+  db:
+    container_name: nyxguard-db
+    image: jc21/mariadb-aria:latest
+    restart: unless-stopped
+    environment:
+      TZ: "${TZ:-UTC}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${DB_MYSQL_NAME:-nyxguard}"
+      MYSQL_USER: "${DB_MYSQL_USER:-nyxguard}"
+      MYSQL_PASSWORD: "${DB_MYSQL_PASSWORD}"
+    volumes:
+      - nyxguard_db:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+
+volumes:
+  nyxguard_data:
+    name: nyxguard_data
+  nyxguard_letsencrypt:
+    name: nyxguard_letsencrypt
+  nyxguard_db:
+    name: nyxguard_db
+YAML
+```
 
 3. Edit `.env` (set strong passwords for `DB_MYSQL_PASSWORD` and `MYSQL_ROOT_PASSWORD`), then start:
 
 ```bash
+cat > .env <<'ENV'
+TZ=UTC
+PUID=1000
+PGID=1000
+DB_MYSQL_USER=nyxguard
+DB_MYSQL_NAME=nyxguard
+DB_MYSQL_PASSWORD=CHANGE_ME_STRONG_PASSWORD
+MYSQL_ROOT_PASSWORD=CHANGE_ME_STRONG_ROOT_PASSWORD
+ENV
+
 docker compose --env-file .env up -d
 ```
 
@@ -128,16 +206,16 @@ Actual resource usage depends heavily on traffic volume, number of protected app
 - Minimum (small install / short retention):
   - 2 vCPU
   - 2 GB RAM
-  - 25 GB disk
+  - 40 GB disk
 - Recommended (multiple apps / longer retention):
   - 4 vCPU
-  - 4 GB RAM
-  - 40 GB disk
+  - 8 GB RAM
+  - 60 GB disk
 
 Notes:
 - Prefer SSD storage (log-heavy workloads are disk I/O sensitive).
 - If you plan 60-180 days retention and/or high traffic, allocate more disk.
-- If you plan to use NyxGuard for long term - 40 GB should be more then sufficient. 
+- If you plan to use NyxGuard for long term - 60 GB should be more then sufficient. 
 
 ## Update (In-Place)
 
@@ -153,6 +231,7 @@ curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upd
 
 Optional environment variables:
 - Pull from a different repo: `IMAGE_REPO=youruser/nyxguardmanager`
+- Force a specific version: `FORCE_TAG=4.0.0`
 
 Example:
 
@@ -163,11 +242,12 @@ IMAGE_REPO=nyxmael/nyxguardmanager \
 
 ### Update Via Docker Compose (Manual Installs)
 
-If you installed by downloading `docker-compose.yml` yourself:
+If you installed with a manual compose file:
 
 ```bash
 cd /opt/nyxguardmanager
-docker compose pull
+docker pull nyxmael/nyxguardmanager:4.0.0
+# update image tag in docker-compose.yml if needed, then:
 docker compose --env-file .env up -d
 ```
 
@@ -175,13 +255,13 @@ docker compose --env-file .env up -d
 
 - Your data is stored in Docker volumes, so updates should not wipe config/certs/DB unless you delete volumes.
 - If you previously migrated volumes (via `NYXGUARD_*_VOLUME` in `.env`), keep those values unchanged.
-- If you want to update to a specific release, change the `image:` tag in `docker-compose.yml` (for example, `nyxmael/nyxguardmanager:3.0.4`) before running `docker compose pull`.
+- If you want to update to a specific release, use `FORCE_TAG=<version>` with `update.sh` or update the compose `image:` tag explicitly.
 
 ## Quick Health Checks
 
 ```bash
-curl -I http://127.0.0.1:81/
-curl -fsS http://127.0.0.1:81/api/ | jq
+curl -kI https://127.0.0.1:8443/
+curl -ksS https://127.0.0.1:8443/api/ | jq
 docker ps
 docker logs --tail=100 nyxguard-manager
 ```
@@ -236,6 +316,7 @@ See the full license in the [LICENSE](LICENSE.md) file.
 
 - https://nyxcloud.ro/
 - https://billcore.ro/
+- https://m.youtube.com/@NyxGuardManager
 
 Contact: 
 VladCardei@live.com
