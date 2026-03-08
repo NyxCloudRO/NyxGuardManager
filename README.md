@@ -17,7 +17,7 @@ Operator-grade reverse proxy manager for self-hosted infrastructure. NyxGuard Ma
 ## What You Get
 
 ### Reverse Proxy Manager
-- Proxy Hosts (HTTP)
+- Proxy Hosts (HTTP) (HTTPS)
 - Per-host SSL controls, access policies, advanced/custom Nginx controls, and custom locations
 - Let's Encrypt certificates (HTTP-01 and DNS providers), certificate management, and renew flows
 - Access Lists, Users/Roles, and full audit logging
