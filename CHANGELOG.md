@@ -109,7 +109,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Lockout warning when no active rules exist with LAN Access enabled.
 
 ### Proxy & Certificate Management
-- Proxy Hosts (HTTP), Redirection Hosts, Streams (TCP/UDP), and 404 Hosts.
+- Proxy Hosts (HTTP) (HTTPS)
 - Per-host SSL controls, access policies, advanced Nginx config, and custom locations.
 - Let's Encrypt certificates via HTTP-01 and DNS challenge (multiple DNS providers supported).
 - Access Lists, Users/Roles, and full audit logging.
