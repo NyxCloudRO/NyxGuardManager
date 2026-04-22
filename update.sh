@@ -8,6 +8,7 @@ INSTALL_DIR="${INSTALL_DIR:-/opt/nyxguardmanager}"
 IMAGE_REPO="${IMAGE_REPO:-nyxmael/nyxguardmanager}"
 FORCE_TAG="${FORCE_TAG:-}"        # Optional explicit target tag override.
 AUTO_YES="${NYXGUARD_AUTO_YES:-0}" # Set to 1 for non-interactive mode.
+REMOVE_OLD_IMAGE="${NYXGUARD_REMOVE_OLD_IMAGE:-1}" # Set to 0 to keep the previous image for rollback.
 
 need_root() {
   if [[ "${EUID}" -ne 0 ]]; then
@@ -189,6 +190,25 @@ confirm_update() {
   esac
 }
 
+cleanup_previous_image() {
+  local current_ref="$1"
+  local target_ref="$2"
+
+  if [[ "${REMOVE_OLD_IMAGE}" != "1" ]]; then
+    echo "Keeping previous image: ${current_ref}"
+    return 0
+  fi
+
+  if [[ "${current_ref}" == "${target_ref}" ]]; then
+    return 0
+  fi
+
+  echo "Removing previous image: ${current_ref}"
+  if ! docker image rm "${current_ref}"; then
+    echo "Previous image was kept because Docker still considers it in use." >&2
+  fi
+}
+
 main() {
   need_root
   require_commands
@@ -237,6 +257,7 @@ main() {
 
   echo "Applying update (in-place, data preserved)..."
   docker compose --env-file "${INSTALL_DIR}/.env" -f "${INSTALL_DIR}/docker-compose.yml" up -d --remove-orphans
+  cleanup_previous_image "${current_ref}" "${target_ref}"
 
   echo ""
   echo "Update complete."
