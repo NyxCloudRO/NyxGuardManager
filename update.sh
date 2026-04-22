@@ -173,7 +173,13 @@ confirm_update() {
   fi
 
   local answer
-  read -r -p "Proceed with update? [y/N]: " answer
+  if [[ -r /dev/tty ]]; then
+    read -r -p "Proceed with update? [y/N]: " answer </dev/tty
+  else
+    echo "ERROR: No interactive terminal available for confirmation." >&2
+    echo "Run with NYXGUARD_AUTO_YES=1 for non-interactive updates." >&2
+    return 1
+  fi
   case "${answer}" in
     y|Y|yes|YES) return 0 ;;
     *)
