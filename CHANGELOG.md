@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [4.0.1] - 2026-04-22
+
+### Distribution
+- Docker Hub release `nyxmael/nyxguardmanager:4.0.1`.
+- Public GitHub repository remains install-only and does not include internal application source code.
+- Installer, updater, compose example, and release metadata updated for `4.0.1`.
+
 ## [4.0.0] - 2026-03-07
 
 ### Distribution
