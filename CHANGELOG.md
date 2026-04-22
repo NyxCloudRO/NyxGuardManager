@@ -6,9 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [4.0.1] - 2026-04-22
 
+### UI
+- Replaced the sidebar Discord entry with a standard `Community` menu item.
+- The new `Community` link opens `https://community.nyxcloud.ro/`.
+
 ### Distribution
 - Docker Hub release `nyxmael/nyxguardmanager:4.0.1`.
-- Public GitHub repository remains install-only and does not include internal application source code.
 - Installer, updater, compose example, and release metadata updated for `4.0.1`.
 
 ## [4.0.0] - 2026-03-07
