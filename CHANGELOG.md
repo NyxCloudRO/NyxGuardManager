@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [4.0.2] - 2026-04-23
+
+### Fixed
+- Aligned the published Docker image state with the official Docker Hub release flow so production installs update from published tags only.
+- Refreshed the NyxGuard attack log and attack monitor runtime modules with the latest 4.0.2 fixes.
+- Kept temporary allow/deny rules out of active-ban API results after expiry.
+- Preserved private/internal and trusted-self source ranges from automatic ban actions.
+
+### Distribution
+- Docker Hub release `nyxmael/nyxguardmanager:4.0.2`.
+- Updated `latest` to point at `4.0.2`.
+- Production docs, compose example, installer override examples, and release metadata updated for `4.0.2`.
+- Added repo ignore/build-context guardrails so local dev overlays, unpacked image files, node modules, and security reports are not pushed as production source.
+
 ## [4.0.1] - 2026-04-22
 
 ### UI

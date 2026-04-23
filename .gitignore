@@ -2,3 +2,13 @@
 .idea
 .vscode
 .env
+
+# Local-only build and extracted-image artifacts. Production uses the
+# published nyxmael/nyxguardmanager image, not checked-in app source.
+.image-cache/
+.tmp*
+Dockerfile.localbuild
+docker-compose.local*.yml
+dev-image-*/
+backend/
+security-reports/
