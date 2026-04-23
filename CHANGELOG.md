@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [4.0.3] - 2026-04-23
+
+### Fixed
+- Fixed the built-in Update Manager modal so all update steps and options remain visible on shorter viewports.
+- Made the update dialog top-aligned and scrollable, with viewport-height fallback handling for browsers without dynamic viewport unit support.
+- Updated the bundled UI version marker to show `4.0.3`.
+
+### Distribution
+- Docker Hub release `nyxmael/nyxguardmanager:4.0.3`.
+- Updated `latest` to point at `4.0.3`.
+- Production compose example, installer override examples, and release metadata updated for `4.0.3`.
+
 ## [4.0.2] - 2026-04-23
 
 ### Fixed
