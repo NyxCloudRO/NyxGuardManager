@@ -6,7 +6,7 @@ set -euo pipefail
 
 INSTALL_DIR="${INSTALL_DIR:-/opt/nyxguardmanager}"
 IMAGE_REPO="${IMAGE_REPO:-nyxmael/nyxguardmanager}"
-APP_TAG="${APP_TAG:-}" # Optional override (example: 4.0.2). If empty, auto-detect latest.
+APP_TAG="${APP_TAG:-}" # Optional override (example: 4.0.4). If empty, auto-detect latest.
 
 need_root() {
   if [[ "${EUID}" -ne 0 ]]; then

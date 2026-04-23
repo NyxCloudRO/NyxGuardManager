@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [4.0.4] - 2026-04-23
+
+### Fixed
+- Refreshed the local release image build path on top of the published `4.0.3` base image.
+- Carried forward the current bundled UI/runtime overlay for the `4.0.4` Docker release.
+
+### Distribution
+- Docker Hub release `nyxmael/nyxguardmanager:4.0.4`.
+- Updated `latest` to point at `4.0.4`.
+- Production compose example, installer override examples, and release metadata updated for `4.0.4`.
+
 ## [4.0.3] - 2026-04-23
 
 ### Fixed
