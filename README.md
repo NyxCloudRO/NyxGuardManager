@@ -324,6 +324,7 @@ See the full license in the [LICENSE](LICENSE.md) file.
 
 - https://nyxcloud.ro/
 - https://billcore.ro/
+- https://community.nyxcloud.ro/
 
 Contact: 
 VladCardei@live.com
