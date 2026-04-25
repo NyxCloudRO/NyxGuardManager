@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [4.0.5] - 2026-04-25
+
+### Fixed
+- Updated the app-wide runtime, footer, settings, login, and Event Center version markers to `4.0.5`.
+- Fixed Event Center Access Logs so access portal login events and access-check denial events are included.
+- Expanded the Event Center access-log lookback window to keep older access events visible.
+- Improved the Users toolbar spacing so search and Add User controls no longer crowd each other.
+- Fixed duplicate Community links in the sidebar preferences area.
+- Refined sidebar action links so Support and Community remain visible and aligned without opening preferences.
+- Replaced plain sidebar navigation icons with richer NyxGuard-styled icon tiles.
+- Tightened sidebar navigation spacing so the upgraded icons do not force unnecessary sidebar scrolling.
+- Removed the visible grid texture from the Premium Nyx background while preserving the dark cyan color depth.
+- Improved Nyx Cobalt sidebar color coverage and account dropdown contrast.
+- Scoped theme-specific account dropdown color fixes so other themes keep their own palette while retaining the dropdown stacking fix.
+
+### Distribution
+- Docker Hub release `nyxmael/nyxguardmanager:4.0.5`.
+- Updated `latest` to point at `4.0.5`.
+- Docker image references, installer examples, compose examples, and release metadata updated for `4.0.5`.
+
 ## [4.0.4] - 2026-04-23
 
 ### Fixed
