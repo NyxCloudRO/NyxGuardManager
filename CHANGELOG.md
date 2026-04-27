@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [4.0.6] - 2026-04-27
+
+### Changed
+- Updated dev/runtime version markers, cache-busting URLs, package metadata, and local build metadata to `4.0.6`.
+- Kept the tightened sidebar menu spacing from the dev build.
+- Refined Control Matrix, Cobalt, and shared action-pill styling for better contrast, spacing, and alignment across themes.
+- Improved GlobalGate, Traffic Rules, Web Controls, WAF Custom Rules, and Live Traffic control spacing.
+
+### Fixed
+- Bridged NyxGuard attack monitor detections into Web Threat events so the Web Threat Recent Events panel receives inbound block events from existing protection logs.
+
 ## [4.0.5] - 2026-04-25
 
 ### Fixed

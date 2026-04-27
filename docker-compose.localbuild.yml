@@ -1,0 +1,6 @@
+services:
+  nyxguard-manager:
+    image: nyxguardmanager:local
+    build:
+      context: .
+      dockerfile: Dockerfile.localbuild
