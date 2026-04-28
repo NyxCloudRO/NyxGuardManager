@@ -103,7 +103,7 @@ By default the installer:
 
 Optional:
 - Use a different image/repo: `IMAGE_REPO=youruser/nyxguardmanager`
-- Install a specific version: `APP_TAG=4.0.6`
+- Install a specific version: `APP_TAG=4.0.7`
 
 ### Install Via Docker (Compose)
 
@@ -121,7 +121,7 @@ cat > docker-compose.yml <<'YAML'
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:4.0.6
+    image: nyxmael/nyxguardmanager:4.0.7
     restart: unless-stopped
     ports:
       - "80:80"
@@ -239,7 +239,7 @@ curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upd
 
 Optional environment variables:
 - Pull from a different repo: `IMAGE_REPO=youruser/nyxguardmanager`
-- Force a specific version: `FORCE_TAG=4.0.6`
+- Force a specific version: `FORCE_TAG=4.0.7`
 
 Example:
 
@@ -254,7 +254,7 @@ If you installed with a manual compose file:
 
 ```bash
 cd /opt/nyxguardmanager
-docker pull nyxmael/nyxguardmanager:4.0.6
+docker pull nyxmael/nyxguardmanager:4.0.7
 # update image tag in docker-compose.yml if needed, then:
 docker compose --env-file .env up -d
 ```

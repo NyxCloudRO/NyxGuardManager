@@ -4,16 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [4.0.6] - 2026-04-27
+## [4.0.7] - 2026-04-28
 
 ### Changed
-- Updated runtime version markers, cache-busting URLs, package metadata, and Docker image references to `4.0.6`.
+- Updated runtime version markers, cache-busting URLs, package metadata, and Docker image references to `4.0.7`.
 - Kept the tightened sidebar menu spacing from the dev build.
 - Refined Control Matrix, Cobalt, and shared action-pill styling for better contrast, spacing, and alignment across themes.
-- Improved GlobalGate, Traffic Rules, Web Controls, WAF Custom Rules, and Live Traffic control spacing.
+- Improved GlobalGate, Traffic Rules, Web Controls, WAF Custom Rules, Threat Activity, IPs & Locations, and Live Traffic control spacing.
+- Refined NyxGuard time-window pills and header action buttons so inactive controls stay visually separate and compact across themes.
+- Updated Users table search styling so the search icon and input render as one unified field while Add User remains separate.
 
 ### Fixed
 - Bridged NyxGuard attack monitor detections into Web Threat events so the Web Threat Recent Events panel receives inbound block events from existing protection logs.
+- Fixed attack-ban adjustments from the 24-hour autoban flow so 30-day and permanent changes update the active deny rule correctly.
+- Fixed IPs & Locations JSON export so it still downloads the current window payload when the result set is empty.
+- Fixed frontend cache-busting and lazy chunk runtime imports so the app loads fully after the 4.0.7 asset refresh instead of showing only the background.
+
+### Distribution
+- Docker Hub release `nyxmael/nyxguardmanager:4.0.7`.
+- Updated `latest` to point at `4.0.7`.
+- Installer, compose examples, README, changelog, and release metadata updated for `4.0.7`.
 
 ## [4.0.5] - 2026-04-25
 
