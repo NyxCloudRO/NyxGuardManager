@@ -4,31 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [4.0.8] - 2026-04-28
+## [4.0.9] - 2026-04-29
 
 ### Changed
-- Updated release metadata, README install examples, production compose defaults, and environment examples to `4.0.8`.
-- Completed NyxGuard Manager branding cleanup across package metadata, runtime labels, default pages, API documentation, and visible app text.
+- Updated release metadata, README install examples, production compose defaults, and environment examples to `4.0.9`.
 - Refreshed Docker image metadata and labels so the published image identifies as NyxGuard Manager.
-- Improved clean-install startup readiness for new Docker deployments.
+- Refined bundled UI cache-busting assets for the `409dev` runtime bundle.
+- Improved small UI spacing and alignment details across the NyxGuard management views.
+- Polished action controls and status labels for a cleaner, more consistent interface.
 
 ### Fixed
 - Fixed attack-ban duration changes so switching from the default 24-hour ban to 30-day or permanent updates the active deny rule immediately.
 - Cleared cached Threat Activity responses after ban changes so the UI reflects the new ban duration without waiting for stale route cache expiry.
 - Disabled duplicate active deny rows for the same IP when a ban is adjusted, preventing old 24-hour rows from continuing to appear in Threat Activity.
 - Fixed the container startup path after renaming the logrotate config to NyxGuard Manager branding.
-- Added first-run admin HTTPS certificate generation for clean Docker installs.
-- Added default NyxGuard HTTP variable bootstrap config for clean Docker installs.
 
 ### Verified
-- Clean Docker install starts successfully with the `4.0.8` image.
-- Live API reports `4.0.8`, and the frontend serves `NyxGuard Manager`, `4.0.8`, and `408dev`.
+- Clean Docker install starts successfully with the `4.0.9` image.
+- Live API reports `4.0.9`, and the frontend serves `NyxGuard Manager`, `4.0.9`, and `409dev`.
 - Live Threat Activity ban tests verified `24h`, `30d`, and `permanent` durations, including duplicate-row cleanup.
 
 ### Distribution
-- Docker Hub release `nyxmael/nyxguardmanager:4.0.8`.
-- Updated `latest` to point at `4.0.8`.
-- GitHub README, changelog, compose example, installer examples, and release metadata updated for `4.0.8`.
+- Docker Hub release `nyxmael/nyxguardmanager:4.0.9`.
+- Updated `latest` to point at `4.0.9`.
+- GitHub README, changelog, compose example, installer examples, and release metadata updated for `4.0.9`.
 
 ## [4.0.7] - 2026-04-28
 

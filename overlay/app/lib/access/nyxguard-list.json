@@ -1,0 +1,16 @@
+{
+	"anyOf": [
+		{
+			"$ref": "roles#/definitions/admin"
+		},
+		{
+			"type": "object",
+			"required": ["permission_nyxguard"],
+			"properties": {
+				"permission_nyxguard": {
+					"$ref": "perms#/definitions/view"
+				}
+			}
+		}
+	]
+}
