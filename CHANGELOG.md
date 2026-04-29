@@ -7,9 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [4.0.9] - 2026-04-29
 
 ### Changed
-- Updated release metadata, README install examples, production compose defaults, and environment examples to `4.0.9`.
-- Refreshed Docker image metadata and labels so the published image identifies as NyxGuard Manager.
-- Refined bundled UI cache-busting assets for the `409dev` runtime bundle.
+- Updated release references and setup examples to `4.0.9`.
 - Improved small UI spacing and alignment details across the NyxGuard management views.
 - Polished action controls and status labels for a cleaner, more consistent interface.
 
@@ -17,25 +15,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Fixed attack-ban duration changes so switching from the default 24-hour ban to 30-day or permanent updates the active deny rule immediately.
 - Cleared cached Threat Activity responses after ban changes so the UI reflects the new ban duration without waiting for stale route cache expiry.
 - Disabled duplicate active deny rows for the same IP when a ban is adjusted, preventing old 24-hour rows from continuing to appear in Threat Activity.
-- Fixed stale frontend bundle references that could load the previous `408dev` runtime alongside `409dev` after upgrading.
+- Improved frontend loading after upgrades so the app renders correctly after an asset refresh.
 - Unified Certificates table row hover styling so each certificate uses one consistent hover color.
-- Fixed the container startup path after renaming the logrotate config to NyxGuard Manager branding.
-
-### Verified
-- Clean Docker install starts successfully with the `4.0.9` image.
-- Live API reports `4.0.9`, and the frontend serves `NyxGuard Manager`, `4.0.9`, and `409dev`.
-- Live Threat Activity ban tests verified `24h`, `30d`, and `permanent` durations, including duplicate-row cleanup.
-
-### Distribution
-- Docker Hub release `nyxmael/nyxguardmanager:4.0.9`.
-- Updated `latest` to point at `4.0.9`.
-- GitHub README, changelog, compose example, installer examples, and release metadata updated for `4.0.9`.
+- Improved startup compatibility after NyxGuard Manager branding updates.
 
 ## [4.0.7] - 2026-04-28
 
 ### Changed
-- Updated runtime version markers, cache-busting URLs, package metadata, and Docker image references to `4.0.7`.
-- Kept the tightened sidebar menu spacing from the dev build.
+- Updated release references to `4.0.7`.
 - Refined Control Matrix, Cobalt, and shared action-pill styling for better contrast, spacing, and alignment across themes.
 - Improved GlobalGate, Traffic Rules, Web Controls, WAF Custom Rules, Threat Activity, IPs & Locations, and Live Traffic control spacing.
 - Refined NyxGuard time-window pills and header action buttons so inactive controls stay visually separate and compact across themes.
@@ -45,12 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Bridged NyxGuard attack monitor detections into Web Threat events so the Web Threat Recent Events panel receives inbound block events from existing protection logs.
 - Fixed attack-ban adjustments from the 24-hour autoban flow so 30-day and permanent changes update the active deny rule correctly.
 - Fixed IPs & Locations JSON export so it still downloads the current window payload when the result set is empty.
-- Fixed frontend cache-busting and lazy chunk runtime imports so the app loads fully after the 4.0.7 asset refresh instead of showing only the background.
-
-### Distribution
-- Docker Hub release `nyxmael/nyxguardmanager:4.0.7`.
-- Updated `latest` to point at `4.0.7`.
-- Installer, compose examples, README, changelog, and release metadata updated for `4.0.7`.
+- Improved frontend loading after updates so the app renders fully instead of showing only the background.
 
 ## [4.0.5] - 2026-04-25
 
@@ -67,21 +49,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Improved Nyx Cobalt sidebar color coverage and account dropdown contrast.
 - Scoped theme-specific account dropdown color fixes so other themes keep their own palette while retaining the dropdown stacking fix.
 
-### Distribution
-- Docker Hub release `nyxmael/nyxguardmanager:4.0.5`.
-- Updated `latest` to point at `4.0.5`.
-- Docker image references, installer examples, compose examples, and release metadata updated for `4.0.5`.
-
 ## [4.0.4] - 2026-04-23
 
 ### Fixed
-- Refreshed the local release image build path on top of the published `4.0.3` base image.
-- Carried forward the current bundled UI/runtime overlay for the `4.0.4` Docker release.
-
-### Distribution
-- Docker Hub release `nyxmael/nyxguardmanager:4.0.4`.
-- Updated `latest` to point at `4.0.4`.
-- Production compose example, installer override examples, and release metadata updated for `4.0.4`.
+- Improved bundled UI compatibility for the `4.0.4` release.
 
 ## [4.0.3] - 2026-04-23
 
@@ -90,34 +61,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Made the update dialog top-aligned and scrollable, with viewport-height fallback handling for browsers without dynamic viewport unit support.
 - Updated the bundled UI version marker to show `4.0.3`.
 
-### Distribution
-- Docker Hub release `nyxmael/nyxguardmanager:4.0.3`.
-- Updated `latest` to point at `4.0.3`.
-- Production compose example, installer override examples, and release metadata updated for `4.0.3`.
-
 ## [4.0.2] - 2026-04-23
 
 ### Fixed
-- Aligned the published Docker image state with the official Docker Hub release flow so production installs update from published tags only.
-- Refreshed the NyxGuard attack log and attack monitor runtime modules with the latest 4.0.2 fixes.
+- Improved the release update flow for tagged installs.
+- Refreshed NyxGuard attack log and attack monitor handling with the latest `4.0.2` fixes.
 - Kept temporary allow/deny rules out of active-ban API results after expiry.
 - Preserved private/internal and trusted-self source ranges from automatic ban actions.
-
-### Distribution
-- Docker Hub release `nyxmael/nyxguardmanager:4.0.2`.
-- Updated `latest` to point at `4.0.2`.
-- Production docs, compose example, installer override examples, and release metadata updated for `4.0.2`.
-- Added repo ignore/build-context guardrails so local dev overlays, unpacked image files, node modules, and security reports are not pushed as production source.
 
 ## [4.0.1] - 2026-04-22
 
 ### UI
 - Replaced the sidebar Discord entry with a standard `Community` menu item.
 - The new `Community` link opens `https://community.nyxcloud.ro/`.
-
-### Distribution
-- Docker Hub release `nyxmael/nyxguardmanager:4.0.1`.
-- Installer, updater, compose example, and release metadata updated for `4.0.1`.
 
 ## [4.0.0] - 2026-03-07
 
@@ -254,7 +210,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Startup time improvements: certbot site-packages persisted across restarts; IPv6 configuration skipped when unchanged.
 - Exponential backoff on backend startup retry (capped at 60s).
 - nginx default proxy timeout 60s; long-running paths keep 15m timeout.
-- CSP header added to production nginx config.
+- CSP header added to the nginx config.
 - Integration tokens use 256-bit entropy with timing-safe comparison.
 - API rate limiter uses per-user+IP composite key.
 - Poll intervals for attack monitor and web threat monitor configurable via `NYXGUARD_POLL_INTERVAL_MS`.
@@ -269,7 +225,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Expanded theme catalog to 8 distinct themes, with Nyx Aurora preserved as the default for fresh installs.
 
 ### Fixed
-- Host resources data path in production container: restored backend system metrics reporting and container metrics collection.
+- Host resources data path: restored backend system metrics reporting and container metrics collection.
 - Theme consistency: applied token-based button gradients per active theme across dashboard controls and action buttons.
 - Dropdown/readability regressions: improved select and dropdown contrast to avoid white-on-white text in themed views.
 - Theme persistence and runtime updates: stabilized global query/theme behavior so dashboard metrics refresh without manual page reload.
@@ -291,12 +247,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [3.0.2] - 2026-02-10
 
 ### Changed
-- Container hardening: removed remaining system Python wheel packages from the production image to further reduce reported CVEs.
+- Container hardening: removed remaining system Python wheel packages to further reduce reported CVEs.
 
 ## [3.0.1] - 2026-02-10
 
 ### Changed
-- Container hardening: reduced shipped CVE surface by removing runtime-unneeded tooling from the production image.
+- Container hardening: reduced shipped CVE surface by removing runtime-unneeded tooling.
 
 ## [3.0.0] - 2026-02-10
 
