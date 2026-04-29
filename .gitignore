@@ -12,3 +12,7 @@ docker-compose.local*.yml
 dev-image-*/
 backend/
 security-reports/
+
+# Local release build overlays
+overlay/
+Dockerfile.dev-fix
