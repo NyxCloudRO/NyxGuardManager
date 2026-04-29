@@ -45,7 +45,7 @@ const modernCss = `
 .nyx-modern-table{width:100%!important;border-collapse:collapse!important;margin:0!important}
 .nyx-modern-table th{height:38px!important;padding:9px 16px!important;border-bottom:1px solid color-mix(in srgb,var(--app-border) 76%,transparent)!important;color:color-mix(in srgb,var(--app-text-secondary) 82%,var(--app-text-primary) 18%)!important;font-size:11px!important;letter-spacing:.04em!important;text-transform:uppercase!important}
 .nyx-modern-table td{padding:14px 16px!important;border-bottom:1px solid color-mix(in srgb,var(--app-border) 42%,transparent)!important;vertical-align:middle!important;background:transparent!important}
-.nyx-modern-table tr:hover td{background:linear-gradient(90deg,color-mix(in srgb,var(--app-primary) 13%,var(--app-surface) 87%),color-mix(in srgb,var(--app-secondary) 8%,var(--app-surface) 92%))!important}
+.nyx-modern-table tr:hover td{background:color-mix(in srgb,var(--app-primary) 12%,var(--app-surface) 88%)!important}
 .nyx-modern-primary{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important}
 .nyx-modern-stack{display:flex!important;flex-direction:column!important;gap:4px!important;min-width:0!important}
 .nyx-modern-title{font-weight:760!important;color:var(--app-text-primary)!important;line-height:1.2!important}

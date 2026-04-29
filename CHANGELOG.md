@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Cleared cached Threat Activity responses after ban changes so the UI reflects the new ban duration without waiting for stale route cache expiry.
 - Disabled duplicate active deny rows for the same IP when a ban is adjusted, preventing old 24-hour rows from continuing to appear in Threat Activity.
 - Fixed stale frontend bundle references that could load the previous `408dev` runtime alongside `409dev` after upgrading.
+- Unified Certificates table row hover styling so each certificate uses one consistent hover color.
 - Fixed the container startup path after renaming the logrotate config to NyxGuard Manager branding.
 
 ### Verified
