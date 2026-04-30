@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [4.0.10] - 2026-04-30
+
+### Added
+- Added a refreshed Docker release image for `4.0.10`.
+- Added improved Grafana dashboard coverage for security, application, and host observability views.
+
+### Changed
+- Updated production deployment references and setup examples to `4.0.10`.
+- Refined bundled monitoring assets for cleaner Prometheus/Grafana onboarding.
+- Improved release metadata consistency across Docker Compose, installer guidance, and update examples.
+
+### Improved
+- Enhanced dashboard query compatibility for host CPU, memory, disk, and network telemetry.
+- Improved dashboard portability across fresh monitoring installs and existing Prometheus setups.
+- Polished operational documentation for faster install, update, and manual Docker Compose workflows.
+
 ## [4.0.9] - 2026-04-29
 
 ### Changed
