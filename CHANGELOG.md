@@ -4,21 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [4.0.10] - 2026-04-30
+## [4.0.10] - 2026-05-01
 
 ### Added
 - Added a refreshed Docker release image for `4.0.10`.
 - Added improved Grafana dashboard coverage for security, application, and host observability views.
+- Added Failed Login notification coverage for failed app login attempts, including Discord/webhook delivery with attempted identity, source IP, user agent, and reason.
 
 ### Changed
 - Updated production deployment references and setup examples to `4.0.10`.
 - Refined bundled monitoring assets for cleaner Prometheus/Grafana onboarding.
 - Improved release metadata consistency across Docker Compose, installer guidance, and update examples.
+- Improved notification channel presentation so saved webhook data stays in the background while event options remain organized.
+- Improved Discord notification formatting with cleaner embed-style payloads and safer field formatting.
+- Improved email notification setup and test handling for SMTP channels, including TLS behavior and password preservation while editing saved channels.
 
 ### Improved
 - Enhanced dashboard query compatibility for host CPU, memory, disk, and network telemetry.
 - Improved dashboard portability across fresh monitoring installs and existing Prometheus setups.
 - Polished operational documentation for faster install, update, and manual Docker Compose workflows.
+
+### Fixed
+- Fixed duplicate Failed Login event pills and stray Failed Login checkboxes appearing outside the notification channel form.
+- Fixed the built-in Update Manager overlay so upgrade steps, logs, confirmations, and action buttons stay visible above the dashboard instead of being hidden behind the page layout.
+- Fixed Update Manager version detection so the app uses the runtime build version before package metadata.
+- Fixed Docker image pull/apply behavior in the Update Manager to use published plain Docker tags like `4.0.10` instead of non-existent `v4.0.10` tags.
 
 ## [4.0.9] - 2026-04-29
 

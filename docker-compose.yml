@@ -19,7 +19,7 @@ services:
       SKIP_CERTBOT_OWNERSHIP: "true"
       NPM_BUILD_VERSION: "4.0.10"
       NPM_BUILD_COMMIT: "release-4.0.10"
-      NPM_BUILD_DATE: "2026-04-30"
+      NPM_BUILD_DATE: "2026-05-01"
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost:3000/"]
       interval: 10s
