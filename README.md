@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/nyxguard-wordmark-clean.svg" alt="NyxGuard Manager" width="1000" />
+  <img src="assets/nyxguard-cover.png" alt="NyxGuard Manager" width="1000" />
 </p>
 
 Operator-grade reverse proxy manager for self-hosted infrastructure. NyxGuard Manager combines proxy hosting (HTTP/TCP/UDP) and certificate automation with an integrated security layer (NyxGuard): WAF-style controls, SQL Shield, bot defence, DDoS protection, auth-bypass hardening, IP/Geo intelligence, attack visibility, and real-time traffic analytics, all running locally on your server with Docker.
@@ -103,7 +103,7 @@ By default the installer:
 
 Optional:
 - Use a different image/repo: `IMAGE_REPO=youruser/nyxguardmanager`
-- Install a specific version: `APP_TAG=4.0.10`
+- Install a specific version: `APP_TAG=4.0.11`
 
 ### Install Via Docker (Compose)
 
@@ -121,7 +121,7 @@ cat > docker-compose.yml <<'YAML'
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:4.0.10
+    image: nyxmael/nyxguardmanager:4.0.11
     restart: unless-stopped
     ports:
       - "80:80"
@@ -239,7 +239,7 @@ curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upd
 
 Optional environment variables:
 - Pull from a different repo: `IMAGE_REPO=youruser/nyxguardmanager`
-- Force a specific version: `FORCE_TAG=4.0.10`
+- Force a specific version: `FORCE_TAG=4.0.11`
 
 Example:
 
@@ -254,7 +254,7 @@ If you installed with a manual compose file:
 
 ```bash
 cd /opt/nyxguardmanager
-docker pull nyxmael/nyxguardmanager:4.0.10
+docker pull nyxmael/nyxguardmanager:4.0.11
 # update image tag in docker-compose.yml if needed, then:
 docker compose --env-file .env up -d
 ```

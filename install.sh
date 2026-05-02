@@ -6,7 +6,8 @@ set -euo pipefail
 
 INSTALL_DIR="${INSTALL_DIR:-/opt/nyxguardmanager}"
 IMAGE_REPO="${IMAGE_REPO:-nyxmael/nyxguardmanager}"
-APP_TAG="${APP_TAG:-}" # Optional override (example: 4.0.10). If empty, auto-detect latest.
+APP_TAG="${APP_TAG:-}" # Optional override (example: 4.0.11). If empty, auto-detect latest.
+NYXGUARD_PROMETHEUS_SCRAPER_IP="${NYXGUARD_PROMETHEUS_SCRAPER_IP:-}"
 
 need_root() {
   if [[ "${EUID}" -ne 0 ]]; then
@@ -89,6 +90,22 @@ SRC
   fi
 }
 
+install_node_exporter() {
+  require_apt
+
+  if ! dpkg -s prometheus-node-exporter >/dev/null 2>&1; then
+    echo "Installing Prometheus node exporter for Grafana system metrics..."
+    apt-get install -y prometheus-node-exporter
+  fi
+
+  systemctl enable --now prometheus-node-exporter >/dev/null 2>&1 || true
+  systemctl enable --now node_exporter >/dev/null 2>&1 || true
+
+  if [[ -n "${NYXGUARD_PROMETHEUS_SCRAPER_IP}" ]] && have_cmd ufw && ufw status | grep -q "Status: active"; then
+    ufw allow from "${NYXGUARD_PROMETHEUS_SCRAPER_IP}" to any port 9100 proto tcp comment "Prometheus node_exporter scrape" >/dev/null || true
+  fi
+}
+
 is_semver() {
   [[ "$1" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]
 }
@@ -153,14 +170,16 @@ ensure_env() {
     return
   fi
 
-  local db_pass root_pass
+  local db_pass root_pass docker_sock_gid
   db_pass="$(rand32)"
   root_pass="$(rand32)"
+  docker_sock_gid="$(stat -c '%g' /var/run/docker.sock 2>/dev/null || echo 988)"
 
   cat >"${INSTALL_DIR}/.env" <<ENV
 TZ=UTC
 PUID=1000
-PGID=1000
+PGID=${docker_sock_gid}
+DOCKER_SOCK_GID=${docker_sock_gid}
 
 DB_MYSQL_USER=nyxguard
 DB_MYSQL_NAME=nyxguard
@@ -200,6 +219,8 @@ services:
       timeout: 5s
       retries: 5
       start_period: 60s
+    group_add:
+      - "\${DOCKER_SOCK_GID:-988}"
     volumes:
       - nyxguard_data:/data
       - nyxguard_letsencrypt:/etc/letsencrypt
@@ -268,6 +289,7 @@ main() {
   need_root
   install_base_packages
   install_docker
+  install_node_exporter
   ensure_install_dir
   ensure_env
 

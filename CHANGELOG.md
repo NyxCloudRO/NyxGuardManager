@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [4.0.11] - 2026-05-02
+
+### Added
+- Added a fresh Docker release image for `4.0.11`.
+- Added a refreshed NyxGuard GitHub cover image using the new `Wallpaper1.png` artwork.
+- Added a compact, release-ready Grafana dashboard JSON with the latest production fixes baked into the app download endpoint.
+
+### Changed
+- Updated production deployment references, Docker Compose examples, installer examples, and local version metadata to `4.0.11`.
+- Reworked the Grafana attack-range summary pills so the selected range panel follows the active Grafana time picker instead of fixed 7-day or 90-day windows.
+- Replaced the old fixed 90-day attack pill with an average-attacks-per-day view for easier sanity checking across selected ranges.
+- Rewired the Top Attacked Hosts panel into Top Impacted Hosts (4xx/5xx), using complete per-app 4xx/5xx traffic metrics instead of the narrower attack-event table.
+- Refined Grafana range-gating expressions so dashboard panels switch cleanly between 24h, 7d, 30d, and 90d windows.
+- Updated README Changelog and Support buttons to match the default NyxGuard dark cyan theme.
+
+### Improved
+- Improved Grafana provisioning reliability by keeping the bundled dashboard JSON aligned with the live production dashboard source.
+- Improved main dashboard GlobalGate status pill consistency by matching the actual GlobalGate toggle state styling.
+- Compacted the main dashboard Decision Stream layout so recent allow/deny traffic is easier to scan.
+- Improved the app favicon with a sharper NyxGuard-style mark for browser tabs.
+- Improved SSO settings persistence and callback account matching for OIDC/Auth provider flows.
+
+### Fixed
+- Fixed Grafana dashboard panels that appeared stuck when changing the time range.
+- Fixed misleading Top Attacked Hosts coverage when multiple apps had impacted traffic but no matching attack-event rows.
+- Fixed duplicate notification sends for the same alert identity so repeated messages are not emitted for the same IP/event combination until the alert changes.
+- Fixed intermittent Grafana "No data" behavior caused by stale or incomplete dashboard/query wiring.
+- Fixed bundled Grafana dashboard export so fresh installs and future deployments include the latest production dashboard fixes.
+- Fixed SSO save handling for enablement, provider URL, client ID, client secret, and application slug settings.
+
 ## [4.0.10] - 2026-05-01
 
 ### Added
