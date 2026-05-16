@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [4.0.12] - 2026-05-16
+
+### Added
+- Added a fresh Docker release image for `4.0.12`.
+- Added the long-window IP Insights hotfix to the published release image.
+- Added the latest local UI polish assets for dashboard panels, GlobalGate spacing, theme badges, Event Center controls, settings text backgrounds, and action menus.
+
+### Changed
+- Updated production deployment references, Docker Compose examples, installer examples, and local version metadata to `4.0.12`.
+- Updated release metadata so the container reports `NPM_BUILD_VERSION=4.0.12`, `NPM_BUILD_COMMIT=release-4.0.12`, and `NPM_BUILD_DATE=2026-05-16`.
+- Increased the bounded attack-log request limit used by IP Insights so longer reporting windows can load complete result sets.
+- Standardized the Event Center current-version label to match the Settings version pill wording.
+
+### Fixed
+- Fixed long-window IP intelligence requests that were capped too low for larger 7-day, 30-day, and longer views.
+- Preserved the certificate expiry table display fix in the new release image.
+- Fixed several theme and panel consistency issues across modern, AppPage, and legacy menu surfaces.
+
 ## [4.0.11] - 2026-05-02
 
 ### Added

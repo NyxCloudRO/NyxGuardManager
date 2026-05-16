@@ -1,7 +1,7 @@
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:4.0.11
+    image: nyxmael/nyxguardmanager:4.0.12
     restart: unless-stopped
     ports:
       - "80:80"
@@ -17,9 +17,9 @@ services:
       DB_MYSQL_PASSWORD: "${DB_MYSQL_PASSWORD}"
       DB_MYSQL_NAME: "${DB_MYSQL_NAME:-nyxguard}"
       SKIP_CERTBOT_OWNERSHIP: "true"
-      NPM_BUILD_VERSION: "4.0.11"
-      NPM_BUILD_COMMIT: "release-4.0.11"
-      NPM_BUILD_DATE: "2026-05-02"
+      NPM_BUILD_VERSION: "4.0.12"
+      NPM_BUILD_COMMIT: "release-4.0.12"
+      NPM_BUILD_DATE: "2026-05-16"
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost:3000/"]
       interval: 10s

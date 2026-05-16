@@ -6,7 +6,7 @@ set -euo pipefail
 
 INSTALL_DIR="${INSTALL_DIR:-/opt/nyxguardmanager}"
 IMAGE_REPO="${IMAGE_REPO:-nyxmael/nyxguardmanager}"
-APP_TAG="${APP_TAG:-}" # Optional override (example: 4.0.11). If empty, auto-detect latest.
+APP_TAG="${APP_TAG:-}" # Optional override (example: 4.0.12). If empty, auto-detect latest.
 NYXGUARD_PROMETHEUS_SCRAPER_IP="${NYXGUARD_PROMETHEUS_SCRAPER_IP:-}"
 
 need_root() {
