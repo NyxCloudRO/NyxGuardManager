@@ -9,30 +9,6 @@ Operator-grade reverse proxy manager for self-hosted infrastructure. NyxGuard Ma
   <img src="assets/view-changelog.svg" alt="View Changelog" height="48" />
 </a>
 
-## Latest Release — 4.0.13
-
-NyxGuard Manager `4.0.13` is available from [Docker Hub](https://hub.docker.com/r/nyxmael/nyxguardmanager/tags):
-
-```bash
-docker pull nyxmael/nyxguardmanager:4.0.13
-```
-
-The `4.0.13` and `latest` tags resolve to the same published image digest:
-
-```text
-sha256:5502528268e86f31d94e5a2144dfde6d02dade9f57c7a5105645fb181b370b5f
-```
-
-Release highlights:
-
-- Fixed protected-application logins that could return to the NyxGuard login page after a few minutes even though authentication succeeded.
-- Added a persistent, host-only `__Host-nyxguard_access` cookie for HTTPS with explicit expiry and cross-site/WebSocket-safe attributes.
-- Kept legacy `nyxguard_access` cookies valid during the upgrade so existing deployments migrate cleanly.
-- Updated backend, frontend, container, installer, Compose, and visible UI version markers to `4.0.13`.
-- Sanitized the published image so database passwords are never embedded in image metadata; credentials must be supplied at runtime.
-
-After upgrading, sign in once on each protected hostname to receive the new hardened session cookie.
-
 ## Support
 <a href="https://buymeacoffee.com/nyxmael" target="_blank" rel="noopener noreferrer">
   <img src="assets/buy-me-a-coffee.svg" alt="Buy me a coffee" height="54" />
