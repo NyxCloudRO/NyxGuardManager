@@ -9,6 +9,30 @@ Operator-grade reverse proxy manager for self-hosted infrastructure. NyxGuard Ma
   <img src="assets/view-changelog.svg" alt="View Changelog" height="48" />
 </a>
 
+## Latest Release — 4.0.13
+
+NyxGuard Manager `4.0.13` is available from [Docker Hub](https://hub.docker.com/r/nyxmael/nyxguardmanager/tags):
+
+```bash
+docker pull nyxmael/nyxguardmanager:4.0.13
+```
+
+The `4.0.13` and `latest` tags resolve to the same published image digest:
+
+```text
+sha256:5502528268e86f31d94e5a2144dfde6d02dade9f57c7a5105645fb181b370b5f
+```
+
+Release highlights:
+
+- Fixed protected-application logins that could return to the NyxGuard login page after a few minutes even though authentication succeeded.
+- Added a persistent, host-only `__Host-nyxguard_access` cookie for HTTPS with explicit expiry and cross-site/WebSocket-safe attributes.
+- Kept legacy `nyxguard_access` cookies valid during the upgrade so existing deployments migrate cleanly.
+- Updated backend, frontend, container, installer, Compose, and visible UI version markers to `4.0.13`.
+- Sanitized the published image so database passwords are never embedded in image metadata; credentials must be supplied at runtime.
+
+After upgrading, sign in once on each protected hostname to receive the new hardened session cookie.
+
 ## Support
 <a href="https://buymeacoffee.com/nyxmael" target="_blank" rel="noopener noreferrer">
   <img src="assets/buy-me-a-coffee.svg" alt="Buy me a coffee" height="54" />
@@ -103,7 +127,7 @@ By default the installer:
 
 Optional:
 - Use a different image/repo: `IMAGE_REPO=youruser/nyxguardmanager`
-- Install a specific version: `APP_TAG=4.0.12`
+- Install a specific version: `APP_TAG=4.0.13`
 
 ### Install Via Docker (Compose)
 
@@ -121,7 +145,7 @@ cat > docker-compose.yml <<'YAML'
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:4.0.12
+    image: nyxmael/nyxguardmanager:4.0.13
     restart: unless-stopped
     ports:
       - "80:80"
@@ -137,6 +161,8 @@ services:
       DB_MYSQL_PASSWORD: "${DB_MYSQL_PASSWORD}"
       DB_MYSQL_NAME: "${DB_MYSQL_NAME:-nyxguard}"
       SKIP_CERTBOT_OWNERSHIP: "true"
+      # Maximum persistent-cookie lifetime supported by current Chromium browsers.
+      NYXGUARD_ACCESS_SESSION_TTL_SEC: "34560000"
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost:3000/"]
       interval: 10s
@@ -239,7 +265,7 @@ curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upd
 
 Optional environment variables:
 - Pull from a different repo: `IMAGE_REPO=youruser/nyxguardmanager`
-- Force a specific version: `FORCE_TAG=4.0.12`
+- Force a specific version: `FORCE_TAG=4.0.13`
 
 Example:
 
@@ -254,7 +280,7 @@ If you installed with a manual compose file:
 
 ```bash
 cd /opt/nyxguardmanager
-docker pull nyxmael/nyxguardmanager:4.0.12
+docker pull nyxmael/nyxguardmanager:4.0.13
 # update image tag in docker-compose.yml if needed, then:
 docker compose --env-file .env up -d
 ```

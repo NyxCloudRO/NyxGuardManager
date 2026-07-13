@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [4.0.13] - 2026-07-13
+
+### Added
+- Published the official `nyxmael/nyxguardmanager:4.0.13` Docker image and updated `latest` to the identical release digest.
+- Added an explicit `Expires` attribute alongside `Max-Age` for protected-application session compatibility.
+
+### Changed
+- Updated application, container, installer, Compose, and compiled frontend version metadata to `4.0.13`.
+- Updated the release image identity to `release-4.0.13` with a `2026-07-13` build date and OCI version label.
+- Set the documented protected-application session lifetime to 400 days, the maximum persistent-cookie lifetime supported by current Chromium browsers.
+- Kept the legacy `nyxguard_access` cookie valid during migration to avoid invalidating existing sessions unnecessarily.
+
+### Fixed
+- Fixed successful protected-application logins that could redirect back to the NyxGuard login page after several minutes because subsequent requests arrived without the session cookie.
+- Hardened protected-application sessions with a host-only `__Host-nyxguard_access` cookie on HTTPS.
+- Added explicit persistent-cookie expiry and cross-site/WebSocket-safe HTTPS cookie attributes.
+- Ensured plain HTTP development environments retain the compatible legacy cookie name and `SameSite=Lax` behavior.
+
+### Security
+- Cleared database password values from the published image metadata; database credentials are supplied only at container runtime.
+- Bound hardened access cookies to the protected hostname by using the browser-enforced `__Host-` prefix with `Secure` and `Path=/`.
+
 ## [4.0.12] - 2026-05-16
 
 ### Added
