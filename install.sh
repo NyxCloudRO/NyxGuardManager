@@ -220,7 +220,7 @@ services:
       retries: 5
       start_period: 60s
     group_add:
-      - "\${DOCKER_SOCK_GID:-988}"
+      - "${DOCKER_SOCK_GID:-988}"
     volumes:
       - nyxguard_data:/data
       - nyxguard_letsencrypt:/etc/letsencrypt
