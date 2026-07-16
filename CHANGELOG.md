@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [4.0.14] - 2026-07-15
+
+### Major improvement — Multi-site WireGuard VPN Client
+
+- Introduced multi-site VPN management directly in NyxGuard, with independent WireGuard profiles, interfaces, routes, connection state, transfer statistics, handshakes, and connectivity tests for every remote site.
+- Promoted VPN Client to a dedicated main-sidebar workspace instead of mixing tunnel operations into Settings.
+- Added clear per-site workflows for upload, validation, naming, renaming, connect, disconnect, removal, and private-address testing.
+- Added an always-visible connection action for disconnected sites, including a distinct Connect VPN control in the site details and a quick-connect action in the site list.
+- Refined Add VPN site into a guided validation workflow with optional naming, immediate file-selection feedback, actionable errors, and clearly active controls.
+- Added route and tunnel-address overlap protection so traffic cannot be sent through the wrong remote site.
+- Added preflight protection against remote CIDRs that overlap a network already attached to NyxGuard.
+- Added safe handling for full-tunnel profiles, DNS directives, and executable WireGuard hooks while preserving NyxGuard's host networking and resolver configuration.
+
+### Security architecture
+
+- Privileged tunnel operations run in a dedicated loopback-only VPN agent with narrowly scoped `NET_ADMIN` and TUN access; the NyxGuard Manager web application remains unprivileged.
+- WireGuard private keys remain in a restricted persistent volume and are never returned by the Manager API or displayed in the interface.
+- Each site receives an isolated interface and explicit destination routes, with validation before a profile can be stored or activated.
+
+### Operations and documentation
+
+- Published matching Manager and VPN agent images, Compose definitions, installer support, reboot persistence, and in-place upgrade support for version 4.0.14.
+- Added host capability detection so installations remain operational when optional VPN prerequisites are not yet available.
+- Added a comprehensive networking guide for remote-site planning, routing, firewalls, NAT, diagnostics, application publishing, and multi-site deployments.
+- Expanded release documentation and in-app guidance for production planning and day-two operations.
+
 ## [4.0.13] - 2026-07-13
 
 ### Added

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<script>
+			(function() {
+				var ver = localStorage.getItem("app_theme_ver");
+				if (ver !== "4.0.13") {
+					localStorage.setItem("app_theme", "premium-nyx");
+					localStorage.setItem("app_theme_ver", "4.0.13");
+				}
+				var theme = localStorage.getItem("app_theme") || "premium-nyx";
+				document.documentElement.setAttribute("data-app-theme", theme);
+				document.documentElement.setAttribute("data-bs-theme", "dark");
+			})();
+		</script>
+		<title>NyxGuard Manager</title>
+		<meta name="description" content="NyxGuard Manager" />
+		<link rel="preload" href="/images/favicon/favicon.svg?v=4.0.13-icon3" as="image" type="image/svg+xml" fetchPriority="high">
+		<link rel="icon" type="image/svg+xml" href="/images/favicon/favicon.svg?v=4.0.13-icon3" />
+		<link rel="icon" sizes="any" href="/images/favicon/favicon.svg?v=4.0.13-icon3" />
+		<link
+			rel="apple-touch-icon"
+			sizes="180x180"
+			href="/images/favicon/apple-touch-icon.png?v=4.0.13-icon3" />
+		<link rel="manifest" href="/images/favicon/site.webmanifest?v=4.0.13-icon3" />
+		<link
+			rel="mask-icon"
+			href="/images/favicon/safari-pinned-tab.svg?v=4.0.13-icon3"
+			color="#5bbad5" />
+		<link rel="shortcut icon" href="/images/favicon/favicon.svg?v=4.0.13-icon3" />
+		<meta name="msapplication-TileColor" content="#4a4a4a" />
+		<meta
+			name="msapplication-config"
+			content="/images/favicon/browserconfig.xml?v=4.0.13-icon3" />
+		<meta name="theme-color" content="#ffffff" />
+		<script src="/assets/boot-hydration-4010.js?v=20260501-shell"></script>
+		<script src="/assets/lan-access-block-4011.js?v=20260504-lan-block1"></script>
+		<script type="module" crossorigin src="/assets/index-CTHAIRmi-409dev-4012certfix4.js"></script>
+		<link rel="stylesheet" crossorigin href="/assets/index-j7fgCarU.css">
+	<link rel="stylesheet" crossorigin href="/assets/settings-text-background-fix.css?v=20260508-settings-text-bg">
+	<link rel="stylesheet" crossorigin href="/assets/local-dev-gradient-unifier-4012.css?v=20260515-gradient-unifier">
+	<link rel="stylesheet" crossorigin href="/assets/settings-text-background-final.css?v=20260516-settings-text-bg-final">
+	<link rel="stylesheet" crossorigin href="/assets/dashboard-corner-unifier.css?v=20260516-dashboard-corners">
+	<link rel="stylesheet" crossorigin href="/assets/theme-badge-color-unifier.css?v=20260516-theme-badges">
+	<link rel="stylesheet" crossorigin href="/assets/globalgate-spacing-unifier.css?v=20260516-globalgate-spacing">
+	<link rel="stylesheet" crossorigin href="/assets/event-center-button-unifier.css?v=20260516-event-buttons">
+	<link rel="stylesheet" crossorigin href="/assets/action-menu-button-unifier.css?v=20260516-action-menu-buttons">
+	<link rel="stylesheet" crossorigin href="/assets/vpn-client-4014.css?v=20260716-vpn18">
+		<script defer src="/assets/local-dev-fixes-409dev.js?v=20260502-globalgate-direction4"></script>
+		<script defer src="/assets/vpn-client-4014.js?v=20260716-vpn18"></script>
+		<script defer src="/assets/notification-visibility-4010.js?v=20260501-4010-fix3"></script>
+		<script defer src="/assets/update-manager-visibility-4010.js?v=20260501-update-fix1"></script>
+	</head>
+	<body>
+		<noscript>You need to enable JavaScript to run this app.</noscript>
+		<div id="root"></div>
+		<script>
+			if (typeof global === "undefined") {
+				var global = window;
+			}
+		</script>
+	</body>
+</html>

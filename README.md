@@ -4,6 +4,10 @@
 
 Operator-grade reverse proxy manager for self-hosted infrastructure. NyxGuard Manager combines proxy hosting (HTTP/TCP/UDP) and certificate automation with an integrated security layer (NyxGuard): WAF-style controls, SQL Shield, bot defence, DDoS protection, auth-bypass hardening, IP/Geo intelligence, attack visibility, and real-time traffic analytics, all running locally on your server with Docker.
 
+Current release: **4.0.14**. See the [VPN Client networking guide](docs/VPN_CLIENT.md) for the new multi-site WireGuard feature.
+
+Release details and verified image digests: [NyxGuard Manager 4.0.14 release notes](docs/releases/4.0.14.md).
+
 ## Changelog
 <a href="CHANGELOG.md">
   <img src="assets/view-changelog.svg" alt="View Changelog" height="48" />
@@ -40,6 +44,17 @@ Operator-grade reverse proxy manager for self-hosted infrastructure. NyxGuard Ma
 - Built-in Update Manager (check/download/apply workflow, changelog, What's New acknowledgements)
 - SSO (OIDC/Auth provider flow) and local-account mapping controls
 - LAN Access controls with ARP-assisted host discovery and IP/MAC rule management
+
+### Multi-site WireGuard VPN Client
+- Connect NyxGuard to multiple independent remote sites without exposing their applications publicly
+- Upload and validate standard WireGuard client profiles from the dedicated **VPN Client** sidebar workspace
+- Separate interface, routes, lifecycle controls, handshake, transfer counters, and ping test for every site
+- Prominent Connect VPN controls in both the selected-site workspace and every disconnected site card
+- Automatic reconnect after the first successful connection
+- Route and tunnel-address overlap protection so traffic cannot enter the wrong VPN
+- Local-network collision protection before a profile is stored or connected
+- Privileged networking isolated in the dedicated `nyxguard-vpn-agent` container
+- Full setup, routing, firewall, and troubleshooting details in [docs/VPN_CLIENT.md](docs/VPN_CLIENT.md)
 
 ### GeoIP Country (Optional)
 NyxGuard can show the **country code** for each IP (RO/FR/GB/etc). For accurate results you need a local GeoIP database.
@@ -90,20 +105,18 @@ Why this method is recommended:
 Then run the installer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | sudo bash
 ```
-
-> Run as root or prefix with `sudo bash` if you are a non-root user.
 
 By default the installer:
 - detects the latest published image tag from Docker Hub
-- pulls `nyxmael/nyxguardmanager:<latest>`
+- pulls the matching manager and VPN agent images
 - creates the local Docker Compose stack in `/opt/nyxguardmanager`
 - starts the stack and enables reboot persistence via systemd
 
 Optional:
 - Use a different image/repo: `IMAGE_REPO=youruser/nyxguardmanager`
-- Install a specific version: `APP_TAG=4.0.13`
+- Install a specific version: `APP_TAG=4.0.14`
 
 ### Install Via Docker (Compose)
 
@@ -121,7 +134,7 @@ cat > docker-compose.yml <<'YAML'
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:4.0.13
+    image: nyxmael/nyxguardmanager:4.0.14
     restart: unless-stopped
     ports:
       - "80:80"
@@ -137,6 +150,8 @@ services:
       DB_MYSQL_PASSWORD: "${DB_MYSQL_PASSWORD}"
       DB_MYSQL_NAME: "${DB_MYSQL_NAME:-nyxguard}"
       SKIP_CERTBOT_OWNERSHIP: "true"
+      NYXGUARD_VPN_AGENT_URL: "http://127.0.0.1:3198"
+      NYXGUARD_VPN_AGENT_TOKEN_PATH: "/run/nyxguard-vpn-auth/token"
       # Maximum persistent-cookie lifetime supported by current Chromium browsers.
       NYXGUARD_ACCESS_SESSION_TTL_SEC: "34560000"
     healthcheck:
@@ -151,8 +166,28 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/localtime:/etc/localtime:ro
       - /proc/1/net/arp:/host/proc/net/arp:ro
+      - nyxguard_vpn_auth:/run/nyxguard-vpn-auth:ro
     depends_on:
       - db
+
+  vpn-client-agent:
+    container_name: nyxguard-vpn-agent
+    image: nyxmael/nyxguardmanager-vpn-agent:4.0.14
+    restart: unless-stopped
+    network_mode: "service:nyxguard-manager"
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      NYXGUARD_BACKEND_UID: "${PUID:-1000}"
+    volumes:
+      - nyxguard_vpn:/var/lib/nyxguard-vpn
+      - nyxguard_vpn_auth:/run/nyxguard-vpn-auth
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      nyxguard-manager:
+        condition: service_healthy
 
   db:
     container_name: nyxguard-db
@@ -175,6 +210,10 @@ volumes:
     name: nyxguard_letsencrypt
   nyxguard_db:
     name: nyxguard_db
+  nyxguard_vpn:
+    name: nyxguard_vpn
+  nyxguard_vpn_auth:
+    name: nyxguard_vpn_auth
 YAML
 ```
 
@@ -241,24 +280,47 @@ curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upd
 
 Optional environment variables:
 - Pull from a different repo: `IMAGE_REPO=youruser/nyxguardmanager`
-- Force a specific version: `FORCE_TAG=4.0.13`
+- Pull the VPN agent from a different repo: `VPN_AGENT_REPO=youruser/nyxguardmanager-vpn-agent`
+- Force a specific version: `FORCE_TAG=4.0.14`
+- Run non-interactively: `NYXGUARD_AUTO_YES=1`
+- Require VPN support instead of continuing without it when TUN is missing: `NYXGUARD_REQUIRE_VPN=1`
 
 Example:
 
 ```bash
-IMAGE_REPO=nyxmael/nyxguardmanager \
-  curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh \
+  | sudo env FORCE_TAG=4.0.14 NYXGUARD_AUTO_YES=1 bash
 ```
+
+The 4.0.14 updater installs the isolated VPN agent Compose overlay and its reboot-persistent systemd override when the host provides `/dev/net/tun`. Running it again repairs a missing VPN agent even when the manager is already on 4.0.14. If TUN is unavailable, the updater keeps the manager and database running, removes any stale VPN startup override, and prints host-specific remediation instead of failing the whole deployment.
+
+### Proxmox LXC and `/dev/net/tun`
+
+WireGuard needs the host kernel TUN device. A restricted LXC container cannot create it with `mknod` or load the Proxmox kernel module itself. On the **Proxmox host**, load TUN and add these entries to `/etc/pve/lxc/<CTID>.conf`:
+
+```text
+lxc.cgroup2.devices.allow: c 10:200 rwm
+lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
+```
+
+Then restart that LXC and verify inside it:
+
+```bash
+test -c /dev/net/tun && echo "TUN ready"
+```
+
+Run the general updater again to install and persist the VPN agent. Regular VM and bare-metal installations are prepared automatically when their kernel exposes the TUN module.
 
 ### Update Via Docker Compose (Manual Installs)
 
-If you installed with a manual compose file:
+If you installed with a manual Compose file, merge the 4.0.14 services and volumes from the repository's [`docker-compose.yml`](docker-compose.yml). Pulling only the manager image does not enable VPN Client because `NET_ADMIN` intentionally belongs only to the separate agent.
 
 ```bash
 cd /opt/nyxguardmanager
-docker pull nyxmael/nyxguardmanager:4.0.13
-# update image tag in docker-compose.yml if needed, then:
-docker compose --env-file .env up -d
+docker pull nyxmael/nyxguardmanager:4.0.14
+docker pull nyxmael/nyxguardmanager-vpn-agent:4.0.14
+docker compose --env-file .env pull
+docker compose --env-file .env up -d --remove-orphans
 ```
 
 ### Notes
@@ -274,7 +336,10 @@ curl -kI https://127.0.0.1:8443/
 curl -ksS https://127.0.0.1:8443/api/ | jq
 docker ps
 docker logs --tail=100 nyxguard-manager
+docker logs --tail=100 nyxguard-vpn-agent
 ```
+
+Expected containers for a VPN-capable 4.0.14 host are `nyxguard-manager`, `nyxguard-vpn-agent`, and `nyxguard-db`. Without host TUN access, `nyxguard-manager` and `nyxguard-db` remain healthy while VPN Client reports unavailable.
 
 ## Start On Boot (systemd)
 

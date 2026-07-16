@@ -6,8 +6,10 @@ set -euo pipefail
 
 INSTALL_DIR="${INSTALL_DIR:-/opt/nyxguardmanager}"
 IMAGE_REPO="${IMAGE_REPO:-nyxmael/nyxguardmanager}"
-APP_TAG="${APP_TAG:-}" # Optional override (example: 4.0.13). If empty, auto-detect latest.
+VPN_AGENT_REPO="${VPN_AGENT_REPO:-nyxmael/nyxguardmanager-vpn-agent}"
+APP_TAG="${APP_TAG:-}" # Optional override (example: 4.0.14). If empty, auto-detect latest.
 NYXGUARD_PROMETHEUS_SCRAPER_IP="${NYXGUARD_PROMETHEUS_SCRAPER_IP:-}"
+REQUIRE_VPN="${NYXGUARD_REQUIRE_VPN:-0}" # Set to 1 to abort when /dev/net/tun is unavailable.
 
 need_root() {
   if [[ "${EUID}" -ne 0 ]]; then
@@ -115,6 +117,56 @@ normalize_semver() {
   echo "${t#v}"
 }
 
+version_at_least() {
+  local version minimum
+  version="$(normalize_semver "$1")"
+  minimum="$(normalize_semver "$2")"
+  [[ "$(printf '%s\n%s\n' "${version}" "${minimum}" | sort -V | tail -n1)" == "${version}" ]]
+}
+
+tun_is_usable() {
+  [[ -c /dev/net/tun ]] && (exec 9<>/dev/net/tun) 2>/dev/null
+}
+
+prepare_tun_device() {
+  if tun_is_usable; then
+    return 0
+  fi
+
+  if have_cmd modprobe; then
+    modprobe tun >/dev/null 2>&1 || true
+  fi
+
+  if [[ ! -c /dev/net/tun && -e /sys/class/misc/tun/dev ]]; then
+    mkdir -p /dev/net
+    mknod /dev/net/tun c 10 200 >/dev/null 2>&1 || true
+    chmod 666 /dev/net/tun >/dev/null 2>&1 || true
+  fi
+
+  tun_is_usable
+}
+
+print_tun_warning() {
+  local virt="unknown"
+  if have_cmd systemd-detect-virt; then
+    virt="$(systemd-detect-virt 2>/dev/null || true)"
+  fi
+
+  echo ""
+  echo "WARNING: /dev/net/tun is unavailable. NyxGuard Manager will be installed,"
+  echo "but WireGuard VPN Client will remain disabled until the host exposes TUN."
+  if [[ "${virt}" == "lxc" ]]; then
+    echo "Detected Proxmox/LXC. Configure the Proxmox HOST with:"
+    echo "  modprobe tun"
+    echo "  lxc.cgroup2.devices.allow: c 10:200 rwm"
+    echo "  lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file"
+    echo "Restart the LXC container, then run update.sh to enable VPN Client."
+  else
+    echo "Load TUN on the host (modprobe tun), verify /dev/net/tun, then run update.sh."
+  fi
+  echo ""
+}
+
 dockerhub_latest_tag() {
   local repo="$1"
 
@@ -192,6 +244,7 @@ ENV
 
 write_compose_file() {
   local image_ref="$1"
+  local vpn_agent_ref="$2"
 
   cat >"${INSTALL_DIR}/docker-compose.yml" <<'YAML'
 services:
@@ -213,6 +266,8 @@ services:
       DB_MYSQL_PASSWORD: "${DB_MYSQL_PASSWORD}"
       DB_MYSQL_NAME: "${DB_MYSQL_NAME:-nyxguard}"
       SKIP_CERTBOT_OWNERSHIP: "true"
+      NYXGUARD_VPN_AGENT_URL: "http://127.0.0.1:3198"
+      NYXGUARD_VPN_AGENT_TOKEN_PATH: "/run/nyxguard-vpn-auth/token"
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost:3000/"]
       interval: 10s
@@ -227,8 +282,34 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/localtime:/etc/localtime:ro
       - /proc/1/net/arp:/host/proc/net/arp:ro
+      - nyxguard_vpn_auth:/run/nyxguard-vpn-auth:ro
     depends_on:
       - db
+
+  vpn-client-agent:
+    container_name: nyxguard-vpn-agent
+    image: __VPN_AGENT_IMAGE_REF__
+    restart: unless-stopped
+    network_mode: "service:nyxguard-manager"
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      NYXGUARD_BACKEND_UID: "${PUID:-1000}"
+    volumes:
+      - nyxguard_vpn:/var/lib/nyxguard-vpn
+      - nyxguard_vpn_auth:/run/nyxguard-vpn-auth
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      nyxguard-manager:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "const fs=require('fs');fetch('http://127.0.0.1:3198/status',{headers:{'X-NyxGuard-VPN-Token':fs.readFileSync('/run/nyxguard-vpn-auth/token','utf8').trim()}}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   db:
     container_name: nyxguard-db
@@ -251,9 +332,14 @@ volumes:
     name: nyxguard_letsencrypt
   nyxguard_db:
     name: nyxguard_db
+  nyxguard_vpn:
+    name: nyxguard_vpn
+  nyxguard_vpn_auth:
+    name: nyxguard_vpn_auth
 YAML
 
   sed -i "s|__IMAGE_REF__|${image_ref}|g" "${INSTALL_DIR}/docker-compose.yml"
+  sed -i "s|__VPN_AGENT_IMAGE_REF__|${vpn_agent_ref}|g" "${INSTALL_DIR}/docker-compose.yml"
 }
 
 write_version_file() {
@@ -262,6 +348,12 @@ write_version_file() {
 }
 
 install_systemd_unit() {
+  local vpn_enabled="$1"
+  local services=""
+  if [[ "${vpn_enabled}" != "1" ]]; then
+    services=" nyxguard-manager db"
+  fi
+
   cat >/etc/systemd/system/nyxguardmanager.service <<UNIT
 [Unit]
 Description=NyxGuard Manager (Docker Compose)
@@ -273,7 +365,7 @@ Wants=network-online.target
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=${INSTALL_DIR}
-ExecStart=/usr/bin/docker compose --env-file ${INSTALL_DIR}/.env -f ${INSTALL_DIR}/docker-compose.yml up -d --remove-orphans
+ExecStart=/usr/bin/docker compose --env-file ${INSTALL_DIR}/.env -f ${INSTALL_DIR}/docker-compose.yml up -d --remove-orphans${services}
 ExecStop=/usr/bin/docker compose --env-file ${INSTALL_DIR}/.env -f ${INSTALL_DIR}/docker-compose.yml down
 TimeoutStartSec=0
 
@@ -293,7 +385,7 @@ main() {
   ensure_install_dir
   ensure_env
 
-  local selected_tag image_ref
+  local selected_tag image_ref vpn_agent_ref vpn_enabled
   if [[ -n "${APP_TAG}" ]]; then
     selected_tag="${APP_TAG}"
   else
@@ -302,18 +394,38 @@ main() {
   fi
 
   image_ref="${IMAGE_REPO}:${selected_tag}"
+  vpn_agent_ref="${VPN_AGENT_REPO}:${selected_tag}"
+  vpn_enabled=0
+  if is_semver "${selected_tag}" && version_at_least "${selected_tag}" "4.0.14"; then
+    if prepare_tun_device; then
+      vpn_enabled=1
+    elif [[ "${REQUIRE_VPN}" == "1" ]]; then
+      print_tun_warning
+      echo "ERROR: VPN Client is required but this host cannot provide /dev/net/tun." >&2
+      exit 1
+    else
+      print_tun_warning
+    fi
+  fi
   echo "Using image: ${image_ref}"
 
-  write_compose_file "${image_ref}"
+  write_compose_file "${image_ref}" "${vpn_agent_ref}"
   write_version_file "${selected_tag}"
 
-  echo "Pulling image..."
+  echo "Pulling images..."
   docker pull "${image_ref}"
+  if [[ "${vpn_enabled}" == "1" ]]; then
+    docker pull "${vpn_agent_ref}"
+  fi
 
   echo "Starting stack..."
-  docker compose --env-file "${INSTALL_DIR}/.env" -f "${INSTALL_DIR}/docker-compose.yml" up -d
+  if [[ "${vpn_enabled}" == "1" ]]; then
+    docker compose --env-file "${INSTALL_DIR}/.env" -f "${INSTALL_DIR}/docker-compose.yml" up -d
+  else
+    docker compose --env-file "${INSTALL_DIR}/.env" -f "${INSTALL_DIR}/docker-compose.yml" up -d --remove-orphans nyxguard-manager db
+  fi
 
-  install_systemd_unit
+  install_systemd_unit "${vpn_enabled}"
 
   local host_ip
   host_ip="$(hostname -I 2>/dev/null | awk '{print $1}')"
