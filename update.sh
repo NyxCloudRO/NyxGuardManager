@@ -288,6 +288,41 @@ UNIT
   systemctl daemon-reload
 }
 
+wait_for_manager_vpn_agent() {
+  local attempt
+  for attempt in {1..20}; do
+    if docker exec nyxguard-manager node -e '
+      const fs = require("fs");
+      const token = fs.readFileSync("/run/nyxguard-vpn-auth/token", "utf8").trim();
+      fetch("http://127.0.0.1:3198/status", { headers: { "X-NyxGuard-VPN-Token": token } })
+        .then((response) => process.exit(response.ok ? 0 : 1))
+        .catch(() => process.exit(1));
+    ' >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "ERROR: VPN agent is not reachable from the NyxGuard Manager network namespace." >&2
+  return 1
+}
+
+start_vpn_stack() {
+  local compose_args=(
+    --env-file "${INSTALL_DIR}/.env"
+    -f "${INSTALL_DIR}/docker-compose.yml"
+    -f "${INSTALL_DIR}/docker-compose.vpn.yml"
+  )
+
+  docker compose "${compose_args[@]}" up -d --remove-orphans
+
+  # network_mode: service:nyxguard-manager binds the agent to the manager's
+  # concrete network namespace. Compose does not automatically recreate the
+  # dependent agent when only the manager image/container changes.
+  docker compose "${compose_args[@]}" up -d --no-deps --force-recreate vpn-client-agent
+  wait_for_manager_vpn_agent
+}
+
 confirm_update() {
   local current_ref="$1"
   local target_ref="$2"
@@ -394,7 +429,7 @@ main() {
         docker pull "${vpn_agent_ref}"
         write_vpn_compose_overlay "${vpn_agent_ref}"
         install_vpn_systemd_override
-        docker compose --env-file "${INSTALL_DIR}/.env" -f "${INSTALL_DIR}/docker-compose.yml" -f "${INSTALL_DIR}/docker-compose.vpn.yml" up -d --remove-orphans
+        start_vpn_stack
         echo "VPN agent stack is installed and running."
       else
         start_manager_without_vpn
@@ -428,7 +463,7 @@ main() {
 
   echo "Applying update (in-place, data preserved)..."
   if [[ "${vpn_enabled}" == "1" ]]; then
-    docker compose --env-file "${INSTALL_DIR}/.env" -f "${INSTALL_DIR}/docker-compose.yml" -f "${INSTALL_DIR}/docker-compose.vpn.yml" up -d --remove-orphans
+    start_vpn_stack
   else
     start_manager_without_vpn
   fi

@@ -26,6 +26,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Operations and documentation
 
 - Published matching Manager and VPN agent images, Compose definitions, installer support, reboot persistence, and in-place upgrade support for version 4.0.14.
+- Fixed in-place upgrades leaving the VPN agent attached to the replaced Manager container's stale network namespace; upgrades now recreate the agent and verify it from the Manager before reporting success.
+- Preserved stored WireGuard profiles and auto-connect markers in the existing `nyxguard_vpn` volume while recreating the VPN agent.
 - Added host capability detection so installations remain operational when optional VPN prerequisites are not yet available.
 - Added a comprehensive networking guide for remote-site planning, routing, firewalls, NAT, diagnostics, application publishing, and multi-site deployments.
 - Expanded release documentation and in-app guidance for production planning and day-two operations.

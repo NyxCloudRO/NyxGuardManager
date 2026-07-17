@@ -377,6 +377,31 @@ UNIT
   systemctl enable --now nyxguardmanager.service
 }
 
+wait_for_manager_vpn_agent() {
+  local attempt
+  for attempt in {1..20}; do
+    if docker exec nyxguard-manager node -e '
+      const fs = require("fs");
+      const token = fs.readFileSync("/run/nyxguard-vpn-auth/token", "utf8").trim();
+      fetch("http://127.0.0.1:3198/status", { headers: { "X-NyxGuard-VPN-Token": token } })
+        .then((response) => process.exit(response.ok ? 0 : 1))
+        .catch(() => process.exit(1));
+    ' >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "ERROR: VPN agent is not reachable from the NyxGuard Manager network namespace." >&2
+  return 1
+}
+
+start_vpn_stack() {
+  docker compose --env-file "${INSTALL_DIR}/.env" -f "${INSTALL_DIR}/docker-compose.yml" up -d
+  docker compose --env-file "${INSTALL_DIR}/.env" -f "${INSTALL_DIR}/docker-compose.yml" up -d --no-deps --force-recreate vpn-client-agent
+  wait_for_manager_vpn_agent
+}
+
 main() {
   need_root
   install_base_packages
@@ -420,7 +445,7 @@ main() {
 
   echo "Starting stack..."
   if [[ "${vpn_enabled}" == "1" ]]; then
-    docker compose --env-file "${INSTALL_DIR}/.env" -f "${INSTALL_DIR}/docker-compose.yml" up -d
+    start_vpn_stack
   else
     docker compose --env-file "${INSTALL_DIR}/.env" -f "${INSTALL_DIR}/docker-compose.yml" up -d --remove-orphans nyxguard-manager db
   fi
