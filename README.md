@@ -4,9 +4,7 @@
 
 Operator-grade reverse proxy manager for self-hosted infrastructure. NyxGuard Manager combines proxy hosting (HTTP/TCP/UDP) and certificate automation with an integrated security layer (NyxGuard): WAF-style controls, SQL Shield, bot defence, DDoS protection, auth-bypass hardening, IP/Geo intelligence, attack visibility, and real-time traffic analytics, all running locally on your server with Docker.
 
-Current release: **4.0.14**. See the [VPN Client networking guide](docs/VPN_CLIENT.md) for the new multi-site WireGuard feature.
-
-Release details and verified image digests: [NyxGuard Manager 4.0.14 release notes](docs/releases/4.0.14.md).
+Current release: **4.0.14**, including the new multi-site WireGuard VPN Client.
 
 ## Changelog
 <a href="CHANGELOG.md">
@@ -47,14 +45,14 @@ Release details and verified image digests: [NyxGuard Manager 4.0.14 release not
 
 ### Multi-site WireGuard VPN Client
 - Connect NyxGuard to multiple independent remote sites without exposing their applications publicly
-- Upload and validate standard WireGuard client profiles from the dedicated **VPN Client** sidebar workspace
+- Upload and validate standard WireGuard client profiles from the **VPN Client** tab beside **LAN Access** in Settings
 - Separate interface, routes, lifecycle controls, handshake, transfer counters, and ping test for every site
 - Prominent Connect VPN controls in both the selected-site workspace and every disconnected site card
 - Automatic reconnect after the first successful connection
 - Route and tunnel-address overlap protection so traffic cannot enter the wrong VPN
 - Local-network collision protection before a profile is stored or connected
 - Privileged networking isolated in the dedicated `nyxguard-vpn-agent` container
-- Full setup, routing, firewall, and troubleshooting details in [docs/VPN_CLIENT.md](docs/VPN_CLIENT.md)
+- Setup, routing, firewall, and troubleshooting guidance is included in the deployment section below
 
 ### GeoIP Country (Optional)
 NyxGuard can show the **country code** for each IP (RO/FR/GB/etc). For accurate results you need a local GeoIP database.
