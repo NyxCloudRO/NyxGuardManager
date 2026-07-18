@@ -4,7 +4,7 @@
 
 Operator-grade reverse proxy manager for self-hosted infrastructure. NyxGuard Manager combines proxy hosting (HTTP/TCP/UDP) and certificate automation with an integrated security layer (NyxGuard): WAF-style controls, SQL Shield, bot defence, DDoS protection, auth-bypass hardening, IP/Geo intelligence, attack visibility, and real-time traffic analytics, all running locally on your server with Docker.
 
-Current release: **4.0.14**, including the new multi-site WireGuard VPN Client.
+Current release: **4.0.15**, including accurate liveness reporting for multi-site WireGuard VPN connections.
 
 ## Changelog
 <a href="CHANGELOG.md">
@@ -114,7 +114,7 @@ By default the installer:
 
 Optional:
 - Use a different image/repo: `IMAGE_REPO=youruser/nyxguardmanager`
-- Install a specific version: `APP_TAG=4.0.14`
+- Install a specific version: `APP_TAG=4.0.15`
 
 ### Install Via Docker (Compose)
 
@@ -132,7 +132,7 @@ cat > docker-compose.yml <<'YAML'
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:4.0.14
+    image: nyxmael/nyxguardmanager:4.0.15
     restart: unless-stopped
     ports:
       - "80:80"
@@ -170,7 +170,7 @@ services:
 
   vpn-client-agent:
     container_name: nyxguard-vpn-agent
-    image: nyxmael/nyxguardmanager-vpn-agent:4.0.14
+    image: nyxmael/nyxguardmanager-vpn-agent:4.0.15
     restart: unless-stopped
     network_mode: "service:nyxguard-manager"
     cap_add:
@@ -279,7 +279,7 @@ curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upd
 Optional environment variables:
 - Pull from a different repo: `IMAGE_REPO=youruser/nyxguardmanager`
 - Pull the VPN agent from a different repo: `VPN_AGENT_REPO=youruser/nyxguardmanager-vpn-agent`
-- Force a specific version: `FORCE_TAG=4.0.14`
+- Force a specific version: `FORCE_TAG=4.0.15`
 - Run non-interactively: `NYXGUARD_AUTO_YES=1`
 - Require VPN support instead of continuing without it when TUN is missing: `NYXGUARD_REQUIRE_VPN=1`
 
@@ -287,10 +287,10 @@ Example:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh \
-  | sudo env FORCE_TAG=4.0.14 NYXGUARD_AUTO_YES=1 bash
+  | sudo env FORCE_TAG=4.0.15 NYXGUARD_AUTO_YES=1 bash
 ```
 
-The 4.0.14 updater installs the isolated VPN agent Compose overlay and its reboot-persistent systemd override when the host provides `/dev/net/tun`. Running it again repairs a missing VPN agent even when the manager is already on 4.0.14. If TUN is unavailable, the updater keeps the manager and database running, removes any stale VPN startup override, and prints host-specific remediation instead of failing the whole deployment.
+The 4.0.15 updater installs the isolated VPN agent Compose overlay and its reboot-persistent systemd override when the host provides `/dev/net/tun`. Running it again repairs a missing VPN agent even when the manager is already on 4.0.15. If TUN is unavailable, the updater keeps the manager and database running, removes any stale VPN startup override, and prints host-specific remediation instead of failing the whole deployment.
 
 ### Proxmox LXC and `/dev/net/tun`
 
@@ -311,12 +311,12 @@ Run the general updater again to install and persist the VPN agent. Regular VM a
 
 ### Update Via Docker Compose (Manual Installs)
 
-If you installed with a manual Compose file, merge the 4.0.14 services and volumes from the repository's [`docker-compose.yml`](docker-compose.yml). Pulling only the manager image does not enable VPN Client because `NET_ADMIN` intentionally belongs only to the separate agent.
+If you installed with a manual Compose file, merge the 4.0.15 services and volumes from the repository's [`docker-compose.yml`](docker-compose.yml). Pulling only the manager image does not enable VPN Client because `NET_ADMIN` intentionally belongs only to the separate agent.
 
 ```bash
 cd /opt/nyxguardmanager
-docker pull nyxmael/nyxguardmanager:4.0.14
-docker pull nyxmael/nyxguardmanager-vpn-agent:4.0.14
+docker pull nyxmael/nyxguardmanager:4.0.15
+docker pull nyxmael/nyxguardmanager-vpn-agent:4.0.15
 docker compose --env-file .env pull
 docker compose --env-file .env up -d --remove-orphans
 ```
@@ -337,7 +337,7 @@ docker logs --tail=100 nyxguard-manager
 docker logs --tail=100 nyxguard-vpn-agent
 ```
 
-Expected containers for a VPN-capable 4.0.14 host are `nyxguard-manager`, `nyxguard-vpn-agent`, and `nyxguard-db`. Without host TUN access, `nyxguard-manager` and `nyxguard-db` remain healthy while VPN Client reports unavailable.
+Expected containers for a VPN-capable 4.0.15 host are `nyxguard-manager`, `nyxguard-vpn-agent`, and `nyxguard-db`. Without host TUN access, `nyxguard-manager` and `nyxguard-db` remain healthy while VPN Client reports unavailable.
 
 ## Start On Boot (systemd)
 

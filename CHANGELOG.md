@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [4.0.15] - 2026-07-18
+
+### Fixed
+
+- Fixed VPN sites remaining marked **Connected** after the remote WireGuard server went offline.
+- Changed VPN status evaluation to require a handshake within the last three minutes. An interface that remains up with an older handshake now reports **Waiting** instead of a false-positive connection.
+
+### Changed
+
+- Published matching `4.0.15` Manager and VPN agent images containing the corrected VPN connection-state behavior.
+- Added regression coverage for recent, stale, missing, and interface-down handshake states.
+
 ## [4.0.14] - 2026-07-15
 
 ### Major improvement — Multi-site WireGuard VPN Client
