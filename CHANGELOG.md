@@ -10,11 +10,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Fixed VPN sites remaining marked **Connected** after the remote WireGuard server went offline.
 - Changed VPN status evaluation to require a handshake within the last three minutes. An interface that remains up with an older handshake now reports **Waiting** instead of a false-positive connection.
+- Fixed **Update Now** silently rejecting a confirmed update because the frontend and backend used different request-field naming conventions.
+- Fixed in-app upgrades trying to start the replacement Manager before the existing container released ports `80`, `443`, and `8443`.
+- Added a Docker-side handover that safely stops the old Manager and VPN agent, starts and health-checks their replacements, and restores the previous pair if startup fails.
+- Fixed the VPN agent remaining attached to the replaced Manager container's network namespace during an in-app update.
+- Fixed the application showing only its background after an update because the main JavaScript module was loaded twice under different URLs.
+- Removed the unintended dark background strip behind the Update Manager title and close button.
+- Added visible frontend error feedback when an update request cannot be started.
 
 ### Changed
 
 - Published matching `4.0.15` Manager and VPN agent images containing the corrected VPN connection-state behavior.
 - Added regression coverage for recent, stale, missing, and interface-down handshake states.
+- Republished the `4.0.15` Manager image with the tested in-app handover and frontend-loading corrections; `4.0.15` and `latest` resolve to digest `sha256:28ad5ca15a1c44bb35377cfb2a96b25ee2803e7c561cf9aec502821d5178e209`.
 
 ## [4.0.14] - 2026-07-15
 

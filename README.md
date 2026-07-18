@@ -4,7 +4,7 @@
 
 Operator-grade reverse proxy manager for self-hosted infrastructure. NyxGuard Manager combines proxy hosting (HTTP/TCP/UDP) and certificate automation with an integrated security layer (NyxGuard): WAF-style controls, SQL Shield, bot defence, DDoS protection, auth-bypass hardening, IP/Geo intelligence, attack visibility, and real-time traffic analytics, all running locally on your server with Docker.
 
-Current release: **4.0.15**, including accurate liveness reporting for multi-site WireGuard VPN connections.
+Current release: **4.0.15**, including accurate multi-site WireGuard liveness reporting and a rollback-safe in-app container update handover.
 
 ## Changelog
 <a href="CHANGELOG.md">
@@ -291,6 +291,8 @@ curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upd
 ```
 
 The 4.0.15 updater installs the isolated VPN agent Compose overlay and its reboot-persistent systemd override when the host provides `/dev/net/tun`. Running it again repairs a missing VPN agent even when the manager is already on 4.0.15. If TUN is unavailable, the updater keeps the manager and database running, removes any stale VPN startup override, and prints host-specific remediation instead of failing the whole deployment.
+
+The built-in Update Manager now performs Manager and VPN-agent replacement through a separate handover helper. It releases host ports before starting the new Manager, reconnects the VPN agent to the replacement network namespace, verifies both services, and restores the previous containers if the handover fails.
 
 ### Proxmox LXC and `/dev/net/tun`
 

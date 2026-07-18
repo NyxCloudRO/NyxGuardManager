@@ -18,7 +18,7 @@ services:
       DB_MYSQL_NAME: "${DB_MYSQL_NAME:-nyxguard}"
       SKIP_CERTBOT_OWNERSHIP: "true"
       NPM_BUILD_VERSION: "4.0.15"
-      NPM_BUILD_COMMIT: "release-4.0.15-vpn-handshake-status"
+      NPM_BUILD_COMMIT: "release-4.0.15-update-manager-r6"
       NPM_BUILD_DATE: "2026-07-18"
       NYXGUARD_VPN_AGENT_URL: "http://127.0.0.1:3198"
       NYXGUARD_VPN_AGENT_TOKEN_PATH: "/run/nyxguard-vpn-auth/token"
