@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [4.0.16] - 2026-07-23
+
+### Fixed
+
+- Prevented overlapping asynchronous attack-monitor polls when a database operation exceeds the one-second polling interval.
+- Kept attack-monitor polling single-flight so a delayed Aria state-row update cannot accumulate lock waiters and exhaust the Knex connection pool.
+- Preserved the existing attack detection, event processing, state tracking, and best-effort error behavior.
+
+### Changed
+
+- Published the Manager image as `4.0.16` and `latest`; both resolve to digest `sha256:641602cd8ee04f8d31b466e95be686fce47d3dd626c1226b9cc87b998da3cba9`.
+- Promoted the unchanged VPN agent to matching `4.0.16` and `latest` tags at digest `sha256:4f4c347e6c18ac316b21ff76a00c1f3eba171645fb1ffe9a91bb07d3b20161c7`.
+- Updated application, container, installer, Compose, and documentation version metadata to `4.0.16`.
+
 ## [4.0.15] - 2026-07-18
 
 ### Fixed

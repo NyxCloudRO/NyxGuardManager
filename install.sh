@@ -7,7 +7,7 @@ set -euo pipefail
 INSTALL_DIR="${INSTALL_DIR:-/opt/nyxguardmanager}"
 IMAGE_REPO="${IMAGE_REPO:-nyxmael/nyxguardmanager}"
 VPN_AGENT_REPO="${VPN_AGENT_REPO:-nyxmael/nyxguardmanager-vpn-agent}"
-APP_TAG="${APP_TAG:-}" # Optional override (example: 4.0.15). If empty, auto-detect latest.
+APP_TAG="${APP_TAG:-}" # Optional override (example: 4.0.16). If empty, auto-detect latest.
 NYXGUARD_PROMETHEUS_SCRAPER_IP="${NYXGUARD_PROMETHEUS_SCRAPER_IP:-}"
 REQUIRE_VPN="${NYXGUARD_REQUIRE_VPN:-0}" # Set to 1 to abort when /dev/net/tun is unavailable.
 
