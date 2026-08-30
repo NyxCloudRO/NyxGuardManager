@@ -69,6 +69,21 @@ aligned with `NYXGUARD MANAGER`, and that no `logo-no-text.svg` reference remain
 in the dialog. The accepted copy, structure, colors, layout, actions, dismissal,
 acknowledgement, migration, security, and accessibility behavior are unchanged.
 
+### Final composition polish
+
+The accepted modal measured 880px wide at the 1920×1080 test target. Its title
+and lead occupied 752px, while the 659px readable copy column remained anchored
+to the left body padding, leaving visibly uneven side whitespace. The final
+composition uses an 820px desktop dialog and centers the title, lead, copy, and
+signature in a shared maximum 620px column while keeping all long-form text
+left-aligned. Desktop maximum height is reduced from 905px in the test viewport
+to 860px. Header, body, paragraph, signature, and footer spacing are tightened
+slightly without changing typography or removing content. Focused browser
+measurements verify balanced content margins within the usable scroll area (the
+only outer-edge difference is the browser's scrollbar rail), clean internal
+scrolling, reachable footer actions, and unchanged mobile edge spacing and
+stacked actions.
+
 ## Combined candidate regressions
 
 - Custom Locations: build-time source and patched-image tests passed for numeric

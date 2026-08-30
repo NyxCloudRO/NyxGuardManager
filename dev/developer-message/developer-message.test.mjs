@@ -44,7 +44,10 @@ if (process.argv.includes("--verify-image")) {
 	assert.match(script, /enforceFocus/);
 	assert.match(script, /event\.key === "Escape"/);
 	assert.match(script, /modal\.closest\("\.nyx-developer-message-overlay"\)/);
-	assert.match(css, /max-height:calc\(100dvh/);
+	assert.match(css, /width:min\(820px,100%\)/);
+	assert.match(css, /max-height:min\(860px,calc\(100dvh/);
+	assert.match(css, /width:min\(100%,620px\)/);
+	assert.match(css, /scrollbar-gutter:stable both-edges/);
 	assert.match(css, /@media \(max-width:600px\)/);
 	assert.match(index, /developer-message\.js/);
 	assert.equal(packageJson.version, "4.0.18");

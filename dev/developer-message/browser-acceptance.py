@@ -86,8 +86,12 @@ def run():
 			"""
 			const dialog = document.querySelector('.nyx-developer-message');
 			const footer = document.querySelector('.nyx-developer-message-footer');
+			const title = document.querySelector('.nyx-developer-message h1');
+			const copy = document.querySelector('.nyx-developer-message-copy');
 			const rect = dialog.getBoundingClientRect();
 			const footerRect = footer.getBoundingClientRect();
+			const titleRect = title.getBoundingClientRect();
+			const copyRect = copy.getBoundingClientRect();
 			return { innerWidth, innerHeight,
 				documentWidth: document.documentElement.scrollWidth,
 				bodyWidth: document.body.scrollWidth,
@@ -95,6 +99,11 @@ def run():
 				footerBottom: footerRect.bottom,
 				modalScrollWidth: dialog.scrollWidth,
 				modalClientWidth: dialog.clientWidth,
+				bodyScrollbarWidth: document.querySelector('.nyx-developer-message-body').offsetWidth - document.querySelector('.nyx-developer-message-body').clientWidth,
+				titleWidth: titleRect.width,
+				copyWidth: copyRect.width,
+				titleBalance: Math.abs((titleRect.left - rect.left) - (rect.right - titleRect.right)),
+				copyBalance: Math.abs((copyRect.left - rect.left) - (rect.right - copyRect.right)),
 				bodyOverflow: getComputedStyle(document.body).overflow };
 			"""
 		)
@@ -104,6 +113,8 @@ def run():
 		assert metrics["bottom"] <= metrics["innerHeight"] + 0.5
 		assert metrics["footerBottom"] <= metrics["innerHeight"] + 0.5
 		assert metrics["modalScrollWidth"] <= metrics["modalClientWidth"] + 1
+		assert metrics["titleBalance"] <= metrics["bodyScrollbarWidth"] + 1
+		assert metrics["copyBalance"] <= metrics["bodyScrollbarWidth"] + 1
 		assert metrics["bodyOverflow"] == "hidden"
 		driver.save_screenshot(f"/tmp/nyx-developer-message-{label}.png")
 		return metrics
