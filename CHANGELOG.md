@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [4.0.18] - 2026-08-30
+
+### Added
+
+- Added an optional Developer Message describing NyxGuard Manager's independent development, local-first philosophy, and free-to-use model.
+- Added per-user server-side acknowledgement when **Support NyxGuard** is chosen; normal dismissal remains limited to the current authenticated session.
+
+### Fixed
+
+- Corrected numeric Custom Location forward-port serialization while preserving strict backend integer validation.
+- Improved generated Custom Location configuration compatibility, including generic host-with-path routing, without changing existing Proxy Hosts.
+
+### Changed
+
+- Improved Threat Activity accuracy and scalability with independent filtered totals and bounded server-side pagination.
+- Added server-side search, filtering, minimum-count selection, and sorting with deterministic secondary ordering for large result sets.
+- Ensured the public updater removes stale Compose build-metadata overrides so upgraded installations report the image's authoritative version.
+- Updated application, container, installer, Compose, and documentation version metadata to `4.0.18`.
+
 ## [4.0.16] - 2026-07-23
 
 ### Fixed

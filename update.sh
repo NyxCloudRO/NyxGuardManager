@@ -129,6 +129,10 @@ update_compose_image_ref() {
         indent = substr($0, RSTART, RLENGTH)
         print indent "image: " img
         done = 1
+      } else if ($1 == "NPM_BUILD_VERSION:" || $1 == "NPM_BUILD_COMMIT:" || $1 == "NPM_BUILD_DATE:") {
+        # Image metadata is authoritative after an update. Repository Compose
+        # examples may contain release-specific overrides from the old image.
+        next
       } else {
         print
       }
