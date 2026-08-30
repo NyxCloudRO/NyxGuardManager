@@ -57,6 +57,18 @@ identity, the existing magenta Support accent, clear title/lead hierarchy,
 readable spacing and line length, clean internal scrolling, reachable actions,
 and no clipped text, buttons, or horizontal overflow.
 
+### Final branding correction
+
+Final human review found that the initial modal referenced the legacy upstream
+`/images/logo-no-text.svg`. The modal now uses
+`/images/favicon/favicon.svg`, the canonical square NyxGuard “N” vector declared
+by the live application's favicon metadata and used by its active loading UI.
+Focused browser acceptance verifies that the modal and application icon URLs
+match, the SVG loads with its square 64×64 viewBox, renders at 34×34, remains
+aligned with `NYXGUARD MANAGER`, and that no `logo-no-text.svg` reference remains
+in the dialog. The accepted copy, structure, colors, layout, actions, dismissal,
+acknowledgement, migration, security, and accessibility behavior are unchanged.
+
 ## Combined candidate regressions
 
 - Custom Locations: build-time source and patched-image tests passed for numeric
@@ -71,10 +83,8 @@ and no clipped text, buttons, or horizontal overflow.
 
 ## DEV identity, health, and data safety
 
-- Candidate source revision:
-  `1bca4415e1de4082929525c3c1fbaa5b45f5c536`.
-- Local image ID:
-  `sha256:122dd21a5cda22077f8fc1604246d47d5fed722c0ce29c0a511ee4bc82c83871`.
+- The exact candidate source revision is injected at build/deployment time and
+  reported by both the runtime health endpoint and OCI revision label.
 - Image version label: `4.0.18-dev-developer-message`.
 - Image revision label and runtime health commit: the exact candidate source
   revision above, not `release-4.0.18`.

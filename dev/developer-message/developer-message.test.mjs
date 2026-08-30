@@ -39,6 +39,8 @@ if (process.argv.includes("--verify-image")) {
 	assert.match(script, /a\.support-nyxguard/);
 	assert.match(script, /rel = "noopener noreferrer"/);
 	assert.match(script, /aria-modal/);
+	assert.match(script, /\/images\/favicon\/favicon\.svg/);
+	assert.doesNotMatch(script, /\/images\/logo-no-text\.svg/);
 	assert.match(script, /enforceFocus/);
 	assert.match(script, /event\.key === "Escape"/);
 	assert.match(script, /modal\.closest\("\.nyx-developer-message-overlay"\)/);

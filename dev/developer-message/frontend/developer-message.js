@@ -205,7 +205,7 @@
 		var brand = document.createElement("div");
 		brand.className = "nyx-developer-message-brand";
 		var mark = document.createElement("img");
-		mark.src = "/images/logo-no-text.svg";
+		mark.src = "/images/favicon/favicon.svg";
 		mark.alt = "";
 		mark.width = 34;
 		mark.height = 34;

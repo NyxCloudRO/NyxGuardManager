@@ -112,6 +112,21 @@ def run():
 		driver.get(APP_URL)
 		login(fixture["first"])
 		dialog = driver.find_element(By.CSS_SELECTOR, ".nyx-developer-message")
+		brand_logo = dialog.find_element(By.CSS_SELECTOR, ".nyx-developer-message-brand img")
+		canonical_logo = driver.find_element(By.CSS_SELECTOR, 'link[rel="icon"][type="image/svg+xml"]')
+		assert brand_logo.get_attribute("src").split("?", 1)[0] == canonical_logo.get_attribute("href").split("?", 1)[0]
+		logo_metrics = driver.execute_script(
+			"return {complete: arguments[0].complete, naturalWidth: arguments[0].naturalWidth, "
+			"naturalHeight: arguments[0].naturalHeight, width: arguments[0].getBoundingClientRect().width, "
+			"height: arguments[0].getBoundingClientRect().height};",
+			brand_logo,
+		)
+		assert logo_metrics["complete"] is True
+		assert logo_metrics["naturalWidth"] > 0
+		assert logo_metrics["naturalWidth"] == logo_metrics["naturalHeight"]
+		assert logo_metrics["width"] == 34 and logo_metrics["height"] == 34
+		assert not dialog.find_elements(By.CSS_SELECTOR, 'img[src*="logo-no-text.svg"]')
+		results["canonical_branding"] = logo_metrics
 		for approved_text in (
 			"A note from the developer",
 			"Built independently. Security that stays in your hands.",
