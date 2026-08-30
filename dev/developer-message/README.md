@@ -9,7 +9,9 @@ digest-pinned public 4.0.16 Manager image and produces only the local DEV image
 
 - `Continue`, close, backdrop click, and Escape dismiss only for the current
   authenticated browser session. A refresh in that session stays dismissed.
-  Full logout clears the session guard, so the next login shows the message.
+  Entering NyxGuard's unauthenticated state clears the session guard, including
+  when logout is immediately followed by a page reload, so every new login shows
+  the message again until Support is chosen.
 - `Support NyxGuard` uses the existing sidebar support link, opens it with the
   established new-tab/no-opener behavior, and then persists a timestamp.
 - The timestamp is per user. It means only that the support destination was
@@ -55,6 +57,11 @@ python3 dev/developer-message/browser-acceptance.py
 
 The acceptance fixture creates uniquely named temporary DEV users for browser
 acceptance and deletes only those exact fixture users afterward.
+
+Normal dismissal lasts only for the current authenticated login session. The
+Developer Message is shown again on every new login until the user explicitly
+chooses Support NyxGuard. Support acknowledgement is persisted server-side per
+user.
 
 ## Acceptance record
 

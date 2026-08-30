@@ -53,8 +53,13 @@ try {
 		const first = await createUser("A", password);
 		const second = await createUser("B", password);
 		console.log(JSON.stringify({ first, second }));
+	} else if (process.argv.includes("--status")) {
+		const id = Number.parseInt(process.argv[process.argv.indexOf("--status") + 1], 10);
+		const user = await userModel.query().select("id", "email", "developer_message_acknowledged_on").findById(id);
+		if (!user || !user.email.startsWith(prefix)) throw new Error("Fixture user not found");
+		console.log(JSON.stringify({ id: user.id, acknowledged: Boolean(user.developer_message_acknowledged_on) }));
 	} else {
-		throw new Error("Use --create or --cleanup");
+		throw new Error("Use --create, --status <id>, or --cleanup");
 	}
 } finally {
 	await userModel.knex().destroy();

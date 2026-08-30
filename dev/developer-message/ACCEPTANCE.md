@@ -9,8 +9,9 @@ candidate. This is an internal acceptance record, not a release marker.
   JWT from NyxGuard's existing authentication store, and performs one
   acknowledgement check per token.
 - `Continue`, close, backdrop, and Escape write only the per-user
-  `sessionStorage` guard. Refresh stays dismissed; logout clears the guard; a
-  later login shows the message again.
+  `sessionStorage` guard. Refresh stays dismissed. Whenever the frontend enters
+  NyxGuard's unauthenticated state it clears temporary dismissal once, including
+  on a freshly loaded login page, so a later login shows the message again.
 - `Support NyxGuard` reuses the existing sidebar's canonical HTTPS destination,
   `https://buymeacoffee.com/nyxmael`, with `_blank` and
   `noopener noreferrer`, then records acknowledgement. No donation verification,
@@ -42,14 +43,19 @@ VPN-agent recreation:
   background content, and supported focus restoration.
 - Refresh produced neither repeated mounting nor a repeated acknowledgement
   request loop.
+- An immediate authentication removal plus hard reload reproduced the prior
+  same-tab failure before the fix. The committed matrix now proves Continue,
+  X, Escape, and another Continue across four consecutive logins; hard-reload
+  logout; same-session refresh and navigation suppression; two-way temporary
+  user isolation; and server-side acknowledgement isolation.
 - Chromium recorded zero severe console errors.
 
 Viewport measurements:
 
 | Target | Rendered viewport | Dialog horizontal bounds | Dialog/footer bottom | Document/modal overflow | Background |
 | --- | --- | --- | --- | --- | --- |
-| 1920×1080 desktop | 1920×937 | 520–1400 | 921 / 920 | 1920 / 878=878 | locked |
-| 1366×768 constrained | 1366×625 | 243–1123 | 609 / 608 | 1366 / 878=878 | locked |
+| 1920×1080 desktop | 1920×937 | 550–1370 | 898.5 / 897.5 | 1920 / 818=818 | locked |
+| 1366×768 constrained | 1366×625 | 273–1093 | 605 / 604 | 1366 / 818=818 | locked |
 | 390×844 mobile | 390×701 | 8–382 | 693 / 692 | 390 / 372=372 | locked |
 
 Read-only inspection of the captured renders confirmed NyxGuard's navy/cyan

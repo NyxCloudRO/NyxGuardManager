@@ -36,6 +36,9 @@ if (process.argv.includes("--verify-image")) {
 	assert.match(migration, /developer_message_acknowledged_on/);
 	assert.match(migration, /nullable\(\)\.defaultTo\(null\)/);
 	assert.match(script, /sessionStorage/);
+	assert.match(script, /loggedOutCleanupDone/);
+	assert.match(script, /if \(!loggedOutCleanupDone\)/);
+	assert.doesNotMatch(script, /if \(currentToken\) clearSessionDismissals/);
 	assert.match(script, /a\.support-nyxguard/);
 	assert.match(script, /rel = "noopener noreferrer"/);
 	assert.match(script, /aria-modal/);

@@ -74,6 +74,13 @@ def run():
 		wait.until(expected.visibility_of_element_located((By.CSS_SELECTOR, 'input[type="email"]')))
 		time.sleep(0.35)
 
+	def hard_logout_reload():
+		"""Reproduce logout storage removal followed by navigation before the old script can poll."""
+		assert not modal_visible(), "dismiss the message before logout"
+		driver.execute_script("localStorage.removeItem('authentications'); window.location.assign(arguments[0]);", APP_URL)
+		wait.until(expected.visibility_of_element_located((By.CSS_SELECTOR, 'input[type="email"]')))
+		time.sleep(0.35)
+
 	def dismiss(selector):
 		wait.until(expected.element_to_be_clickable((By.CSS_SELECTOR, selector))).click()
 		wait.until(expected.invisibility_of_element_located((By.CSS_SELECTOR, ".nyx-developer-message-overlay")))
@@ -165,20 +172,41 @@ def run():
 		wait.until(expected.presence_of_element_located((By.CSS_SELECTOR, '[aria-label="Open user menu"]')))
 		time.sleep(1.2)
 		assert not modal_visible(), "refresh repeated a session-dismissed message"
-		results["continue_and_refresh"] = "passed"
+		driver.get(APP_URL + "nginx/proxy-hosts")
+		wait.until(expected.presence_of_element_located((By.CSS_SELECTOR, '[aria-label="Open user menu"]')))
+		time.sleep(1)
+		assert not modal_visible(), "navigation repeated a session-dismissed message"
+		results["continue_refresh_and_navigation"] = "passed"
 
-		logout()
+		hard_logout_reload()
 		login(fixture["first"])
+		results["immediate_logout_reload_new_login"] = "passed"
 		dismiss('[aria-label="Close developer message"]')
 		logout()
 		login(fixture["first"])
 		ActionChains(driver).send_keys(Keys.ESCAPE).perform()
 		wait.until(expected.invisibility_of_element_located((By.CSS_SELECTOR, ".nyx-developer-message-overlay")))
 		assert not driver.find_elements(By.CSS_SELECTOR, ".nyx-developer-message-overlay")
-		results["close_and_escape"] = "passed"
+		results["close_and_escape_new_logins"] = "passed"
 
 		logout()
 		login(fixture["first"])
+		overlay = wait.until(expected.visibility_of_element_located((By.CSS_SELECTOR, ".nyx-developer-message-overlay")))
+		driver.execute_script("arguments[0].dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));", overlay)
+		wait.until(expected.invisibility_of_element_located((By.CSS_SELECTOR, ".nyx-developer-message-overlay")))
+		assert not driver.find_elements(By.CSS_SELECTOR, ".nyx-developer-message-overlay")
+		logout()
+		login(fixture["first"])
+		results["backdrop_new_login"] = "passed"
+
+		dismiss(".nyx-developer-message-continue")
+		logout()
+		login(fixture["second"])
+		dismiss(".nyx-developer-message-continue")
+		logout()
+		login(fixture["first"])
+		results["temporary_dismissal_user_isolation"] = "passed"
+
 		original_window = driver.current_window_handle
 		windows_before = set(driver.window_handles)
 		support = wait.until(expected.element_to_be_clickable((By.CSS_SELECTOR, ".nyx-developer-message-support")))
@@ -194,9 +222,18 @@ def run():
 		assert driver.current_url.startswith("https://buymeacoffee.com/nyxmael")
 		driver.close()
 		driver.switch_to.window(original_window)
+		first_status = json.loads(container_node("--status", str(fixture["first"]["id"])).strip().splitlines()[-1])
+		second_status = json.loads(container_node("--status", str(fixture["second"]["id"])).strip().splitlines()[-1])
+		assert first_status["acknowledged"] is True
+		assert second_status["acknowledged"] is False
+		results["server_acknowledgement_user_isolation"] = "passed"
 
 		logout()
 		login(fixture["first"], expect_message=False)
+		driver.refresh()
+		wait.until(expected.presence_of_element_located((By.CSS_SELECTOR, '[aria-label="Open user menu"]')))
+		time.sleep(1.2)
+		assert not modal_visible(), "acknowledged user received the message after refresh"
 		sidebar_support = wait.until(expected.presence_of_element_located((By.CSS_SELECTOR, "a.prefs-action-support")))
 		assert sidebar_support.text.strip() == "Support NyxGuard"
 		assert sidebar_support.get_attribute("href").rstrip("/") == "https://buymeacoffee.com/nyxmael"
@@ -205,7 +242,7 @@ def run():
 		logout()
 		login(fixture["second"])
 		dismiss(".nyx-developer-message-continue")
-		results["second_user_isolation"] = "passed"
+		results["repeated_logins"] = "continue, close, escape, continue all redisplayed"
 
 		severe = [entry for entry in driver.get_log("browser") if entry.get("level") == "SEVERE"]
 		assert not severe, severe

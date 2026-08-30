@@ -8,6 +8,7 @@
 	var currentUserId = 0;
 	var checkInFlight = false;
 	var checkedToken = "";
+	var loggedOutCleanupDone = false;
 	var modal = null;
 	var previouslyFocused = null;
 	var supportUrl = "";
@@ -302,7 +303,10 @@
 	function tick() {
 		var token = readAuthentication();
 		if (!token) {
-			if (currentToken) clearSessionDismissals();
+			if (!loggedOutCleanupDone) {
+				clearSessionDismissals();
+				loggedOutCleanupDone = true;
+			}
 			currentToken = "";
 			currentUserId = 0;
 			checkedToken = "";
@@ -311,6 +315,7 @@
 		}
 		var decoded = decodeToken(token);
 		if (!decoded.id) return;
+		loggedOutCleanupDone = false;
 		currentToken = token;
 		currentUserId = decoded.id;
 		if (wasDismissed(decoded.id)) return;
