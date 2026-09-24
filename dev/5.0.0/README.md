@@ -19,10 +19,13 @@ only the local `nyxguardmanager:5.0.0-dev` tag. No image is pushed.
 
 The trust root is the reviewed platform Ed25519 public key embedded in
 `licensing/verify.mjs`. The verifier requires the exact product
-`nyxguard-manager-professional-support`, capability
-`nyxguard_diagnostics_support`, canonical signed payload, active status,
+`nyxguard-manager-professional-support` with `nyxguard_diagnostics_support`,
+or `nyxcloud-premium-support` with the exact signed coverage pair
+`diagnostics_support` and `nyxguard_diagnostics_support`, canonical signed payload, active status,
 installation and activation binding, revision, validity interval, and signature.
-Unknown products, capabilities, or keys fail closed. The private signing key
+Unknown products, capabilities, or keys fail closed. Claim, activation, refresh,
+recovery, and activation management use the explicit product route selected by
+the verified entitlement. The private signing key
 never enters this application. The browser receives only derived status.
 
 `NYXCLOUD_AUTHORITY_URL` and `NYXCLOUD_SUPPORT_URL` must be approved fixed

@@ -51,8 +51,11 @@ export class SqlStore {
 	}
 	async replaceInstallation(installationId, state, revisionFloor) {
 		const current = await this.read();
-		if (!Number.isSafeInteger(revisionFloor) || revisionFloor < current.revisionFloor) throw new Error("revision_rollback");
-		const changed = await this.knex("nyxcloud_license_state").where({ id: 1 }).andWhere("revision_floor", "<=", revisionFloor).update({
+		if (!Number.isSafeInteger(revisionFloor) || revisionFloor < 1 ||
+			(installationId === current.installationId && revisionFloor < current.revisionFloor)) throw new Error("revision_rollback");
+		const query = this.knex("nyxcloud_license_state").where({ id: 1 });
+		if (installationId === current.installationId) query.andWhere("revision_floor", "<=", revisionFloor);
+		const changed = await query.update({
 			installation_id: installationId, sealed_state: seal(state, this.key), revision_floor: revisionFloor, updated_on: new Date(),
 		});
 		if (changed !== 1) throw new Error("revision_rollback");

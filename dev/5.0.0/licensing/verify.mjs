@@ -2,6 +2,8 @@ import { createHash, createPublicKey, verify as verifySignature } from "node:cry
 
 export const PRODUCT = "nyxguard-manager-professional-support";
 export const CAPABILITY = "nyxguard_diagnostics_support";
+export const PREMIUM_PRODUCT = "nyxcloud-premium-support";
+export const PREMIUM_CAPABILITIES = Object.freeze(["diagnostics_support", CAPABILITY]);
 const MAX_ENVELOPE = 64 * 1024;
 const MAX_PAYLOAD = 32 * 1024;
 const SPKI_ED25519_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
@@ -64,8 +66,12 @@ export function verifyNyxGuardEnvelope(encoded, { trust = BUILTIN_TRUST, install
 	// keys, alternate whitespace, unsorted capabilities and non-canonical numbers.
 	const canonical = Object.fromEntries(PAYLOAD_KEYS.map((name) => [name, payload[name]]));
 	if (JSON.stringify(canonical) !== payloadBytes.toString("utf8")) fail("noncanonical_payload");
-	if (payload.schema_version !== 1 || payload.product !== PRODUCT || payload.status !== "active" ||
-		!Array.isArray(payload.capabilities) || payload.capabilities.length !== 1 || payload.capabilities[0] !== CAPABILITY ||
+	const native = payload.product === PRODUCT && Array.isArray(payload.capabilities) &&
+		payload.capabilities.length === 1 && payload.capabilities[0] === CAPABILITY;
+	const premium = payload.product === PREMIUM_PRODUCT && Array.isArray(payload.capabilities) &&
+		payload.capabilities.length === PREMIUM_CAPABILITIES.length &&
+		payload.capabilities.every((capability, index) => capability === PREMIUM_CAPABILITIES[index]);
+	if (payload.schema_version !== 1 || (!native && !premium) || payload.status !== "active" ||
 		payload.kid !== envelope.kid || !validInteger(payload.revision, 1, Number.MAX_SAFE_INTEGER) ||
 		!validInteger(payload.policy_version, 1, Number.MAX_SAFE_INTEGER) ||
 		!validInteger(payload.offline_grace_seconds, 0, 604800) || !SUBJECT.test(payload.subject) ||

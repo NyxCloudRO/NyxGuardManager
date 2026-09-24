@@ -199,6 +199,13 @@
       details.append(identity);
       inactiveNote(details);
       var actions = element("div", "nyx-support-actions");
+      var product = element("select", "nyx-support-input");
+      product.setAttribute("aria-label", "Support product");
+      var nativeOption = element("option", "", "NyxGuard Manager Professional Support");
+      nativeOption.value = "nyxguard-manager-professional-support";
+      var premiumOption = element("option", "", "NyxCloud Premium Support");
+      premiumOption.value = "nyxcloud-premium-support";
+      product.append(nativeOption, premiumOption);
       var claim = element("input", "nyx-support-input");
       claim.type = "text";
       claim.autocomplete = "off";
@@ -207,10 +214,10 @@
       var claimButton = button("Claim", function () {
         var code = claim.value.trim();
         claim.value = "";
-        performAction(details, "/claim", { claim_code: code });
+        performAction(details, "/claim", { claim_code: code, product: product.value });
       });
-      if (status.state !== "ACTIVE" && status.state !== "OFFLINE_GRACE" && status.state !== "REFRESH_REQUIRED") actions.append(claim, claimButton);
-      if (status.state === "NOT_CONFIGURED") actions.append(button("Activate", function () { performAction(details, "/activate", {}); }));
+      actions.append(product, claim, claimButton);
+      if (status.activation_pending) actions.append(button("Activate", function () { performAction(details, "/activate", {}); }));
       actions.append(button("Refresh status", function () { performAction(details, "/refresh", {}); }, "nyx-support-button-secondary"));
       details.append(actions);
     }, details);

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash, generateKeyPairSync, sign } from "node:crypto";
-import { verifyNyxGuardEnvelope, PRODUCT, CAPABILITY } from "../licensing/verify.mjs";
+import { verifyNyxGuardEnvelope, PRODUCT, CAPABILITY, PREMIUM_PRODUCT, PREMIUM_CAPABILITIES } from "../licensing/verify.mjs";
 import { LicensingClient } from "../licensing/client.mjs";
 import { seal, unseal } from "../licensing/store.mjs";
 
@@ -39,6 +39,21 @@ test("signed NyxGuard envelope and all product/binding denials", () => {
 	assert.throws(() => verifyNyxGuardEnvelope('{"alg":"Ed25519","alg":"Ed25519"}', { trust, now }));
 });
 
+test("Premium requires exact explicit NyxGuard coverage and valid binding", () => {
+	const premium = envelope({ product: PREMIUM_PRODUCT, capabilities: [...PREMIUM_CAPABILITIES] });
+	assert.equal(verify(premium).payload.product, PREMIUM_PRODUCT);
+	for (const changes of [
+		{ capabilities: [CAPABILITY] }, { capabilities: ["diagnostics_support"] },
+		{ capabilities: [...PREMIUM_CAPABILITIES].reverse() }, { capabilities: [...PREMIUM_CAPABILITIES, "unknown"] },
+		{ product: "nyxcloud-other-support", capabilities: [...PREMIUM_CAPABILITIES] },
+		{ status: "revoked" }, { expires_at: format(now - 1000) },
+		{ installation_id: "44444444-4444-4444-8444-444444444444" },
+	]) assert.throws(() => verify(envelope({ product: PREMIUM_PRODUCT, capabilities: [...PREMIUM_CAPABILITIES], ...changes })));
+	const badSignature = structuredClone(premium);
+	badSignature.signature = "A".repeat(86);
+	assert.throws(() => verify(badSignature));
+});
+
 test("vault encryption rejects tampering and plaintext leakage", () => {
 	const key = Buffer.alloc(32, 0x7d);
 	const secret = { refreshCredential: "SYNTHETIC-SECRET-CREDENTIAL" };
@@ -53,11 +68,64 @@ class MemoryStore {
 	constructor() { this.data = { installationId: installation, revisionFloor: 0, state: null }; this.upload = null; }
 	async read() { return structuredClone(this.data); }
 	async write(state, floor) { if (floor < this.data.revisionFloor) throw Error("revision_rollback"); this.data.state = structuredClone(state); this.data.revisionFloor = floor; }
+	async replaceInstallation(id, state, floor) { if (id === this.data.installationId && floor < this.data.revisionFloor) throw Error("revision_rollback"); this.data.installationId = id; this.data.state = structuredClone(state); this.data.revisionFloor = floor; }
 	async pendingUpload() { return this.upload; }
 	async createUpload(key, sha256, bundle) { this.upload = { key, sha256, bundle }; }
 	async completeUpload(key, supportId) { assert.equal(key, this.upload.key); this.supportId = supportId; this.upload = null; }
 }
 const response = (status, data) => new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } });
+
+test("Premium claim, activation, and refresh stay on explicit Premium routes", async () => {
+	const store = new MemoryStore();
+	const signed = envelope({ product: PREMIUM_PRODUCT, capabilities: [...PREMIUM_CAPABILITIES] });
+	const urls = [];
+	const fetchImpl = async (url) => {
+		urls.push(url);
+		if (url.endsWith("/claims/exchange")) return response(200, { activation_proof: "a".repeat(43) });
+		if (url.endsWith("/activations")) return response(200, { activation_id: activation, refresh_credential: "b".repeat(43), signed_entitlement: signed, authoritative_revision: 1 });
+		if (url.endsWith("/refresh")) return response(200, { signed_entitlement: signed, authoritative_revision: 1 });
+		throw Error("unexpected route");
+	};
+	const client = new LicensingClient({ store, authorityOrigin: "https://authority.example.invalid", fetchImpl, trust, now: () => now });
+	await assert.rejects(client.claim("c".repeat(43), "*"), /invalid_product_policy/);
+	await client.claim("c".repeat(43), PREMIUM_PRODUCT);
+	await client.activate();
+	assert.equal((await client.status()).product, PREMIUM_PRODUCT);
+	assert.equal((await client.refresh()).state, "ACTIVE");
+	assert.deepEqual(urls.map((url) => new URL(url).pathname), [
+		"/api/v1/premium/claims/exchange", "/api/v1/premium/activations", "/api/v1/premium/entitlements/refresh",
+	]);
+});
+
+test("changing from native to Premium binds a new installation and exposes activation pending", async () => {
+	const store = new MemoryStore();
+	const requests = [];
+	const fetchImpl = async (url, options) => {
+		const body = JSON.parse(options.body);
+		requests.push({ url, installation: body.installation_id });
+		if (url.endsWith("/claims/exchange")) return response(200, { activation_proof: "a".repeat(43) });
+		if (url.endsWith("/activations")) return response(200, { activation_id: activation, refresh_credential: "b".repeat(43),
+			signed_entitlement: envelope({ product: url.includes("/premium/") ? PREMIUM_PRODUCT : PRODUCT,
+				capabilities: url.includes("/premium/") ? [...PREMIUM_CAPABILITIES] : [CAPABILITY], installation_id: body.installation_id }), authoritative_revision: 1 });
+		throw Error("unexpected route");
+	};
+	const client = new LicensingClient({ store, authorityOrigin: "https://authority.example.invalid", fetchImpl, trust, now: () => now });
+	await client.claim("c".repeat(43));
+	assert.equal((await client.status()).activation_pending, true);
+	await client.activate();
+	assert.equal((await client.status()).product, PRODUCT);
+	store.data.state = { revoked: true };
+	store.data.revisionFloor = 2;
+	await client.claim("d".repeat(43), PREMIUM_PRODUCT);
+	assert.equal((await client.status()).activation_pending, true);
+	await client.activate();
+	assert.equal((await client.status()).product, PREMIUM_PRODUCT);
+	assert.equal(store.data.revisionFloor, 1);
+	assert.notEqual(store.data.installationId, installation);
+	assert.equal(requests[2].installation, requests[3].installation);
+	assert.notEqual(requests[2].installation, installation);
+});
+
 
 test("claim, activation, refresh denial and core-independent support state", async () => {
 	const store = new MemoryStore();
@@ -126,4 +194,17 @@ test("support upload retries exact bytes and never selects storage", async () =>
 	assert.equal(sent[0].headers["Idempotency-Key"], sent[1].headers["Idempotency-Key"]);
 	assert.equal(sent[0].url, "https://support.example.invalid/v1/nyxguard/support-bundles");
 	assert.ok(!/bucket|object_prefix|storage_credentials/.test(sent[0].body));
+});
+
+test("Premium authorizes only the NyxGuard support route", async () => {
+	const store = new MemoryStore();
+	store.data.state = { activationId: activation, refreshCredential: "b".repeat(43),
+		envelope: envelope({ product: PREMIUM_PRODUCT, capabilities: [...PREMIUM_CAPABILITIES] }), lastVerified: now };
+	store.data.revisionFloor = 1;
+	const sent = [];
+	const client = new LicensingClient({ store, authorityOrigin: "https://authority.example.invalid", supportOrigin: "https://support.example.invalid",
+		fetchImpl: async (url) => { sent.push(url); return response(201, { support_id: "NYX-20260924-" + "A".repeat(24), expires_at: "2026-10-24T12:00:00Z" }); }, trust, now: () => now });
+	const result = await client.upload('{"format":"nyxguard-support-bundle-v1"}', "5.0.0");
+	assert.match(result.support_id, /^NYX-/);
+	assert.deepEqual(sent, ["https://support.example.invalid/v1/nyxguard/support-bundles"]);
 });

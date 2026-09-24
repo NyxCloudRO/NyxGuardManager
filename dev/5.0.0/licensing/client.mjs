@@ -1,10 +1,8 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
-import { PRODUCT, CAPABILITY, verifyNyxGuardEnvelope } from "./verify.mjs";
+import { PRODUCT, PREMIUM_PRODUCT, verifyNyxGuardEnvelope } from "./verify.mjs";
 
 export const STATES = Object.freeze(["NOT_CONFIGURED", "ACTIVE", "EXPIRED", "REVOKED", "INVALID", "REFRESH_REQUIRED", "OFFLINE_GRACE", "AUTHORITY_UNAVAILABLE"]);
-const AUTHORITY_PATH = Object.freeze({ claim: "/api/v1/nyxguard/claims/exchange", activate: "/api/v1/nyxguard/activations",
-	refresh: "/api/v1/nyxguard/entitlements/refresh", recoveryRequest: "/api/v1/nyxguard/recoveries/request",
-	recoveryConfirm: "/api/v1/nyxguard/recoveries/confirm" });
+const AUTHORITY_PREFIX = Object.freeze({ [PRODUCT]: "/api/v1/nyxguard", [PREMIUM_PRODUCT]: "/api/v1/premium" });
 const SUPPORT_PATH = "/v1/nyxguard/support-bundles";
 const MAX_BUNDLE = 1_000_000;
 const fail = (code) => { throw new Error(code); };
@@ -26,6 +24,11 @@ const readLimited = async (response, maximum) => {
 	try { return JSON.parse(Buffer.concat(chunks).toString("utf8")); } catch { fail("invalid_response"); }
 };
 const accepted = (status) => status >= 200 && status < 300;
+const authorityPath = (product, path) => {
+	if (!Object.hasOwn(AUTHORITY_PREFIX, product)) fail("invalid_product_policy");
+	const prefix = AUTHORITY_PREFIX[product];
+	return prefix + path;
+};
 
 export class LicensingClient {
 	constructor({ store, authorityOrigin, supportOrigin, fetchImpl = fetch, trust, now = () => Date.now() }) {
@@ -56,9 +59,9 @@ export class LicensingClient {
 		try { record = await this.stored(); } catch { return { state: "INVALID", enabled: false }; }
 		const { installationId, revisionFloor, state } = record;
 		if (!state) return { state: "NOT_CONFIGURED", enabled: false, installation_id: installationId };
-		if (state.revoked) return { state: "REVOKED", enabled: false, installation_id: installationId };
-		if (state.invalid) return { state: "INVALID", enabled: false, installation_id: installationId };
-		if (!state.envelope || !state.activationId) return { state: "NOT_CONFIGURED", enabled: false, installation_id: installationId };
+		if (state.revoked) return { state: "REVOKED", enabled: false, installation_id: installationId, activation_pending: Boolean(state.pendingProof) };
+		if (state.invalid) return { state: "INVALID", enabled: false, installation_id: installationId, activation_pending: Boolean(state.pendingProof) };
+		if (!state.envelope || !state.activationId) return { state: "NOT_CONFIGURED", enabled: false, installation_id: installationId, activation_pending: Boolean(state.pendingProof) };
 		let verified;
 		try { verified = this.verify(state.envelope, installationId, state.activationId, revisionFloor); }
 		catch (err) { return { state: err.message === "expired_entitlement" ? "EXPIRED" : "INVALID", enabled: false, installation_id: installationId }; }
@@ -67,36 +70,40 @@ export class LicensingClient {
 		let result = "ACTIVE";
 		if (state.authorityUnavailable) result = grace > 0 && this.now() >= last && this.now() - last <= grace ? "OFFLINE_GRACE" : "AUTHORITY_UNAVAILABLE";
 		else if (this.now() - last > 12 * 3600000) result = "REFRESH_REQUIRED";
-		return { state: result, enabled: result === "ACTIVE" || result === "OFFLINE_GRACE" || result === "REFRESH_REQUIRED",
+		return { state: result, enabled: result === "ACTIVE" || result === "OFFLINE_GRACE" || result === "REFRESH_REQUIRED", activation_pending: Boolean(state.pendingProof),
 			expires_at: verified.expiresAt, installation_id: installationId, revision: verified.payload.revision,
 			product: verified.payload.product };
 	}
-	async claim(code) {
+	async claim(code, product = PRODUCT) {
 		if (!/^[A-Za-z0-9_-]{32,128}$/.test(code ?? "")) fail("claim_code_invalid");
 		const current = await this.stored();
-		const result = await this.request(this.authorityOrigin, AUTHORITY_PATH.claim, { bearer: code, body: { contract_version: 1, installation_id: current.installationId } });
+		const pendingInstallationId = current.revisionFloor > 0 ? randomUUID() : current.installationId;
+		const result = await this.request(this.authorityOrigin, authorityPath(product, "/claims/exchange"), { bearer: code, body: { contract_version: 1, installation_id: pendingInstallationId } });
 		if (!accepted(result.status) || !/^[A-Za-z0-9_-]{32,128}$/.test(result.data.activation_proof ?? "")) fail("claim_rejected");
-		await this.store.write({ ...(current.state || {}), pendingProof: result.data.activation_proof }, current.revisionFloor);
+		await this.store.write({ ...(current.state || {}), pendingProof: result.data.activation_proof, pendingProduct: product, pendingInstallationId }, current.revisionFloor);
 		return { result: "claim_exchanged" };
 	}
 	async activate() {
 		const current = await this.stored();
-		if (!current.state?.pendingProof) fail("activation_proof_missing");
-		const result = await this.request(this.authorityOrigin, AUTHORITY_PATH.activate, { bearer: current.state.pendingProof,
-			body: { contract_version: 1, installation_id: current.installationId } });
+		if (!current.state?.pendingProof || !current.state?.pendingProduct || !current.state?.pendingInstallationId) fail("activation_proof_missing");
+		const result = await this.request(this.authorityOrigin, authorityPath(current.state.pendingProduct, "/activations"), { bearer: current.state.pendingProof,
+			body: { contract_version: 1, installation_id: current.state.pendingInstallationId } });
 		if (!accepted(result.status) || !result.data.signed_entitlement || !result.data.refresh_credential) fail("activation_rejected");
 		const activationId = result.data.activation_id;
-		const verified = this.verify(result.data.signed_entitlement, current.installationId, activationId, current.revisionFloor);
+		const revisionFloor = current.state.pendingInstallationId === current.installationId ? current.revisionFloor : 0;
+		const verified = this.verify(result.data.signed_entitlement, current.state.pendingInstallationId, activationId, revisionFloor);
+		if (verified.payload.product !== current.state.pendingProduct) fail("invalid_product_policy");
 		if (result.data.authoritative_revision !== verified.payload.revision) fail("revision_mismatch");
-		await this.store.write({ activationId, refreshCredential: result.data.refresh_credential,
+		await this.store.replaceInstallation(current.state.pendingInstallationId, { activationId, refreshCredential: result.data.refresh_credential,
 			envelope: result.data.signed_entitlement, lastVerified: this.now(), authorityUnavailable: false }, verified.payload.revision);
 		return { result: "active" };
 	}
 	async refresh() {
 		const current = await this.stored();
 		if (!current.state?.refreshCredential || !current.state?.activationId) fail("refresh_not_configured");
+		const currentProduct = this.verify(current.state.envelope, current.installationId, current.state.activationId, current.revisionFloor).payload.product;
 		let result;
-		try { result = await this.request(this.authorityOrigin, AUTHORITY_PATH.refresh, { bearer: current.state.refreshCredential,
+		try { result = await this.request(this.authorityOrigin, authorityPath(currentProduct, "/entitlements/refresh"), { bearer: current.state.refreshCredential,
 				body: { contract_version: 1, installation_id: current.installationId, activation_id: current.state.activationId } }); }
 		catch (err) {
 			if (err.message === "authority_unavailable" || err.message === "endpoint_unavailable") {
@@ -122,6 +129,7 @@ export class LicensingClient {
 		let verified;
 		try {
 			verified = this.verify(result.data.signed_entitlement, current.installationId, current.state.activationId, current.revisionFloor);
+			if (verified.payload.product !== currentProduct) fail("invalid_product_policy");
 			if (result.data.authoritative_revision !== verified.payload.revision) fail("revision_mismatch");
 		} catch (err) {
 			await this.store.write({ ...current.state, invalid: true }, current.revisionFloor);
@@ -130,25 +138,26 @@ export class LicensingClient {
 		await this.store.write({ ...current.state, envelope: result.data.signed_entitlement, lastVerified: this.now(), authorityUnavailable: false, invalid: false }, verified.payload.revision);
 		return this.status();
 	}
-	async requestRecovery(email) {
+	async requestRecovery(email, product = PRODUCT) {
 		if (typeof email !== "string" || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail("email_invalid");
 		const current = await this.stored();
 		const newInstallationId = randomUUID();
-		const result = await this.request(this.authorityOrigin, AUTHORITY_PATH.recoveryRequest, { body: { contract_version: 1, installation_id: newInstallationId, email } });
+		const result = await this.request(this.authorityOrigin, authorityPath(product, "/recoveries/request"), { body: { contract_version: 1, installation_id: newInstallationId, email } });
 		if (!accepted(result.status)) fail("recovery_unavailable");
-		await this.store.write({ ...(current.state || {}), recoveryInstallationId: newInstallationId }, current.revisionFloor);
+		await this.store.write({ ...(current.state || {}), recoveryInstallationId: newInstallationId, recoveryProduct: product }, current.revisionFloor);
 		return { result: "request_accepted" };
 	}
 	async confirmRecovery(code) {
 		const current = await this.stored();
 		const newId = current.state?.recoveryInstallationId;
-		if (!newId || !/^[A-Za-z0-9_-]{32,128}$/.test(code ?? "")) fail("recovery_invalid");
-		const exchange = await this.request(this.authorityOrigin, AUTHORITY_PATH.claim, { bearer: code, body: { contract_version: 1, installation_id: newId } });
+		if (!newId || !current.state?.recoveryProduct || !/^[A-Za-z0-9_-]{32,128}$/.test(code ?? "")) fail("recovery_invalid");
+		const exchange = await this.request(this.authorityOrigin, authorityPath(current.state.recoveryProduct, "/claims/exchange"), { bearer: code, body: { contract_version: 1, installation_id: newId } });
 		if (!accepted(exchange.status) || !exchange.data.activation_proof) fail("recovery_rejected");
-		const result = await this.request(this.authorityOrigin, AUTHORITY_PATH.recoveryConfirm, { bearer: exchange.data.activation_proof,
+		const result = await this.request(this.authorityOrigin, authorityPath(current.state.recoveryProduct, "/recoveries/confirm"), { bearer: exchange.data.activation_proof,
 			body: { contract_version: 1, installation_id: newId } });
 		if (!accepted(result.status) || !result.data.signed_entitlement || !result.data.refresh_credential) fail("recovery_rejected");
 		const verified = this.verify(result.data.signed_entitlement, newId, result.data.activation_id, current.revisionFloor);
+		if (verified.payload.product !== current.state.recoveryProduct) fail("invalid_product_policy");
 		if (result.data.authoritative_revision !== verified.payload.revision) fail("revision_mismatch");
 		await this.store.replaceInstallation(newId, { activationId: result.data.activation_id, refreshCredential: result.data.refresh_credential,
 			envelope: result.data.signed_entitlement, lastVerified: this.now(), authorityUnavailable: false }, verified.payload.revision);
@@ -157,8 +166,9 @@ export class LicensingClient {
 	async deactivate() {
 		const current = await this.stored();
 		if (!current.state?.activationId || !current.state?.refreshCredential) fail("deactivation_not_configured");
+		const product = this.verify(current.state.envelope, current.installationId, current.state.activationId, current.revisionFloor).payload.product;
 		const result = await this.request(this.authorityOrigin,
-			`/api/v1/nyxguard/activations/${current.state.activationId}/deactivate`, {
+			authorityPath(product, `/activations/${current.state.activationId}/deactivate`), {
 				bearer: current.state.refreshCredential, body: { contract_version: 1, installation_id: current.installationId },
 			});
 		if (!accepted(result.status) || result.data.result !== "deactivated") fail("deactivation_failed");
@@ -168,14 +178,16 @@ export class LicensingClient {
 	async replace() {
 		const current = await this.stored();
 		if (!current.state?.activationId || !current.state?.refreshCredential) fail("replacement_not_configured");
+		const product = this.verify(current.state.envelope, current.installationId, current.state.activationId, current.revisionFloor).payload.product;
 		const newId = current.state.pendingReplacementId || randomUUID();
 		if (!current.state.pendingReplacementId) await this.store.write({ ...current.state, pendingReplacementId: newId }, current.revisionFloor);
 		const result = await this.request(this.authorityOrigin,
-			`/api/v1/nyxguard/activations/${current.state.activationId}/replace`, {
+			authorityPath(product, `/activations/${current.state.activationId}/replace`), {
 				bearer: current.state.refreshCredential, body: { contract_version: 1, installation_id: newId },
 			});
 		if (!accepted(result.status) || !result.data.signed_entitlement || !result.data.refresh_credential) fail("replacement_failed");
 		const verified = this.verify(result.data.signed_entitlement, newId, result.data.activation_id, current.revisionFloor);
+		if (verified.payload.product !== product) fail("invalid_product_policy");
 		if (result.data.authoritative_revision !== verified.payload.revision) fail("revision_mismatch");
 		await this.store.replaceInstallation(newId, { activationId: result.data.activation_id, refreshCredential: result.data.refresh_credential,
 			envelope: result.data.signed_entitlement, lastVerified: this.now(), authorityUnavailable: false }, verified.payload.revision);
@@ -187,7 +199,7 @@ export class LicensingClient {
 		if (!this.supportOrigin) fail("support_endpoint_unavailable");
 		const current = await this.stored();
 		const verified = this.verify(current.state.envelope, current.installationId, current.state.activationId, current.revisionFloor);
-		if (verified.payload.product !== PRODUCT || verified.payload.capabilities[0] !== CAPABILITY) fail("invalid_product_policy");
+		if (verified.payload.product !== PRODUCT && verified.payload.product !== PREMIUM_PRODUCT) fail("invalid_product_policy");
 		let operation = await this.store.pendingUpload();
 		if (!operation) {
 			if (typeof bundle !== "string" || Buffer.byteLength(bundle) > MAX_BUNDLE || Buffer.byteLength(bundle) < 2) fail("bundle_size_invalid");

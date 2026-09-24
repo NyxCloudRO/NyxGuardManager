@@ -72,7 +72,7 @@ route("get", "/status", async (_req, res) => {
 route("post", "/claim", async (req, res) => {
 	const c = await client(); if (!c) return res.status(503).json({ category: "support_not_configured" });
 	await audit(res, "nyxcloud.support.claim.requested");
-	res.json(await c.claim(req.body?.claim_code));
+	res.json(await c.claim(req.body?.claim_code, req.body?.product));
 });
 route("post", "/activate", async (_req, res) => {
 	const c = await client(); if (!c) return res.status(503).json({ category: "support_not_configured" });
@@ -87,7 +87,7 @@ route("post", "/refresh", async (_req, res) => {
 route("post", "/recovery/request", async (req, res) => {
 	const c = await client(); if (!c) return res.status(503).json({ category: "support_not_configured" });
 	await audit(res, "nyxcloud.support.recovery.requested");
-	res.json(await c.requestRecovery(req.body?.email));
+	res.json(await c.requestRecovery(req.body?.email, req.body?.product));
 });
 route("post", "/recovery/confirm", async (req, res) => {
 	const c = await client(); if (!c) return res.status(503).json({ category: "support_not_configured" });
