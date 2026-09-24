@@ -21,7 +21,7 @@ const FAILURES = Object.freeze({
 	connection_closed: "The upstream closed the connection before responding.",
 	error: "The configured upstream check encountered an error.",
 });
-const CATEGORIES = new Set(["upstream_connection_refused", "upstream_timeout", "dns_resolution", "tls_handshake", "certificate_renewal", "upstream_response", "upstream_http_error", "openresty_error"]);
+const CATEGORIES = new Set(["upstream_connection_refused", "upstream_timeout", "dns_resolution", "tls_handshake", "certificate_renewal", "upstream_response", "upstream_http_error", "openresty_error", "backend_exception", "database_connectivity_error", "migration_error"]);
 const LICENSE_STATES = new Set(["ACTIVE", "OFFLINE_GRACE", "REFRESH_REQUIRED", "EXPIRED", "REVOKED", "INVALID", "AUTHORITY_UNAVAILABLE", "NOT_CONFIGURED"]);
 const LICENSE_PRODUCTS = new Set(["nyxguard-manager-professional-support", "nyxcloud-premium-support"]);
 const ACTIONS = Object.freeze({

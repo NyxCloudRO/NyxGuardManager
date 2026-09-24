@@ -35,7 +35,7 @@ const guidance = {
 	cpu_usage: ["CPU usage is within the monitored range.", "CPU usage is high.", "Continue monitoring CPU usage.", "Inspect sustained CPU load and service responsiveness."],
 	uptime: ["Application uptime was observed.", "Application uptime was not observed.", "Compare uptime with deployment history.", "Collect process uptime."],
 	restart_indicator: ["The observed restart count is low.", "The observed restart count is elevated.", "Continue monitoring restarts.", "Inspect container exit reasons and recent logs."],
-	error_indicator: ["No OpenResty errors were found in the observed interval.", "Recent OpenResty errors were observed.", "Continue monitoring OpenResty errors.", "Inspect recent OpenResty error log entries."],
+	error_indicator: ["No classified backend or OpenResty errors were found in the observed interval.", "Recent backend or OpenResty errors were observed.", "Continue monitoring service errors.", "Inspect recent backend and OpenResty problem summaries."],
 	listener_match: ["A listener match was observed.", "No listener match was observed.", "Continue checking route behavior.", "Check listener bindings and host names."],
 	route_match: ["A route match was observed.", "No route match was observed.", "Continue checking upstream behavior.", "Inspect routing rules and host priority."],
 	dns_resolution: ["The configured upstream resolved.", "The configured upstream did not resolve.", "Continue checking the upstream connection.", "Check the upstream name and resolver."],

@@ -17,6 +17,7 @@ import { systemDiagnostics, routingDiagnostics, tlsDiagnostics } from "../intern
 import { buildSupportBundle } from "../internal/nyxcloud-support/bundle.mjs";
 import { recentOpenRestyProblems } from "../internal/nyxcloud-support/recent-problems.mjs";
 import { ownDockerIndicators } from "../internal/nyxcloud-support/docker-indicators.mjs";
+import { recentBackendProblems } from "../internal/nyxcloud-support/backend-problems.mjs";
 import { redact } from "../internal/nyxcloud-support/redaction.mjs";
 import { probeConfiguredHost } from "../internal/nyxcloud-licensing/probes.mjs";
 
@@ -163,8 +164,12 @@ async function currentProblems(hostIds, windowMinutes = 60) {
 	const offset = /^([+-])(\d{2})(\d{2})\s*$/.exec(stdout);
 	if (!offset) throw new Error("log_clock_unavailable");
 	const logUtcOffsetMinutes = (offset[1] === "-" ? -1 : 1) * (Number(offset[2]) * 60 + Number(offset[3]));
-	return recentOpenRestyProblems({ root: "/data/logs", hostIds, windowMinutes,
-		logUtcOffsetMinutes });
+	const [openresty, backend] = await Promise.all([
+		recentOpenRestyProblems({ root: "/data/logs", hostIds, windowMinutes, logUtcOffsetMinutes }),
+		recentBackendProblems({ windowMinutes }),
+	]);
+	return { problems: [...openresty, ...backend.problems].sort((a, b) => b.last_seen.localeCompare(a.last_seen)).slice(0, 40),
+		backendAvailable: backend.available };
 }
 
 async function currentErrorLogAvailable(hostIds) {
@@ -318,8 +323,8 @@ async function mapLimited(items, limit, worker) {
 async function diagnosticData({ probe = false, windowMinutes = 60 } = {}) {
 	const { rows, truncated } = await activeHosts();
 	const ids = rows.map((row) => row.id);
-	const problems = await currentProblems(ids, windowMinutes);
-	const logAvailable = await currentErrorLogAvailable(ids);
+	const { problems, backendAvailable } = await currentProblems(ids, windowMinutes);
+	const logAvailable = backendAvailable || await currentErrorLogAvailable(ids);
 	const snapshot = await systemSnapshot(problems, logAvailable);
 	const system = systemDiagnostics(snapshot);
 	const certificates = await certificatesFor(rows);
@@ -377,9 +382,10 @@ route("get", "/problems", async (req, res) => {
 	const windowMinutes = Number(req.query.window ?? 60);
 	if (![15, 60, 1440].includes(windowMinutes)) return res.sendStatus(400);
 	const { rows } = await activeHosts();
-	const problems = await currentProblems(rows.map((row) => row.id), windowMinutes);
-	const sourceAvailable = await currentErrorLogAvailable(rows.map((row) => row.id));
+	const { problems, backendAvailable } = await currentProblems(rows.map((row) => row.id), windowMinutes);
+	const sourceAvailable = backendAvailable || await currentErrorLogAvailable(rows.map((row) => row.id));
 	res.set("Cache-Control", "no-store").json(redact({ problems, source_available: sourceAvailable,
+		backend_source_available: backendAvailable,
 		window_minutes: windowMinutes, generated_at: new Date().toISOString() }));
 });
 route("get", "/diagnostics", async (_req, res) => {
@@ -416,7 +422,7 @@ route("post", "/troubleshoot", async (req, res) => {
 		.where({ id: host.certificate_id, is_deleted: 0 }).first();
 	const certData = await certificateObservation(host, cert);
 	const tls = tlsDiagnostics(host, certData.certificate, certData.observations);
-	const problems = (await currentProblems([host.id], 60)).filter((item) => item.host_id === host.id);
+	const problems = (await currentProblems([host.id], 60)).problems.filter((item) => item.host_id === host.id);
 	let hostLogAvailable = false;
 	try { hostLogAvailable = (await lstat(`/data/logs/proxy-host-${host.id}_error.log`)).isFile(); } catch {}
 	const errorStep = fixed("recent_errors", !hostLogAvailable ? "SKIPPED" : problems.length ? "WARNING" : "PASS",

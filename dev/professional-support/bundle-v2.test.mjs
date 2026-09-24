@@ -38,7 +38,8 @@ test("V2 selects proxy, certificate, problem, result and support metadata withou
 		certificates: [{ id: 3, expires_on: new Date(now.getTime() + 86400000),
 			domain_names: [seed], provider: seed, private_key: seed }],
 		recentProblems: [{ category: "upstream_connection_refused", state: "FAIL", host_id: 7,
-			count: 4, first_seen: at, last_seen: at, excerpt: seed }],
+			count: 4, first_seen: at, last_seen: at, excerpt: seed },
+		{ category: "backend_exception", state: "WARNING", count: 2, first_seen: at, last_seen: at, excerpt: seed }],
 		lastSupportId: "NYX-20260924-" + "A".repeat(24),
 	});
 	assert.equal(bundle.diagnostics.stale, true);
@@ -49,6 +50,7 @@ test("V2 selects proxy, certificate, problem, result and support metadata withou
 	assert.equal(bundle.proxy_hosts[0].domain_count, 1);
 	assert.equal(bundle.certificates[0].provider, "other");
 	assert.equal(bundle.recent_problems[0].count, 4);
+	assert.equal(bundle.recent_problems[1].category, "backend_exception");
 	assert.equal(bundle.support_record.last_support_id, "NYX-20260924-" + "A".repeat(24));
 	assert.ok(!bytes.toString().includes(seed));
 });
