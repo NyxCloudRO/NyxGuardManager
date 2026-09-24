@@ -46,6 +46,7 @@ async function client() {
 
 function sendError(res, error) {
 	const category = typeof error?.message === "string" ? error.message : "support_unavailable";
+	console.error("professional_support_error", /^(Invalid|Missing|Support bundle|Bundle timestamp)/.test(category) ? category : "request_failed");
 	const input = /^(claim_code_invalid|activation_proof_missing|email_invalid|recovery_invalid|version_invalid)$/.test(category);
 	const denied = /^(support_upload_not_authorized|support_feature_not_authorized|license_revoked_or_reactivation_required)$/.test(category);
 	const conflict = category === "upload_conflict" || category === "bundle_not_generated";
