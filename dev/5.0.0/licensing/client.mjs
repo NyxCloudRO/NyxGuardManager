@@ -47,6 +47,11 @@ export class LicensingClient {
 				headers: { "Content-Type": "application/json", ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}), ...headers },
 				body: typeof body === "string" ? body : JSON.stringify(body) });
 		} catch { fail("authority_unavailable"); }
+		// A gateway or WAF may return an HTML error page. It is not an
+		// authoritative licensing decision and must not poison persisted state.
+		const contentType = response.headers.get("content-type");
+		if (contentType && !/^application\/json(?:\s*;|\s*$)/i.test(contentType))
+			fail("authority_unavailable");
 		const data = await readLimited(response, maximum);
 		return { status: response.status, data };
 	}
@@ -106,7 +111,7 @@ export class LicensingClient {
 		try { result = await this.request(this.authorityOrigin, authorityPath(currentProduct, "/entitlements/refresh"), { bearer: current.state.refreshCredential,
 				body: { contract_version: 1, installation_id: current.installationId, activation_id: current.state.activationId } }); }
 		catch (err) {
-			if (err.message === "authority_unavailable" || err.message === "endpoint_unavailable") {
+			if (["authority_unavailable", "endpoint_unavailable", "invalid_response", "response_too_large"].includes(err.message)) {
 				await this.store.write({ ...current.state, authorityUnavailable: true }, current.revisionFloor);
 			} else {
 				await this.store.write({ ...current.state, invalid: true }, current.revisionFloor);

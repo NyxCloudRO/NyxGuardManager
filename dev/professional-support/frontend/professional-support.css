@@ -5,12 +5,12 @@
 .prefs-action-links .nyx-support-diagnostics-nav:hover svg,.prefs-action-links .nyx-support-diagnostics-nav:focus-visible svg,.prefs-action-links .nyx-support-diagnostics-nav[aria-current=page] svg{filter:drop-shadow(0 0 5px rgba(108,220,255,.55))}
 .prefs-action-links .nyx-support-license-nav[aria-current=page],.prefs-action-links .nyx-support-diagnostics-nav[aria-current=page]{border-color:color-mix(in srgb,var(--app-primary,#6cdcff) 52%,var(--app-border,#36516a));background:color-mix(in srgb,var(--app-primary,#6cdcff) 14%,var(--app-surface-2,#10263a));color:var(--app-text-primary,#eaf5ff)}
 .nyx-support-main-active>.nyx-support-route-hidden{display:none!important}
-.nyx-support-page{box-sizing:border-box;width:100%;height:100%;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;padding:clamp(22px,3vw,42px);color:var(--app-text-primary,#eaf5ff);font:inherit}
+.nyx-support-page{box-sizing:border-box;width:100%;height:100%;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;padding:clamp(20px,2.1vw,30px);color:var(--app-text-primary,#eaf5ff);font:inherit}
 .nyx-support-page *{box-sizing:border-box}
-.nyx-support-page-header{max-width:980px;margin:0 0 28px}
-.nyx-support-page-header h1{margin:0 0 8px;color:var(--app-text-primary,#eaf5ff);font-size:30px;font-weight:600;line-height:1.1}
-.nyx-support-page-header p{max-width:760px;margin:0;color:var(--app-text-secondary,#b7cbda);font-size:14px;line-height:1.65}
-.nyx-support-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 24px;padding:0 0 14px;border-bottom:1px solid var(--app-border,#29495e)}
+.nyx-support-page-header{max-width:980px;margin:0 0 20px}
+.nyx-support-page-header h1{margin:0 0 6px;color:var(--app-text-primary,#eaf5ff);font-size:26px;font-weight:600;line-height:30px}
+.nyx-support-page-header p{max-width:760px;margin:0;color:var(--app-text-secondary,#b7cbda);font-size:14px;line-height:20px}
+.nyx-support-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px;padding:0 0 12px;border-bottom:1px solid var(--app-border,#29495e)}
 .nyx-support-tabs .nyx-support-button{min-height:36px;padding:8px 15px;border-color:transparent;background:transparent;color:var(--app-text-secondary,#b7cbda);box-shadow:none}
 .nyx-support-tabs .nyx-support-tab-active{border-color:color-mix(in srgb,var(--app-primary,#6cdcff) 45%,transparent);background:color-mix(in srgb,var(--app-primary,#6cdcff) 15%,var(--app-surface,#102840));color:var(--app-text-primary,#eaf5ff)}
 .nyx-support-page-content{max-width:1380px}

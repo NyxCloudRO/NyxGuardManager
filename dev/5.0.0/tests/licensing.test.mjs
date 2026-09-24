@@ -183,6 +183,19 @@ test("invalid authority refresh fails closed despite a cached valid grant", asyn
 	assert.equal((await client.status()).state, "INVALID");
 });
 
+test("HTML gateway denial keeps a valid entitlement recoverable", async () => {
+	const store = new MemoryStore();
+	store.data.state = { activationId: activation, refreshCredential: "b".repeat(43), envelope: envelope(), lastVerified: now };
+	store.data.revisionFloor = 1;
+	const client = new LicensingClient({ store, authorityOrigin: "https://authority.example.invalid",
+		fetchImpl: async () => new Response("<html>gateway denied</html>", { status: 403,
+			headers: { "Content-Type": "text/html; charset=UTF-8" } }), trust, now: () => now });
+	await assert.rejects(client.refresh(), /authority_unavailable/);
+	assert.equal((await client.status()).state, "OFFLINE_GRACE");
+	assert.equal(store.data.state.invalid, undefined);
+	assert.ok(store.data.state.envelope);
+});
+
 test("support upload retries exact bytes and never selects storage", async () => {
 	const store = new MemoryStore(); store.data.state = { activationId: activation, refreshCredential: "b".repeat(43),
 		envelope: envelope(), lastVerified: now, authorityUnavailable: false }; store.data.revisionFloor = 1;

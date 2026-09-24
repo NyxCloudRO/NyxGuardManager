@@ -7,6 +7,7 @@ ARG NYXGUARD_SOURCE_REVISION=uncommitted
 COPY dev/5.0.0/licensing/ /app/internal/nyxcloud-licensing/
 COPY dev/professional-support/result.mjs dev/professional-support/redaction.mjs dev/professional-support/diagnostics.mjs dev/professional-support/bundle.mjs dev/professional-support/recent-problems.mjs /app/internal/nyxcloud-support/
 COPY dev/5.0.0/routes/professional-support.js /app/routes/professional-support.js
+COPY dev/5.0.0/authority-tunnel.conf /etc/nginx/conf.d/authority-tunnel.conf
 COPY dev/5.0.0/migrations/20260924000000_nyxcloud_professional_support.js /app/migrations/20260924000000_nyxcloud_professional_support.js
 COPY dev/professional-support/frontend/professional-support.js /app/frontend/assets/professional-support.js
 COPY dev/professional-support/frontend/professional-support.css /app/frontend/assets/professional-support.css
