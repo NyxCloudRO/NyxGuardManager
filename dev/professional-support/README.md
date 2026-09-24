@@ -29,13 +29,13 @@ idempotent upload retries.
 
 This is an additive frontend layer for the existing 4.0.18 image composition build. It does not create or alter a React source tree. The main sidebar and lower User, Preferences, and Community controls retain their markup, classes, icons, order, and styling.
 
-The only edited existing frontend value is the visible lower `a.prefs-action-support` destination in `local-dev-fixes-409dev.js`. It becomes `#nyxguard-professional-support`. The hidden React `a.support-nyxguard` donation link remains unchanged because the existing Developer Message uses it for its separate donation action.
+The lower navigation gains `License` and `Diagnostics & Support` after Preferences. The existing `Support NyxGuard` commercial link and Community destination remain unchanged. The hidden React `a.support-nyxguard` donation link remains unchanged because the existing Developer Message uses it for its separate donation action.
 
-The overlay opens a focused Support dialog with Overview, Diagnostics, Troubleshooting, and Support Bundle sections. It uses the existing local JWT for same-origin requests. Backend authorization remains authoritative; the UI disables support actions unless `/api/professional-support/status` reports `enabled: true` and `state: "ACTIVE"`.
+Both new destinations render in the normal main content area. Diagnostics & Support has internal Overview, Diagnostics, Troubleshooting, and Support Bundle sections. The old `#nyxguard-professional-support` route redirects to the new destination. The overlay uses the existing local JWT for same-origin requests. Backend authorization remains authoritative; diagnostics require `enabled: true`, while upload requires `state: "ACTIVE"`.
 
 ## Image composition
 
-After the existing 4.0.18 frontend overlays are applied, copy `frontend/professional-support.js` and `frontend/professional-support.css` into `/app/frontend/assets/`, then run `node patch-frontend.mjs /app/frontend`. The script fails before writing if the expected 4.0.18 asset or insertion point has drifted. It also fails on a second application.
+After the existing 4.0.18 frontend overlays are applied, copy `frontend/professional-support.js` and `frontend/professional-support.css` into `/app/frontend/assets/`, then run `node patch-frontend.mjs /app/frontend`. Exact base digests and anchored assertions protect the lower navigation, main sidebar, content wrapper, footer, Settings, theme cache, and notification version. The script fails before writing if the expected base has drifted. It also fails on a second application.
 
 ## API contract
 
@@ -56,4 +56,4 @@ Diagnostic records display only `check`, `state`, an integer proxy host ID, fixe
 
 ## Verification
 
-Run `node --check` on the overlay script and patch script, then `node dev/professional-support/patch-frontend.test.mjs`. Browser acceptance should confirm the existing sidebar geometry and lower controls remain identical, normal click and open-in-new-tab both enter the Support area, tabs work, and inactive entitlements leave actions unavailable. The 4.0.18 Developer Message donation link should continue to open its original destination.
+Run `node --check` on the overlay script and patch script, then run `NYX_UI_BASE_DIR=/path/to/exact/base/frontend node dev/professional-support/patch-frontend.test.mjs`. Browser acceptance should confirm the unchanged main sidebar, the two lower destinations, native content rendering, internal tabs, and entitlement gates. The existing Support NyxGuard and Community links should retain their destinations.

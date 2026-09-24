@@ -1,30 +1,43 @@
 (function () {
   "use strict";
 
-  var HASH = "#nyxguard-professional-support";
-  var BASE = "/api/professional-support";
-  var root = null;
-  var previousFocus = null;
-  var appWasInert = false;
-  var appAriaHidden = null;
-  var activeTab = "Overview";
-  var latestStatus = null;
+  var LICENSE_HASH = "#nyxguard-license";
+  var SUPPORT_HASH = "#nyxguard-diagnostics-support";
+  var LEGACY_HASH = "#nyxguard-professional-support";
   var tabs = ["Overview", "Diagnostics", "Troubleshooting", "Support Bundle"];
+  var tabSlugs = ["overview", "diagnostics", "troubleshooting", "support-bundle"];
+  var systemChecks = new Set(["application_version", "backend_health", "database_reachability", "migrations_current", "openresty_health", "configuration_valid", "disk_capacity", "memory_pressure", "uptime", "restart_indicator", "error_indicator"]);
+  var tlsChecks = new Set(["certificate_presence", "certificate_expiry", "san_match", "chain_valid", "renewal_ready", "acme_ready", "dns_challenge_ready"]);
   var guidance = {
     database_reachability: "Check the MariaDB service and its connection settings.",
-    migrations_current: "Check whether the 5.0.0 database migration completed.",
+    migrations_current: "Confirm that the 5.0.0 migration completed.",
     openresty_health: "Validate the OpenResty configuration and service health.",
-    disk_capacity: "Free disk space before logs, certificates, or database writes fail.",
+    disk_capacity: "Free disk space before writes fail.",
     memory_pressure: "Review memory pressure on the NyxGuard host.",
-    dns_resolution: "Check the configured upstream hostname and DNS resolver.",
+    dns_resolution: "Check the configured upstream name and DNS resolver.",
     listener_match: "Confirm the proxy host is enabled and listens on the expected port.",
     route_match: "Review the configured hostname and route rules.",
-    upstream_tcp: "Check that the configured upstream accepts connections on its port.",
+    upstream_tcp: "Check the configured upstream service and port.",
     upstream_tls: "Check the upstream certificate, name, and trust chain.",
-    upstream_http: "Inspect the configured upstream service response.",
-    certificate_presence: "Assign a certificate to the configured proxy host.",
-    certificate_expiry: "Renew or replace the expiring certificate.",
+    upstream_http: "Inspect the upstream service response.",
+    certificate_presence: "Assign a certificate to this configured proxy host.",
+    certificate_expiry: "Renew or replace the certificate.",
   };
+  var page = null;
+  var mainNode = null;
+  var routeWrapper = null;
+  var currentRoute = "";
+  var latestStatus = null;
+  var lastDiagnostics = null;
+  var lastBundle = null;
+  var lastBundleBytes = null;
+  var lastSupportId = null;
+  var scheduled = false;
+
+  if (location.pathname === "/nyxguard-professional-support") {
+    location.replace("/" + SUPPORT_HASH);
+    return;
+  }
 
   function token() {
     try {
@@ -33,284 +46,459 @@
     } catch (_) { return ""; }
   }
 
-  function element(tag, className, label) {
+  function element(tag, className, value) {
     var node = document.createElement(tag);
     if (className) node.className = className;
-    if (label != null) node.textContent = String(label);
+    if (value != null) node.textContent = String(value);
     return node;
   }
 
-  function button(label, action, disabled) {
-    var node = element("button", "nyx-support-button", label);
+  function button(label, action, className) {
+    var node = element("button", "nyx-support-button " + (className || ""), label);
     node.type = "button";
-    node.disabled = !!disabled;
     node.addEventListener("click", action);
     return node;
   }
 
-  function notice(container, value, isError) {
-    var node = container.querySelector(".nyx-support-notice");
+  function notice(parent, message, error) {
+    var node = parent.querySelector(":scope > .nyx-support-notice");
     if (!node) {
       node = element("p", "nyx-support-notice");
       node.setAttribute("role", "status");
-      container.prepend(node);
+      parent.prepend(node);
     }
-    node.classList.toggle("nyx-support-error", !!isError);
-    node.textContent = value;
+    node.classList.toggle("nyx-support-error", !!error);
+    node.textContent = message || "";
   }
+
+  function statusLabel(state) {
+    return ({
+      NOT_CONFIGURED: "Not configured", ACTIVE: "Active", EXPIRED: "Expired",
+      REVOKED: "Revoked", REFRESH_REQUIRED: "Refresh required",
+      AUTHORITY_UNAVAILABLE: "Authority unavailable", OFFLINE_GRACE: "Offline grace",
+      INVALID: "Invalid"
+    })[state] || "Unavailable";
+  }
+
+  function dateLabel(raw) {
+    if (!raw) return "Not available";
+    var date = new Date(raw);
+    return Number.isNaN(date.getTime()) ? "Not available" : new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(date);
+  }
+
+  function canDiagnose() { return !!(latestStatus && latestStatus.enabled); }
+  function canUpload() { return !!(latestStatus && latestStatus.state === "ACTIVE"); }
 
   async function request(path, options) {
     var auth = token();
     if (!auth) throw new Error("Sign in to use Professional Support.");
-    var response = await fetch(BASE + path, {
+    var response = await fetch(path, {
       method: options && options.method || "GET",
       credentials: "same-origin",
-      headers: { Authorization: "Bearer " + auth, Accept: "application/json", "Content-Type": "application/json" },
+      headers: {
+        Authorization: "Bearer " + auth,
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
       body: options && options.body ? JSON.stringify(options.body) : undefined,
     });
     if (!response.ok) throw new Error("Request failed (HTTP " + response.status + ").");
     return response.json();
   }
 
-  function panel() { return root && root.querySelector(".nyx-support-content"); }
-
-  function line(container, title, value) {
-    var row = element("div", "nyx-support-row");
-    row.append(element("span", "nyx-support-label", title), element("span", "nyx-support-value", value == null ? "—" : value));
-    container.append(row);
+  function field(parent, title, value) {
+    var cell = element("div", "nyx-support-field");
+    cell.append(element("span", "nyx-support-field-label", title), element("strong", "", value == null ? "Not available" : value));
+    parent.append(cell);
+    return cell;
   }
 
-  function active() { return latestStatus && latestStatus.enabled === true && latestStatus.state === "ACTIVE"; }
-
-  function gatedButton(label, action) {
-    var node = button(label, action, !active());
-    node.setAttribute("data-support-gated", "true");
+  function card(parent, title, copy) {
+    var node = element("section", "nyx-support-card");
+    node.append(element("h2", "", title));
+    if (copy) node.append(element("p", "nyx-support-muted", copy));
+    parent.append(node);
     return node;
   }
 
-  function refreshGates() {
-    if (!root) return;
-    root.querySelectorAll("[data-support-gated]").forEach(function (node) { node.disabled = !active(); });
+  function sectionHeading(parent, title, copy) {
+    var header = element("div", "nyx-support-section-heading");
+    header.append(element("h2", "", title));
+    if (copy) header.append(element("p", "", copy));
+    parent.append(header);
   }
 
-  async function loadStatus(container) {
-    notice(container, "Loading Professional Support status…");
+  function inactiveNote(parent) {
+    if (canDiagnose()) return;
+    var note = element("p", "nyx-support-callout", "Professional Support features require an active entitlement. Core NyxGuard functionality remains available.");
+    parent.append(note);
+  }
+
+  async function loadStatus(onReady, target) {
     try {
-      latestStatus = await request("/status");
-      refreshGates();
-      notice(container, "");
-      line(container, "Status", latestStatus.state || "UNKNOWN");
-      line(container, "Entitlement expires", latestStatus.expires_at || "—");
-      line(container, "Installation", latestStatus.installation_id || "—");
-      if (!active()) notice(container, "Professional Support features require an active entitlement. Core NyxGuard features remain available.");
-    } catch (error) { notice(container, error.message, true); }
+      latestStatus = await request("/api/professional-support/status");
+      if (target && !target.isConnected) return;
+      onReady(null, latestStatus);
+    } catch (error) {
+      if (target && !target.isConnected) return;
+      onReady(error);
+    }
   }
 
-  async function action(container, path, body) {
-    notice(container, "Working…");
+  function statusFields(parent, status) {
+    var grid = element("div", "nyx-support-metrics");
+    field(grid, "Status", statusLabel(status.state));
+    field(grid, "Entitlement expiry", dateLabel(status.expires_at));
+    field(grid, "Installation", status.installation_id ? "Bound to this installation" : "Not configured");
+    field(grid, "Authority", status.state === "AUTHORITY_UNAVAILABLE" || status.state === "OFFLINE_GRACE" ? "Unavailable" : status.state === "REFRESH_REQUIRED" ? "Refresh required" : status.state === "NOT_CONFIGURED" ? "Not configured" : "Available");
+    parent.append(grid);
+  }
+
+  async function performAction(target, path, body) {
+    notice(target, "Working…");
     try {
-      await request(path, { method: "POST", body: body });
-      switchTab("Overview");
-    } catch (error) { notice(container, error.message, true); }
+      await request("/api/professional-support" + path, { method: "POST", body: body });
+      latestStatus = null;
+      unmount();
+      renderRoute();
+    } catch (error) { notice(target, error.message, true); }
   }
 
-  function overview(container) {
-    container.append(element("h2", "", "Professional Support"));
-    container.append(element("p", "nyx-support-intro", "Optional support for diagnostics, guided troubleshooting, and secure support bundles."));
-    loadStatus(container);
-    var claim = element("div", "nyx-support-form");
-    var claimCode = element("input", "nyx-support-input");
-    claimCode.type = "text";
-    claimCode.autocomplete = "off";
-    claimCode.placeholder = "Claim code";
-    claimCode.setAttribute("aria-label", "Claim code");
-    claim.append(claimCode, button("Claim", function () { action(container, "/claim", { claim_code: claimCode.value.trim() }); }));
-    container.append(claim, button("Activate", function () { action(container, "/activate", {}); }),
-      button("Refresh status", function () { action(container, "/refresh", {}); }));
+  function licenseContent(parent) {
+    var header = element("header", "nyx-support-page-header");
+    header.append(element("span", "nyx-support-eyebrow", "NYXGUARD MANAGER 5.0.0"), element("h1", "", "Professional Support License"),
+      element("p", "", "Manage the optional entitlement for diagnostics and support. Core NyxGuard remains available without it."));
+    parent.append(header);
+    var details = card(parent, "License status", "Entitlement details are verified by the NyxGuard backend.");
+    notice(details, "Loading license status…");
+    loadStatus(function (error, status) {
+      if (error) { notice(details, error.message, true); return; }
+      notice(details, "");
+      statusFields(details, status);
+      var identity = element("div", "nyx-support-metrics nyx-support-identity");
+      field(identity, "Product", "NyxGuard Manager Professional Support");
+      field(identity, "Capability", "Diagnostics & Support");
+      details.append(identity);
+      inactiveNote(details);
+      var actions = element("div", "nyx-support-actions");
+      var claim = element("input", "nyx-support-input");
+      claim.type = "text";
+      claim.autocomplete = "off";
+      claim.placeholder = "Claim code";
+      claim.setAttribute("aria-label", "Claim code");
+      var claimButton = button("Claim", function () {
+        var code = claim.value.trim();
+        claim.value = "";
+        performAction(details, "/claim", { claim_code: code });
+      });
+      if (status.state !== "ACTIVE" && status.state !== "OFFLINE_GRACE" && status.state !== "REFRESH_REQUIRED") actions.append(claim, claimButton);
+      if (status.state === "NOT_CONFIGURED") actions.append(button("Activate", function () { performAction(details, "/activate", {}); }));
+      actions.append(button("Refresh status", function () { performAction(details, "/refresh", {}); }, "nyx-support-button-secondary"));
+      details.append(actions);
+    }, details);
   }
 
-  function renderChecks(container, records) {
-    if (!Array.isArray(records) || records.length === 0) {
-      notice(container, "No diagnostic results are available.");
-      return;
-    }
-    records.forEach(function (record) {
-      var card = element("article", "nyx-support-result");
-      var state = ["PASS", "WARNING", "FAIL", "SKIPPED"].includes(record.state) ? record.state : "SKIPPED";
-      card.append(element("strong", "", record.check ? record.check.replaceAll("_", " ") : "Check"),
-        element("span", "nyx-support-state state-" + state.toLowerCase(), state));
-      if (Number.isSafeInteger(record.evidence && record.evidence.host_id)) {
-        card.append(element("p", "", "Proxy host " + record.evidence.host_id));
-      }
-      if (typeof record.summary === "string") card.append(element("p", "", record.summary));
-      if ((state === "FAIL" || state === "WARNING") && Object.hasOwn(guidance, record.check)) {
-        card.append(element("p", "", guidance[record.check]));
-      }
-      container.append(card);
+  function overviewContent(parent) {
+    var grid = element("div", "nyx-support-overview-grid");
+    parent.append(grid);
+    var license = card(grid, "Professional Support", "Current entitlement and authority state.");
+    notice(license, "Loading status…");
+    var workflow = card(grid, "Support workflow", "Generate a redacted bundle and upload when entitled.");
+    field(workflow, "Bundle", lastBundle ? "Generated " + dateLabel(lastBundle.generated_at) : "Not generated this session");
+    field(workflow, "Support ID", lastSupportId || "No upload this session");
+    var uploadField = field(workflow, "Upload", "Checking entitlement…");
+    loadStatus(function (error, status) {
+      if (error) { notice(license, error.message, true); return; }
+      notice(license, "");
+      statusFields(license, status);
+      inactiveNote(license);
+      uploadField.querySelector("strong").textContent = canUpload() ? "Available" : "Requires an active online entitlement";
+    }, license);
+    var diagnostics = card(grid, "Diagnostics summary", "System, proxy and routing, and TLS.");
+    field(diagnostics, "Last run", lastDiagnostics ? dateLabel(lastDiagnostics.at) : "Not run this session");
+    field(diagnostics, "System", lastDiagnostics ? lastDiagnostics.system : "Not run");
+    field(diagnostics, "Proxy & Routing", lastDiagnostics ? lastDiagnostics.routing : "Not run");
+    field(diagnostics, "TLS", lastDiagnostics ? lastDiagnostics.tls : "Not run");
+  }
+
+  function friendlyCheck(name) {
+    return String(name || "Check").replaceAll("_", " ").replace(/\b\w/g, function (letter) { return letter.toUpperCase(); });
+  }
+
+  function resultCard(parent, record) {
+    var state = ["PASS", "WARNING", "FAIL", "SKIPPED"].includes(record.state) ? record.state : "SKIPPED";
+    var row = element("article", "nyx-support-result");
+    var heading = element("div", "nyx-support-result-heading");
+    heading.append(element("strong", "", friendlyCheck(record.check)), element("span", "nyx-support-state state-" + state.toLowerCase(), state));
+    row.append(heading);
+    if (typeof record.summary === "string" && record.summary) row.append(element("p", "", record.summary));
+    var evidence = record.evidence || {};
+    var safeEvidence = [];
+    if (Number.isSafeInteger(evidence.host_id)) safeEvidence.push("Proxy host " + evidence.host_id);
+    if (Number.isSafeInteger(evidence.status_code)) safeEvidence.push("HTTP " + evidence.status_code);
+    if (Number.isFinite(evidence.free_percent)) safeEvidence.push(Math.round(evidence.free_percent) + "% free");
+    if (Number.isFinite(evidence.days_remaining)) safeEvidence.push(evidence.days_remaining + " days remaining");
+    if (Number.isFinite(evidence.seconds)) safeEvidence.push(evidence.seconds + " seconds uptime");
+    if (safeEvidence.length) row.append(element("p", "nyx-support-evidence", safeEvidence.join(" · ")));
+    if (state !== "PASS") row.append(element("p", "nyx-support-guidance", guidance[record.check] || (state === "SKIPPED" ? "This check needs more configured data or a reachable service." : "Review this check and its configured resource.")));
+    parent.append(row);
+  }
+
+  function checkGroup(parent, title, records) {
+    var group = card(parent, title);
+    group.classList.add("nyx-support-result-group");
+    if (!records.length) group.append(element("p", "nyx-support-muted", "No configured resources produced checks in this group."));
+    records.forEach(function (record) { resultCard(group, record); });
+  }
+
+  function summarize(records) {
+    if (!records.length) return "No configured checks";
+    if (records.some(function (r) { return r.state === "FAIL"; })) return "Needs attention";
+    if (records.some(function (r) { return r.state === "WARNING"; })) return "Warnings";
+    if (records.every(function (r) { return r.state === "SKIPPED"; })) return "Not assessed";
+    return "Passing";
+  }
+
+  function diagnosticsContent(parent) {
+    sectionHeading(parent, "Diagnostics", "Run bounded checks against this installation and configured resources.");
+    var controls = element("div", "nyx-support-actions");
+    var run = button("Run diagnostics", async function () {
+      notice(parent, "Running diagnostics…");
+      try {
+        var data = await request("/api/professional-support/diagnostics");
+        if (!parent.isConnected) return;
+        var records = Array.isArray(data.checks) ? data.checks : [];
+        var system = records.filter(function (r) { return systemChecks.has(r.check); });
+        var tls = records.filter(function (r) { return tlsChecks.has(r.check); });
+        var routing = records.filter(function (r) { return !systemChecks.has(r.check) && !tlsChecks.has(r.check); });
+        var output = parent.querySelector(".nyx-support-check-groups");
+        output.replaceChildren();
+        checkGroup(output, "System", system);
+        checkGroup(output, "Proxy & Routing", routing);
+        checkGroup(output, "TLS", tls);
+        lastDiagnostics = { at: new Date().toISOString(), system: summarize(system), routing: summarize(routing), tls: summarize(tls) };
+        notice(parent, "Diagnostics completed.");
+      } catch (error) { notice(parent, error.message, true); }
     });
+    run.disabled = !canDiagnose();
+    controls.append(run);
+    parent.append(controls);
+    inactiveNote(parent);
+    parent.append(element("div", "nyx-support-check-groups"));
   }
 
-  function diagnostics(container) {
-    container.append(element("h2", "", "Diagnostics"));
-    container.append(element("p", "nyx-support-intro", "System, proxy and routing, and TLS checks for configured resources."));
-    var results = element("div", "nyx-support-results");
-    container.append(gatedButton("Run diagnostics", async function () {
-      results.replaceChildren();
-      notice(container, "Running diagnostics…");
-      try {
-        var data = await request("/diagnostics");
-        notice(container, "");
-        renderChecks(results, data.checks);
-      } catch (error) { notice(container, error.message, true); }
-    }), results);
+  async function loadHosts(select, hostNotice) {
+    try {
+      var rows = await request("/api/nginx/proxy-hosts");
+      if (!select.isConnected) return;
+      select.replaceChildren();
+      select.append(element("option", "", "Select a configured proxy host"));
+      select.firstChild.value = "";
+      (Array.isArray(rows) ? rows : []).filter(function (row) { return Number.isSafeInteger(row.id) && !row.is_deleted; }).forEach(function (row) {
+        var names = Array.isArray(row.domain_names) ? row.domain_names : [];
+        var label = names.length ? String(names[0]) : "Proxy host " + row.id;
+        var option = element("option", "", label + " · #" + row.id);
+        option.value = String(row.id);
+        select.append(option);
+      });
+      if (select.options.length === 1) {
+        select.disabled = true;
+        hostNotice.textContent = "No configured proxy hosts are available for this workflow.";
+      } else hostNotice.textContent = "Only hosts already configured in NyxGuard can be selected.";
+    } catch (error) { hostNotice.textContent = error.message; select.disabled = true; }
   }
 
-  function troubleshooting(container) {
-    container.append(element("h2", "", "Troubleshooting"));
-    container.append(element("p", "nyx-support-intro", "Trace an upstream 502 for an existing proxy host."));
-    var form = element("div", "nyx-support-form");
-    var hostId = element("input", "nyx-support-input");
-    hostId.type = "number";
-    hostId.min = "1";
-    hostId.step = "1";
-    hostId.placeholder = "Proxy host ID";
-    hostId.setAttribute("aria-label", "Existing proxy host ID");
-    var results = element("div", "nyx-support-results");
-    form.append(hostId, gatedButton("Run 502 workflow", async function () {
-      var id = Number(hostId.value);
-      if (!Number.isSafeInteger(id) || id < 1) { notice(container, "Enter an existing proxy host ID.", true); return; }
-      results.replaceChildren();
-      notice(container, "Running troubleshooting…");
+  function troubleshootingContent(parent) {
+    sectionHeading(parent, "Troubleshooting", "Guided 502 / Upstream unavailable workflow for an existing proxy host.");
+    var cardNode = card(parent, "502 / Upstream unavailable", "Choose an authorized proxy host. Arbitrary URLs and addresses are not accepted.");
+    var form = element("div", "nyx-support-actions");
+    var hostSelect = element("select", "nyx-support-input");
+    hostSelect.setAttribute("aria-label", "Configured proxy host");
+    hostSelect.append(element("option", "", "Loading configured hosts…"));
+    var hostNotice = element("p", "nyx-support-muted", "");
+    var run = button("Run 502 workflow", async function () {
+      var id = Number(hostSelect.value);
+      if (!Number.isSafeInteger(id) || id < 1) { notice(cardNode, "Select a configured proxy host.", true); return; }
+      notice(cardNode, "Running troubleshooting…");
       try {
-        var data = await request("/troubleshoot", { method: "POST", body: { workflow: "upstream_502", proxy_host_id: id } });
-        notice(container, "");
-        renderChecks(results, data.steps);
-      } catch (error) { notice(container, error.message, true); }
-    }));
-    container.append(form, results);
-  }
-
-  function bundle(container) {
-    container.append(element("h2", "", "Support Bundle"));
-    container.append(element("p", "nyx-support-intro", "Generate a structured, redacted JSON bundle or upload it through NyxCloud Support."));
-    container.append(gatedButton("Download bundle", async function () {
-      notice(container, "Generating bundle…");
-      try {
-        var data = await request("/bundle");
-        var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-        var url = URL.createObjectURL(blob);
-        var link = element("a");
-        link.href = url;
-        link.download = "nyxguard-support-bundle.json";
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-        notice(container, "Bundle downloaded.");
-      } catch (error) { notice(container, error.message, true); }
-    }));
-    container.append(gatedButton("Upload bundle", async function () {
-      notice(container, "Uploading bundle…");
-      try {
-        var data = await request("/upload", { method: "POST", body: {} });
-        notice(container, data.support_id ? "Support ID: " + data.support_id : "Upload complete.");
-        if (data.expires_at) line(container, "Available until", data.expires_at);
-      } catch (error) { notice(container, error.message, true); }
-    }));
-  }
-
-  function switchTab(name) {
-    if (!root || !tabs.includes(name)) return;
-    activeTab = name;
-    root.querySelectorAll("[role=tab]").forEach(function (tab) {
-      var selected = tab.textContent === name;
-      tab.setAttribute("aria-selected", String(selected));
-      tab.tabIndex = selected ? 0 : -1;
+        var data = await request("/api/professional-support/troubleshoot", { method: "POST", body: { workflow: "upstream_502", proxy_host_id: id } });
+        if (!cardNode.isConnected) return;
+        var output = cardNode.querySelector(".nyx-support-results");
+        output.replaceChildren();
+        (Array.isArray(data.steps) ? data.steps : []).forEach(function (record) { resultCard(output, record); });
+        notice(cardNode, "Workflow completed.");
+      } catch (error) { notice(cardNode, error.message, true); }
     });
-    var content = panel();
-    content.replaceChildren();
-    if (name === "Overview") overview(content);
-    if (name === "Diagnostics") diagnostics(content);
-    if (name === "Troubleshooting") troubleshooting(content);
-    if (name === "Support Bundle") bundle(content);
-    refreshGates();
+    run.disabled = !canDiagnose();
+    form.append(hostSelect, run);
+    cardNode.append(form, hostNotice, element("div", "nyx-support-results"));
+    inactiveNote(cardNode);
+    if (canDiagnose()) loadHosts(hostSelect, hostNotice);
+    else { hostSelect.disabled = true; hostNotice.textContent = "An active entitlement is required to run this workflow."; }
   }
 
-  function close() {
-    if (!root) return;
-    root.remove();
-    root = null;
-    var app = document.getElementById("root");
-    if (app) {
-      app.inert = appWasInert;
-      if (appAriaHidden == null) app.removeAttribute("aria-hidden");
-      else app.setAttribute("aria-hidden", appAriaHidden);
+  function downloadBundle() {
+    if (!lastBundleBytes) return;
+    var url = URL.createObjectURL(new Blob([lastBundleBytes], { type: "application/json" }));
+    var link = element("a");
+    link.href = url;
+    link.download = "nyxguard-support-bundle.json";
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function bundleContent(parent) {
+    sectionHeading(parent, "Support Bundle", "Generate and review safe metadata before downloading or uploading a structured support bundle.");
+    var cardNode = card(parent, "Bundle workflow", "The bundle is redacted JSON, never a filesystem archive.");
+    var info = element("div", "nyx-support-metrics");
+    var actions = element("div", "nyx-support-actions");
+    var download = button("Download bundle", downloadBundle, "nyx-support-button-secondary");
+    download.disabled = !lastBundleBytes;
+    var generate = button("Generate Support Bundle", async function () {
+      notice(cardNode, "Generating bundle…");
+      try {
+        var data = await request("/api/professional-support/bundle");
+        if (!cardNode.isConnected) return;
+        lastBundle = data;
+        lastBundleBytes = JSON.stringify(data, null, 2);
+        info.replaceChildren();
+        field(info, "Format", data.format || "Unknown");
+        field(info, "Size", new Blob([lastBundleBytes]).size.toLocaleString() + " bytes");
+        field(info, "Generated", dateLabel(data.generated_at));
+        download.disabled = false;
+        notice(cardNode, "Bundle ready to review or download.");
+      } catch (error) { notice(cardNode, error.message, true); }
+    });
+    generate.disabled = !canDiagnose();
+    var upload = button("Upload Support Bundle", async function () {
+      notice(cardNode, "Uploading a freshly generated bundle…");
+      try {
+        var receipt = await request("/api/professional-support/upload", { method: "POST", body: {} });
+        if (!cardNode.isConnected) return;
+        lastSupportId = receipt.support_id || null;
+        notice(cardNode, lastSupportId ? "Upload accepted. Support ID: " + lastSupportId : "Upload completed.");
+        if (receipt.expires_at) field(info, "Available until", dateLabel(receipt.expires_at));
+      } catch (error) { notice(cardNode, error.message, true); }
+    });
+    upload.disabled = !canUpload();
+    actions.append(generate, download, upload);
+    cardNode.append(info, actions);
+    inactiveNote(cardNode);
+    if (lastBundle) {
+      field(info, "Format", lastBundle.format || "Unknown");
+      field(info, "Size", new Blob([lastBundleBytes]).size.toLocaleString() + " bytes");
+      field(info, "Generated", dateLabel(lastBundle.generated_at));
     }
-    document.body.classList.remove("nyx-support-open");
-    if (location.hash === HASH) history.replaceState(null, "", location.pathname + location.search);
-    if (previousFocus && previousFocus.isConnected) previousFocus.focus();
+    if (lastSupportId) field(info, "Support ID", lastSupportId);
   }
 
-  function open() {
-    if (root || !token()) return;
-    previousFocus = document.activeElement;
-    root = element("div", "nyx-support-backdrop");
-    root.addEventListener("mousedown", function (event) { if (event.target === root) close(); });
-    var dialog = element("section", "nyx-support-dialog");
-    dialog.setAttribute("role", "dialog");
-    dialog.setAttribute("aria-modal", "true");
-    dialog.setAttribute("aria-labelledby", "nyx-support-title");
-    var header = element("header", "nyx-support-header");
-    var title = element("h1", "", "Support NyxGuard");
-    title.id = "nyx-support-title";
-    var dismiss = button("Close", close);
-    dismiss.setAttribute("aria-label", "Close Support NyxGuard");
-    header.append(title, dismiss);
-    var nav = element("div", "nyx-support-tabs");
-    nav.setAttribute("role", "tablist");
-    nav.setAttribute("aria-label", "Support sections");
-    tabs.forEach(function (name) {
-      var tab = button(name, function () { switchTab(name); });
-      tab.setAttribute("role", "tab");
+  function route() {
+    if (location.hash === LEGACY_HASH) {
+      history.replaceState(null, "", "/" + SUPPORT_HASH);
+    }
+    if (location.hash === LICENSE_HASH) return "license";
+    if (location.hash === SUPPORT_HASH) return "support:overview";
+    var prefix = SUPPORT_HASH + "/";
+    if (location.hash.startsWith(prefix)) {
+      var slug = location.hash.slice(prefix.length);
+      if (tabSlugs.includes(slug)) return "support:" + slug;
+    }
+    return "";
+  }
+
+  function navigate(hash) {
+    if (location.hash !== hash || location.pathname !== "/") history.pushState(null, "", "/" + hash);
+    renderRoute();
+  }
+
+  function supportContent(parent, slug) {
+    var header = element("header", "nyx-support-page-header");
+    header.append(element("span", "nyx-support-eyebrow", "PROFESSIONAL SUPPORT"), element("h1", "", "Diagnostics & Support"),
+      element("p", "", "Health checks, guided troubleshooting, and secure support workflows for this installation."));
+    parent.append(header);
+    var nav = element("nav", "nyx-support-tabs");
+    nav.setAttribute("aria-label", "Diagnostics and support sections");
+    tabs.forEach(function (name, index) {
+      var tab = button(name, function () { navigate(SUPPORT_HASH + "/" + tabSlugs[index]); });
+      tab.classList.toggle("nyx-support-tab-active", slug === tabSlugs[index]);
+      if (slug === tabSlugs[index]) tab.setAttribute("aria-current", "page");
       nav.append(tab);
     });
-    var content = element("div", "nyx-support-content");
-    content.setAttribute("role", "tabpanel");
-    dialog.append(header, nav, content);
-    root.append(dialog);
-    var app = document.getElementById("root");
-    if (app) {
-      appWasInert = app.inert;
-      appAriaHidden = app.getAttribute("aria-hidden");
-      app.setAttribute("aria-hidden", "true");
-      app.inert = true;
+    parent.append(nav);
+    var content = element("div", "nyx-support-page-content");
+    parent.append(content);
+    if (slug === "overview") overviewContent(content);
+    if (slug === "diagnostics") {
+      loadStatus(function (error) {
+        if (error) notice(content, error.message, true);
+        else diagnosticsContent(content);
+      }, content);
     }
-    document.body.append(root);
-    document.body.classList.add("nyx-support-open");
-    switchTab(activeTab);
-    dismiss.focus();
+    if (slug === "troubleshooting") {
+      loadStatus(function (error) {
+        if (error) notice(content, error.message, true);
+        else troubleshootingContent(content);
+      }, content);
+    }
+    if (slug === "support-bundle") {
+      loadStatus(function (error) {
+        if (error) notice(content, error.message, true);
+        else bundleContent(content);
+      }, content);
+    }
+  }
+
+  function unmount() {
+    if (page) page.remove();
+    if (routeWrapper) routeWrapper.classList.remove("nyx-support-route-hidden");
+    if (mainNode) mainNode.classList.remove("nyx-support-main-active");
+    page = mainNode = routeWrapper = null;
+    currentRoute = "";
+  }
+
+  function renderRoute() {
+    var next = route();
+    if (!next) { unmount(); return; }
+    var main = document.querySelectorAll("#root ._main_f6sqx_21");
+    if (main.length !== 1) { unmount(); return; }
+    var wrappers = main[0].querySelectorAll(":scope > .w-100.py-0.min-w-0.h-100.d-flex.flex-column");
+    if (wrappers.length !== 1) { unmount(); return; }
+    if (page && page.isConnected && mainNode === main[0] && routeWrapper === wrappers[0] && currentRoute === next) return;
+    unmount();
+    mainNode = main[0];
+    routeWrapper = wrappers[0];
+    routeWrapper.classList.add("nyx-support-route-hidden");
+    mainNode.classList.add("nyx-support-main-active");
+    page = element("div", "nyx-support-page");
+    page.setAttribute("data-nyx-support-view", next);
+    mainNode.append(page);
+    currentRoute = next;
+    if (next === "license") licenseContent(page);
+    else supportContent(page, next.split(":")[1]);
+  }
+
+  function scheduleRender() {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(function () { scheduled = false; renderRoute(); });
   }
 
   document.addEventListener("click", function (event) {
-    var link = event.target.closest && event.target.closest("a.prefs-action-support");
+    var link = event.target.closest && event.target.closest("a.nyx-support-license-nav,a.nyx-support-diagnostics-nav");
     if (!link || !link.closest(".prefs-action-links")) return;
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
-    location.hash = HASH;
-    open();
+    navigate(link.classList.contains("nyx-support-license-nav") ? LICENSE_HASH : SUPPORT_HASH);
   }, true);
-  document.addEventListener("keydown", function (event) {
-    if (!root) return;
-    if (event.key === "Escape") { event.preventDefault(); close(); return; }
-    if (event.key !== "Tab") return;
-    var items = Array.from(root.querySelectorAll("button:not([disabled]),input:not([disabled])"));
-    if (!items.length) return;
-    if (event.shiftKey && document.activeElement === items[0]) { event.preventDefault(); items[items.length - 1].focus(); }
-    if (!event.shiftKey && document.activeElement === items[items.length - 1]) { event.preventDefault(); items[0].focus(); }
+  document.addEventListener("click", function (event) {
+    if (!currentRoute || !event.target.closest || !event.target.closest("#navbar-menu")) return;
+    history.replaceState(null, "", location.pathname + location.search);
+    unmount();
   }, true);
-  window.addEventListener("hashchange", function () { if (location.hash === HASH) open(); else close(); });
-  if (location.hash === HASH) {
-    var timer = setInterval(function () { if (token() && document.getElementById("root")) { clearInterval(timer); open(); } }, 250);
-    setTimeout(function () { clearInterval(timer); }, 10000);
-  }
+  window.addEventListener("hashchange", scheduleRender);
+  window.addEventListener("popstate", scheduleRender);
+  new MutationObserver(scheduleRender).observe(document.documentElement, { childList: true, subtree: true });
+  scheduleRender();
 })();

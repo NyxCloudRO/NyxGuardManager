@@ -53,7 +53,7 @@ if (process.argv.includes("--verify-image")) {
 	assert.match(css, /scrollbar-gutter:stable both-edges/);
 	assert.match(css, /@media \(max-width:600px\)/);
 	assert.match(index, /developer-message\.js/);
-	assert.equal(packageJson.version, "4.0.18");
+	assert.equal(packageJson.version, process.env.NYX_EXPECTED_VERSION || "4.0.18");
 	for (const text of approvedCopy) assert.ok(script.includes(text), `missing approved copy: ${text}`);
 
 	const activeBundle = fs.readFileSync("/app/frontend/assets/index-CTHAIRmi-409dev-4012certfix4-threatpagination3.js", "utf8");

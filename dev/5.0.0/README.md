@@ -72,10 +72,11 @@ image, so rollback must pin the saved running image ID, never the drifting tag.
 The app and VPN share a network namespace; inspect the Compose plan and VPN
 impact before replacement. Replace only the application workload when an
 operator has a tested restore, then verify old customer records, login, proxy,
-TLS, WAF, settings, OpenResty, MariaDB, and VPN health. To roll back, restore
-the exact 4.0.18 app image and previous Compose configuration while retaining
-the additive 5.0.0 tables; restore database/volumes only if a specific
-corruption requires it. Do not run `compose down -v` or recreate MariaDB storage.
+TLS, WAF, settings, OpenResty, MariaDB, and VPN health. The 4.0.18 application
+cannot safely use the migration-42 database. A rollback to 4.0.18 requires
+the verified pre-upgrade database backup as well as the exact rollback image
+and previous Compose configuration. Do not run `compose down -v` or recreate
+MariaDB storage during this DEV deployment.
 
 ## Verification and limits
 
@@ -87,11 +88,14 @@ VPN agent, and Developer Message regressions are retained. The Developer
 Message image test's sole 4.0.18 version assertion must be adapted to 5.0.0 in
 an image-specific regression copy; its original file remains unchanged.
 
-The Support entry is the existing lower `Support NyxGuard` control. The main
-sidebar item order, icons, dimensions, User card, Preferences, and Community
-markup/style are untouched. The Support dialog groups Overview, Diagnostics,
-Troubleshooting, and Support Bundle inside that single entry. Full native React
-routing or richer evidence panels require the matching 4.0.18/5.0.0 React
-source and build inputs; the backend endpoints are ready for that UI. Live
+The lower navigation adds `License` and `Diagnostics & Support` after
+Preferences. The latter renders Overview, Diagnostics, Troubleshooting, and
+Support Bundle in the normal main content area. The existing lower
+`Support NyxGuard` control remains a separate commercial action, and Community
+retains its destination. The main sidebar remains unchanged. The exact React
+source is unavailable, so the native content view is mounted by the bounded,
+assertion-protected frontend overlay. The footer, Settings and backup labels
+show 5.0.0; the backend package version controls backup export metadata and
+the exact-version import gate. Live
 Support API, Authority, S3, Cloudflare path, and production acceptance remain
 separate controlled work.
