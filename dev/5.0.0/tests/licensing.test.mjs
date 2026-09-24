@@ -205,6 +205,48 @@ test("support upload retries exact bytes and never selects storage", async () =>
 	assert.ok(!/bucket|object_prefix|storage_credentials/.test(sent[0].body));
 });
 
+test("expected SHA binds upload to the generated artifact and pending retry bytes", async () => {
+	const store = new MemoryStore(); store.data.state = { activationId: activation, refreshCredential: "b".repeat(43),
+		envelope: envelope(), lastVerified: now, authorityUnavailable: false }; store.data.revisionFloor = 1;
+	const sent = [];
+	const client = new LicensingClient({ store, authorityOrigin: "https://authority.example.invalid",
+		supportOrigin: "https://support.example.invalid", trust, now: () => now,
+		fetchImpl: async (_url, options) => {
+			sent.push({ body: options.body, key: options.headers["Idempotency-Key"] });
+			return sent.length === 1 ? response(503, { category: "storage_unavailable" }) :
+				response(201, { support_id: "NYX-20260924-" + "A".repeat(24), expires_at: "2026-10-24T12:00:00Z" });
+		} });
+	const first = '{"format":"nyxguard-support-bundle-v2","test":1}';
+	const second = '{"format":"nyxguard-support-bundle-v2","test":2}';
+	const firstSha = createHash("sha256").update(first).digest("hex");
+	const secondSha = createHash("sha256").update(second).digest("hex");
+	await assert.rejects(client.upload(first, "invalid", firstSha), /version_invalid/);
+	assert.equal(store.upload, null);
+	await assert.rejects(client.upload(first, "5.0.0", secondSha), /upload_conflict/);
+	assert.equal(store.upload, null);
+	await assert.rejects(client.upload(first, "5.0.0", firstSha), /upload_failed/);
+	assert.equal(store.upload.sha256, firstSha);
+	await assert.rejects(client.upload(second, "5.0.0", secondSha), /upload_conflict/);
+	assert.equal(sent.length, 1);
+	const receipt = await client.upload(first, "5.0.0", firstSha);
+	assert.match(receipt.support_id, /^NYX-/);
+	assert.deepEqual(sent, [{ body: first, key: sent[0].key }, { body: first, key: sent[0].key }]);
+});
+
+test("expected SHA rejects a pending record whose stored bytes do not match its digest", async () => {
+	const store = new MemoryStore(); store.data.state = { activationId: activation, refreshCredential: "b".repeat(43),
+		envelope: envelope(), lastVerified: now }; store.data.revisionFloor = 1;
+	const bundle = '{"format":"nyxguard-support-bundle-v2"}';
+	const sha = createHash("sha256").update(bundle).digest("hex");
+	store.upload = { key: "pending-key", sha256: sha, bundle: "different stored bytes" };
+	let requests = 0;
+	const client = new LicensingClient({ store, authorityOrigin: "https://authority.example.invalid",
+		supportOrigin: "https://support.example.invalid", trust, now: () => now,
+		fetchImpl: async () => { requests++; throw Error("must not send"); } });
+	await assert.rejects(client.upload(bundle, "5.0.0", sha), /upload_conflict/);
+	assert.equal(requests, 0);
+});
+
 test("Premium authorizes only the NyxGuard support route", async () => {
 	const store = new MemoryStore();
 	store.data.state = { activationId: activation, refreshCredential: "b".repeat(43),

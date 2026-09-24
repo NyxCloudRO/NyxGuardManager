@@ -1,8 +1,10 @@
 // Bundle data is selected by schema first. This pass is a second, fail-closed boundary.
-const BLOCKED_KEY = /(?:pass(?:word|phrase)?|secret|token|cookie|session|authorization|api[_-]?key|private[_-]?key|credential|database[_-]?url|dsn|webhook|recovery|s3|access[_-]?key|encryption[_-]?key|signing[_-]?key|dns[_-]?provider|acme)/i;
-const SECRET_VALUE = /-----BEGIN [^-]*PRIVATE KEY-----|\bBearer\s+\S+|\b(?:password|token|secret|api[_-]?key|authorization)\s*[:=]\s*\S+|(?:mysql|postgres(?:ql)?|mongodb|redis):\/\/[^\s/@:]+:[^\s/@]+@|https?:\/\/[^\s/@:]+:[^\s/@]+@/i;
+const BLOCKED_KEY = /(?:pass(?:word|phrase)?|secret|token|cookie|session|authorization|api[_-]?key|private[_-]?key|credential|database[_-]?url|dsn|webhook|recovery|claim[_-]?code|s3|access[_-]?key|encryption[_-]?key|signing[_-]?key|dns[_-]?provider|acme|cloudflare|license[_-]?key)/i;
+const SENSITIVE_NAME = "(?:password|passphrase|secret|token|api[_-]?key|access[_-]?key|refresh[_-]?token|session(?:[_-]?id)?|claim[_-]?code|authorization|(?:set[_-]?)?cookie|credential|webhook[_-]?secret|license[_-]?key)";
+const SECRET_VALUE = new RegExp(
+	`-----BEGIN [^-]*PRIVATE KEY-----|\\b(?:Bearer|Basic)\\s+\\S+|\\b(?:[A-Za-z][A-Za-z0-9]*[_-]){0,3}${SENSITIVE_NAME}\\s*[:=]\\s*\\S+|[?&](?:[A-Za-z][A-Za-z0-9]*[_-]){0,3}${SENSITIVE_NAME}=|(?:mysql|postgres(?:ql)?|mongodb|redis):\\/\\/[^\\s/@:]+:[^\\s/@]+@|https?:\\/\\/[^\\s/@:]+:[^\\s/@]+@`, "i");
 const MAX_STRING = 240;
-const MAX_ARRAY = 100;
+const MAX_ARRAY = 512;
 const MAX_DEPTH = 8;
 
 export function redact(value, depth = 0) {

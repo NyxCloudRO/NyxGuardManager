@@ -27,9 +27,9 @@ idempotent upload retries.
 
 # NyxGuard 5.0.0 Professional Support UI overlay
 
-This is an additive frontend layer for the existing 4.0.18 image composition build. It does not create or alter a React source tree. The main sidebar and lower User, Preferences, and Community controls retain their markup, classes, icons, order, and styling.
+This is an additive frontend layer for the existing 4.0.18 image composition build. It does not create or alter a React source tree. The main sidebar and lower User, Preferences, and Community controls retain their markup, classes, icons, and order. Viewport-height CSS compacts their spacing on shorter laptop displays and places the expanded Preferences panel beside the sidebar so it does not cover navigation.
 
-The lower navigation gains `License` and `Diagnostics & Support` after Preferences. The existing `Support NyxGuard` commercial link and Community destination remain unchanged. The hidden React `a.support-nyxguard` donation link remains unchanged because the existing Developer Message uses it for its separate donation action.
+The lower navigation gains `License` and `Diagnostics & Support` after Preferences. Diagnostics uses a cyan stethoscope icon drawn in the existing 14 px lower-navigation SVG format. The existing `Support NyxGuard` commercial link and Community destination remain unchanged. The hidden React `a.support-nyxguard` donation link remains unchanged because the existing Developer Message uses it for its separate donation action.
 
 Both new destinations render in the normal main content area. Diagnostics & Support has internal Overview, Diagnostics, Troubleshooting, and Support Bundle sections. The old `#nyxguard-professional-support` route redirects to the new destination. The overlay uses the existing local JWT for same-origin requests. Backend authorization remains authoritative; diagnostics require `enabled: true`, while upload requires `state: "ACTIVE"`.
 

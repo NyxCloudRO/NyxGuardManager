@@ -31,7 +31,11 @@
   var lastDiagnostics = null;
   var lastBundle = null;
   var lastBundleBytes = null;
+  var lastBundleSha = null;
   var lastSupportId = null;
+  var pendingHostId = null;
+  var pendingDiagnosticsRun = false;
+  var pendingBundleGeneration = false;
   var scheduled = false;
 
   if (location.pathname === "/nyxguard-professional-support") {
@@ -102,7 +106,7 @@
   function canDiagnose() { return !!(latestStatus && latestStatus.enabled); }
   function canUpload() { return !!(latestStatus && latestStatus.state === "ACTIVE"); }
 
-  async function request(path, options) {
+  async function requestResponse(path, options) {
     var auth = token();
     if (!auth) throw new Error("Sign in to use Professional Support.");
     var response = await fetch(path, {
@@ -116,7 +120,11 @@
       body: options && options.body ? JSON.stringify(options.body) : undefined,
     });
     if (!response.ok) throw new Error("Request failed (HTTP " + response.status + ").");
-    return response.json();
+    return response;
+  }
+
+  async function request(path, options) {
+    return (await requestResponse(path, options)).json();
   }
 
   function field(parent, title, value) {
@@ -180,7 +188,7 @@
 
   function licenseContent(parent) {
     var header = element("header", "nyx-support-page-header");
-    header.append(element("span", "nyx-support-eyebrow", "NYXGUARD MANAGER 5.0.0"), element("h1", "", "Professional Support License"),
+    header.append(element("h1", "", "Professional Support License"),
       element("p", "", "Manage NyxGuard Manager Professional Support or NyxCloud Premium Support for diagnostics and support. Core NyxGuard remains available without a license."));
     parent.append(header);
     var details = card(parent, "License status", "Entitlement details are verified by the NyxGuard backend.");
@@ -232,6 +240,14 @@
     field(workflow, "Bundle", lastBundle ? "Generated " + dateLabel(lastBundle.generated_at) : "Not generated this session");
     field(workflow, "Support ID", lastSupportId || "No upload this session");
     var uploadField = field(workflow, "Upload", "Checking entitlement…");
+    var bundleAction = button("Generate Support Bundle", function () {
+      pendingBundleGeneration = true;
+      navigate(SUPPORT_HASH + "/support-bundle");
+    });
+    bundleAction.disabled = true;
+    var workflowActions = element("div", "nyx-support-actions");
+    workflowActions.append(bundleAction);
+    workflow.append(workflowActions);
     loadStatus(function (error, status) {
       if (error) {
         notice(license, error.message, true);
@@ -243,12 +259,27 @@
       statusFields(license, status);
       inactiveNote(license);
       uploadField.querySelector("strong").textContent = canUpload() ? "Available" : "Requires an active online entitlement";
+      bundleAction.disabled = !canDiagnose();
+      diagnosticsAction.disabled = !canDiagnose();
+      troubleshootAction.disabled = !canDiagnose();
+      problemsPanel(problems, true);
     }, license);
     var diagnostics = card(grid, "Diagnostics summary", "System, proxy and routing, and TLS.");
     field(diagnostics, "Last run", lastDiagnostics ? dateLabel(lastDiagnostics.at) : "Not run this session");
     field(diagnostics, "System", lastDiagnostics ? lastDiagnostics.system : "Not run");
     field(diagnostics, "Proxy & Routing", lastDiagnostics ? lastDiagnostics.routing : "Not run");
     field(diagnostics, "TLS", lastDiagnostics ? lastDiagnostics.tls : "Not run");
+    var diagnosticActions = element("div", "nyx-support-actions");
+    var diagnosticsAction = button("Run Diagnostics", function () {
+      pendingDiagnosticsRun = true;
+      navigate(SUPPORT_HASH + "/diagnostics");
+    });
+    var troubleshootAction = button("Troubleshoot", function () { navigate(SUPPORT_HASH + "/troubleshooting"); }, "nyx-support-button-secondary");
+    diagnosticsAction.disabled = true;
+    troubleshootAction.disabled = true;
+    diagnosticActions.append(diagnosticsAction, troubleshootAction);
+    diagnostics.append(diagnosticActions);
+    var problems = card(grid, "Recent problems", "Current service and proxy issues from this installation.");
   }
 
   function friendlyCheck(name) {
@@ -261,7 +292,7 @@
     var heading = element("div", "nyx-support-result-heading");
     heading.append(element("strong", "", friendlyCheck(record.check)), element("span", "nyx-support-state state-" + state.toLowerCase(), state));
     row.append(heading);
-    if (typeof record.summary === "string" && record.summary) row.append(element("p", "", record.summary));
+    if (typeof record.summary === "string" && record.summary) row.append(element("p", "", record.summary.slice(0, 240)));
     var evidence = record.evidence || {};
     var safeEvidence = [];
     if (Number.isSafeInteger(evidence.host_id)) safeEvidence.push("Proxy host " + evidence.host_id);
@@ -269,8 +300,11 @@
     if (Number.isFinite(evidence.free_percent)) safeEvidence.push(Math.round(evidence.free_percent) + "% free");
     if (Number.isFinite(evidence.days_remaining)) safeEvidence.push(evidence.days_remaining + " days remaining");
     if (Number.isFinite(evidence.seconds)) safeEvidence.push(evidence.seconds + " seconds uptime");
+    if (Number.isSafeInteger(evidence.count)) safeEvidence.push(evidence.count + " occurrences");
+    if (typeof evidence.failure === "string" && /^[a-z_]{1,32}$/.test(evidence.failure)) safeEvidence.push(friendlyCheck(evidence.failure));
     if (safeEvidence.length) row.append(element("p", "nyx-support-evidence", safeEvidence.join(" · ")));
-    if (state !== "PASS") row.append(element("p", "nyx-support-guidance", guidance[record.check] || (state === "SKIPPED" ? "This check needs more configured data or a reachable service." : "Review this check and its configured resource.")));
+    var recommendation = record.recommendation || record.remediation;
+    if (state !== "PASS") row.append(element("p", "nyx-support-guidance", typeof recommendation === "string" && recommendation.length <= 240 ? recommendation : guidance[record.check] || (state === "SKIPPED" ? "This check needs more configured data or a reachable service." : "Review this check and its configured resource.")));
     parent.append(row);
   }
 
@@ -289,6 +323,100 @@
     return "Passing";
   }
 
+  function troubleshootHost(id) {
+    if (!Number.isSafeInteger(id) || id < 1) return;
+    pendingHostId = id;
+    navigate(SUPPORT_HASH + "/troubleshooting");
+  }
+
+  function problemsPanel(parent, compact) {
+    var controls = element("div", "nyx-support-actions");
+    var windowSelect = element("select", "nyx-support-input");
+    windowSelect.setAttribute("aria-label", "Recent problems time window");
+    [["15", "Last 15 minutes"], ["60", "Last hour"], ["1440", "Last 24 hours"]].forEach(function (entry) {
+      var option = element("option", "", entry[1]);
+      option.value = entry[0];
+      windowSelect.append(option);
+    });
+    if (compact) windowSelect.value = "60";
+    var refresh = button("Refresh problems", load, "nyx-support-button-secondary");
+    refresh.disabled = !canDiagnose();
+    controls.append(windowSelect, refresh);
+    var output = element("div", "nyx-support-problems");
+    parent.append(controls, output);
+    windowSelect.addEventListener("change", load);
+    async function load() {
+      if (!canDiagnose()) { output.replaceChildren(element("p", "nyx-support-muted", "An active entitlement is required.")); return; }
+      output.replaceChildren(element("p", "nyx-support-muted", "Loading recent problems…"));
+      try {
+        var data = await request("/api/professional-support/problems?window=" + windowSelect.value);
+        if (!parent.isConnected) return;
+        output.replaceChildren();
+        var items = Array.isArray(data.problems) ? data.problems.slice(0, 20) : [];
+        if (data.source_available === false) output.append(element("p", "nyx-support-callout", "Recent log sources are unavailable. Problem counts may be incomplete; check logging and try again."));
+        if (!items.length && data.source_available !== false) output.append(element("p", "nyx-support-muted", "No recent problems were detected in this window."));
+        items.forEach(function (item) {
+          var row = element("article", "nyx-support-problem");
+          var title = /^[a-z][a-z0-9_]{0,63}$/.test(item.category || "") ? friendlyCheck(item.category) : "Service problem";
+          var state = ["FAIL", "WARNING", "PASS"].includes(item.state) ? item.state : "WARNING";
+          var heading = element("div", "nyx-support-result-heading");
+          heading.append(element("strong", "", title), element("span", "nyx-support-state state-" + state.toLowerCase(), state));
+          row.append(heading);
+          var details = [];
+          if (Number.isSafeInteger(item.host_id) && item.host_id > 0) details.push("Proxy host #" + item.host_id);
+          if (Number.isSafeInteger(item.count) && item.count >= 0) details.push(item.count + " occurrences");
+          if (item.last_seen) details.push("Last seen " + dateLabel(item.last_seen));
+          if (details.length) row.append(element("p", "nyx-support-evidence", details.join(" · ")));
+          if (Number.isSafeInteger(item.host_id) && item.host_id > 0) row.append(button("Troubleshoot host #" + item.host_id, function () { troubleshootHost(item.host_id); }, "nyx-support-button-secondary"));
+          output.append(row);
+        });
+      } catch (error) { output.replaceChildren(element("p", "nyx-support-error", error.message)); }
+    }
+    load();
+  }
+
+  function renderDiagnostics(parent, data) {
+    var records = Array.isArray(data.checks) ? data.checks : [];
+    var hosts = Array.isArray(data.hosts) ? data.hosts : [];
+    var system = records.filter(function (r) { return systemChecks.has(r.check); });
+    var tls = records.filter(function (r) { return tlsChecks.has(r.check); });
+    var routing = records.filter(function (r) { return !systemChecks.has(r.check) && !tlsChecks.has(r.check); });
+    var output = parent.querySelector(".nyx-support-check-groups");
+    output.replaceChildren();
+    checkGroup(output, "System", system);
+    if (hosts.length) {
+      hosts.forEach(function (host) {
+        if (!Number.isSafeInteger(host.id) || host.id < 1) return;
+        var names = Array.isArray(host.domains) ? host.domains.filter(function (name) { return typeof name === "string" && name.length <= 253; }) : [];
+        var group = card(output, "Proxy host #" + host.id, names.slice(0, 2).join(", ") || "Configured proxy host");
+        group.classList.add("nyx-support-result-group", "nyx-support-host-group");
+        group.append(element("p", "nyx-support-muted", host.enabled ? "Enabled" : "Disabled"));
+        var hostChecks = Array.isArray(host.checks) ? host.checks : [];
+        var details = element("details", "nyx-support-host-details");
+        var summary = element("summary", "", summarize(hostChecks) + " · " + hostChecks.length + " checks");
+        details.append(summary);
+        if (hostChecks.some(function (record) { return record.state === "FAIL" || record.state === "WARNING"; })) details.open = true;
+        if (!hostChecks.length) details.append(element("p", "nyx-support-muted", "No checks available for this host."));
+        hostChecks.forEach(function (record) { resultCard(details, record); });
+        details.append(button("Troubleshoot this host", function () { troubleshootHost(host.id); }, "nyx-support-button-secondary"));
+        group.append(details);
+      });
+    } else {
+      checkGroup(output, "Proxy & Routing", routing);
+      checkGroup(output, "TLS", tls);
+    }
+    var allHostChecks = hosts.flatMap(function (h) { return Array.isArray(h.checks) ? h.checks : []; });
+    var hostTls = allHostChecks.filter(function (r) { return tlsChecks.has(r.check); });
+    var hostRouting = allHostChecks.filter(function (r) { return !tlsChecks.has(r.check); });
+    lastDiagnostics = { at: data.generated_at || new Date().toISOString(), system: summarize(system),
+      routing: summarize(hosts.length ? hostRouting : routing), tls: summarize(hosts.length ? hostTls : tls) };
+    var summary = parent.querySelector(".nyx-support-summary");
+    summary.replaceChildren();
+    if (data.summary) ["pass", "warning", "fail", "skipped"].forEach(function (key) {
+      if (Number.isSafeInteger(data.summary[key])) field(summary, friendlyCheck(key), data.summary[key]);
+    });
+  }
+
   function diagnosticsContent(parent) {
     sectionHeading(parent, "Diagnostics", "Run bounded checks against this installation and configured resources.");
     notice(parent, "");
@@ -298,16 +426,7 @@
       try {
         var data = await request("/api/professional-support/diagnostics");
         if (!parent.isConnected) return;
-        var records = Array.isArray(data.checks) ? data.checks : [];
-        var system = records.filter(function (r) { return systemChecks.has(r.check); });
-        var tls = records.filter(function (r) { return tlsChecks.has(r.check); });
-        var routing = records.filter(function (r) { return !systemChecks.has(r.check) && !tlsChecks.has(r.check); });
-        var output = parent.querySelector(".nyx-support-check-groups");
-        output.replaceChildren();
-        checkGroup(output, "System", system);
-        checkGroup(output, "Proxy & Routing", routing);
-        checkGroup(output, "TLS", tls);
-        lastDiagnostics = { at: new Date().toISOString(), system: summarize(system), routing: summarize(routing), tls: summarize(tls) };
+        renderDiagnostics(parent, data);
         notice(parent, "Diagnostics completed.");
       } catch (error) { notice(parent, error.message, true); }
     });
@@ -315,7 +434,14 @@
     controls.append(run);
     parent.append(controls);
     inactiveNote(parent);
+    parent.append(element("div", "nyx-support-metrics nyx-support-summary"));
+    var problems = card(parent, "Recent problems", "Issues detected from bounded logs and service events.");
+    problemsPanel(problems, false);
     parent.append(element("div", "nyx-support-check-groups"));
+    if (pendingDiagnosticsRun && canDiagnose()) {
+      pendingDiagnosticsRun = false;
+      run.click();
+    }
   }
 
   async function loadHosts(select, hostNotice) {
@@ -335,20 +461,31 @@
       if (select.options.length === 1) {
         select.disabled = true;
         hostNotice.textContent = "No configured proxy hosts are available for this workflow.";
-      } else hostNotice.textContent = "Only hosts already configured in NyxGuard can be selected.";
+      } else {
+        hostNotice.textContent = "Only hosts already configured in NyxGuard can be selected.";
+        if (pendingHostId && Array.from(select.options).some(function (option) { return option.value === String(pendingHostId); })) select.value = String(pendingHostId);
+        pendingHostId = null;
+      }
     } catch (error) { hostNotice.textContent = error.message; select.disabled = true; }
   }
 
   function troubleshootingContent(parent) {
-    sectionHeading(parent, "Troubleshooting", "Guided 502 / Upstream unavailable workflow for an existing proxy host.");
-    var cardNode = card(parent, "502 / Upstream unavailable", "Choose an authorized proxy host. Arbitrary URLs and addresses are not accepted.");
+    sectionHeading(parent, "Troubleshooting", "Guided routing and upstream checks for an existing proxy host.");
+    var cardNode = card(parent, "Configured host workflow", "Choose an authorized proxy host and focus. The same bounded connectivity probe checks the configured upstream; arbitrary URLs and addresses are not accepted.");
     notice(cardNode, "");
     var form = element("div", "nyx-support-actions");
     var hostSelect = element("select", "nyx-support-input");
     hostSelect.setAttribute("aria-label", "Configured proxy host");
     hostSelect.append(element("option", "", "Loading configured hosts…"));
+    var focusSelect = element("select", "nyx-support-input");
+    focusSelect.setAttribute("aria-label", "Troubleshooting focus");
+    [["all", "502 / Full route"], ["dns", "DNS resolution"], ["tcp", "Upstream connection"], ["tls", "Upstream TLS"], ["http", "Upstream HTTP"]].forEach(function (entry) {
+      var option = element("option", "", entry[1]);
+      option.value = entry[0];
+      focusSelect.append(option);
+    });
     var hostNotice = element("p", "nyx-support-muted", "");
-    var run = button("Run 502 workflow", async function () {
+    var run = button("Run workflow", async function () {
       var id = Number(hostSelect.value);
       if (!Number.isSafeInteger(id) || id < 1) { notice(cardNode, "Select a configured proxy host.", true); return; }
       notice(cardNode, "Running troubleshooting…");
@@ -357,21 +494,35 @@
         if (!cardNode.isConnected) return;
         var output = cardNode.querySelector(".nyx-support-results");
         output.replaceChildren();
-        (Array.isArray(data.steps) ? data.steps : []).forEach(function (record) { resultCard(output, record); });
+        var steps = Array.isArray(data.steps) ? data.steps : [];
+        var focus = focusSelect.value;
+        var focusedChecks = { dns: ["dns_resolution"], tcp: ["dns_resolution", "upstream_tcp"],
+          tls: ["dns_resolution", "upstream_tcp", "upstream_tls"], http: ["dns_resolution", "upstream_tcp", "upstream_tls", "upstream_http"] };
+        if (focus !== "all") steps = steps.filter(function (record) { return focusedChecks[focus] && focusedChecks[focus].includes(record.check); });
+        steps.forEach(function (record) { resultCard(output, record); });
+        if (!steps.length) output.append(element("p", "nyx-support-muted", "No steps were returned for this focus."));
         notice(cardNode, "Workflow completed.");
       } catch (error) { notice(cardNode, error.message, true); }
     });
     run.disabled = !canDiagnose();
-    form.append(hostSelect, run);
+    form.append(hostSelect, focusSelect, run);
     cardNode.append(form, hostNotice, element("div", "nyx-support-results"));
     inactiveNote(cardNode);
     if (canDiagnose()) loadHosts(hostSelect, hostNotice);
     else { hostSelect.disabled = true; hostNotice.textContent = "An active entitlement is required to run this workflow."; }
   }
 
-  function downloadBundle() {
-    if (!lastBundleBytes) return;
-    var url = URL.createObjectURL(new Blob([lastBundleBytes], { type: "application/json" }));
+  async function downloadBundle(cardNode) {
+    if (!lastBundleSha) return;
+    notice(cardNode, "Downloading verified bundle…");
+    try {
+    var response = await requestResponse("/api/professional-support/bundle/" + lastBundleSha + "/download");
+    var raw = await response.text();
+    var bytes = new TextEncoder().encode(raw);
+    var hash = await crypto.subtle.digest("SHA-256", bytes);
+    var actual = Array.from(new Uint8Array(hash), function (byte) { return byte.toString(16).padStart(2, "0"); }).join("");
+    if (actual !== lastBundleSha) throw new Error("Downloaded bundle digest verification failed.");
+    var url = URL.createObjectURL(new Blob([bytes], { type: "application/json" }));
     var link = element("a");
     link.href = url;
     link.download = "nyxguard-support-bundle.json";
@@ -379,6 +530,21 @@
     link.click();
     link.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    notice(cardNode, "Bundle downloaded and verified.");
+    } catch (error) { notice(cardNode, error.message, true); }
+  }
+
+  async function fetchBundle() {
+    var response = await requestResponse("/api/professional-support/bundle");
+    var raw = await response.text();
+    var bytes = new TextEncoder().encode(raw);
+    var expected = response.headers.get("X-NyxGuard-Bundle-SHA256");
+    if (!expected || !/^[0-9a-f]{64}$/i.test(expected)) throw new Error("Bundle digest is missing or invalid.");
+    if (!window.crypto || !crypto.subtle) throw new Error("Secure bundle verification is unavailable in this browser.");
+    var hash = await crypto.subtle.digest("SHA-256", bytes);
+    var actual = Array.from(new Uint8Array(hash), function (byte) { return byte.toString(16).padStart(2, "0"); }).join("");
+    if (actual !== expected.toLowerCase()) throw new Error("Bundle digest verification failed.");
+    return { data: JSON.parse(raw), bytes: bytes, sha256: actual };
   }
 
   function bundleContent(parent) {
@@ -387,28 +553,43 @@
     notice(cardNode, "");
     var info = element("div", "nyx-support-metrics");
     var actions = element("div", "nyx-support-actions");
-    var download = button("Download bundle", downloadBundle, "nyx-support-button-secondary");
+    var download = button("Download bundle", function () { downloadBundle(cardNode); }, "nyx-support-button-secondary");
     download.disabled = !lastBundleBytes;
     var generate = button("Generate Support Bundle", async function () {
       notice(cardNode, "Generating bundle…");
       try {
-        var data = await request("/api/professional-support/bundle");
+        var fetched = await fetchBundle();
         if (!cardNode.isConnected) return;
-        lastBundle = data;
-        lastBundleBytes = JSON.stringify(data, null, 2);
+        lastBundle = fetched.data;
+        lastBundleBytes = fetched.bytes;
+        lastBundleSha = fetched.sha256;
         info.replaceChildren();
-        field(info, "Format", data.format || "Unknown");
-        field(info, "Size", new Blob([lastBundleBytes]).size.toLocaleString() + " bytes");
-        field(info, "Generated", dateLabel(data.generated_at));
+        field(info, "Format", lastBundle.format || "Unknown");
+        field(info, "Size", lastBundleBytes.length.toLocaleString() + " bytes");
+        field(info, "SHA-256", lastBundleSha);
+        field(info, "Generated", dateLabel(lastBundle.generated_at));
         download.disabled = false;
-        notice(cardNode, "Bundle ready to review or download.");
+        notice(cardNode, "Bundle ready to download or upload.");
       } catch (error) { notice(cardNode, error.message, true); }
     });
     generate.disabled = !canDiagnose();
     var upload = button("Upload Support Bundle", async function () {
-      notice(cardNode, "Uploading a freshly generated bundle…");
+      notice(cardNode, "Preparing verified bundle for upload…");
       try {
-        var receipt = await request("/api/professional-support/upload", { method: "POST", body: {} });
+        if (!lastBundleSha) {
+          var fetched = await fetchBundle();
+          lastBundle = fetched.data;
+          lastBundleBytes = fetched.bytes;
+          lastBundleSha = fetched.sha256;
+          download.disabled = false;
+          info.replaceChildren();
+          field(info, "Format", lastBundle.format || "Unknown");
+          field(info, "Size", lastBundleBytes.length.toLocaleString() + " bytes");
+          field(info, "SHA-256", lastBundleSha);
+          field(info, "Generated", dateLabel(lastBundle.generated_at));
+        }
+        notice(cardNode, "Uploading verified bundle…");
+        var receipt = await request("/api/professional-support/upload", { method: "POST", body: { sha256: lastBundleSha } });
         if (!cardNode.isConnected) return;
         lastSupportId = receipt.support_id || null;
         notice(cardNode, lastSupportId ? "Upload accepted. Support ID: " + lastSupportId : "Upload completed.");
@@ -421,10 +602,15 @@
     inactiveNote(cardNode);
     if (lastBundle) {
       field(info, "Format", lastBundle.format || "Unknown");
-      field(info, "Size", new Blob([lastBundleBytes]).size.toLocaleString() + " bytes");
+      field(info, "Size", lastBundleBytes.length.toLocaleString() + " bytes");
+      if (lastBundleSha) field(info, "SHA-256", lastBundleSha);
       field(info, "Generated", dateLabel(lastBundle.generated_at));
     }
     if (lastSupportId) field(info, "Support ID", lastSupportId);
+    if (pendingBundleGeneration && canDiagnose()) {
+      pendingBundleGeneration = false;
+      generate.click();
+    }
   }
 
   function route() {
@@ -448,7 +634,7 @@
 
   function supportContent(parent, slug) {
     var header = element("header", "nyx-support-page-header");
-    header.append(element("span", "nyx-support-eyebrow", "PROFESSIONAL SUPPORT"), element("h1", "", "Diagnostics & Support"),
+    header.append(element("h1", "", "Diagnostics & Support"),
       element("p", "", "Health checks, guided troubleshooting, and secure support workflows for this installation."));
     parent.append(header);
     var nav = element("nav", "nyx-support-tabs");

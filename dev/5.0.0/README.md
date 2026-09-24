@@ -95,7 +95,9 @@ The lower navigation adds `License` and `Diagnostics & Support` after
 Preferences. The latter renders Overview, Diagnostics, Troubleshooting, and
 Support Bundle in the normal main content area. The existing lower
 `Support NyxGuard` control remains a separate commercial action, and Community
-retains its destination. The main sidebar remains unchanged. The exact React
+retains its destination. The main sidebar keeps its menu structure, with
+height-responsive spacing to keep Settings and the lower controls visible on
+supported laptop displays. The exact React
 source is unavailable, so the native content view is mounted by the bounded,
 assertion-protected frontend overlay. The footer, Settings and backup labels
 show 5.0.0; the backend package version controls backup export metadata and

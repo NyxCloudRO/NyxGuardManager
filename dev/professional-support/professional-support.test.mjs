@@ -23,6 +23,55 @@ test("system, routing, TLS and 502 workflow return bounded stable states", () =>
 	assert.equal(tls.find((r) => r.check === "certificate_expiry").state, "WARNING");
 });
 
+test("diagnostics explain every state without claiming missing observations passed", () => {
+	const unobservedHost = { ...host, listenerMatched: undefined, routeMatched: undefined };
+	const collections = [systemDiagnostics(), routingDiagnostics(unobservedHost), tlsDiagnostics(host), troubleshoot502(unobservedHost)];
+	for (const collection of collections) for (const item of collection) {
+		assert.ok(["PASS", "WARNING", "FAIL", "SKIPPED"].includes(item.state), item.check);
+		assert.ok(typeof item.reason === "string" && item.reason.length > 10, item.check);
+		assert.ok(typeof item.recommendation === "string" && item.recommendation.length > 10, item.check);
+		assert.equal(item.summary, item.reason);
+	}
+	assert.ok(systemDiagnostics().every((item) => item.state === "SKIPPED"));
+	assert.ok(routingDiagnostics(unobservedHost).every((item) => item.state === "SKIPPED"));
+	assert.equal(tlsDiagnostics(host).find((item) => item.check === "certificate_presence").state, "FAIL");
+	assert.equal(systemDiagnostics({ diskFreePercent: 110, memoryFreePercent: -1 })
+		.find((item) => item.check === "disk_capacity").state, "SKIPPED");
+});
+
+test("system resource, restart, and error states require actual observations", () => {
+	const absent = systemDiagnostics({ version: "5.0.0", backendHealthy: true });
+	for (const name of ["disk_capacity", "memory_pressure", "restart_indicator", "error_indicator"]) {
+		assert.equal(absent.find((item) => item.check === name).state, "SKIPPED");
+	}
+	assert.equal(absent.some((item) => item.check === "cpu_usage"), false);
+	const observed = systemDiagnostics({ cpuUsagePercent: 96, diskFreePercent: 4, memoryFreePercent: 9,
+		restartCount: 4, recentErrorCount: 2 });
+	for (const name of ["cpu_usage", "disk_capacity"]) assert.equal(observed.find((item) => item.check === name).state, "FAIL");
+	for (const name of ["memory_pressure", "restart_indicator", "error_indicator"]) {
+		assert.equal(observed.find((item) => item.check === name).state, "WARNING");
+	}
+});
+
+test("routing and TLS distinguish measured failures, disabled hosts, and missing probes", () => {
+	const disabled = routingDiagnostics({ ...host, enabled: false });
+	assert.equal(disabled.find((item) => item.check === "listener_match").state, "WARNING");
+	assert.match(disabled.find((item) => item.check === "listener_match").reason, /disabled/);
+	for (const item of [...disabled, ...tlsDiagnostics(host)]) assert.equal(item.evidence.host_id, host.id, item.check);
+	const baseline = routingDiagnostics(host, { routeConflict: false });
+	assert.match(baseline.find((item) => item.check === "dns_resolution").reason, /not requested/);
+	assert.match(disabled.find((item) => item.check === "dns_resolution").reason, /disabled/);
+	const http = routingDiagnostics({ ...host, forward_scheme: "http" }, { dnsResolved: true, tcpReachable: true, httpStatus: 503 });
+	assert.equal(http.find((item) => item.check === "upstream_tls").state, "SKIPPED");
+	assert.match(http.find((item) => item.check === "upstream_tls").reason, /HTTP/);
+	assert.equal(http.find((item) => item.check === "upstream_http").state, "FAIL");
+	assert.match(http.find((item) => item.check === "upstream_http").reason, /server error/);
+	assert.equal(routingDiagnostics(host, { httpStatus: 401 }).find((item) => item.check === "upstream_http").state, "WARNING");
+	const expired = tlsDiagnostics(host, { id: 3, expires_on: new Date(Date.now() - 86400000 * 2).toISOString() });
+	assert.equal(expired.find((item) => item.check === "certificate_expiry").state, "FAIL");
+	assert.match(expired.find((item) => item.check === "certificate_expiry").reason, /expired/);
+});
+
 test("configured target rejects URL, credentials, paths and arbitrary ports", () => {
 	for (const bad of [
 		"http://169.254.169.254/latest/meta-data", "user:password@internal.example", "internal.example/path",
@@ -47,13 +96,13 @@ test("central redactor strips seeded secrets and rejects unsafe object types", (
 	assert.throws(() => redact(new Date()), TypeError);
 });
 
-test("bundle selects approved evidence, excludes seeded secrets, and stays within 1 MiB", () => {
+test("bundle selects approved evidence, excludes seeded secrets, and stays within upload limit", () => {
 	const seeded = "seeded_unrecognizable_secret_187";
 	const result = { check: "backend_health", state: "PASS", evidence: {
 		host_id: 7, password: seeded, arbitrary_text: seeded, authorization: `Bearer ${seeded}`,
 	} };
 	const { bundle, bytes } = buildSupportBundle({ version: "5.0.0", installationId, system: [result] });
-	assert.equal(bundle.format, "nyxguard-support-bundle-v1");
+	assert.equal(bundle.format, "nyxguard-support-bundle-v2");
 	assert.ok(bytes.length <= MAX_BUNDLE_BYTES);
 	assert.ok(!bytes.toString().includes(seeded));
 	assert.equal(bundle.diagnostics.system[0].evidence.host_id, 7);
@@ -61,5 +110,5 @@ test("bundle selects approved evidence, excludes seeded secrets, and stays withi
 	assert.throws(() => buildSupportBundle({ version: "5.0.0", installationId,
 		system: [{ check: "valid_check", state: "PASS", evidence: { host_id: Number.NaN } }] }), TypeError);
 	assert.throws(() => buildSupportBundle({ version: "5.0.0", installationId,
-		system: Array(101).fill(result) }), TypeError);
+		system: Array(513).fill(result) }), TypeError);
 });

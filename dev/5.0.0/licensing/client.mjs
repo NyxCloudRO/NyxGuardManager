@@ -193,23 +193,31 @@ export class LicensingClient {
 			envelope: result.data.signed_entitlement, lastVerified: this.now(), authorityUnavailable: false }, verified.payload.revision);
 		return { result: "active" };
 	}
-	async upload(bundle, version) {
+	async upload(bundle, version, expectedSha256 = null) {
 		const status = await this.status();
 		if (status.state !== "ACTIVE") fail("support_upload_not_authorized");
 		if (!this.supportOrigin) fail("support_endpoint_unavailable");
+		if (!/^\d+\.\d+\.\d+(?:-dev)?$/.test(version ?? "")) fail("version_invalid");
+		if (typeof bundle !== "string" || Buffer.byteLength(bundle) > MAX_BUNDLE || Buffer.byteLength(bundle) < 2) fail("bundle_size_invalid");
 		const current = await this.stored();
 		const verified = this.verify(current.state.envelope, current.installationId, current.state.activationId, current.revisionFloor);
 		if (verified.payload.product !== PRODUCT && verified.payload.product !== PREMIUM_PRODUCT) fail("invalid_product_policy");
 		let operation = await this.store.pendingUpload();
+		if (operation && (typeof operation.bundle !== "string" || Buffer.byteLength(operation.bundle) > MAX_BUNDLE ||
+			Buffer.byteLength(operation.bundle) < 2)) fail("bundle_size_invalid");
+		if (expectedSha256 !== null) {
+			if (typeof bundle !== "string" || !/^[a-f0-9]{64}$/.test(expectedSha256) ||
+				createHash("sha256").update(bundle).digest("hex") !== expectedSha256 ||
+				operation && (operation.sha256 !== expectedSha256 || typeof operation.bundle !== "string" ||
+					createHash("sha256").update(operation.bundle).digest("hex") !== expectedSha256)) fail("upload_conflict");
+		}
 		if (!operation) {
-			if (typeof bundle !== "string" || Buffer.byteLength(bundle) > MAX_BUNDLE || Buffer.byteLength(bundle) < 2) fail("bundle_size_invalid");
 			const key = randomBytes(24).toString("base64url");
 			const sha256 = createHash("sha256").update(bundle).digest("hex");
 			await this.store.createUpload(key, sha256, bundle);
 			operation = { key, sha256, bundle };
 		}
 		const bearer = Buffer.from(JSON.stringify(current.state.envelope)).toString("base64url");
-		if (!/^\d+\.\d+\.\d+(?:-dev)?$/.test(version ?? "")) fail("version_invalid");
 		const result = await this.request(this.supportOrigin, SUPPORT_PATH, { bearer, body: operation.bundle, maximum: 16384, timeout: 30000,
 			headers: { "X-NyxGuard-Version": version, "X-NyxGuard-Installation-ID": current.installationId,
 				"Idempotency-Key": operation.key } });

@@ -56,7 +56,7 @@ const newLowerLinks = [
   "\t\t\t\t\t'<span>License</span></a>' +",
   "\t\t\t\t\t'<a class=\"prefs-action-link nyx-support-diagnostics-nav\" href=\"/#nyxguard-diagnostics-support\">' +",
   "\t\t\t\t\ticon(",
-  "\t\t\t\t\t\t'M4 18h4l3-11 3 8 2-5 2 8h2',",
+  "\t\t\t\t\t\t'M6 3v5a6 6 0 0 0 12 0V3 M4 3h4 M16 3h4 M12 14v2a4 4 0 0 0 8 0v-1 M20 11a2 2 0 1 0 0 4a2 2 0 0 0 0-4',",
   "\t\t\t\t\t\t'#6cdcff',",
   "\t\t\t\t\t) +",
   "\t\t\t\t\t'<span>Diagnostics &amp; Support</span></a>' +",
@@ -67,8 +67,8 @@ const revisedFixes = fixes.replace(supportAnchor, newLowerLinks + supportAnchor)
 const revisedMain = main.replace(footerVersion, 'Coe="5.0.0";function Roe()').replace(themeVersion, '$C="5.0.0",m8=');
 const revisedSettings = settings.replace(settingsVersion, 'K="5.0.0",Bt=["attack_ban"');
 const revisedNotifications = notifications.replace(notificationVersion, 'var desiredVersion = "5.0.0";');
-const addition = '\n\t\t<link rel="stylesheet" href="/assets/professional-support.css?v=20260924-2">' +
-  '\n\t\t<script defer src="/assets/professional-support.js?v=20260924-2"></script>';
+const addition = '\n\t\t<link rel="stylesheet" href="/assets/professional-support.css?v=20260924-4">' +
+  '\n\t\t<script defer src="/assets/professional-support.js?v=20260924-4"></script>';
 const revisedIndex = index.replace(scriptAnchor, scriptAnchor + addition);
 
 // Prove the main bundle and Settings chunk changed only at the two approved
