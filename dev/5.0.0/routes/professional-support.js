@@ -11,16 +11,18 @@ import proxyHostModel from "../models/proxy_host.js";
 import certificateModel from "../models/certificate.js";
 import auditLog from "../internal/audit-log.js";
 import nginx from "../internal/nginx.js";
-import { loadVaultKey, SqlStore } from "../internal/nyxcloud-licensing/store.mjs";
+import { loadVaultKey, SqlStore, unseal } from "../internal/nyxcloud-licensing/store.mjs";
 import { LicensingClient } from "../internal/nyxcloud-licensing/client.mjs";
 import { systemDiagnostics, routingDiagnostics, tlsDiagnostics } from "../internal/nyxcloud-support/diagnostics.mjs";
 import { buildSupportBundle } from "../internal/nyxcloud-support/bundle.mjs";
 import { recentOpenRestyProblems } from "../internal/nyxcloud-support/recent-problems.mjs";
+import { ownDockerIndicators } from "../internal/nyxcloud-support/docker-indicators.mjs";
 import { redact } from "../internal/nyxcloud-support/redaction.mjs";
 import { probeConfiguredHost } from "../internal/nyxcloud-licensing/probes.mjs";
 
 const router = express.Router({ caseSensitive: true, strict: true, mergeParams: true });
 const VERSION = "5.0.0";
+const BUILD_REVISION = /^[a-f0-9]{40}$/.test(process.env.NPM_BUILD_COMMIT ?? "") ? process.env.NPM_BUILD_COMMIT : null;
 const MAX_HOSTS = 20;
 const MAX_CONCURRENT_PROBES = 4;
 const BUNDLE_TTL_MS = 30 * 60 * 1000;
@@ -67,6 +69,24 @@ async function audit(res, action) {
 	await auditLog.add(res.locals.access, { action, object_type: "professional_support", object_id: 0, meta: {} });
 }
 
+async function lastAcceptedSupportId(installationId) {
+	if (!/^[0-9a-f-]{36}$/i.test(installationId ?? "")) return null;
+	try {
+		const rows = await db()("nyxcloud_support_upload").where("state", "accepted").whereNotNull("support_id")
+			.orderBy("id", "desc").limit(8).select("support_id", "sealed_bundle").timeout(2000);
+		const key = await loadVaultKey(process.env.NYXCLOUD_LICENSE_VAULT_KEY_PATH);
+		for (const row of rows) {
+			if (!/^NYX-\d{8}-[A-Z2-7]{24}$/.test(row.support_id ?? "")) continue;
+			try {
+				const raw = unseal(row.sealed_bundle, key);
+				if (typeof raw !== "string" || Buffer.byteLength(raw) > 1_000_000) continue;
+				if (JSON.parse(raw)?.installation?.id === installationId) return row.support_id;
+			} catch {}
+		}
+	} catch {}
+	return null;
+}
+
 async function permitted(res, { upload = false } = {}) {
 	const c = await client();
 	if (!c) { res.status(503).json({ category: "support_not_configured" }); return null; }
@@ -84,7 +104,9 @@ const route = (method, path, handler) => router[method](path, async (req, res) =
 router.use(jwtdecode(), admin);
 route("get", "/status", async (_req, res) => {
 	const c = await client();
-	res.set("Cache-Control", "no-store").json(c ? await c.status() : { state: "NOT_CONFIGURED", enabled: false });
+	const status = c ? await c.status() : { state: "NOT_CONFIGURED", enabled: false };
+	if (status.enabled && status.installation_id) status.latest_support_id = await lastAcceptedSupportId(status.installation_id);
+	res.set("Cache-Control", "no-store").json(status);
 });
 route("post", "/claim", async (req, res) => {
 	const c = await client(); if (!c) return res.status(503).json({ category: "support_not_configured" });
@@ -181,6 +203,7 @@ async function cpuUsagePercent() {
 async function systemSnapshot(problems = [], logAvailable = false) {
 	const snapshot = { version: VERSION, backendHealthy: true, uptimeSeconds: Math.floor(process.uptime()),
 		memoryFreePercent: os.freemem() / os.totalmem() * 100 };
+	Object.assign(snapshot, await ownDockerIndicators());
 	try { snapshot.cpuUsagePercent = await cpuUsagePercent(); } catch {}
 	try { await db().raw("SELECT 1").timeout(2000); snapshot.databaseReachable = true; }
 	catch { snapshot.databaseReachable = false; }
@@ -320,7 +343,8 @@ async function diagnosticData({ probe = false, windowMinutes = 60 } = {}) {
 	const routing = hostResults.flatMap((host) => host.routing);
 	const tls = hostResults.flatMap((host) => host.tls);
 	const checks = [...system, ...routing, ...tls];
-	const payload = { generated_at: new Date().toISOString(), checks, hosts: hostResults.map(({ id, domains, enabled, checks }) => ({ id, domains, enabled, checks })),
+	const payload = { generated_at: new Date().toISOString(), application: { version: VERSION, ...(BUILD_REVISION ? { revision: BUILD_REVISION } : {}) },
+		checks, hosts: hostResults.map(({ id, domains, enabled, checks }) => ({ id, domains, enabled, checks })),
 		problems, summary: countStates(checks), truncated, host_count: rows.length };
 	return { payload: redact(payload), system, routing, tls, hosts: rows, certificates: [...certificates.values()],
 		problems, snapshot };
@@ -415,13 +439,16 @@ route("post", "/troubleshoot", async (req, res) => {
 
 async function bundleData(entitlement, requester) {
 	const baseline = await diagnosticData({ probe: false });
+	const lastSupportId = await lastAcceptedSupportId(entitlement.installation_id);
 	const usable = (entry) => entry && entry.userId === requester &&
 		entry.installationId === entitlement.installation_id &&
 		Number.isFinite(Date.parse(entry.at)) && Date.now() - Date.parse(entry.at) <= RESULT_TTL_MS;
 	const diagnostics = usable(latestDiagnostics) ? latestDiagnostics : null;
 	const troubleshooting = usable(latestTroubleshooting) ? latestTroubleshooting : null;
 	const results = diagnostics ?? baseline;
-	return buildSupportBundle({ version: VERSION, installationId: entitlement.installation_id, entitlement,
+	return buildSupportBundle({ version: VERSION, ...(BUILD_REVISION ? { buildRevision: BUILD_REVISION } : {}),
+		installationId: entitlement.installation_id, entitlement,
+		...(lastSupportId ? { lastSupportId } : {}),
 		systemSnapshot: baseline.snapshot, proxyHosts: baseline.hosts, certificates: baseline.certificates,
 		recentProblems: baseline.problems, system: results.system, routing: results.routing, tls: results.tls,
 		diagnosticsAt: diagnostics?.at, diagnosticsStale: Boolean(diagnostics && Date.now() - Date.parse(diagnostics.at) >= 15 * 60 * 1000),

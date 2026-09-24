@@ -159,6 +159,7 @@
   async function loadStatus(onReady, target) {
     try {
       latestStatus = await request("/api/professional-support/status");
+      lastSupportId = latestStatus.latest_support_id || null;
       if (target && !target.isConnected) return;
       onReady(null, latestStatus);
     } catch (error) {
@@ -238,7 +239,7 @@
     notice(license, "Loading status…");
     var workflow = card(grid, "Support workflow", "Generate a redacted bundle and upload when entitled.");
     field(workflow, "Bundle", lastBundle ? "Generated " + dateLabel(lastBundle.generated_at) : "Not generated this session");
-    field(workflow, "Support ID", lastSupportId || "No upload this session");
+    var supportIdField = field(workflow, "Support ID", lastSupportId || "No upload recorded for this installation");
     var uploadField = field(workflow, "Upload", "Checking entitlement…");
     var bundleAction = button("Generate Support Bundle", function () {
       pendingBundleGeneration = true;
@@ -257,6 +258,7 @@
       }
       notice(license, "");
       statusFields(license, status);
+      supportIdField.querySelector("strong").textContent = lastSupportId || "No upload recorded for this installation";
       inactiveNote(license);
       uploadField.querySelector("strong").textContent = canUpload() ? "Available" : "Requires an active online entitlement";
       bundleAction.disabled = !canDiagnose();

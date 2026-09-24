@@ -145,18 +145,20 @@ function recentProblems(items, now) {
 	});
 }
 
-export function buildSupportBundle({ version, installationId, system = [], routing = [], tls = [], troubleshooting = [],
+export function buildSupportBundle({ version, buildRevision, installationId, system = [], routing = [], tls = [], troubleshooting = [],
 	entitlement: license, systemSnapshot: snapshot, proxyHosts: hosts = [], certificates: certs = [], recentProblems: problems = [],
 	diagnosticsAt, diagnosticsStale = false, troubleshootingAt, troubleshootingStale = false, lastSupportId, now = new Date() }) {
 	if (typeof version !== "string" || !VERSION.test(version) || typeof installationId !== "string" || !UUID.test(installationId))
 		throw new TypeError("Invalid bundle identity");
+	if (buildRevision !== undefined && (typeof buildRevision !== "string" || !/^[a-f0-9]{40}$/.test(buildRevision)))
+		throw new TypeError("Invalid build revision");
 	const generatedAt = time(now, new Date(), false, true);
 	if (Math.abs(Date.now() - now.getTime()) > 5 * 60 * 1000) throw new TypeError("Bundle timestamp is not recent");
 	if (lastSupportId !== undefined && (typeof lastSupportId !== "string" || !SUPPORT_ID.test(lastSupportId))) throw new TypeError("Invalid support ID");
 	const bundle = {
 		format: "nyxguard-support-bundle-v2", generated_at: generatedAt,
 		support_record: { format: "nyxguard-support-record-v2", ...(lastSupportId ? { last_support_id: lastSupportId } : {}) },
-		application: { version }, installation: { id: installationId },
+		application: { version, ...(buildRevision ? { revision: buildRevision } : {}) }, installation: { id: installationId },
 		entitlement: entitlement(license, now), system_snapshot: systemSnapshot(snapshot),
 		proxy_hosts: proxyHosts(hosts), certificates: certificates(certs, now), recent_problems: recentProblems(problems, now),
 		diagnostics: { captured_at: time(diagnosticsAt, now, true), stale: Boolean(diagnosticsStale),

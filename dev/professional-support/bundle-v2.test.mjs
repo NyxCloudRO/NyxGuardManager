@@ -8,12 +8,13 @@ const base = () => ({ version: "5.0.0", installationId, now: new Date() });
 
 test("V2 baseline works without a previous diagnostic or troubleshooting run", () => {
 	const { bundle, bytes } = buildSupportBundle({
-		...base(), systemSnapshot: { backendHealthy: true, databaseReachable: true, uptimeSeconds: 120,
+		...base(), buildRevision: "a".repeat(40), systemSnapshot: { backendHealthy: true, databaseReachable: true, uptimeSeconds: 120,
 			diskFreePercent: 55, password: "seed_system_300" },
 		entitlement: { state: "ACTIVE", product: "nyxcloud-premium-support", revision: 8,
 			refresh_credential: "seed_entitlement_301" },
 	});
 	assert.equal(bundle.format, "nyxguard-support-bundle-v2");
+	assert.equal(bundle.application.revision, "a".repeat(40));
 	assert.equal(bundle.diagnostics.baseline_only, true);
 	assert.equal(bundle.diagnostics.captured_at, null);
 	assert.deepEqual(bundle.troubleshooting.results, []);
@@ -53,6 +54,7 @@ test("V2 selects proxy, certificate, problem, result and support metadata withou
 });
 
 test("V2 rejects unsafe metadata and bounds result counts", () => {
+	assert.throws(() => buildSupportBundle({ ...base(), buildRevision: "not-a-commit" }), TypeError);
 	assert.throws(() => buildSupportBundle({ ...base(), entitlement: { state: "ACTIVE", product: "other" } }), TypeError);
 	assert.throws(() => buildSupportBundle({ ...base(), proxyHosts: [{ id: 1, forward_port: 65536 }] }), TypeError);
 	assert.throws(() => buildSupportBundle({ ...base(), recentProblems: [{ category: "raw_log", state: "FAIL", count: 1 }] }), TypeError);
