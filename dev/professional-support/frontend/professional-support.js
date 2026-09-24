@@ -65,10 +65,17 @@
     if (!node) {
       node = element("p", "nyx-support-notice");
       node.setAttribute("role", "status");
-      parent.prepend(node);
+      parent.append(node);
     }
     node.classList.toggle("nyx-support-error", !!error);
+    node.setAttribute("role", error ? "alert" : "status");
     node.textContent = message || "";
+  }
+
+  function statusError(parent, error) {
+    var panel = card(parent, "Support status unavailable", "NyxGuard could not load the entitlement state for this installation.");
+    notice(panel, error.message, true);
+    panel.append(button("Try again", function () { unmount(); renderRoute(); }, "nyx-support-button-secondary"));
   }
 
   function statusLabel(state) {
@@ -78,6 +85,12 @@
       AUTHORITY_UNAVAILABLE: "Authority unavailable", OFFLINE_GRACE: "Offline grace",
       INVALID: "Invalid"
     })[state] || "Unavailable";
+  }
+
+  function productLabel(product) {
+    if (product === "nyxguard-manager-professional-support") return "NyxGuard Manager Professional Support";
+    if (product === "nyxcloud-premium-support") return "NyxCloud Premium Support";
+    return "Not available";
   }
 
   function dateLabel(raw) {
@@ -130,7 +143,8 @@
 
   function inactiveNote(parent) {
     if (canDiagnose()) return;
-    var note = element("p", "nyx-support-callout", "Professional Support features require an active entitlement. Core NyxGuard functionality remains available.");
+    var note = element("div", "nyx-support-callout");
+    note.append(element("strong", "", "Support is locked. "), document.createTextNode("An active Professional Support entitlement is required for these tools. Core NyxGuard functionality remains available."));
     parent.append(note);
   }
 
@@ -167,16 +181,20 @@
   function licenseContent(parent) {
     var header = element("header", "nyx-support-page-header");
     header.append(element("span", "nyx-support-eyebrow", "NYXGUARD MANAGER 5.0.0"), element("h1", "", "Professional Support License"),
-      element("p", "", "Manage the optional entitlement for diagnostics and support. Core NyxGuard remains available without it."));
+      element("p", "", "Manage NyxGuard Manager Professional Support or NyxCloud Premium Support for diagnostics and support. Core NyxGuard remains available without a license."));
     parent.append(header);
     var details = card(parent, "License status", "Entitlement details are verified by the NyxGuard backend.");
     notice(details, "Loading license status…");
     loadStatus(function (error, status) {
-      if (error) { notice(details, error.message, true); return; }
+      if (error) {
+        notice(details, error.message, true);
+        details.append(button("Try again", function () { unmount(); renderRoute(); }, "nyx-support-button-secondary"));
+        return;
+      }
       notice(details, "");
       statusFields(details, status);
       var identity = element("div", "nyx-support-metrics nyx-support-identity");
-      field(identity, "Product", "NyxGuard Manager Professional Support");
+      field(identity, "License product", productLabel(status.product));
       field(identity, "Capability", "Diagnostics & Support");
       details.append(identity);
       inactiveNote(details);
@@ -208,7 +226,12 @@
     field(workflow, "Support ID", lastSupportId || "No upload this session");
     var uploadField = field(workflow, "Upload", "Checking entitlement…");
     loadStatus(function (error, status) {
-      if (error) { notice(license, error.message, true); return; }
+      if (error) {
+        notice(license, error.message, true);
+        license.append(button("Try again", function () { unmount(); renderRoute(); }, "nyx-support-button-secondary"));
+        uploadField.querySelector("strong").textContent = "Status unavailable";
+        return;
+      }
       notice(license, "");
       statusFields(license, status);
       inactiveNote(license);
@@ -261,6 +284,7 @@
 
   function diagnosticsContent(parent) {
     sectionHeading(parent, "Diagnostics", "Run bounded checks against this installation and configured resources.");
+    notice(parent, "");
     var controls = element("div", "nyx-support-actions");
     var run = button("Run diagnostics", async function () {
       notice(parent, "Running diagnostics…");
@@ -311,6 +335,7 @@
   function troubleshootingContent(parent) {
     sectionHeading(parent, "Troubleshooting", "Guided 502 / Upstream unavailable workflow for an existing proxy host.");
     var cardNode = card(parent, "502 / Upstream unavailable", "Choose an authorized proxy host. Arbitrary URLs and addresses are not accepted.");
+    notice(cardNode, "");
     var form = element("div", "nyx-support-actions");
     var hostSelect = element("select", "nyx-support-input");
     hostSelect.setAttribute("aria-label", "Configured proxy host");
@@ -352,6 +377,7 @@
   function bundleContent(parent) {
     sectionHeading(parent, "Support Bundle", "Generate and review safe metadata before downloading or uploading a structured support bundle.");
     var cardNode = card(parent, "Bundle workflow", "The bundle is redacted JSON, never a filesystem archive.");
+    notice(cardNode, "");
     var info = element("div", "nyx-support-metrics");
     var actions = element("div", "nyx-support-actions");
     var download = button("Download bundle", downloadBundle, "nyx-support-button-secondary");
@@ -431,23 +457,37 @@
     parent.append(content);
     if (slug === "overview") overviewContent(content);
     if (slug === "diagnostics") {
+      notice(content, "Loading support status…");
       loadStatus(function (error) {
-        if (error) notice(content, error.message, true);
+        content.replaceChildren();
+        if (error) statusError(content, error);
         else diagnosticsContent(content);
       }, content);
     }
     if (slug === "troubleshooting") {
+      notice(content, "Loading support status…");
       loadStatus(function (error) {
-        if (error) notice(content, error.message, true);
+        content.replaceChildren();
+        if (error) statusError(content, error);
         else troubleshootingContent(content);
       }, content);
     }
     if (slug === "support-bundle") {
+      notice(content, "Loading support status…");
       loadStatus(function (error) {
-        if (error) notice(content, error.message, true);
+        content.replaceChildren();
+        if (error) statusError(content, error);
         else bundleContent(content);
       }, content);
     }
+  }
+
+  function updateLowerNavigation(next) {
+    document.querySelectorAll(".prefs-action-links .nyx-support-license-nav,.prefs-action-links .nyx-support-diagnostics-nav").forEach(function (link) {
+      var active = link.classList.contains("nyx-support-license-nav") ? next === "license" : next.startsWith("support:");
+      if (active) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+    });
   }
 
   function unmount() {
@@ -460,6 +500,7 @@
 
   function renderRoute() {
     var next = route();
+    updateLowerNavigation(next);
     if (!next) { unmount(); return; }
     var main = document.querySelectorAll("#root ._main_f6sqx_21");
     if (main.length !== 1) { unmount(); return; }
