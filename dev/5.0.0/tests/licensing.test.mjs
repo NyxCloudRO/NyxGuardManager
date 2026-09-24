@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createHash, generateKeyPairSync, sign } from "node:crypto";
 import { verifyNyxGuardEnvelope, PRODUCT, CAPABILITY, PREMIUM_PRODUCT, PREMIUM_CAPABILITIES } from "../licensing/verify.mjs";
 import { LicensingClient } from "../licensing/client.mjs";
-import { seal, unseal } from "../licensing/store.mjs";
+import { seal, unseal, SqlStore } from "../licensing/store.mjs";
 
 const installation = "11111111-1111-4111-8111-111111111111";
 const activation = "22222222-2222-4222-8222-222222222222";
@@ -62,6 +62,15 @@ test("vault encryption rejects tampering and plaintext leakage", () => {
 	assert.deepEqual(unseal(sealed, key), secret);
 	const tampered = Buffer.from(sealed, "base64url"); tampered[tampered.length - 1] ^= 1;
 	assert.throws(() => unseal(tampered.toString("base64url"), key));
+});
+
+test("accepted upload stores nanosecond server expiry as a MariaDB date", async () => {
+	let saved;
+	const knex = () => ({ where: () => ({ update: async (value) => { saved = value; } }) });
+	const store = new SqlStore(knex, Buffer.alloc(32));
+	await store.completeUpload("test-key", "NYX-20260924-ABCDEFGHIJKLMNOPQRSTUVWX", "2026-10-24T09:15:35.430078007Z");
+	assert.ok(saved.expires_at instanceof Date);
+	assert.equal(saved.expires_at.toISOString(), "2026-10-24T09:15:35.430Z");
 });
 
 class MemoryStore {

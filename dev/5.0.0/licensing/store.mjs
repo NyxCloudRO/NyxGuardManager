@@ -70,7 +70,7 @@ export class SqlStore {
 	}
 	async completeUpload(key, supportId, expiresAt) {
 		await this.knex("nyxcloud_support_upload").where({ idempotency_key: key, state: "pending" }).update({
-			state: "accepted", support_id: supportId, expires_at: expiresAt, updated_on: new Date(),
+			state: "accepted", support_id: supportId, expires_at: new Date(expiresAt), updated_on: new Date(),
 		});
 	}
 }
