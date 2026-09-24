@@ -67,7 +67,7 @@ const revisedFixes = fixes.replace(supportAnchor, newLowerLinks + supportAnchor)
 const revisedMain = main.replace(footerVersion, 'Coe="5.0.0";function Roe()').replace(themeVersion, '$C="5.0.0",m8=');
 const revisedSettings = settings.replace(settingsVersion, 'K="5.0.0",Bt=["attack_ban"');
 const revisedNotifications = notifications.replace(notificationVersion, 'var desiredVersion = "5.0.0";');
-const addition = '\n\t\t<link rel="stylesheet" href="/assets/professional-support.css?v=20260924-4">' +
+const addition = '\n\t\t<link rel="stylesheet" href="/assets/professional-support.css?v=20260924-5">' +
   '\n\t\t<script defer src="/assets/professional-support.js?v=20260924-4"></script>';
 const revisedIndex = index.replace(scriptAnchor, scriptAnchor + addition);
 
