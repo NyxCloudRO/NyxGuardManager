@@ -42,7 +42,8 @@ const ACTIONS = Object.freeze({
 	chain_valid: "Check intermediates and certificate trust.",
 });
 
-const plain = (value) => value && typeof value === "object" && !Array.isArray(value) && Object.getPrototypeOf(value) === Object.prototype;
+const plain = (value) => value && typeof value === "object" && !Array.isArray(value) &&
+	(Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null);
 function numeric(value, min = -1e12, max = 1e12, integer = false) {
 	if (typeof value !== "number" || !Number.isFinite(value) || value < min || value > max || integer && !Number.isSafeInteger(value))
 		throw new TypeError("Invalid support bundle number");

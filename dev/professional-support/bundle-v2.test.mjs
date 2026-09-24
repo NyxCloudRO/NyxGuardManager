@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { buildSupportBundle, MAX_BUNDLE_BYTES } from "./bundle.mjs";
+import { redact } from "./redaction.mjs";
 
 const installationId = "6a185775-37b1-4af7-9300-18a0e57e826c";
 const base = () => ({ version: "5.0.0", installationId, now: new Date() });
@@ -56,4 +57,11 @@ test("V2 rejects unsafe metadata and bounds result counts", () => {
 	assert.throws(() => buildSupportBundle({ ...base(), proxyHosts: [{ id: 1, forward_port: 65536 }] }), TypeError);
 	assert.throws(() => buildSupportBundle({ ...base(), recentProblems: [{ category: "raw_log", state: "FAIL", count: 1 }] }), TypeError);
 	assert.throws(() => buildSupportBundle({ ...base(), system: Array(513).fill({ check: "backend_health", state: "PASS" }) }), TypeError);
+});
+
+test("V2 includes troubleshooting results already passed through central redaction", () => {
+	const steps = redact([{ check: "upstream_tcp", state: "FAIL", evidence: { host_id: 6, failure: "refused" } }]);
+	const { bundle } = buildSupportBundle({ ...base(), troubleshooting: steps, troubleshootingAt: new Date().toISOString() });
+	assert.equal(bundle.troubleshooting.results[0].check, "upstream_tcp");
+	assert.equal(bundle.troubleshooting.results[0].evidence.failure, "refused");
 });
