@@ -43,7 +43,7 @@ The script calls these authenticated admin endpoints:
 
 | Action | Endpoint | Payload/result used |
 | --- | --- | --- |
-| Status | `GET /api/professional-support/status` | `state`, `enabled`, `expires_at`, `installation_id` |
+| Status | `GET /api/professional-support/status` | `state`, `enabled`, `expires_at`, `installation_id`, verified `product` when active or in grace |
 | Claim | `POST /api/professional-support/claim` | `{claim_code}` |
 | Activate | `POST /api/professional-support/activate` | `{}`; the backend retains the short-lived activation proof |
 | Refresh | `POST /api/professional-support/refresh` | `{}` |

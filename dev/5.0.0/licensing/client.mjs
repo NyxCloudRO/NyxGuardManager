@@ -68,7 +68,8 @@ export class LicensingClient {
 		if (state.authorityUnavailable) result = grace > 0 && this.now() >= last && this.now() - last <= grace ? "OFFLINE_GRACE" : "AUTHORITY_UNAVAILABLE";
 		else if (this.now() - last > 12 * 3600000) result = "REFRESH_REQUIRED";
 		return { state: result, enabled: result === "ACTIVE" || result === "OFFLINE_GRACE" || result === "REFRESH_REQUIRED",
-			expires_at: verified.expiresAt, installation_id: installationId, revision: verified.payload.revision };
+			expires_at: verified.expiresAt, installation_id: installationId, revision: verified.payload.revision,
+			product: verified.payload.product };
 	}
 	async claim(code) {
 		if (!/^[A-Za-z0-9_-]{32,128}$/.test(code ?? "")) fail("claim_code_invalid");

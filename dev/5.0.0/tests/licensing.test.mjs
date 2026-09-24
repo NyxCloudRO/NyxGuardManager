@@ -76,6 +76,7 @@ test("claim, activation, refresh denial and core-independent support state", asy
 	assert.equal((await client.status()).state, "NOT_CONFIGURED");
 	await client.activate();
 	assert.equal((await client.status()).state, "ACTIVE");
+	assert.equal((await client.status()).product, PRODUCT);
 	assert.equal(store.data.revisionFloor, 1);
 	await assert.rejects(client.refresh(), /license_revoked/);
 	assert.equal((await client.status()).state, "REVOKED");
