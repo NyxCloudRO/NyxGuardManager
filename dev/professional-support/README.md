@@ -45,14 +45,14 @@ The script calls these authenticated admin endpoints:
 | --- | --- | --- |
 | Status | `GET /api/professional-support/status` | `state`, `enabled`, `expires_at`, `installation_id` |
 | Claim | `POST /api/professional-support/claim` | `{claim_code}` |
-| Activate | `POST /api/professional-support/activate` | `{activation_proof}` |
+| Activate | `POST /api/professional-support/activate` | `{}`; the backend retains the short-lived activation proof |
 | Refresh | `POST /api/professional-support/refresh` | `{}` |
 | Diagnostics | `GET /api/professional-support/diagnostics` | `{checks:[...]}` |
 | Troubleshoot | `POST /api/professional-support/troubleshoot` | `{workflow:"upstream_502",proxy_host_id}` → `{steps:[...]}` |
 | Bundle | `GET /api/professional-support/bundle` | JSON bundle, downloaded locally |
 | Upload | `POST /api/professional-support/upload` | `{}` → `{support_id,expires_at}` |
 
-Diagnostic records display only `name` or `id`, `state`, and `summary`. The UI never renders arbitrary evidence objects, signed envelopes, tokens, or API error response bodies.
+Diagnostic records display only `check`, `state`, and a bounded summary when available. The UI never renders arbitrary evidence objects, signed envelopes, tokens, or API error response bodies.
 
 ## Verification
 

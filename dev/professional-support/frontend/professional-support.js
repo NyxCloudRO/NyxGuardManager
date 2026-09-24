@@ -110,14 +110,8 @@
     claimCode.placeholder = "Claim code";
     claimCode.setAttribute("aria-label", "Claim code");
     claim.append(claimCode, button("Claim", function () { action(container, "/claim", { claim_code: claimCode.value.trim() }); }));
-    var activation = element("div", "nyx-support-form");
-    var proof = element("input", "nyx-support-input");
-    proof.type = "password";
-    proof.autocomplete = "off";
-    proof.placeholder = "Activation proof";
-    proof.setAttribute("aria-label", "Activation proof");
-    activation.append(proof, button("Activate", function () { action(container, "/activate", { activation_proof: proof.value }); }));
-    container.append(claim, activation, button("Refresh status", function () { action(container, "/refresh", {}); }));
+    container.append(claim, button("Activate", function () { action(container, "/activate", {}); }),
+      button("Refresh status", function () { action(container, "/refresh", {}); }));
   }
 
   function renderChecks(container, records) {
@@ -128,7 +122,8 @@
     records.forEach(function (record) {
       var card = element("article", "nyx-support-result");
       var state = ["PASS", "WARNING", "FAIL", "SKIPPED"].includes(record.state) ? record.state : "SKIPPED";
-      card.append(element("strong", "", record.name || record.id || "Check"), element("span", "nyx-support-state state-" + state.toLowerCase(), state));
+      card.append(element("strong", "", record.check ? record.check.replaceAll("_", " ") : "Check"),
+        element("span", "nyx-support-state state-" + state.toLowerCase(), state));
       if (typeof record.summary === "string") card.append(element("p", "", record.summary));
       container.append(card);
     });
