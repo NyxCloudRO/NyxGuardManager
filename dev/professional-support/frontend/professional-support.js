@@ -6,7 +6,7 @@
   var LEGACY_HASH = "#nyxguard-professional-support";
   var tabs = ["Overview", "Diagnostics", "Troubleshooting", "Support Bundle"];
   var tabSlugs = ["overview", "diagnostics", "troubleshooting", "support-bundle"];
-  var systemChecks = new Set(["application_version", "backend_health", "database_reachability", "migrations_current", "openresty_health", "configuration_valid", "disk_capacity", "memory_pressure", "uptime", "restart_indicator", "error_indicator"]);
+  var systemChecks = new Set(["application_version", "backend_health", "database_reachability", "migrations_current", "openresty_health", "configuration_valid", "disk_capacity", "memory_pressure", "cpu_usage", "uptime", "restart_indicator", "error_indicator"]);
   var tlsChecks = new Set(["certificate_presence", "certificate_expiry", "san_match", "chain_valid", "renewal_ready", "acme_ready", "dns_challenge_ready"]);
   var guidance = {
     database_reachability: "Check the MariaDB service and its connection settings.",

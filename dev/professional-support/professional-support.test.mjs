@@ -87,12 +87,13 @@ test("central redactor strips seeded secrets and rejects unsafe object types", (
 	const seeded = {
 		password: "seed_password_181", bearerToken: "seed_bearer_182", api_key: "seed_api_183",
 		private_key: "seed_private_184", s3_secret: "seed_s3_185",
-		safe: "ok", note: "Bearer seed_bearer_186", nested: { db_url: "mysql://user:pass@db", count: 1 },
+		safe: "ok", pass: 3, note: "Bearer seed_bearer_186", nested: { db_url: "mysql://user:pass@db", count: 1 },
 	};
 	const output = JSON.stringify(redact(seeded));
 	for (const marker of ["seed_password_181", "seed_bearer_182", "seed_api_183", "seed_private_184", "seed_s3_185", "seed_bearer_186", "mysql://user:pass@db"]) {
 		assert.ok(!output.includes(marker), marker);
 	}
+	assert.equal(redact(seeded).pass, 3);
 	assert.throws(() => redact(new Date()), TypeError);
 });
 

@@ -46,6 +46,19 @@ test("reads only the bounded tail of an oversized current log", async () => {
 	} finally { await rm(root, { recursive: true, force: true }); }
 });
 
+test("interprets OpenResty timestamps using the host log offset", async () => {
+	const root = await mkdtemp(join(tmpdir(), "nyx-support-logs-"));
+	try {
+		await writeFile(join(root, "proxy-host-6_error.log"),
+			"2026/09/24 16:06:27 [error] connect() failed (111: Connection refused) while connecting to upstream\n");
+		const now = new Date("2026-09-24T13:07:00Z");
+		const correct = await recentOpenRestyProblems({ root, hostIds: [6], windowMinutes: 15, now, logUtcOffsetMinutes: 180 });
+		const wrong = await recentOpenRestyProblems({ root, hostIds: [6], windowMinutes: 15, now, logUtcOffsetMinutes: 120 });
+		assert.deepEqual(correct.map(({ host_id, category }) => [host_id, category]), [[6, "upstream_connection_refused"]]);
+		assert.deepEqual(wrong, []);
+	} finally { await rm(root, { recursive: true, force: true }); }
+});
+
 test("redactor covers header text, query secrets and structured secret keys", () => {
 	const sentinel = "seed_sensitive_202";
 	for (const value of [

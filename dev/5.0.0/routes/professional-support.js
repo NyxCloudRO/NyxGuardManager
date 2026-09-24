@@ -1,7 +1,9 @@
 import express from "express";
 import os from "node:os";
 import { createHash, X509Certificate } from "node:crypto";
+import { execFile } from "node:child_process";
 import { lstat, readFile, stat, statfs } from "node:fs/promises";
+import { promisify } from "node:util";
 import jwtdecode from "../lib/express/jwt-decode.js";
 import db from "../db.js";
 import userModel from "../models/user.js";
@@ -23,6 +25,7 @@ const MAX_HOSTS = 20;
 const MAX_CONCURRENT_PROBES = 4;
 const BUNDLE_TTL_MS = 30 * 60 * 1000;
 const RESULT_TTL_MS = 24 * 60 * 60 * 1000;
+const execFileAsync = promisify(execFile);
 let cachedClient;
 let uploadBusy = false;
 let diagnosticsBusy = false;
@@ -131,8 +134,14 @@ const safeDomain = (value) => typeof value === "string" && value.length <= 253 &
 	!/secret|token|password|credential|api[_-]?key|private[_-]?key|recovery/i.test(value) ? value : null;
 
 async function currentProblems(hostIds, windowMinutes = 60) {
+	// OpenResty follows the mounted /etc/localtime. Node's ICU offset can differ
+	// from libc on this image, so ask the same system clock used by nginx logs.
+	const { stdout } = await execFileAsync("/bin/date", ["+%z"], { timeout: 500, maxBuffer: 32 });
+	const offset = /^([+-])(\d{2})(\d{2})\s*$/.exec(stdout);
+	if (!offset) throw new Error("log_clock_unavailable");
+	const logUtcOffsetMinutes = (offset[1] === "-" ? -1 : 1) * (Number(offset[2]) * 60 + Number(offset[3]));
 	return recentOpenRestyProblems({ root: "/data/logs", hostIds, windowMinutes,
-		logUtcOffsetMinutes: -new Date().getTimezoneOffset() });
+		logUtcOffsetMinutes });
 }
 
 async function currentErrorLogAvailable(hostIds) {
