@@ -192,7 +192,40 @@
     header.append(element("h1", "", "Professional Support License"),
       element("p", "", "Manage NyxGuard Manager Professional Support or NyxCloud Premium Support for diagnostics and support. Core NyxGuard remains available without a license."));
     parent.append(header);
-    var details = card(parent, "License status", "Entitlement details are verified by the NyxGuard backend.");
+    var details = card(parent, "License status and new activation", "Enter a new purchase or approved owner claim code here. Entitlement details are verified by the NyxGuard backend.");
+    var recovery = card(parent, "License recovery and replacement", "Use this when a previous NyxGuard installation was lost or replaced. A reinstall that keeps its database and vault key normally needs no recovery. Recovery is not a purchase; you do not need to buy support again solely because the old installation was lost.");
+    var recoveryProduct = element("select", "nyx-support-input");
+    recoveryProduct.setAttribute("aria-label", "Product to recover");
+    var recoveryNative = element("option", "", "NyxGuard Manager Professional Support");
+    recoveryNative.value = "nyxguard-manager-professional-support";
+    var recoveryPremium = element("option", "", "NyxCloud Premium Support");
+    recoveryPremium.value = "nyxcloud-premium-support";
+    recoveryProduct.append(recoveryNative, recoveryPremium);
+    var recoveryEmail = element("input", "nyx-support-input");
+    recoveryEmail.type = "email";
+    recoveryEmail.autocomplete = "email";
+    recoveryEmail.placeholder = "Purchase email";
+    recoveryEmail.setAttribute("aria-label", "Purchase email for recovery");
+    var recoveryCode = element("input", "nyx-support-input");
+    recoveryCode.type = "text";
+    recoveryCode.autocomplete = "off";
+    recoveryCode.placeholder = "Recovery code";
+    recoveryCode.setAttribute("aria-label", "Recovery code received by email");
+    var recoveryActions = element("div", "nyx-support-actions");
+    recoveryActions.append(recoveryProduct, recoveryEmail, button("Request recovery", async function () {
+      var email = recoveryEmail.value.trim();
+      recoveryEmail.value = "";
+      notice(recovery, "Requesting recovery…");
+      try {
+        await request("/api/professional-support/recovery/request", { method: "POST", body: { email: email, product: recoveryProduct.value } });
+        notice(recovery, "If an eligible license exists, a recovery code will be sent to the verified purchase email. Enter it below on this installation.");
+      } catch (error) { notice(recovery, error.message, true); }
+    }), recoveryCode, button("Confirm recovery", function () {
+      var code = recoveryCode.value.trim();
+      recoveryCode.value = "";
+      performAction(recovery, "/recovery/confirm", { recovery_code: code });
+    }));
+    recovery.append(recoveryActions, element("p", "nyx-support-muted", "If you cannot access the purchase email, contact support for a reviewed replacement. Premium with two active installations also requires manual review. A successful recovery supersedes the selected old installation."));
     notice(details, "Loading license status…");
     loadStatus(function (error, status) {
       if (error) {

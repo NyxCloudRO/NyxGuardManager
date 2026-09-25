@@ -106,12 +106,8 @@ Support API, Authority, S3, Cloudflare path, and production acceptance remain
 separate controlled work.
 # DEV authority connectivity
 
-The DEV Compose runtime uses `NYXCLOUD_AUTHORITY_URL=http://127.0.0.1:18091`.
-The image's loopback-only OpenResty listener forwards this endpoint to
-`host.docker.internal:18090`, which is the host's boot-persistent
-`nyxguard-dev-authority-tunnel.service` SSH forward to the primary licensing
-authority. Compose must provide `host.docker.internal:host-gateway` and the
-host firewall must allow only the DEV Docker bridge to reach port 18090.
-This bypasses the public Cloudflare HTML challenge while keeping refresh
-credentials inside the host-to-authority SSH channel. The existing MariaDB
-license row and bind-mounted vault key persist across app recreation.
+The DEV Compose runtime uses `NYXCLOUD_AUTHORITY_URL=https://licensing.nyxcloud.ro`.
+The exact licensing API paths pass through the Cloudflare public HTTPS rule.
+The existing MariaDB license row and bind-mounted vault key persist across app
+recreation. The former DEV-only SSH tunnel is disabled; future images do not
+include its loopback OpenResty listener.

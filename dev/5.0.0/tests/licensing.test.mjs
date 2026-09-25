@@ -3,7 +3,10 @@ import assert from "node:assert/strict";
 import { createHash, generateKeyPairSync, sign } from "node:crypto";
 import { verifyNyxGuardEnvelope, PRODUCT, CAPABILITY, PREMIUM_PRODUCT, PREMIUM_CAPABILITIES } from "../licensing/verify.mjs";
 import { LicensingClient } from "../licensing/client.mjs";
-import { seal, unseal, SqlStore } from "../licensing/store.mjs";
+import { seal, unseal, loadVaultKey, SqlStore } from "../licensing/store.mjs";
+import { mkdtemp, writeFile, chmod, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const installation = "11111111-1111-4111-8111-111111111111";
 const activation = "22222222-2222-4222-8222-222222222222";
@@ -62,6 +65,27 @@ test("vault encryption rejects tampering and plaintext leakage", () => {
 	assert.deepEqual(unseal(sealed, key), secret);
 	const tampered = Buffer.from(sealed, "base64url"); tampered[tampered.length - 1] ^= 1;
 	assert.throws(() => unseal(tampered.toString("base64url"), key));
+});
+
+test("vault file requires a durable exact key and rejects missing or wrong restoration", async () => {
+	const directory = await mkdtemp(join(tmpdir(), "nyxguard-vault-test-"));
+	const path = join(directory, "vault.key");
+	try {
+		await assert.rejects(loadVaultKey(path), /ENOENT/);
+		await writeFile(path, Buffer.alloc(31, 0x11), { mode: 0o600 });
+		await assert.rejects(loadVaultKey(path), /vault_key_invalid/);
+		await writeFile(path, Buffer.alloc(32, 0x11));
+		await chmod(path, 0o644);
+		await assert.rejects(loadVaultKey(path), /vault_key_permissions_invalid/);
+		await chmod(path, 0o600);
+		const original = await loadVaultKey(path);
+		const sealed = seal({ installation: installation, refreshCredential: "synthetic-only" }, original);
+		assert.equal(unseal(sealed, await loadVaultKey(path)).installation, installation);
+		await writeFile(path, Buffer.alloc(32, 0x22));
+		assert.throws(() => unseal(sealed, Buffer.alloc(32, 0x22)));
+	} finally {
+		await rm(directory, { recursive: true, force: true });
+	}
 });
 
 test("accepted upload stores nanosecond server expiry as a MariaDB date", async () => {
