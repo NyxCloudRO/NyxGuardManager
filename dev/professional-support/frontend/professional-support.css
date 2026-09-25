@@ -85,5 +85,11 @@ aside[aria-label="Main navigation"] .prefs-action-links{gap:4px!important;paddin
   aside[aria-label="Main navigation"] .prefs-action-link{min-height:25px!important;padding-block:2px!important}
   aside[aria-label="Main navigation"] .nyx-support-nav-divider{margin-block:2px!important}
 }
+@media(max-width:767px){
+  #root [class*="_sidebarWrap_"]:has(aside[aria-label="Main navigation"] [class*="_sideMenuNav_"].collapse:not(.show)){
+    flex:0 0 max-content!important;
+    height:max-content!important;
+  }
+}
 @media(max-width:900px){.nyx-support-page{padding:24px}.nyx-support-tabs{gap:4px}.nyx-support-tabs .nyx-support-button{padding:8px 10px}.nyx-support-overview-grid,.nyx-support-check-groups{grid-template-columns:1fr}.nyx-support-overview-grid>.nyx-support-card:first-child,.nyx-support-check-groups>.nyx-support-result-group:first-child{grid-column:auto}}
 @media(max-width:560px){.nyx-support-page{padding:16px}.nyx-support-card{padding:18px}.nyx-support-metrics{grid-template-columns:1fr}.nyx-support-tabs{gap:4px}.nyx-support-tabs .nyx-support-button{padding:8px 10px}.nyx-support-actions{align-items:stretch}.nyx-support-actions .nyx-support-input{width:100%}}
