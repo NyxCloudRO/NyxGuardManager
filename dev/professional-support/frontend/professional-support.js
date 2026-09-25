@@ -214,16 +214,30 @@
     var recoveryActions = element("div", "nyx-support-actions");
     recoveryActions.append(recoveryProduct, recoveryEmail, button("Request recovery", async function () {
       var email = recoveryEmail.value.trim();
-      recoveryEmail.value = "";
+      if (!recoveryEmail.checkValidity() || !email) {
+        notice(recovery, "Enter the purchase email address to request recovery.", true);
+        return;
+      }
       notice(recovery, "Requesting recovery…");
       try {
         await request("/api/professional-support/recovery/request", { method: "POST", body: { email: email, product: recoveryProduct.value } });
+        recoveryEmail.value = "";
         notice(recovery, "If an eligible license exists, a recovery code will be sent to the verified purchase email. Enter it below on this installation.");
-      } catch (error) { notice(recovery, error.message, true); }
-    }), recoveryCode, button("Confirm recovery", function () {
+      } catch (error) { notice(recovery, "Could not request recovery. " + error.message + " Try again or contact support.", true); }
+    }), recoveryCode, button("Confirm recovery", async function () {
       var code = recoveryCode.value.trim();
-      recoveryCode.value = "";
-      performAction(recovery, "/recovery/confirm", { recovery_code: code });
+      if (!code) {
+        notice(recovery, "Enter the recovery code sent to the purchase email.", true);
+        return;
+      }
+      notice(recovery, "Confirming recovery…");
+      try {
+        await request("/api/professional-support/recovery/confirm", { method: "POST", body: { recovery_code: code } });
+        recoveryCode.value = "";
+        latestStatus = null;
+        unmount();
+        renderRoute();
+      } catch (error) { notice(recovery, "Could not confirm recovery. Check the code and try again, or contact support. " + error.message, true); }
     }));
     recovery.append(recoveryActions, element("p", "nyx-support-muted", "If you cannot access the purchase email, contact support for a reviewed replacement. Premium with two active installations also requires manual review. A successful recovery supersedes the selected old installation."));
     notice(details, "Loading license status…");
