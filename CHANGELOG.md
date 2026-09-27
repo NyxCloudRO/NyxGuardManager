@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [5.0.0] - Unreleased
+## [5.0.0] - 2026-09-27
 
 ### Added
 
@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Improved
 
 - Added actionable Docker socket access diagnostics and preserved the Docker socket group and health checks during in-app container handover.
-- Rejects a major-version in-app handover when a full database and volume recovery set is required.
+- Added a versioned 4.0.18 to 5.0.0 in-app handover that verifies a full recovery set before migration, starts the VPN agent in the replacement Manager namespace, and restores the pre-upgrade database and volumes if post-migration health fails.
 
 ### Security
 
@@ -31,7 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Upgrade notes
 
-- A 4.x to 5.0.0 upgrade requires a verified pre-upgrade MariaDB and volume backup, a persistent vault key, and the supported host-side upgrade procedure. An in-app configuration export alone is insufficient for a migration rollback.
+- The in-app 4.0.18 to 5.0.0 upgrade requires working Docker socket group access, all five named volumes, the paired VPN agent, and a Compose-managed installation. It creates a verified SQL, volume, Compose, image and vault recovery set before migration. Operators should retain a separate host backup as well. The generic host-side `update.sh` does not perform major upgrades.
 - Restoring a 4.x application after migration 42 requires restoring the matching pre-upgrade database and application volumes.
 
 ## [4.0.18] - 2026-08-30

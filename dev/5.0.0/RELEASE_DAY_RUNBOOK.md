@@ -1,6 +1,6 @@
-# NyxGuard 5.0.0 PROD release day (do not execute during this gate)
+# NyxGuard 5.0.0 PROD release day
 
-This procedure is for a separately authorized change on `192.168.0.3`.
+This procedure is for the authorized controlled change on the production host.
 The observed starting point is image `sha256:d5ec6137e6b48731a0c971e9fe76f744cee3a82f257bd7b078680474a4d7edf2`,
 NyxGuard 4.0.18, 41 migrations, and five named volumes. Recheck every identity
 before proceeding. Preserve the database and vault key as one recovery set.
@@ -43,10 +43,13 @@ before proceeding. Preserve the database and vault key as one recovery set.
 3. Configure `NYXCLOUD_AUTHORITY_URL=https://licensing.nyxcloud.ro` and the
    validated public SupportStorage origin in the protected PROD Compose config.
    Install the validated 5.0.0 image by immutable digest, retaining the saved
-   4.0.18 image. Review `docker compose --env-file .env -f docker-compose.yml
-   -f docker-compose.vpn.yml config` without printing secrets into the change
-   record. Deploy only the application with the established Compose procedure.
-   Do not recreate database or named volumes.
+   4.0.18 image. Set `DOCKER_SOCK_GID` from the numeric GID of the host Docker
+   socket and add that supplemental group to the Manager. Review
+   `docker compose --env-file .env -f docker-compose.yml -f docker-compose.vpn.yml
+   config` without printing secrets into the change record. Stop the old VPN
+   agent before replacing the Manager; start the new Manager and wait for health
+   and migration 42 before recreating the VPN agent against its new namespace.
+   Verify the VPN agent is healthy. Do not recreate MariaDB or named volumes.
 
 4. Confirm migration 42, application and DB health, zero unexpected restart
    loop, existing customer functions, and public licensing connectivity. Read
@@ -73,7 +76,7 @@ If the 5.0.0 gate fails, stop the 5.0.0 app and prevent new customer writes.
 Preserve the failed state for investigation. Restore the verified pre-upgrade
 SQL database and all five named volumes from the restricted backup, restore
 the saved Compose/configuration, and load the exact saved 4.0.18 image with
-`docker image load -i "$BACKUP_DIR/rollback-4.0.18.tar"`. Pin the restored
+   `docker image load -i "$BACKUP_DIR/rollback-4.0.18.tar"`. Pin the restored
 Compose image to the saved immutable image ID, then start the previous stack.
 Verify 4.0.18, migration 41, health, customer functions and VPN. A 4.0.18 app
 must not run against the migration-42 database. Preserve the 5.0.0 vault key

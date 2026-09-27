@@ -9,6 +9,7 @@ COPY dev/professional-support/result.mjs dev/professional-support/redaction.mjs 
 COPY dev/5.0.0/routes/professional-support.js /app/routes/professional-support.js
 COPY dev/5.0.0/update-manager/update-manager.js /app/internal/update-manager.js
 COPY dev/5.0.0/update-manager/update-handover.js /app/internal/update-handover.js
+COPY dev/5.0.0/update-manager/update-recovery-worker.js /app/internal/update-recovery-worker.js
 COPY dev/5.0.0/migrations/20260924000000_nyxcloud_professional_support.js /app/migrations/20260924000000_nyxcloud_professional_support.js
 COPY dev/professional-support/frontend/professional-support.js /app/frontend/assets/professional-support.js
 COPY dev/professional-support/frontend/professional-support.css /app/frontend/assets/professional-support.css
@@ -23,14 +24,15 @@ RUN set -eu; \
 	node --check /app/internal/nyxcloud-licensing/verify.mjs; \
 	node --check /app/internal/update-manager.js; \
 	node --check /app/internal/update-handover.js; \
+	node --check /app/internal/update-recovery-worker.js; \
 	node --check /app/frontend/assets/professional-support.js; \
 	grep -q '"version": "5.0.0"' /app/package.json; \
 	rm -rf /tmp/nyxguard-5
 
 ENV NPM_BUILD_VERSION=5.0.0 \
 	NPM_BUILD_COMMIT=${NYXGUARD_SOURCE_REVISION} \
-	NPM_BUILD_DATE=2026-09-24
+	NPM_BUILD_DATE=2026-09-27
 
-LABEL org.opencontainers.image.version="5.0.0-dev" \
+LABEL org.opencontainers.image.version="5.0.0" \
 	org.opencontainers.image.revision="${NYXGUARD_SOURCE_REVISION}" \
-	org.opencontainers.image.title="NyxGuard Manager DEV candidate"
+	org.opencontainers.image.title="NyxGuard Manager"

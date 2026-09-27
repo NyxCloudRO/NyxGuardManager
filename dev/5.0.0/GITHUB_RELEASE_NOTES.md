@@ -28,7 +28,7 @@ An eligible signed NyxCloud Premium Support entitlement can unlock NyxGuard Mana
 
 ## Update & Reliability
 
-The updater reports Docker socket access problems with actionable runtime group information and preserves the socket group and health checks when preparing a replacement container. Major-version handover requires the host-side upgrade runbook and a verified full recovery set. In-place upgrades retain named volumes; the paired VPN agent must be recreated against the new Manager network namespace.
+The in-app Update Manager can hand over a supported 4.0.18 Compose installation to 5.0.0. Before migration it verifies a full MariaDB, volume, configuration and exact-image recovery set and prepares a persistent vault key. It checks the new Manager and VPN agent, including their shared network namespace. If startup fails after migration, it restores the pre-upgrade database and volumes before resuming 4.0.18. The updater also reports Docker socket group access problems with actionable details.
 
 ## Security and Privacy
 
@@ -36,7 +36,7 @@ Local entitlement state is encrypted with a separately persisted vault key. Sign
 
 ## Upgrade Notes
 
-Version 5.0.0 adds database migration 42. Before upgrading from 4.x, verify a MariaDB dump, persistent volume archives, Compose configuration, the exact rollback image, and the persistent vault key. Follow the [upgrade procedure](https://github.com/NyxCloudRO/NyxGuardManager#update-in-place). An image-only rollback after migration 42 is unsafe; restoring 4.x requires the matching pre-upgrade database and volumes.
+Version 5.0.0 adds database migration 42. Before upgrading, retain your own MariaDB dump, persistent volume archives, Compose configuration and exact rollback image. The in-app major handover creates its own recovery set; the host-side `update.sh` continues to reject major upgrades. Docker socket access must grant the application's runtime group, and the VPN agent needs host TUN access. Follow the [upgrade procedure](https://github.com/NyxCloudRO/NyxGuardManager#update-in-place). An image-only rollback after migration 42 is unsafe; restoring 4.x requires the matching pre-upgrade database and volumes.
 
 ## Compatibility
 

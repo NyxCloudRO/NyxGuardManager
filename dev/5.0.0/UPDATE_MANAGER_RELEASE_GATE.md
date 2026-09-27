@@ -1,26 +1,83 @@
-# Update Manager 5.0.0 release gate
+# Update Manager 4.0.18 → 5.0.0 disposable acceptance
 
-Status: **BLOCKED**. Do not publish or roll out 5.0.0 based on the current updater work.
+Status: **PASS**, 2026-09-27, disposable Proxmox LXC 109.
 
-## Findings
+The tested path was the 4.0.18 application's own `startDownloadJob` and
+`applyPendingUpdate` path, with the 5.0.0 target image supplying the versioned
+handover helper. Candidate images were served through an isolated local Docker
+registry mirror; the public 5.0.0 tag was not used for the test.
 
-- The failing in-app pull uses the Docker Unix socket from the backend process. The backend runs as UID 1000 with the configured PGID; the socket is normally mode 0660. `connect EACCES` means the effective process credentials or socket ACL did not grant access. The exact GID and process credentials on the backup VM have not been captured, so the particular mismatch there remains to be confirmed. The host-side `update.sh` runs as root and therefore does not exercise this permission path.
-- The Docker socket grants broad host control even when mounted `:ro`; the suffix makes the socket mount read-only in the filesystem, but does not restrict Docker API methods. Long-term, the web process should call a narrowly authorized host-side update service instead of holding the host Docker socket. Do not use mode 0666 as a workaround.
-- The in-app backup is a JSON export of application tables. It excludes the migration table and does not contain MariaDB physical state, named volumes, certificates, VPN state, or the vault key. It is not a full rollback artifact.
-- The 4.0.18 in-app updater executes from the 4.0.18 container during a 4.0.18 to 5.0.0 update. A fix packaged only in the 5.0.0 image cannot protect that first handover. A validated bridge updater or host-side major-version procedure is required.
-- The current handover's Docker API creates containers independently of the Compose files. A subsequent Compose operation can reconcile them back to the old image. The replacement also needs all persistent mounts and the Docker group. The VPN agent must attach to the replacement Manager namespace.
-- After migration 42, automatic image-only rollback to 4.0.18 is unsafe. Recovery requires the matching pre-upgrade MariaDB and volume set, Compose files, and exact rollback image.
+## Measured cause and fix
 
-## Source changes prepared
+The LXC Docker socket was root:GID 991, mode 0660. The 4.0.18 backend ran as
+UID/GID 1000:1000 with no supplemental group; its `_ping` failed with
+`EACCES`. The same request as 1000:991 returned HTTP 200. The disposable
+Compose runtime supplied the socket's numeric GID to the application with
+`group_add`, and the updater then pulled images successfully. The handover
+preserves that group and writes it into the replacement Compose definition.
+Do not change the socket to mode 0666. Docker API access is effectively host
+privilege; Update Manager routes require administrator authorization.
 
-The 5.0.0 image overlay reports Docker socket access failures with UID/GID details, preserves `GroupAdd` and health checks during a same-major handover, treats Docker pull stream errors as failures, and rejects a major-version in-app handover without a full recovery set. The copy of the historical updater comes from the accepted 4.0.18 base image; the frontend remains the documented assertion-protected overlay.
+## Recovery contract
 
-These are source safeguards, **not** Update Manager acceptance. The current design still lacks a narrowly authorized host updater, Compose synchronization, and a validated database-aware rollback. The source must not be tagged or published until those issues are resolved and tested.
+The target-image helper stops the old Manager and VPN agent before taking the
+recovery point. A separate `nyxguard_update_recovery` volume holds a MariaDB
+SQL dump, archives of all five named volumes, Compose and environment files,
+the exact old image tar, the protected vault key and a SHA-256 manifest.
+Preparation rejects an unexpected pre-upgrade migration count or invalid vault
+key. The DB archive is supplementary; the SQL dump is authoritative for a
+post-migration rollback. The helper creates or validates the persistent
+32-byte vault key, records its previous existence, and mounts it read-only in
+the new Manager. It changes both Compose image references before starting the
+new Manager, then starts VPN only after Manager health and migration 42 are
+verified. VPN health and the current Manager namespace are checked before
+success is recorded.
 
-## Required disposable acceptance
+On failure before new Manager startup, the old runtime resumes at migration
+41. On failure after startup, the helper verifies the recovery manifest,
+restores the SQL database and non-DB volumes and Compose, and only then starts
+the old 4.0.18 Manager and VPN. If full recovery cannot be verified, it leaves
+the old runtime stopped and marks manual recovery required. Data written after
+the recovery point would be lost if a later operator rollback used that set.
+The in-app configuration export is not a database recovery asset.
 
-1. Record the backup VM's socket owner/mode/GID, backend UID/GID/groups, mount, and Compose environment. Reproduce the failure, then prove access under corrected runtime credentials without changing host socket mode.
-2. Verify automatic backup and an independently restorable MariaDB plus all-volume recovery set. Prepare the persistent vault key before 5.0.0 startup.
-3. Exercise 4.0.x to a supported target and the actual 4.0.18 to 5.0.0 candidate route. Inspect every replacement mount, namespace, Docker group, health check, Compose image reference, and systemd startup definition.
-4. Confirm migration 42 runs once; users, proxies, certificates, access lists, security settings, VPN data, authentication, and vault survive. Verify UI, DB, app, VPN, and restart counts.
-5. Inject a pre-migration failure and verify automatic restoration. Inject a post-migration failure and verify that 4.0.18 is started only after the pre-upgrade database and volumes are restored. Record exact rollback artifacts and hashes.
+## Disposable observations
+
+- A restricted external five-volume baseline and exact images were saved and
+  checked. Its SQL dump was imported into an isolated MariaDB and showed
+  migration 41 and the expected user count.
+- An image-pull failure before migration left 4.0.18, MariaDB and VPN healthy
+  at migration 41.
+- An invalid existing vault key was rejected before new Manager startup; the
+  old runtime resumed at migration 41. The original key was restored.
+- A test image whose health check failed after migration 42 triggered full
+  automatic SQL and non-DB-volume restore. The old Manager and VPN were healthy
+  again at migration 41. The state recorded `post_migration` and
+  `full_db_and_volume_restore` with no manual recovery required. This was
+  repeated against the final candidate helper.
+- After a clean baseline restore, the automatic 4.0.18 → 5.0.0 handover was
+  repeated successfully. The final Manager and VPN were healthy with zero
+  restarts, MariaDB at migration 42, valid Compose, a 32-byte mode-0600 vault
+  key, and VPN attached to the new Manager namespace. Four non-DB volume
+  marker hashes and the user-table fingerprint matched the baseline.
+- The 5.0.0 Update Manager checked for updates without Docker `EACCES`.
+  Manager and VPN Compose recreation preserved the installation ID and vault
+  key fingerprints, health and migration 42.
+
+The tested backup LXC had one user and no configured proxy hosts or
+certificates, so production customer configuration requires its own preflight
+and post-upgrade comparison. The temporary local mirror is test infrastructure,
+not a customer requirement. The host-side `update.sh` still rejects a major
+upgrade; use the validated in-app handover or an operator runbook with the full
+recovery set.
+
+## Source regression checks
+
+The final source passed 51 Node tests, including Docker socket group access,
+host and installer major-version guards, and six Docker-API handover simulations
+for ordering, success, backup failure, post-start health failure, failed
+restore, ambiguous backup inspection, and old VPN restart failure. The paired
+VPN agent passed four tests. Shell syntax, Compose validation, and the shared
+licensing-platform Go suites passed. The LXC fault-injection results above are
+the integration evidence for actual MariaDB and volume restoration; the mock
+tests exercise orchestration decisions without replacing those live checks.

@@ -7,7 +7,7 @@ set -euo pipefail
 INSTALL_DIR="${INSTALL_DIR:-/opt/nyxguardmanager}"
 IMAGE_REPO="${IMAGE_REPO:-nyxmael/nyxguardmanager}"
 VPN_AGENT_REPO="${VPN_AGENT_REPO:-nyxmael/nyxguardmanager-vpn-agent}"
-APP_TAG="${APP_TAG:-}" # Optional override (example: 4.0.18). If empty, auto-detect latest.
+APP_TAG="${APP_TAG:-}" # Optional override (example: 5.0.0). If empty, auto-detect latest.
 NYXGUARD_PROMETHEUS_SCRAPER_IP="${NYXGUARD_PROMETHEUS_SCRAPER_IP:-}"
 REQUIRE_VPN="${NYXGUARD_REQUIRE_VPN:-0}" # Set to 1 to abort when /dev/net/tun is unavailable.
 
@@ -242,6 +242,47 @@ ENV
   chmod 600 "${INSTALL_DIR}/.env" || true
 }
 
+ensure_socket_gid() {
+  local docker_sock_gid
+  docker_sock_gid="$(stat -c '%g' /var/run/docker.sock)"
+  if [[ ! "${docker_sock_gid}" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: Cannot determine Docker socket group." >&2
+    exit 1
+  fi
+  if grep -q '^DOCKER_SOCK_GID=' "${INSTALL_DIR}/.env"; then
+    sed -i "s/^DOCKER_SOCK_GID=.*/DOCKER_SOCK_GID=${docker_sock_gid}/" "${INSTALL_DIR}/.env"
+  else
+    printf 'DOCKER_SOCK_GID=%s\n' "${docker_sock_gid}" >> "${INSTALL_DIR}/.env"
+  fi
+  chmod 600 "${INSTALL_DIR}/.env"
+}
+
+ensure_vault_key() {
+  local vault_dir=/var/lib/nyxguard-licensing
+  local vault_file=${vault_dir}/vault.key
+  local app_uid app_gid
+  app_uid="$(sed -n 's/^PUID=//p' "${INSTALL_DIR}/.env" | tail -n 1)"
+  app_gid="$(sed -n 's/^PGID=//p' "${INSTALL_DIR}/.env" | tail -n 1)"
+  if [[ ! "${app_uid}" =~ ^[1-9][0-9]*$ || ! "${app_gid}" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: Invalid PUID/PGID for licensing vault." >&2
+    exit 1
+  fi
+  install -d -m 0700 "${vault_dir}"
+  if [[ -L "${vault_file}" ]]; then
+    echo "ERROR: Licensing vault key must be a regular file, not a symlink." >&2
+    exit 1
+  fi
+  if [[ ! -e "${vault_file}" ]]; then
+    umask 077
+    ( set -o noclobber; head -c 32 /dev/urandom > "${vault_file}" )
+  fi
+  if [[ ! -f "${vault_file}" || "$(stat -c %s "${vault_file}")" != 32 || "$(stat -c %a "${vault_file}")" != 600 ]]; then
+    echo "ERROR: Existing licensing vault key is invalid; refusing replacement." >&2
+    exit 1
+  fi
+  chown "${app_uid}:${app_gid}" "${vault_file}"
+}
+
 write_compose_file() {
   local image_ref="$1"
   local vpn_agent_ref="$2"
@@ -266,6 +307,9 @@ services:
       DB_MYSQL_PASSWORD: "${DB_MYSQL_PASSWORD}"
       DB_MYSQL_NAME: "${DB_MYSQL_NAME:-nyxguard}"
       SKIP_CERTBOT_OWNERSHIP: "true"
+      NYXCLOUD_LICENSE_VAULT_KEY_PATH: "/run/nyxguard-licensing/vault.key"
+      NYXCLOUD_AUTHORITY_URL: "https://licensing.nyxcloud.ro"
+      NYXCLOUD_SUPPORT_URL: "https://support-storage.nyxcloud.ro"
       NYXGUARD_VPN_AGENT_URL: "http://127.0.0.1:3198"
       NYXGUARD_VPN_AGENT_TOKEN_PATH: "/run/nyxguard-vpn-auth/token"
     healthcheck:
@@ -275,7 +319,7 @@ services:
       retries: 5
       start_period: 60s
     group_add:
-      - "${DOCKER_SOCK_GID:-988}"
+      - "${DOCKER_SOCK_GID:?Set DOCKER_SOCK_GID to the numeric GID of /var/run/docker.sock}"
     volumes:
       - nyxguard_data:/data
       - nyxguard_letsencrypt:/etc/letsencrypt
@@ -283,6 +327,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /proc/1/net/arp:/host/proc/net/arp:ro
       - nyxguard_vpn_auth:/run/nyxguard-vpn-auth:ro
+      - /var/lib/nyxguard-licensing/vault.key:/run/nyxguard-licensing/vault.key:ro
     depends_on:
       - db
 
@@ -418,6 +463,19 @@ main() {
     selected_tag="$(dockerhub_latest_tag "${IMAGE_REPO}")"
   fi
 
+  if [[ -f "${INSTALL_DIR}/docker-compose.yml" ]]; then
+    local current_tag current_major target_major
+    current_tag="$(awk '$1 == "image:" && $2 ~ /nyxguardmanager:/ { sub(/^.*:/, "", $2); print $2; exit }' "${INSTALL_DIR}/docker-compose.yml")"
+    if is_semver "${current_tag}" && is_semver "${selected_tag}"; then
+      current_major="${current_tag#v}"; current_major="${current_major%%.*}"
+      target_major="${selected_tag#v}"; target_major="${target_major%%.*}"
+      if (( target_major > current_major )); then
+        echo "ERROR: Existing ${current_tag} installation requires the verified in-app major upgrade or release runbook; install.sh cannot replace it with ${selected_tag}." >&2
+        exit 1
+      fi
+    fi
+  fi
+
   image_ref="${IMAGE_REPO}:${selected_tag}"
   vpn_agent_ref="${VPN_AGENT_REPO}:${selected_tag}"
   vpn_enabled=0
@@ -433,6 +491,9 @@ main() {
     fi
   fi
   echo "Using image: ${image_ref}"
+
+  ensure_socket_gid
+  ensure_vault_key
 
   write_compose_file "${image_ref}" "${vpn_agent_ref}"
   write_version_file "${selected_tag}"

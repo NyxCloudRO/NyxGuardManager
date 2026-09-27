@@ -6,7 +6,7 @@
 
 NyxGuard Manager runs reverse proxy, certificate, access, traffic visibility, and security controls on your own Docker host. It manages HTTP, TCP, and UDP services, with per-host protection and operational tools in one interface.
 
-**Current public release: 4.0.18.** Version 5.0.0 is in release validation and will be announced through [GitHub Releases](https://github.com/NyxCloudRO/NyxGuardManager/releases) when the upgrade gate passes.
+**Current release: 5.0.0.** See [GitHub Releases](https://github.com/NyxCloudRO/NyxGuardManager/releases) for release notes and upgrade guidance.
 
 ## Highlights
 
@@ -18,7 +18,7 @@ NyxGuard Manager runs reverse proxy, certificate, access, traffic visibility, an
 
 ## What's new in 5.0.0
 
-The 5.0.0 candidate adds **optional Professional Support** and a Diagnostics & Support workspace. Administrators can inspect system and application health, investigate a configured host with guided checks, create a structured redacted support bundle, and upload it to receive a Support ID. Signed, installation-bound entitlements support activation, refresh, and customer License Recovery & Replacement. NyxCloud Premium Support can grant the same support capability where the signed entitlement covers NyxGuard Manager. The core proxy and security platform remains usable without a Professional Support entitlement.
+Version 5.0.0 adds **optional Professional Support** and a Diagnostics & Support workspace. Administrators can inspect system and application health, investigate a configured host with guided checks, create a structured redacted support bundle, and upload it to receive a Support ID. Signed, installation-bound entitlements support activation, refresh, and customer License Recovery & Replacement. NyxCloud Premium Support can grant the same support capability where the signed entitlement covers NyxGuard Manager. The core proxy and security platform remains usable without a Professional Support entitlement.
 
 ## Professional Support
 
@@ -136,7 +136,7 @@ By default the installer:
 
 Optional:
 - Use a different image/repo: `IMAGE_REPO=youruser/nyxguardmanager`
-- Install a specific version: `APP_TAG=4.0.18`
+- Install a specific version: `APP_TAG=5.0.0`
 
 ### Install Via Docker (Compose)
 
@@ -154,7 +154,7 @@ cat > docker-compose.yml <<'YAML'
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:4.0.18
+    image: nyxmael/nyxguardmanager:5.0.0
     restart: unless-stopped
     ports:
       - "80:80"
@@ -170,6 +170,9 @@ services:
       DB_MYSQL_PASSWORD: "${DB_MYSQL_PASSWORD}"
       DB_MYSQL_NAME: "${DB_MYSQL_NAME:-nyxguard}"
       SKIP_CERTBOT_OWNERSHIP: "true"
+      NYXCLOUD_LICENSE_VAULT_KEY_PATH: "/run/nyxguard-licensing/vault.key"
+      NYXCLOUD_AUTHORITY_URL: "https://licensing.nyxcloud.ro"
+      NYXCLOUD_SUPPORT_URL: "https://support-storage.nyxcloud.ro"
       NYXGUARD_VPN_AGENT_URL: "http://127.0.0.1:3198"
       NYXGUARD_VPN_AGENT_TOKEN_PATH: "/run/nyxguard-vpn-auth/token"
       # Maximum persistent-cookie lifetime supported by current Chromium browsers.
@@ -180,6 +183,8 @@ services:
       timeout: 5s
       retries: 5
       start_period: 60s
+    group_add:
+      - "${DOCKER_SOCK_GID:?Set DOCKER_SOCK_GID in .env}"
     volumes:
       - nyxguard_data:/data
       - nyxguard_letsencrypt:/etc/letsencrypt
@@ -187,12 +192,13 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /proc/1/net/arp:/host/proc/net/arp:ro
       - nyxguard_vpn_auth:/run/nyxguard-vpn-auth:ro
+      - /var/lib/nyxguard-licensing/vault.key:/run/nyxguard-licensing/vault.key:ro
     depends_on:
       - db
 
   vpn-client-agent:
     container_name: nyxguard-vpn-agent
-    image: nyxmael/nyxguardmanager-vpn-agent:4.0.18
+    image: nyxmael/nyxguardmanager-vpn-agent:5.0.0
     restart: unless-stopped
     network_mode: "service:nyxguard-manager"
     cap_add:
@@ -250,6 +256,12 @@ DB_MYSQL_PASSWORD=CHANGE_ME_STRONG_PASSWORD
 MYSQL_ROOT_PASSWORD=CHANGE_ME_STRONG_ROOT_PASSWORD
 ENV
 
+printf 'DOCKER_SOCK_GID=%s\n' "$(stat -c %g /var/run/docker.sock)" >> .env
+sudo install -d -m 0700 /var/lib/nyxguard-licensing
+sudo sh -c 'test ! -e /var/lib/nyxguard-licensing/vault.key && test ! -L /var/lib/nyxguard-licensing/vault.key && umask 077 && set -C && head -c 32 /dev/urandom > /var/lib/nyxguard-licensing/vault.key'
+sudo chown 1000:1000 /var/lib/nyxguard-licensing/vault.key
+sudo chmod 0600 /var/lib/nyxguard-licensing/vault.key
+
 docker compose --env-file .env up -d
 ```
 
@@ -301,7 +313,7 @@ curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upd
 Optional environment variables:
 - Pull from a different repo: `IMAGE_REPO=youruser/nyxguardmanager`
 - Pull the VPN agent from a different repo: `VPN_AGENT_REPO=youruser/nyxguardmanager-vpn-agent`
-- Force a specific version: `FORCE_TAG=4.0.18`
+- Force a specific version: `FORCE_TAG=5.0.0`
 - Run non-interactively: `NYXGUARD_AUTO_YES=1`
 - Require VPN support instead of continuing without it when TUN is missing: `NYXGUARD_REQUIRE_VPN=1`
 
@@ -309,12 +321,12 @@ Example:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh \
-  | sudo env FORCE_TAG=4.0.18 NYXGUARD_AUTO_YES=1 bash
+  | sudo env FORCE_TAG=5.0.0 NYXGUARD_AUTO_YES=1 bash
 ```
 
 The 4.0.18 updater installs the isolated VPN agent Compose overlay and its reboot-persistent systemd override when the host provides `/dev/net/tun`. Running it again repairs a missing VPN agent even when the manager is already on 4.0.18. If TUN is unavailable, the updater keeps the manager and database running, removes any stale VPN startup override, and prints host-specific remediation instead of failing the whole deployment.
 
-The built-in Update Manager now performs Manager and VPN-agent replacement through a separate handover helper. It releases host ports before starting the new Manager, reconnects the VPN agent to the replacement network namespace, verifies both services, and restores the previous containers if the handover fails.
+For a supported 4.0.18 Compose installation, use the built-in Update Manager for the 5.0.0 major upgrade. Set the application's Docker socket supplemental group to the socket's numeric GID first, and retain your own database and volume backup. The target image runs a versioned handover helper that saves and verifies MariaDB, all five named volumes, Compose/configuration, the exact rollback image and the persistent vault key before migration 42. It checks the replacement Manager and VPN namespace, and restores the pre-upgrade database and volumes if the new runtime fails. The generic host-side `update.sh` refuses a major upgrade because it cannot make that recovery set. A post-migration rollback loses writes made after the recovery point.
 
 ### Proxmox LXC and `/dev/net/tun`
 
@@ -335,12 +347,12 @@ Run the general updater again to install and persist the VPN agent. Regular VM a
 
 ### Update Via Docker Compose (Manual Installs)
 
-If you installed with a manual Compose file, merge the 4.0.18 services and volumes from the repository's [`docker-compose.yml`](docker-compose.yml). Pulling only the manager image does not enable VPN Client because `NET_ADMIN` intentionally belongs only to the separate agent.
+For a fresh manual install, use the 5.0.0 services and volumes from the repository's [`docker-compose.yml`](docker-compose.yml). Pulling only the manager image does not enable VPN Client because `NET_ADMIN` intentionally belongs only to the separate agent. For an existing 4.x installation, use the in-app major handover or the [operator runbook](dev/5.0.0/RELEASE_DAY_RUNBOOK.md) with a verified recovery set.
 
 ```bash
 cd /opt/nyxguardmanager
-docker pull nyxmael/nyxguardmanager:4.0.18
-docker pull nyxmael/nyxguardmanager-vpn-agent:4.0.18
+docker pull nyxmael/nyxguardmanager:5.0.0
+docker pull nyxmael/nyxguardmanager-vpn-agent:5.0.0
 docker compose --env-file .env pull
 docker compose --env-file .env up -d --remove-orphans
 ```
@@ -361,7 +373,7 @@ docker logs --tail=100 nyxguard-manager
 docker logs --tail=100 nyxguard-vpn-agent
 ```
 
-Expected containers for a VPN-capable 4.0.18 host are `nyxguard-manager`, `nyxguard-vpn-agent`, and `nyxguard-db`. Without host TUN access, `nyxguard-manager` and `nyxguard-db` remain healthy while VPN Client reports unavailable.
+Expected containers for a VPN-capable 5.0.0 host are `nyxguard-manager`, `nyxguard-vpn-agent`, and `nyxguard-db`. Without host TUN access, `nyxguard-manager` and `nyxguard-db` remain healthy while VPN Client reports unavailable.
 
 ## Start On Boot (systemd)
 
