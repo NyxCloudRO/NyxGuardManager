@@ -11,6 +11,8 @@ FORCE_TAG="${FORCE_TAG:-}"        # Optional explicit target tag override.
 AUTO_YES="${NYXGUARD_AUTO_YES:-0}" # Set to 1 for non-interactive mode.
 REMOVE_OLD_IMAGE="${NYXGUARD_REMOVE_OLD_IMAGE:-1}" # Set to 0 to keep the previous image for rollback.
 REQUIRE_VPN="${NYXGUARD_REQUIRE_VPN:-0}" # Set to 1 to abort when /dev/net/tun is unavailable.
+CLI_BOOTSTRAP_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upgrade/cli-bootstrap.mjs"
+CLI_BOOTSTRAP_SHA256="39bedee56d0b5d7a88872d81c55e2920a4a7e9625a6d94e9ab0853a655c89833"
 
 need_root() {
   if [[ "${EUID}" -ne 0 ]]; then
@@ -77,7 +79,7 @@ dockerhub_latest_tag() {
 
 require_commands() {
   local missing=0
-  for c in curl jq docker; do
+  for c in curl jq docker flock sha256sum; do
     if ! have_cmd "$c"; then
       echo "ERROR: Missing required command: $c" >&2
       missing=1
@@ -380,10 +382,55 @@ cleanup_previous_image() {
   fi
 }
 
+# Register supported transitions here. A new major version must never inherit
+# the compatible image-swap path merely because it is the newest Docker tag.
+upgrade_route() {
+  local from="$(normalize_semver "$1")" to="$(normalize_semver "$2")"
+  if ! is_semver "$from" || ! is_semver "$to"; then
+    echo unsupported
+  elif [[ "$from" == 4.0.18 && "$to" == 5.0.0 ]]; then
+    echo major_handover_500
+  elif [[ "${from%%.*}" == "${to%%.*}" ]]; then
+    echo compatible
+  else
+    echo unsupported
+  fi
+}
+
+run_major_handover_500() {
+  local bootstrap tmp
+  tmp="$(mktemp -d)"
+  chmod 700 "$tmp"
+  trap 'rm -rf "$tmp"' RETURN
+  bootstrap="$tmp/cli-bootstrap.mjs"
+  if [[ -n "${NYXGUARD_CLI_BOOTSTRAP_FILE:-}" ]]; then
+    cp -- "$NYXGUARD_CLI_BOOTSTRAP_FILE" "$bootstrap"
+  else
+    curl -fsSL "$CLI_BOOTSTRAP_URL" -o "$bootstrap"
+  fi
+  if [[ "$(sha256sum "$bootstrap" | cut -d' ' -f1)" != "$CLI_BOOTSTRAP_SHA256" ]]; then
+    echo "ERROR: Upgrade bootstrap checksum mismatch; installation was not changed." >&2
+    return 1
+  fi
+  chmod 600 "$bootstrap"
+  echo "Starting the verified 4.0.18 to 5.0.0 recovery and handover engine..."
+  docker run --rm --network none --user 0:0 --entrypoint node \
+    --mount "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock" \
+    --mount "type=bind,src=$bootstrap,dst=/tmp/cli-bootstrap.mjs,readonly" \
+    -e CURRENT_VERSION=4.0.18 -e TARGET_VERSION=5.0.0 \
+    "$IMAGE_REPO:5.0.0" /tmp/cli-bootstrap.mjs
+}
+
 main() {
   need_root
   require_commands
   require_install_files
+  local lock_fd
+  exec {lock_fd}>"${INSTALL_DIR}/.update.lock"
+  if ! flock -n "$lock_fd"; then
+    echo "ERROR: Another host-side update is running." >&2
+    exit 1
+  fi
 
   local current_ref current_repo current_tag latest_tag target_tag target_ref vpn_agent_ref vpn_enabled vpn_requested
 
@@ -410,17 +457,22 @@ main() {
 
   target_ref="${IMAGE_REPO}:${target_tag}"
   vpn_agent_ref="${VPN_AGENT_REPO}:${target_tag}"
-  if is_semver "${current_tag}" && is_semver "${target_tag}"; then
-    local current_major target_major
-    current_major="${current_tag#v}"
-    target_major="${target_tag#v}"
-    current_major="${current_major%%.*}"
-    target_major="${target_major%%.*}"
-    if (( target_major > current_major )); then
-      echo "ERROR: Major-version upgrades require a verified MariaDB and volume restore set, persistent vault preparation when applicable, and the release-specific host runbook." >&2
-      echo "The generic update.sh image swap is not a supported major-version upgrade path." >&2
+  local route
+  route="$(upgrade_route "$current_tag" "$target_tag")"
+  if [[ "$route" == unsupported ]]; then
+    echo "ERROR: No supported upgrade path from ${current_tag} to ${target_tag}. Installation was not changed." >&2
+    exit 1
+  fi
+  if [[ "$route" == major_handover_500 ]]; then
+    if [[ "$IMAGE_REPO" != nyxmael/nyxguardmanager || "$VPN_AGENT_REPO" != nyxmael/nyxguardmanager-vpn-agent ]]; then
+      echo "ERROR: The verified 4.0.18 to 5.0.0 handover requires the published paired images." >&2
       exit 1
     fi
+    confirm_update "$current_ref" "$target_ref" || exit 0
+    docker pull "$target_ref"
+    docker pull "$vpn_agent_ref"
+    run_major_handover_500
+    return
   fi
   vpn_enabled=0
   vpn_requested=0
@@ -438,7 +490,7 @@ main() {
   fi
 
   if ! version_is_newer "${current_tag}" "${target_tag}"; then
-    if [[ "${current_tag}" == "${target_tag}" && "${vpn_requested}" == "1" ]]; then
+    if [[ "${current_tag}" == "${target_tag}" && "${vpn_requested}" == "1" && "${NYXGUARD_REPAIR_VPN:-0}" == 1 ]]; then
       echo "NyxGuard Manager is already ${target_ref}; refreshing the image and repairing the VPN stack..."
       docker pull "${target_ref}"
       if [[ "${vpn_enabled}" == "1" ]]; then
