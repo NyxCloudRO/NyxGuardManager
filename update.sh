@@ -410,6 +410,18 @@ main() {
 
   target_ref="${IMAGE_REPO}:${target_tag}"
   vpn_agent_ref="${VPN_AGENT_REPO}:${target_tag}"
+  if is_semver "${current_tag}" && is_semver "${target_tag}"; then
+    local current_major target_major
+    current_major="${current_tag#v}"
+    target_major="${target_tag#v}"
+    current_major="${current_major%%.*}"
+    target_major="${target_major%%.*}"
+    if (( target_major > current_major )); then
+      echo "ERROR: Major-version upgrades require a verified MariaDB and volume restore set, persistent vault preparation when applicable, and the release-specific host runbook." >&2
+      echo "The generic update.sh image swap is not a supported major-version upgrade path." >&2
+      exit 1
+    fi
+  fi
   vpn_enabled=0
   vpn_requested=0
   if is_semver "${target_tag}" && version_at_least "${target_tag}" "4.0.14"; then
