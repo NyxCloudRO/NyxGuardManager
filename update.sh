@@ -12,7 +12,7 @@ AUTO_YES="${NYXGUARD_AUTO_YES:-0}" # Set to 1 for non-interactive mode.
 REMOVE_OLD_IMAGE="${NYXGUARD_REMOVE_OLD_IMAGE:-1}" # Set to 0 to keep the previous image for rollback.
 REQUIRE_VPN="${NYXGUARD_REQUIRE_VPN:-0}" # Set to 1 to abort when /dev/net/tun is unavailable.
 CLI_BOOTSTRAP_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upgrade/cli-bootstrap.mjs"
-CLI_BOOTSTRAP_SHA256="39bedee56d0b5d7a88872d81c55e2920a4a7e9625a6d94e9ab0853a655c89833"
+CLI_BOOTSTRAP_SHA256="16cac1b93e6cc48e08b1fe3ce26530e48cd529dde695fda47906e9c0782404f1"
 
 need_root() {
   if [[ "${EUID}" -ne 0 ]]; then

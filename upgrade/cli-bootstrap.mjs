@@ -1,6 +1,8 @@
 // Host-initiated adapter for the recovery/handover engine shipped in 5.0.0.
 // Runs in a short-lived 5.0.0 container; the handover helper outlives it.
 import http from "node:http";
+import fs from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 
 const api = (method, endpoint, body = null) => new Promise((resolve, reject) => {
 	const request = http.request({ socketPath: "/var/run/docker.sock", path: `/v1.41${endpoint}`, method,
@@ -19,10 +21,16 @@ const api = (method, endpoint, body = null) => new Promise((resolve, reject) => 
 });
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const q = encodeURIComponent;
-const ignore = (work) => work.catch(() => undefined);
 const image = "nyxmael/nyxguardmanager:5.0.0";
 const vpnImage = "nyxmael/nyxguardmanager-vpn-agent:5.0.0";
-let oldManager, oldVpn, newManagerId, newVpnId, renamed = false, helperStarted = false;
+let oldManager, oldVpn, newManagerId, newVpnId, helperId;
+let managerRenamed = false, vpnRenamed = false, helperStartAttempted = false;
+
+export function groupAddForSocket(previous, socketGid) {
+	if (!Number.isSafeInteger(socketGid) || socketGid < 1) throw new Error("Invalid Docker socket GID");
+	const groups = Array.isArray(previous) ? previous.map(String) : [];
+	return [...new Set([...groups, String(socketGid)])];
+}
 
 async function checkedContainer(name, expectedImage) {
 	const container = await api("GET", `/containers/${q(name)}/json`);
@@ -46,6 +54,7 @@ async function setup() {
 	if (!data || !["volume", "bind"].includes(data.Type)) throw new Error("Persistent Manager /data mount not found");
 	const dataSource = data.Type === "volume" ? data.Name : data.Source;
 	if (!dataSource) throw new Error("Invalid Manager /data mount");
+	const socketGid = (await fs.stat("/var/run/docker.sock")).gid;
 	const token = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 	const oldManagerName = String(oldManager.Name).replace(/^\//, "");
 	const oldVpnName = String(oldVpn.Name).replace(/^\//, "");
@@ -60,7 +69,7 @@ async function setup() {
 		HostConfig: {
 			Binds: oldManager.HostConfig.Binds, PortBindings: oldManager.HostConfig.PortBindings,
 			RestartPolicy: oldManager.HostConfig.RestartPolicy, NetworkMode: oldManager.HostConfig.NetworkMode,
-			GroupAdd: oldManager.HostConfig.GroupAdd, ExtraHosts: oldManager.HostConfig.ExtraHosts,
+			GroupAdd: groupAddForSocket(oldManager.HostConfig.GroupAdd, socketGid), ExtraHosts: oldManager.HostConfig.ExtraHosts,
 			LogConfig: oldManager.HostConfig.LogConfig, CapAdd: oldManager.HostConfig.CapAdd,
 			Devices: oldManager.HostConfig.Devices,
 		},
@@ -78,8 +87,9 @@ async function setup() {
 		},
 	};
 	await api("POST", `/containers/${oldManager.Id}/rename?name=${q(`${oldManagerName}-rollback-${token}`)}`);
-	renamed = true;
+	managerRenamed = true;
 	await api("POST", `/containers/${oldVpn.Id}/rename?name=${q(`${oldVpnName}-rollback-${token}`)}`);
+	vpnRenamed = true;
 	newManagerId = (await api("POST", `/containers/create?name=${q(oldManagerName)}`, managerConfig)).Id;
 	vpnConfig.HostConfig.NetworkMode = `container:${newManagerId}`;
 	newVpnId = (await api("POST", `/containers/create?name=${q(oldVpnName)}`, vpnConfig)).Id;
@@ -93,8 +103,9 @@ async function setup() {
 		],
 		HostConfig: { Binds: ["/var/run/docker.sock:/var/run/docker.sock", `${dataSource}:/handover-data`], NetworkMode: "none" },
 	});
+	helperId = helper.Id;
+	helperStartAttempted = true;
 	await api("POST", `/containers/${helper.Id}/start`);
-	helperStarted = true;
 	console.log("Verified handover helper started; waiting for recovery and health gates...");
 	for (let attempt = 0; attempt < 1800; attempt++) {
 		const state = await api("GET", `/containers/${helper.Id}/json`);
@@ -115,14 +126,36 @@ async function setup() {
 	throw new Error("Handover helper is still running; inspect it before retrying");
 }
 
-try { await setup(); }
-catch (error) {
-	if (!helperStarted) {
-		if (newVpnId) await ignore(api("DELETE", `/containers/${newVpnId}?force=1`));
-		if (newManagerId) await ignore(api("DELETE", `/containers/${newManagerId}?force=1`));
-		if (renamed && oldManager) await ignore(api("POST", `/containers/${oldManager.Id}/rename?name=nyxguard-manager`));
-		if (renamed && oldVpn) await ignore(api("POST", `/containers/${oldVpn.Id}/rename?name=nyxguard-vpn-agent`));
+
+async function main() {
+	try { await setup(); }
+	catch (error) {
+		let safeToClean = !helperStartAttempted;
+		if (helperStartAttempted && helperId) {
+			try {
+				const helper = await api("GET", `/containers/${helperId}/json`);
+				safeToClean = helper.State?.Status === "created";
+			} catch {
+				// A lost start response is ambiguous. Do not remove containers the
+				// handover helper may already be using.
+			}
+		}
+		if (safeToClean) {
+			try {
+				if (helperId) await api("DELETE", `/containers/${helperId}?force=1`);
+				if (newVpnId) await api("DELETE", `/containers/${newVpnId}?force=1`);
+				if (newManagerId) await api("DELETE", `/containers/${newManagerId}?force=1`);
+				if (managerRenamed) await api("POST", `/containers/${oldManager.Id}/rename?name=nyxguard-manager`);
+				if (vpnRenamed) await api("POST", `/containers/${oldVpn.Id}/rename?name=nyxguard-vpn-agent`);
+			} catch (cleanupError) {
+				console.error(`Setup cleanup is incomplete; inspect containers before retrying: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`);
+			}
+		} else {
+			console.error(`Handover helper state requires review before retrying (container ${helperId}).`);
+		}
+		console.error(`ERROR: ${error instanceof Error ? error.message : String(error)}`);
+		process.exitCode = 1;
 	}
-	console.error(`ERROR: ${error instanceof Error ? error.message : String(error)}`);
-	process.exitCode = 1;
 }
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) await main();
