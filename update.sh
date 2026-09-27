@@ -34,6 +34,7 @@ normalize_semver() {
 
 dockerhub_latest_tag() {
   local repo="$1"
+  local current="${2:-}"
 
   if [[ "${repo}" != */* ]]; then
     echo "ERROR: IMAGE_REPO must be in '<namespace>/<name>' format." >&2
@@ -51,7 +52,7 @@ dockerhub_latest_tag() {
     json="$(curl -fsSL "${url}")"
 
     while IFS= read -r tag; do
-      if is_semver "${tag}"; then
+      if is_semver "${tag}" && [[ "$(upgrade_route "$current" "$tag")" != unsupported ]]; then
         semver_tags+="${tag}"$'\n'
       fi
     done < <(echo "${json}" | jq -r '.results[].name')
@@ -61,8 +62,12 @@ dockerhub_latest_tag() {
   done
 
   if [[ -z "${semver_tags}" ]]; then
-    echo "latest"
-    return 0
+    if is_semver "$current"; then
+      echo "$current"
+      return 0
+    fi
+    echo "ERROR: No supported published release found for current version ${current}." >&2
+    return 1
   fi
 
   local best_norm best_tag
@@ -451,7 +456,7 @@ main() {
     target_tag="${FORCE_TAG}"
   else
     echo "Checking Docker Hub for latest published NyxGuard Manager version..."
-    latest_tag="$(dockerhub_latest_tag "${IMAGE_REPO}")"
+    latest_tag="$(dockerhub_latest_tag "${IMAGE_REPO}" "${current_tag}")"
     target_tag="${latest_tag}"
   fi
 
