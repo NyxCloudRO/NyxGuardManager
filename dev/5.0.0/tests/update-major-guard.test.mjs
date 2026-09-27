@@ -25,9 +25,9 @@ for (const [from, to, expectedCommand, expectedError] of [
 		const script = path.resolve("update.sh");
 		const result = spawnSync("bash", [script], {
 			encoding: "utf8",
-			env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, INSTALL_DIR: install, FORCE_TAG: "5.0.0", NYXGUARD_AUTO_YES: "1" },
+			env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, INSTALL_DIR: install, FORCE_TAG: to, NYXGUARD_AUTO_YES: "1" },
 		});
-		assert.equal(result.status, 1);
+		assert.equal(result.status, expectedCommand ? 97 : 1);
 		if (expectedError) assert.match(result.stderr, expectedError);
 		if (expectedCommand) assert.equal(fs.readFileSync(marker, "utf8").trim(), expectedCommand);
 		else assert.equal(fs.existsSync(marker), false, "Docker was called after the Compose version probe");
