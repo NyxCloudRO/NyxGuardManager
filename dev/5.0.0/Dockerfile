@@ -7,6 +7,8 @@ ARG NYXGUARD_SOURCE_REVISION=uncommitted
 COPY dev/5.0.0/licensing/ /app/internal/nyxcloud-licensing/
 COPY dev/professional-support/result.mjs dev/professional-support/redaction.mjs dev/professional-support/diagnostics.mjs dev/professional-support/bundle.mjs dev/professional-support/recent-problems.mjs dev/professional-support/docker-indicators.mjs dev/professional-support/backend-problems.mjs /app/internal/nyxcloud-support/
 COPY dev/5.0.0/routes/professional-support.js /app/routes/professional-support.js
+COPY dev/5.0.0/update-manager/update-manager.js /app/internal/update-manager.js
+COPY dev/5.0.0/update-manager/update-handover.js /app/internal/update-handover.js
 COPY dev/5.0.0/migrations/20260924000000_nyxcloud_professional_support.js /app/migrations/20260924000000_nyxcloud_professional_support.js
 COPY dev/professional-support/frontend/professional-support.js /app/frontend/assets/professional-support.js
 COPY dev/professional-support/frontend/professional-support.css /app/frontend/assets/professional-support.css
@@ -19,6 +21,8 @@ RUN set -eu; \
 	node --check /app/routes/professional-support.js; \
 	node --check /app/internal/nyxcloud-licensing/client.mjs; \
 	node --check /app/internal/nyxcloud-licensing/verify.mjs; \
+	node --check /app/internal/update-manager.js; \
+	node --check /app/internal/update-handover.js; \
 	node --check /app/frontend/assets/professional-support.js; \
 	grep -q '"version": "5.0.0"' /app/package.json; \
 	rm -rf /tmp/nyxguard-5

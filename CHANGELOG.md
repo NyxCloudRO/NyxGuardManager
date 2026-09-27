@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [5.0.0] - Unreleased
+
+### Added
+
+- Added optional Professional Support with an installation-bound License page, signed entitlement verification, activation, refresh, and License Recovery & Replacement.
+- Added Diagnostics & Support for application, database, migration, OpenResty, resource, and configured-host checks, with guided troubleshooting and recent-problem summaries.
+- Added structured, redacted support bundles, secure upload and readback, and Support IDs.
+- Added support for eligible NyxCloud Premium Support entitlements with explicit NyxGuard coverage.
+
+### Changed
+
+- Updated the application version, navigation, and support experience for the 5.0.0 architecture.
+- Added migration 42 for local licensing and support-upload state. Existing proxy, security, certificate, user, and VPN tables remain in place.
+
+### Improved
+
+- Added actionable Docker socket access diagnostics and preserved the Docker socket group and health checks during in-app container handover.
+- Rejects a major-version in-app handover when a full database and volume recovery set is required.
+
+### Security
+
+- Stores local licensing credentials in a persistent encrypted vault backed by a separate protected key file.
+- Checks signed product, capability, installation binding, validity, and revision before unlocking support features.
+- Selects and redacts support bundle fields before upload; raw credentials and private keys are not intentionally included.
+
+### Upgrade notes
+
+- A 4.x to 5.0.0 upgrade requires a verified pre-upgrade MariaDB and volume backup, a persistent vault key, and the supported host-side upgrade procedure. An in-app configuration export alone is insufficient for a migration rollback.
+- Restoring a 4.x application after migration 42 requires restoring the matching pre-upgrade database and application volumes.
+
 ## [4.0.18] - 2026-08-30
 
 ### Added

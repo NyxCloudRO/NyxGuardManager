@@ -2,9 +2,31 @@
   <img src="assets/nyxguard-cover.png" alt="NyxGuard Manager" width="1000" />
 </p>
 
-Operator-grade reverse proxy manager for self-hosted infrastructure. NyxGuard Manager combines proxy hosting (HTTP/TCP/UDP) and certificate automation with an integrated security layer (NyxGuard): WAF-style controls, SQL Shield, bot defence, DDoS protection, auth-bypass hardening, IP/Geo intelligence, attack visibility, and real-time traffic analytics, all running locally on your server with Docker.
+## Security and Reverse Proxy Platform
 
-Current release: **4.0.18**, improving Custom Location reliability, scaling Threat Activity for large datasets, and adding an optional per-user Developer Message.
+NyxGuard Manager runs reverse proxy, certificate, access, traffic visibility, and security controls on your own Docker host. It manages HTTP, TCP, and UDP services, with per-host protection and operational tools in one interface.
+
+**Current public release: 4.0.18.** Version 5.0.0 is in release validation and will be announced through [GitHub Releases](https://github.com/NyxCloudRO/NyxGuardManager/releases) when the upgrade gate passes.
+
+## Highlights
+
+- Manage proxy hosts, streams, certificates, custom locations, access lists, and users.
+- Apply WAF, bot, DDoS, SQL injection, and authentication protection policies per host.
+- Investigate attacks, traffic, IPs, locations, and operational events.
+- Connect remote sites with the separately isolated WireGuard VPN agent.
+- Back up configuration and update an existing Docker installation in place.
+
+## What's new in 5.0.0
+
+The 5.0.0 candidate adds **optional Professional Support** and a Diagnostics & Support workspace. Administrators can inspect system and application health, investigate a configured host with guided checks, create a structured redacted support bundle, and upload it to receive a Support ID. Signed, installation-bound entitlements support activation, refresh, and customer License Recovery & Replacement. NyxCloud Premium Support can grant the same support capability where the signed entitlement covers NyxGuard Manager. The core proxy and security platform remains usable without a Professional Support entitlement.
+
+## Professional Support
+
+Professional Support unlocks the Diagnostics & Support workspace and the support bundle workflow. Licensing status is visible in the License page. Entitlements are verified locally from signed authority responses and stored in a persistent encrypted vault. Licensing failure does not disable core proxy management or security controls.
+
+## Diagnostics & Support
+
+The workspace shows application, database, migration, OpenResty, and resource health. It groups recent problems and provides bounded checks for configured hosts, including DNS, routing, TCP, HTTP, and TLS observations. Support bundles select structured diagnostic fields and redact sensitive values; they are not raw configuration or log archives. Upload and readback use a Support ID.
 
 ## Changelog
 <a href="CHANGELOG.md">
