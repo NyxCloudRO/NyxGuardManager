@@ -326,7 +326,9 @@ curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upd
 
 The 4.0.18 updater installs the isolated VPN agent Compose overlay and its reboot-persistent systemd override when the host provides `/dev/net/tun`. Running it again repairs a missing VPN agent even when the manager is already on 4.0.18. If TUN is unavailable, the updater keeps the manager and database running, removes any stale VPN startup override, and prints host-specific remediation instead of failing the whole deployment.
 
-For a supported 4.0.18 Compose installation, use the built-in Update Manager for the 5.0.0 major upgrade. Set the application's Docker socket supplemental group to the socket's numeric GID first, and retain your own database and volume backup. The target image runs a versioned handover helper that saves and verifies MariaDB, all five named volumes, Compose/configuration, the exact rollback image and the persistent vault key before migration 42. It checks the replacement Manager and VPN namespace, and restores the pre-upgrade database and volumes if the new runtime fails. The generic host-side `update.sh` refuses a major upgrade because it cannot make that recovery set. A post-migration rollback loses writes made after the recovery point.
+The public command above detects a supported 4.0.18 installation and enters the 5.0.0 recovery and handover workflow automatically. It preserves MariaDB, all five named volumes, Compose configuration, the rollback image, and the vault key before migration 42. It recreates the VPN agent in the new Manager network namespace and verifies both services. If the new runtime fails, the handover restores the verified pre-upgrade database and volumes. Retain your own backup as well; a post-migration rollback loses writes made after the recovery point.
+
+The same command handles compatible 5.x updates, including a future 5.0.0 to 5.0.1 update, when that release is published. Do not use the 4.0.18 browser Update Manager for the 5.0.0 major transition: the published 5.0.0 recovery worker expects a VPN Compose overlay that a standard 4.0.18 installation does not have. Use the public command for this transition. When recreating a Manager container at any version, recreate the VPN agent with it so the agent joins the current Manager network namespace.
 
 ### Proxmox LXC and `/dev/net/tun`
 
@@ -347,7 +349,7 @@ Run the general updater again to install and persist the VPN agent. Regular VM a
 
 ### Update Via Docker Compose (Manual Installs)
 
-For a fresh manual install, use the 5.0.0 services and volumes from the repository's [`docker-compose.yml`](docker-compose.yml). Pulling only the manager image does not enable VPN Client because `NET_ADMIN` intentionally belongs only to the separate agent. For an existing 4.x installation, use the in-app major handover or the [operator runbook](dev/5.0.0/RELEASE_DAY_RUNBOOK.md) with a verified recovery set.
+For a fresh manual install, use the 5.0.0 services and volumes from the repository's [`docker-compose.yml`](docker-compose.yml). Pulling only the manager image does not enable VPN Client because `NET_ADMIN` intentionally belongs only to the separate agent. For an existing supported 4.0.18 installation, use the public update command above. For other customized 4.x layouts, use the [operator runbook](dev/5.0.0/RELEASE_DAY_RUNBOOK.md) with a verified recovery set.
 
 ```bash
 cd /opt/nyxguardmanager

@@ -402,11 +402,12 @@ upgrade_route() {
   fi
 }
 
-run_major_handover_500() {
-  local bootstrap tmp
+run_major_handover_500() (
+  local bootstrap tmp generated_overlay=0
   tmp="$(mktemp -d)"
   chmod 700 "$tmp"
-  trap 'rm -rf "$tmp"' RETURN
+  trap 'rm -rf "$tmp"' EXIT
+  local vpn_overlay="$INSTALL_DIR/docker-compose.vpn.yml"
   bootstrap="$tmp/cli-bootstrap.mjs"
   if [[ -n "${NYXGUARD_CLI_BOOTSTRAP_FILE:-}" ]]; then
     cp -- "$NYXGUARD_CLI_BOOTSTRAP_FILE" "$bootstrap"
@@ -418,13 +419,49 @@ run_major_handover_500() {
     return 1
   fi
   chmod 600 "$bootstrap"
+  if [[ ! -e "$vpn_overlay" ]]; then
+    # The public 4.0.18 installer places VPN in the main Compose file. The
+    # immutable 5.0.0 recovery worker expects a separate VPN override file.
+    local vpn_image vpn_network
+    vpn_image="$(docker compose --env-file "$INSTALL_DIR/.env" -f "$INSTALL_DIR/docker-compose.yml" config --format json | jq -r '.services["vpn-client-agent"].image // empty')"
+    vpn_network="$(docker compose --env-file "$INSTALL_DIR/.env" -f "$INSTALL_DIR/docker-compose.yml" config --format json | jq -r '.services["vpn-client-agent"].network_mode // empty')"
+    if [[ "$vpn_image" != "nyxmael/nyxguardmanager-vpn-agent:4.0.18" || "$vpn_network" != "service:nyxguard-manager" ]]; then
+      echo "ERROR: Unsupported 4.0.18 VPN Compose layout; installation was not changed." >&2
+      return 1
+    fi
+    printf 'services:\n  vpn-client-agent:\n    image: nyxmael/nyxguardmanager-vpn-agent:4.0.18\n' > "$tmp/docker-compose.vpn.yml"
+    chmod 600 "$tmp/docker-compose.vpn.yml"
+    mv -- "$tmp/docker-compose.vpn.yml" "$vpn_overlay"
+    generated_overlay=1
+  fi
   echo "Starting the verified 4.0.18 to 5.0.0 recovery and handover engine..."
-  docker run --rm --network none --user 0:0 --entrypoint node \
+  if ! docker run --rm --network none --user 0:0 --entrypoint node \
     --mount "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock" \
     --mount "type=bind,src=$bootstrap,dst=/tmp/cli-bootstrap.mjs,readonly" \
     -e CURRENT_VERSION=4.0.18 -e TARGET_VERSION=5.0.0 \
-    "$IMAGE_REPO:5.0.0" /tmp/cli-bootstrap.mjs
-}
+    "$IMAGE_REPO:5.0.0" /tmp/cli-bootstrap.mjs; then
+    if [[ "$generated_overlay" == 1 ]] && \
+       [[ "$(docker inspect nyxguard-manager --format '{{.Config.Image}}|{{.State.Health.Status}}' 2>/dev/null)" == "nyxmael/nyxguardmanager:4.0.18|healthy" ]] && \
+       [[ "$(docker inspect nyxguard-vpn-agent --format '{{.Config.Image}}|{{.State.Health.Status}}' 2>/dev/null)" == "nyxmael/nyxguardmanager-vpn-agent:4.0.18|healthy" ]] && \
+       [[ "$(docker exec nyxguard-db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mariadb -N -uroot "$MYSQL_DATABASE" -e "SELECT count(*) FROM migrations"' 2>/dev/null)" == 41 ]]; then
+      rm -f -- "$vpn_overlay"
+    fi
+    echo "ERROR: Major handover failed; inspect the recovery state before retrying." >&2
+    return 1
+  fi
+  # Keep the original installer and systemd path correct even when it reads
+  # only docker-compose.yml rather than the handover worker's VPN override.
+  if grep -q 'nyxmael/nyxguardmanager-vpn-agent:4.0.18' "$INSTALL_DIR/docker-compose.yml"; then
+    sed 's|nyxmael/nyxguardmanager-vpn-agent:4.0.18|nyxmael/nyxguardmanager-vpn-agent:5.0.0|' \
+      "$INSTALL_DIR/docker-compose.yml" > "$tmp/docker-compose.yml"
+    chmod 600 "$tmp/docker-compose.yml"
+    mv -- "$tmp/docker-compose.yml" "$INSTALL_DIR/docker-compose.yml"
+  fi
+  if [[ "$generated_overlay" == 1 ]]; then
+    docker compose --env-file "$INSTALL_DIR/.env" -f "$INSTALL_DIR/docker-compose.yml" config -q
+    rm -f -- "$vpn_overlay"
+  fi
+)
 
 main() {
   need_root

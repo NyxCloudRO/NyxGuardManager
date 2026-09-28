@@ -84,7 +84,7 @@ async function scenario(fault) {
 	}
 	let state;
 	try { state = JSON.parse(await fs.readFile(stateFile, "utf8")); } catch { state = {}; }
-	return { events, output, exitCode, state };
+	return { events, output, exitCode, state, containers };
 }
 
 test("major handover makes a recovery point before startup and starts VPN after Manager", { skip: !enabled }, async () => {
@@ -94,6 +94,10 @@ test("major handover makes a recovery point before startup and starts VPN after 
 	assert.ok(at("created backup") < at("started created2"));
 	assert.ok(at("started created2") < at("created verify"));
 	assert.ok(at("created verify") < at("started created3"));
+	const createdVpn = Object.entries(result.containers).find(([id, container]) =>
+		id.startsWith("created") && container.Config?.Image === "nyxmael/nyxguardmanager-vpn-agent:5.0.0")?.[1];
+	assert.equal(createdVpn?.HostConfig?.NetworkMode, "container:created2",
+		"VPN must join the recreated Manager network namespace");
 	assert.equal(result.state.lastSuccessfulUpdate?.to, "5.0.0");
 	assert.ok(result.events.includes("DELETE /containers/oldmanager"));
 });
