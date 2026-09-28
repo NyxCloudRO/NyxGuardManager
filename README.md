@@ -8,6 +8,9 @@ NyxGuard Manager runs reverse proxy, certificate, access, traffic visibility, an
 
 **Current release: 5.0.0.** See [GitHub Releases](https://github.com/NyxCloudRO/NyxGuardManager/releases) for release notes and upgrade guidance.
 
+The [release source map](release-source/README.md) explains the versioned
+build inputs and their relationship to the published images and updater.
+
 ## Highlights
 
 - Manage proxy hosts, streams, certificates, custom locations, access lists, and users.
@@ -349,7 +352,7 @@ Run the general updater again to install and persist the VPN agent. Regular VM a
 
 ### Update Via Docker Compose (Manual Installs)
 
-For a fresh manual install, use the 5.0.0 services and volumes from the repository's [`docker-compose.yml`](docker-compose.yml). Pulling only the manager image does not enable VPN Client because `NET_ADMIN` intentionally belongs only to the separate agent. For an existing supported 4.0.18 installation, use the public update command above. For other customized 4.x layouts, use the [operator runbook](dev/5.0.0/RELEASE_DAY_RUNBOOK.md) with a verified recovery set.
+For a fresh manual install, use the 5.0.0 services and volumes from the repository's [`docker-compose.yml`](docker-compose.yml). Pulling only the manager image does not enable VPN Client because `NET_ADMIN` intentionally belongs only to the separate agent. For an existing supported 4.0.18 installation, use the public update command above. For other customized 4.x layouts, use the [operator runbook](release-source/5.0.0/RELEASE_DAY_RUNBOOK.md) with a verified recovery set.
 
 ```bash
 cd /opt/nyxguardmanager

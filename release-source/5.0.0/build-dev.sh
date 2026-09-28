@@ -13,5 +13,5 @@ if [[ "$architecture" != 'amd64' ]]; then
   exit 1
 fi
 revision="$(git rev-parse HEAD)"
-docker build --pull=false --progress=plain -f dev/5.0.0/Dockerfile \
+docker build --pull=false --progress=plain -f release-source/5.0.0/Dockerfile \
   --build-arg "NYXGUARD_SOURCE_REVISION=$revision" -t nyxguardmanager:5.0.0-dev .

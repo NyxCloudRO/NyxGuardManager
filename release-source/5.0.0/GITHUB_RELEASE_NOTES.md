@@ -36,7 +36,7 @@ Local entitlement state is encrypted with a separately persisted vault key. Sign
 
 ## Upgrade Notes
 
-Version 5.0.0 adds database migration 42. Before upgrading, retain your own MariaDB dump, persistent volume archives, Compose configuration and exact rollback image. The in-app major handover creates its own recovery set; the host-side `update.sh` continues to reject major upgrades. Docker socket access must grant the application's runtime group, and the VPN agent needs host TUN access. Follow the [upgrade procedure](https://github.com/NyxCloudRO/NyxGuardManager#update-in-place). An image-only rollback after migration 42 is unsafe; restoring 4.x requires the matching pre-upgrade database and volumes.
+Version 5.0.0 adds database migration 42. Before upgrading, retain your own MariaDB dump, persistent volume archives, Compose configuration and exact rollback image. The public host-side `update.sh` automatically invokes the verified major handover for a supported 4.0.18 installation and creates its own recovery set. The in-app Update Manager also supports that handover. Docker socket access must grant the application's runtime group, and the VPN agent needs host TUN access. Follow the [upgrade procedure](https://github.com/NyxCloudRO/NyxGuardManager#update-in-place). An image-only rollback after migration 42 is unsafe; restoring 4.x requires the matching pre-upgrade database and volumes.
 
 ## Compatibility
 

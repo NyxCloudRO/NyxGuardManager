@@ -52,7 +52,7 @@ auth-route, support-action, and version assertions. After deployment:
 ```sh
 docker exec nyxguard-manager node /app/dev-tests/developer-message.test.mjs --integration
 docker exec nyxguard-manager node /app/dev-tests/threat-activity-pagination.test.mjs --integration
-python3 dev/developer-message/browser-acceptance.py
+python3 release-source/4.0.18/developer-message/browser-acceptance.py
 ```
 
 The acceptance fixture creates uniquely named temporary DEV users for browser

@@ -67,9 +67,10 @@ The in-app configuration export is not a database recovery asset.
 The tested backup LXC had one user and no configured proxy hosts or
 certificates, so production customer configuration requires its own preflight
 and post-upgrade comparison. The temporary local mirror is test infrastructure,
-not a customer requirement. The host-side `update.sh` still rejects a major
-upgrade; use the validated in-app handover or an operator runbook with the full
-recovery set.
+not a customer requirement. This section records the in-app gate as tested on
+2026-09-27. The later public host-side `update.sh` invokes the same 5.0.0
+handover for a supported 4.0.18 installation; its separate public-command
+acceptance is recorded in the 5.0.0 closeout evidence.
 
 ## Source regression checks
 

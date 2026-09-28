@@ -10,7 +10,7 @@ import test from "node:test";
 const enabled = process.env.NYX_UPDATER_MOCK_CONTAINER === "1";
 const socket = "/var/run/docker.sock";
 const stateFile = "/handover-data/update-manager/state.json";
-const helper = path.resolve("dev/5.0.0/update-manager/update-handover.js");
+const helper = path.resolve("release-source/5.0.0/update-manager/update-handover.js");
 
 async function scenario(fault) {
 	const existing = await fs.lstat(socket).catch((error) => error.code === "ENOENT" ? null : Promise.reject(error));

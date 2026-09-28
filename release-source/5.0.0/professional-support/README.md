@@ -56,4 +56,4 @@ Diagnostic records display only `check`, `state`, an integer proxy host ID, fixe
 
 ## Verification
 
-Run `node --check` on the overlay script and patch script, then run `NYX_UI_BASE_DIR=/path/to/exact/base/frontend node dev/professional-support/patch-frontend.test.mjs`. Browser acceptance should confirm the unchanged main sidebar, the two lower destinations, native content rendering, internal tabs, and entitlement gates. The existing Support NyxGuard and Community links should retain their destinations.
+Run `node --check` on the overlay script and patch script, then run `NYX_UI_BASE_DIR=/path/to/exact/base/frontend node release-source/5.0.0/professional-support/patch-frontend.test.mjs`. Browser acceptance should confirm the unchanged main sidebar, the two lower destinations, native content rendering, internal tabs, and entitlement gates. The existing Support NyxGuard and Community links should retain their destinations.
