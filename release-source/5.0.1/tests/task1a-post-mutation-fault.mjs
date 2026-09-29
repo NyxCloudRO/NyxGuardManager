@@ -9,4 +9,5 @@ await fs.writeFile("/data/task1a-marker", "after\n");
 await fs.writeFile("/etc/letsencrypt/task1a-marker", "after\n");
 await fs.writeFile("/evidence/modified", "post-mutation failure reached\n");
 await knex.destroy();
+if (process.env.NYX_TASK1A_HANG === "1") await new Promise(() => setInterval(() => {}, 1000));
 process.exitCode = 1;

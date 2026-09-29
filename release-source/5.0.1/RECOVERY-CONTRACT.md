@@ -49,12 +49,18 @@ runtime stopped, retains recovery material, and records
 `manualRecoveryRequired=true` where the state volume remains writable. It
 never records success after a failed restore.
 
+SIGTERM and SIGINT during backup or activation are handled as update failures;
+the helper finishes or rejects backup safely, then restores after any
+replacement write. The disposable fixtures interrupt the helper after a
+replacement write in both topologies and verify the old runtime and data.
+
 This contract relies on the old Manager and VPN Agent being the only normal
 application writers while MariaDB is dumped. Unexpected writers and unknown
 writable application mounts must be handled before activation. An abrupt host
 failure can leave a retained recovery point requiring operator intervention;
 automatic resume after power loss belongs to the remaining Task 1 state
-machine work.
+machine work. A hard SIGKILL likewise requires inspection of the retained
+recovery point before the old runtime is restarted.
 
 ## Test scope
 

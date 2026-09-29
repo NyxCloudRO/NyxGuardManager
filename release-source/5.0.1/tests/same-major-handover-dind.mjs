@@ -6,6 +6,7 @@ import http from "node:http";
 
 assert.equal(process.env.NYX_TASK1A_DISPOSABLE, "1");
 const vpnEnabled = process.env.NYX_TASK1A_TOPOLOGY === "vpn";
+const interrupted = process.env.NYX_TASK1A_INTERRUPT === "1";
 assert.ok(vpnEnabled || process.env.NYX_TASK1A_TOPOLOGY === "manager-only");
 const target = "nyxmael/nyxguardmanager:5.0.1-task1a-test";
 const request = (method, endpoint, body) => new Promise((resolve, reject) => {
@@ -38,7 +39,7 @@ const rollbackVpnName = `nyxguard-vpn-agent-task1a-rollback-${Date.now()}`;
 await request("POST", `/containers/${oldManager.Id}/rename?name=${rollbackManagerName}`);
 if (vpnEnabled) await request("POST", `/containers/${oldVpn.Id}/rename?name=${rollbackVpnName}`);
 const managerBody = {
-	Image: target, Env: oldManager.Config.Env,
+	Image: target, Env: [...oldManager.Config.Env, ...(interrupted ? ["NYX_TASK1A_HANG=1"] : [])],
 	Entrypoint: ["node", "/app/internal/task1a-post-mutation-fault.mjs"], Cmd: [],
 	WorkingDir: "/app", Labels: oldManager.Config.Labels,
 	Healthcheck: { Test: ["CMD", "false"], Interval: 1_000_000_000, Retries: 1 },
@@ -72,6 +73,15 @@ const helper = await request("POST", `/containers/create?name=nyxguard-task1a-he
 		"nyxguard_data:/handover-data:rw"], NetworkMode: "none" },
 });
 await request("POST", `/containers/${helper.Id}/start`);
+if (interrupted) {
+	let wrote = false;
+	for (let i = 0; i < 100; i++) {
+		try { await fs.access("/evidence/modified"); wrote = true; break; }
+		catch { await wait(100); }
+	}
+	assert.equal(wrote, true, "replacement must write before interruption");
+	await request("POST", `/containers/${helper.Id}/kill?signal=SIGTERM`);
+}
 let helperStatus;
 for (let i = 0; i < 180; i++) {
 	helperStatus = await inspect(helper.Id);
@@ -98,4 +108,4 @@ assert.equal(state.restartPending, false);
 assert.equal(state.manualRecoveryRequired, false);
 assert.equal(state.lastApplyFailure?.recoveryStatus, "sql_and_volume_restore");
 assert.equal((await fs.readFile("/evidence/modified", "utf8")).trim(), "post-mutation failure reached");
-console.log(`PASS ${process.env.NYX_TASK1A_TOPOLOGY} post-mutation helper rollback, old runtime healthy, state reconciled`);
+console.log(`PASS ${process.env.NYX_TASK1A_TOPOLOGY} post-mutation ${interrupted ? "interrupted" : "health-failure"} rollback, old runtime healthy, state reconciled`);

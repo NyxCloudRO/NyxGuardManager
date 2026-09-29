@@ -3,6 +3,13 @@ import http from "node:http";
 import path from "node:path";
 
 const env = process.env;
+let interrupted = false;
+let recovering = false;
+process.on("SIGTERM", () => { if (!recovering) interrupted = true; });
+process.on("SIGINT", () => { if (!recovering) interrupted = true; });
+function assertNotInterrupted() {
+	if (interrupted) throw new Error("Handover interrupted before health commit");
+}
 const api = (method, pathname, body = null) =>
 	new Promise((resolve, reject) => {
 		const req = http.request(
@@ -40,6 +47,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function waitHealthy(id, timeoutMs = 120000) {
 	const deadline = Date.now() + timeoutMs;
 	while (Date.now() < deadline) {
+		assertNotInterrupted();
 		const info = await api("GET", `/containers/${id}/json`);
 		if (!info.State?.Running) throw new Error(`${id} stopped during startup`);
 		const health = info.State.Health?.Status;
@@ -272,6 +280,8 @@ async function runMajorHandover() {
 		await ignore(api("DELETE", `/containers/${env.OLD_MANAGER_ID}?force=1`));
 		console.log(`Major handover completed; verified recovery set ${recoveryId} retained`);
 	} catch (error) {
+		recovering = true;
+		interrupted = false;
 		console.error(`Major handover failed ${startedNew ? "after" : "before"} new Manager start: ${error instanceof Error ? error.message : String(error)}`);
 		await ignore(api("POST", `/containers/${vpnId}/stop?t=5`));
 		await ignore(api("DELETE", `/containers/${vpnId}?force=1`));
@@ -336,10 +346,12 @@ async function runSameMajorHandover() {
 		await api("POST", "/volumes/create", { Name: "nyxguard_update_recovery",
 			Labels: { "nyxguard.purpose": "same-major-update-recovery" } });
 		await sleep(1500);
+		assertNotInterrupted();
 		if (hasVpn) await api("POST", `/containers/${env.OLD_VPN_ID}/stop?t=15`);
 		await api("POST", `/containers/${env.OLD_MANAGER_ID}/stop?t=20`);
 		await runSameMajorWorker("backup", recoveryId, volumes);
 		recoveryReady = true;
+		assertNotInterrupted();
 		newStarted = true; // A failed Docker start may still have written persistent state.
 		await api("POST", `/containers/${env.NEW_MANAGER_ID}/start`);
 		await waitHealthy(env.NEW_MANAGER_ID);
@@ -350,6 +362,7 @@ async function runSameMajorHandover() {
 			if (vpn.HostConfig.NetworkMode !== `container:${env.NEW_MANAGER_ID}`)
 				throw new Error("VPN Agent joined the wrong Manager namespace");
 		}
+		assertNotInterrupted();
 		await updateState(true);
 		if (hasVpn) await ignore(api("DELETE", `/containers/${env.OLD_VPN_ID}?force=1`));
 		await ignore(api("DELETE", `/containers/${env.OLD_MANAGER_ID}?force=1`));
@@ -357,6 +370,8 @@ async function runSameMajorHandover() {
 			console.error(`Recovery cleanup deferred: ${error instanceof Error ? error.message : String(error)}`));
 		console.log(`Same-major handover to v${env.TARGET_VERSION} completed`);
 	} catch (error) {
+		recovering = true;
+		interrupted = false;
 		console.error(`Same-major handover failed: ${error instanceof Error ? error.message : String(error)}`);
 		if (hasVpn) {
 			await ignore(api("POST", `/containers/${env.NEW_VPN_ID}/stop?t=5`));
