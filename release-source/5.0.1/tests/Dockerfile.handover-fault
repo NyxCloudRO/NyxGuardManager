@@ -1,0 +1,6 @@
+# Disposable full-handover fault image. Use only inside a Docker-in-Docker fixture.
+FROM nyxmael/nyxguardmanager:5.0.0
+COPY release-source/5.0.1/update-manager/update-handover.js /app/internal/update-handover.js
+COPY release-source/5.0.1/update-manager/same-major-recovery.js /app/internal/same-major-recovery.js
+COPY release-source/5.0.1/tests/task1a-post-mutation-fault.mjs /app/internal/task1a-post-mutation-fault.mjs
+COPY release-source/5.0.1/tests/same-major-handover-dind.mjs /app/internal/task1a-orchestrate.mjs
