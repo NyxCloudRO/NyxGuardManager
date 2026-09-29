@@ -12,7 +12,9 @@ AUTO_YES="${NYXGUARD_AUTO_YES:-0}" # Set to 1 for non-interactive mode.
 REMOVE_OLD_IMAGE="${NYXGUARD_REMOVE_OLD_IMAGE:-1}" # Set to 0 to keep the previous image for rollback.
 REQUIRE_VPN="${NYXGUARD_REQUIRE_VPN:-0}" # Set to 1 to abort when /dev/net/tun is unavailable.
 CLI_BOOTSTRAP_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upgrade/cli-bootstrap.mjs"
-CLI_BOOTSTRAP_SHA256="16cac1b93e6cc48e08b1fe3ce26530e48cd529dde695fda47906e9c0782404f1"
+CLI_BOOTSTRAP_SHA256="89eb4165bfdde3664a07d4a25385cc442ff0862bb01829e0783a817a5a2f38c3"
+MANAGER_ONLY_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upgrade/manager-only-handover.mjs"
+MANAGER_ONLY_SHA256="8a374930d5f421d5296886bc9b05141a79fafb6522d2bd8870b41d1cb476a470"
 
 need_root() {
   if [[ "${EUID}" -ne 0 ]]; then
@@ -233,7 +235,7 @@ disable_vpn_systemd_override() {
 start_manager_without_vpn() {
   disable_vpn_systemd_override
   rm -f "${INSTALL_DIR}/docker-compose.vpn.yml"
-  docker compose --env-file "${INSTALL_DIR}/.env" -f "${INSTALL_DIR}/docker-compose.yml" up -d --remove-orphans
+  docker compose --env-file "${INSTALL_DIR}/.env" -f "${INSTALL_DIR}/docker-compose.yml" up -d --remove-orphans nyxguard-manager db
 }
 
 write_vpn_compose_overlay() {
@@ -402,8 +404,38 @@ upgrade_route() {
   fi
 }
 
+# The immutable 4.0.18 web updater can mark a pulled major image as ready to
+# restart. A failed host attempt must not leave that claim in place when the
+# original 4.0.18 runtime and migration 41 are demonstrably intact.
+reconcile_failed_major_state() {
+  local manager_id db_id manager_state migration
+  manager_id="$(docker compose --env-file "$INSTALL_DIR/.env" -f "$INSTALL_DIR/docker-compose.yml" ps -q nyxguard-manager 2>/dev/null || true)"
+  db_id="$(docker compose --env-file "$INSTALL_DIR/.env" -f "$INSTALL_DIR/docker-compose.yml" ps -q db 2>/dev/null || true)"
+  [[ -n "$manager_id" && -n "$db_id" ]] || return 0
+  manager_state="$(docker inspect "$manager_id" --format '{{.Config.Image}}|{{.State.Health.Status}}' 2>/dev/null || true)"
+  [[ "$manager_state" == "nyxmael/nyxguardmanager:4.0.18|healthy" ]] || return 0
+  migration="$(docker exec "$db_id" sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mariadb -N -uroot "$MYSQL_DATABASE" -e "SELECT count(*) FROM migrations"' 2>/dev/null || true)"
+  [[ "$migration" == 41 ]] || return 0
+  docker exec "$manager_id" node -e '
+    const fs = require("fs");
+    const file = "/data/update-manager/state.json";
+    if (!fs.existsSync(file)) process.exit(0);
+    const state = JSON.parse(fs.readFileSync(file, "utf8"));
+    if (state.pendingVersion !== "5.0.0" || state.restartPending !== true) process.exit(0);
+    state.pendingVersion = null;
+    state.restartPending = false;
+    const prior = state.lastApplyFailure || {};
+    state.lastApplyFailure = { ...prior, at: prior.at || new Date().toISOString(),
+      error: prior.error || "Host major upgrade did not complete; inspect update.sh output and retry after resolving the cause",
+      recoveryStatus: prior.recoveryStatus || "old_runtime_verified" };
+    const temp = `${file}.host-updater-${process.pid}`;
+    fs.writeFileSync(temp, JSON.stringify(state, null, 2), { mode: 0o600 });
+    fs.renameSync(temp, file);
+  ' >/dev/null 2>&1 || echo "WARNING: Unable to reconcile the old web update state; inspect it before using Restart now." >&2
+}
+
 run_major_handover_500() (
-  local bootstrap tmp generated_overlay=0
+  local bootstrap manager_only tmp generated_overlay=0 manager_only_declared=0
   tmp="$(mktemp -d)"
   chmod 700 "$tmp"
   trap 'rm -rf "$tmp"' EXIT
@@ -416,9 +448,28 @@ run_major_handover_500() (
   fi
   if [[ "$(sha256sum "$bootstrap" | cut -d' ' -f1)" != "$CLI_BOOTSTRAP_SHA256" ]]; then
     echo "ERROR: Upgrade bootstrap checksum mismatch; installation was not changed." >&2
+    reconcile_failed_major_state
     return 1
   fi
   chmod 600 "$bootstrap"
+  manager_only="$tmp/manager-only-handover.mjs"
+  if [[ -n "${NYXGUARD_MANAGER_ONLY_FILE:-}" ]]; then
+    cp -- "$NYXGUARD_MANAGER_ONLY_FILE" "$manager_only"
+  else
+    curl -fsSL "$MANAGER_ONLY_URL" -o "$manager_only"
+  fi
+  if [[ "$(sha256sum "$manager_only" | cut -d' ' -f1)" != "$MANAGER_ONLY_SHA256" ]]; then
+    echo "ERROR: Manager-only recovery helper checksum mismatch; installation was not changed." >&2
+    reconcile_failed_major_state
+    return 1
+  fi
+  chmod 600 "$manager_only"
+  local service_unit="/etc/systemd/system/nyxguardmanager.service"
+  local vpn_override="/etc/systemd/system/nyxguardmanager.service.d/vpn-stack.conf"
+  local manager_only_start="ExecStart=/usr/bin/docker compose --env-file ${INSTALL_DIR}/.env -f ${INSTALL_DIR}/docker-compose.yml up -d --remove-orphans nyxguard-manager db"
+  if [[ -f "$service_unit" && ! -e "$vpn_override" ]] && grep -Fxq "$manager_only_start" "$service_unit"; then
+    manager_only_declared=1
+  fi
   if [[ ! -e "$vpn_overlay" ]]; then
     # The public 4.0.18 installer places VPN in the main Compose file. The
     # immutable 5.0.0 recovery worker expects a separate VPN override file.
@@ -439,6 +490,8 @@ run_major_handover_500() (
     --mount "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock" \
     --mount "type=bind,src=$bootstrap,dst=/tmp/cli-bootstrap.mjs,readonly" \
     -e CURRENT_VERSION=4.0.18 -e TARGET_VERSION=5.0.0 \
+    -e "HOST_INSTALL_DIR=$INSTALL_DIR" -e "NYXGUARD_MANAGER_ONLY_DECLARED=$manager_only_declared" \
+    -e "NYXGUARD_MANAGER_ONLY_HOST_FILE=$manager_only" \
     "$IMAGE_REPO:5.0.0" /tmp/cli-bootstrap.mjs; then
     if [[ "$generated_overlay" == 1 ]] && \
        [[ "$(docker inspect nyxguard-manager --format '{{.Config.Image}}|{{.State.Health.Status}}' 2>/dev/null)" == "nyxmael/nyxguardmanager:4.0.18|healthy" ]] && \
@@ -447,6 +500,7 @@ run_major_handover_500() (
       rm -f -- "$vpn_overlay"
     fi
     echo "ERROR: Major handover failed; inspect the recovery state before retrying." >&2
+    reconcile_failed_major_state
     return 1
   fi
   # Keep the original installer and systemd path correct even when it reads

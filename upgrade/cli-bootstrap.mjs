@@ -32,24 +32,105 @@ export function groupAddForSocket(previous, socketGid) {
 	return [...new Set([...groups, String(socketGid)])];
 }
 
-async function checkedContainer(name, expectedImage) {
-	const container = await api("GET", `/containers/${q(name)}/json`);
-	if (!container.State?.Running || container.Config?.Image !== expectedImage) {
-		throw new Error(`Expected a running ${expectedImage} container named ${name}`);
+export function selectTopology(containers, installDir, managerOnlyDeclared) {
+	const configFile = `${installDir}/docker-compose.yml`;
+	const matching = (service) => containers.filter((item) =>
+		item.Labels?.["com.docker.compose.service"] === service &&
+		String(item.Labels?.["com.docker.compose.project.config_files"] || "").split(",")[0] === configFile);
+	const managers = matching("nyxguard-manager");
+	if (managers.length !== 1) throw new Error(`Expected exactly one installed Manager; found ${managers.length}`);
+	const manager = managers[0];
+	const project = manager.Labels?.["com.docker.compose.project"];
+	if (!project) throw new Error("Manager has no Compose project identity");
+	const withinProject = (service) => matching(service).filter((item) => item.Labels?.["com.docker.compose.project"] === project);
+	const databases = withinProject("db");
+	if (databases.length !== 1) throw new Error(`Expected exactly one installed database; found ${databases.length}`);
+	const vpns = withinProject("vpn-client-agent");
+	if (vpns.length > 1) throw new Error(`Ambiguous VPN agents in Compose project ${project}`);
+	if (matching("vpn-client-agent").length !== vpns.length) throw new Error("VPN service has inconsistent Compose project labels");
+	if (vpns.length === 0) {
+		if (!managerOnlyDeclared) throw new Error("VPN agent is missing without an installer-declared Manager-only service; refusing ambiguous topology");
+		if (containers.some((item) => item.Image === "nyxmael/nyxguardmanager-vpn-agent:4.0.18" ||
+			(item.Names || []).some((name) => name === "/nyxguard-vpn-agent"))) {
+			throw new Error("A VPN container exists outside the installed Compose service; refusing ambiguous topology");
+		}
+	}
+	return { manager, database: databases[0], vpn: vpns[0] || null, project };
+}
+
+async function checkedContainer(summary, expectedImage) {
+	const container = await api("GET", `/containers/${q(summary.Id)}/json`);
+	if (!container.State?.Running || container.State.Health?.Status !== "healthy" || container.Config?.Image !== expectedImage) {
+		throw new Error(`Expected one healthy running ${expectedImage} Compose service`);
 	}
 	return container;
+}
+
+async function runManagerOnly(manager, database, installDir) {
+	if (!process.env.NYXGUARD_MANAGER_ONLY_HOST_FILE?.startsWith("/")) throw new Error("Manager-only recovery helper was not supplied");
+	const required = [
+		[manager, "/data", "nyxguard_data"], [manager, "/etc/letsencrypt", "nyxguard_letsencrypt"],
+		[manager, "/run/nyxguard-vpn-auth", "nyxguard_vpn_auth"], [database, "/var/lib/mysql", "nyxguard_db"],
+	];
+	for (const [container, destination, name] of required) {
+		const mount = (container.Mounts || []).find((item) => item.Destination === destination);
+		if (mount?.Type !== "volume" || mount.Name !== name) throw new Error(`Unexpected persistent ${destination} mount; refusing Manager-only handover`);
+	}
+	try { await api("GET", "/volumes/nyxguard_vpn"); throw new Error("VPN state volume exists without a VPN service; refusing ambiguous topology"); }
+	catch (error) { if (!String(error.message).includes("/volumes/nyxguard_vpn: 404")) throw error; }
+	await api("POST", "/volumes/create", { Name: "nyxguard_update_recovery", Labels: { "nyxguard.purpose": "major-update-recovery" } });
+	const managerEnv = Object.fromEntries((manager.Config.Env || []).map((entry) => {
+		const at = entry.indexOf("="); return at < 0 ? [entry, ""] : [entry.slice(0, at), entry.slice(at + 1)];
+	}));
+	const helper = await api("POST", `/containers/create?name=${q(`nyxguard-manager-only-handover-${Date.now()}`)}`, {
+		Image: image, Entrypoint: ["node", "/tmp/manager-only-handover.mjs"], Cmd: [],
+		Env: ["CURRENT_VERSION=4.0.18", "TARGET_VERSION=5.0.0", "VPN_SOURCE=absent",
+			`OLD_MANAGER_ID=${manager.Id}`, `OLD_MANAGER_NAME=${String(manager.Name).replace(/^\//, "")}`,
+			`DB_ID=${database.Id}`, `APP_UID=${managerEnv.PUID || "1000"}`, `APP_GID=${managerEnv.PGID || "1000"}`],
+		HostConfig: { Binds: ["/var/run/docker.sock:/var/run/docker.sock",
+			`${process.env.NYXGUARD_MANAGER_ONLY_HOST_FILE}:/tmp/manager-only-handover.mjs:ro`,
+			`${installDir}:/host-install:rw`, "/var/lib/nyxguard-licensing:/host-vault:rw",
+			"nyxguard_update_recovery:/recovery:rw",
+			...["nyxguard_data", "nyxguard_db", "nyxguard_letsencrypt", "nyxguard_vpn_auth"].map((name) => `${name}:/source/${name}:rw`)],
+			NetworkMode: "none" },
+	});
+	await api("POST", `/containers/${helper.Id}/start`);
+	for (let attempt = 0; attempt < 1800; attempt++) {
+		const info = await api("GET", `/containers/${helper.Id}/json`);
+		if (!info.State.Running) {
+			const logs = await new Promise((resolve, reject) => {
+				const request = http.get({ socketPath: "/var/run/docker.sock", path: `/v1.41/containers/${helper.Id}/logs?stdout=1&stderr=1&tail=60` }, (response) => {
+					const chunks = []; response.on("data", (chunk) => chunks.push(chunk));
+					response.on("end", () => resolve(Buffer.concat(chunks).toString("utf8").replace(/[^\x09\x0A\x0D\x20-\x7E]/g, "")));
+				}); request.on("error", reject);
+			});
+			console.log(logs);
+			if (info.State.ExitCode !== 0) throw new Error(`Manager-only handover failed (helper exit ${info.State.ExitCode}); inspect persistent recovery state`);
+			console.log("Upgrade complete. Now running: 5.0.0 (VPN unavailable)");
+			return;
+		}
+		await sleep(1000);
+	}
+	throw new Error("Manager-only handover is still running; inspect it before retrying");
 }
 
 async function setup() {
 	if (process.env.CURRENT_VERSION !== "4.0.18" || process.env.TARGET_VERSION !== "5.0.0") {
 		throw new Error("Unsupported CLI handover transition");
 	}
-	oldManager = await checkedContainer("nyxguard-manager", "nyxmael/nyxguardmanager:4.0.18");
-	oldVpn = await checkedContainer("nyxguard-vpn-agent", "nyxmael/nyxguardmanager-vpn-agent:4.0.18");
-	const names = (await api("GET", "/containers/json?all=1")).flatMap((item) => item.Names || []);
+	const all = await api("GET", "/containers/json?all=1");
+	const installDir = process.env.HOST_INSTALL_DIR;
+	if (!installDir?.startsWith("/") || installDir.includes("..")) throw new Error("Invalid installed Compose directory");
+	const topology = selectTopology(all, installDir, process.env.NYXGUARD_MANAGER_ONLY_DECLARED === "1");
+	oldManager = await checkedContainer(topology.manager, "nyxmael/nyxguardmanager:4.0.18");
+	const database = await api("GET", `/containers/${q(topology.database.Id)}/json`);
+	if (!database.State?.Running) throw new Error("Installed database is not running");
+	const names = all.flatMap((item) => item.Names || []);
 	if (names.some((name) => /^\/nyxguard-(update-handover|recovery-|manager-rollback-|vpn-agent-rollback-)/.test(name))) {
 		throw new Error("An existing handover or rollback container needs review before retrying");
 	}
+	if (!topology.vpn) { await runManagerOnly(oldManager, database, installDir); return; }
+	oldVpn = await checkedContainer(topology.vpn, "nyxmael/nyxguardmanager-vpn-agent:4.0.18");
 	const data = (oldManager.Mounts || []).find((mount) => mount.Destination === "/data");
 	if (!data || !["volume", "bind"].includes(data.Type)) throw new Error("Persistent Manager /data mount not found");
 	const dataSource = data.Type === "volume" ? data.Name : data.Source;
@@ -145,8 +226,8 @@ async function main() {
 				if (helperId) await api("DELETE", `/containers/${helperId}?force=1`);
 				if (newVpnId) await api("DELETE", `/containers/${newVpnId}?force=1`);
 				if (newManagerId) await api("DELETE", `/containers/${newManagerId}?force=1`);
-				if (managerRenamed) await api("POST", `/containers/${oldManager.Id}/rename?name=nyxguard-manager`);
-				if (vpnRenamed) await api("POST", `/containers/${oldVpn.Id}/rename?name=nyxguard-vpn-agent`);
+				if (managerRenamed) await api("POST", `/containers/${oldManager.Id}/rename?name=${q(String(oldManager.Name).replace(/^\//, ""))}`);
+				if (vpnRenamed) await api("POST", `/containers/${oldVpn.Id}/rename?name=${q(String(oldVpn.Name).replace(/^\//, ""))}`);
 			} catch (cleanupError) {
 				console.error(`Setup cleanup is incomplete; inspect containers before retrying: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`);
 			}
