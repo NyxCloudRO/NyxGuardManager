@@ -605,12 +605,20 @@ const updateManager = {
 		const devImage = process.env.NYX_UPDATE_DEV_IMAGE;
 		const isDevTarget = !!devTarget && target === devTarget && /^\d+\.\d+\.\d+-dev$/.test(target)
 			&& /^nyxguardmanager:\d+\.\d+\.\d+-dev$/.test(devImage || "");
+		const sameVersionDevRebuild = isDevTarget && target === current
+			&& process.env.NYX_TASK1_DEV_REBUILD === "1"
+			&& process.env.NYX_UPDATE_MANAGER_CONTAINER === "nyxguard-manager";
 		if (!target || (!isStrictSemver(target) && !isDevTarget)) {
 			throw new Error("Invalid target version.");
 		}
 		if (!isDevTarget && target !== state.latestVersion) throw new Error("Target is not the latest verified release.");
-		if (!semverGt(target, current)) {
+		if (!semverGt(target, current) && !sameVersionDevRebuild) {
 			throw new Error(`No newer version available. Current: ${current}, target: ${target}`);
+		}
+		if (sameVersionDevRebuild) {
+			const running = await dockerRequest("GET", "/containers/nyxguard-manager/json");
+			const candidate = await dockerRequest("GET", `/images/${encodeURIComponent(devImage)}/json`);
+			if (running.Image === candidate.Id) throw new Error("DEV rebuild image is already running.");
 		}
 		if (state.stage === STAGES.RECOVERY_REQUIRED || state.stage === STAGES.ACTIVATING)
 			throw new Error("Resolve the active handover before downloading another target.");

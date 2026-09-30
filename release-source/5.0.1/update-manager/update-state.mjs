@@ -17,10 +17,6 @@ export function normalizeState(state, currentVersion) {
     next.stage = STAGES.UPDATE_AVAILABLE;
     next.downloadedVersion = null;
   }
-  if (next.downloadedVersion === currentVersion && next.stage === STAGES.DOWNLOADED) {
-    next.stage = STAGES.SUCCESS;
-    next.downloadedVersion = null;
-  }
   next.pendingVersion = null;
   next.restartPending = next.stage === STAGES.RESTART_PENDING;
   return next;

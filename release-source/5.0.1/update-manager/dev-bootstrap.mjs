@@ -9,7 +9,10 @@ assert.equal(process.env.NYX_TASK1_DEV_BOOTSTRAP, "1");
 assert.equal(process.env.NYX_UPDATE_MANAGER_CONTAINER, "nyxguard-manager");
 assert.equal(process.env.NYX_UPDATE_DEV_TARGET, "5.0.1-dev");
 assert.equal(process.env.NYX_UPDATE_DEV_IMAGE, "nyxguardmanager:5.0.1-dev");
-assert.equal(process.env.NPM_BUILD_VERSION, "5.0.0");
+const oldVersion = process.env.NYX_EXPECT_OLD_VERSION || "5.0.0";
+assert.ok(["5.0.0", "5.0.1-dev"].includes(oldVersion));
+assert.equal(process.env.NPM_BUILD_VERSION, oldVersion);
+if (oldVersion === "5.0.1-dev") assert.equal(process.env.NYX_TASK1_DEV_REBUILD, "1");
 const mode = process.argv[2];
 assert.ok(["download", "activate"].includes(mode));
 const request = (endpoint) => new Promise((resolve, reject) => {
@@ -49,14 +52,14 @@ if (mode === "download") {
   }
   const downloaded = await state();
   assert.equal(downloaded.stage, "downloaded");
-  assert.equal(downloaded.currentVersion, "5.0.0");
+  assert.equal(downloaded.currentVersion, oldVersion);
   assert.equal(downloaded.downloadedVersion, "5.0.1-dev");
   assert.equal(downloaded.restartPending, false);
   assert.equal(downloaded.pendingVersion, null);
   assert.ok(downloaded.downloadedImageId?.startsWith("sha256:"));
   assert.equal((await request("/containers/nyxguard-manager/json")).Id, old.Id);
   assert.equal((await request("/containers/nyxguard-vpn-agent/json")).Id, vpn.Id);
-  console.log("DEV download PASS: 5.0.0 and VPN unchanged; target pinned without restart claim");
+  console.log(`DEV download PASS: ${oldVersion} and VPN unchanged; target pinned without restart claim`);
 } else {
   const before = await state();
   assert.equal(before.stage, "downloaded");

@@ -39,6 +39,13 @@ test("failed activation and manual recovery are distinct durable states", () => 
   assert.equal(blocked.manualRecoveryRequired, true);
 });
 
+test("same-version DEV image rebuild stays downloaded until handover commits", () => {
+  const before = normalizeState({ stage: STAGES.SUCCESS }, "5.0.1-dev");
+  const downloaded = markDownloaded(before, "5.0.1-dev", "sha256:new-build");
+  assert.equal(normalizeState(downloaded, "5.0.1-dev").stage, STAGES.DOWNLOADED);
+  assert.equal(downloaded.restartPending, false);
+});
+
 test("hard interruption waits for helper and fails closed after replacement writes", () => {
   assert.equal(classifyInterruption({ helperRunning: true }), "wait");
   assert.equal(classifyInterruption({ helperRunning: false, helperExitCode: 1,

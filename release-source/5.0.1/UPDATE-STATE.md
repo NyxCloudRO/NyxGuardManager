@@ -40,3 +40,6 @@ to a local `X.Y.Z-dev` image. A controlled updater sidecar can set
 `NYX_UPDATE_MANAGER_CONTAINER=nyxguard-manager` to drive the existing 5.0.0
 DEV Manager through this path. Published stable releases continue to use the
 registry check and pull path.
+An explicitly guarded DEV image rebuild may set `NYX_TASK1_DEV_REBUILD=1` to
+replace a running image with another image ID carrying the same `X.Y.Z-dev`
+version. The updater refuses this when the candidate ID already runs.
