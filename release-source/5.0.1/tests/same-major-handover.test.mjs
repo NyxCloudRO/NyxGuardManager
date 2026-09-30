@@ -183,7 +183,7 @@ test("successful retry clears stale failure state", { skip: !enabled }, async ()
 	const result = await scenario({ initialState: { stage: "failed", restartPending: false,
 		pendingVersion: null, lastApplyFailure: { error: "earlier failure" }, manualRecoveryRequired: false } });
 	assert.equal(result.exitCode, 0, result.output);
-	assert.equal(result.state.stage, undefined);
+	assert.equal(result.state.stage, "success");
 	assert.equal(result.state.lastApplyFailure, undefined);
 	assert.equal(result.state.pendingVersion, null);
 	assert.equal(result.state.restartPending, false);

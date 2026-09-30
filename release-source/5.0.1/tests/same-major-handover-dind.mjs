@@ -6,7 +6,8 @@ import http from "node:http";
 
 assert.equal(process.env.NYX_TASK1A_DISPOSABLE, "1");
 const vpnEnabled = process.env.NYX_TASK1A_TOPOLOGY === "vpn";
-const interrupted = process.env.NYX_TASK1A_INTERRUPT === "1";
+const hardInterrupted = process.env.NYX_TASK1A_INTERRUPT === "hard";
+const interrupted = process.env.NYX_TASK1A_INTERRUPT === "1" || hardInterrupted;
 assert.ok(vpnEnabled || process.env.NYX_TASK1A_TOPOLOGY === "manager-only");
 const target = "nyxmael/nyxguardmanager:5.0.1-task1a-test";
 const request = (method, endpoint, body) => new Promise((resolve, reject) => {
@@ -72,6 +73,16 @@ const helper = await request("POST", `/containers/create?name=nyxguard-task1a-he
 	HostConfig: { Binds: ["/var/run/docker.sock:/var/run/docker.sock",
 		"nyxguard_data:/handover-data:rw"], NetworkMode: "none" },
 });
+if (hardInterrupted) {
+	const file = "/handover-data/update-manager/state.json";
+	await fs.mkdir("/handover-data/update-manager", { recursive: true });
+	await fs.writeFile(file, JSON.stringify({ currentVersion: "5.0.0", stage: "activating",
+		downloadedVersion: "5.0.1-dev", pendingVersion: null, restartPending: false,
+		activation: { targetVersion: "5.0.1-dev", imageId: (await inspect(newManager.Id)).Image,
+			oldManagerId: oldManager.Id, newManagerId: newManager.Id,
+			oldVpnId: oldVpn?.Id || null, newVpnId: newVpn?.Id || null,
+			helperId: helper.Id, phase: "prepared" } }, null, 2));
+}
 await request("POST", `/containers/${helper.Id}/start`);
 if (interrupted) {
 	let wrote = false;
@@ -80,7 +91,7 @@ if (interrupted) {
 		catch { await wait(100); }
 	}
 	assert.equal(wrote, true, "replacement must write before interruption");
-	await request("POST", `/containers/${helper.Id}/kill?signal=SIGTERM`);
+	await request("POST", `/containers/${helper.Id}/kill?signal=${hardInterrupted ? "SIGKILL" : "SIGTERM"}`);
 }
 let helperStatus;
 for (let i = 0; i < 180; i++) {
@@ -89,6 +100,16 @@ for (let i = 0; i < 180; i++) {
 	await wait(1000);
 }
 assert.equal(helperStatus.State.Running, false, "helper must finish");
+if (hardInterrupted) {
+	const state = JSON.parse(await fs.readFile("/handover-data/update-manager/state.json", "utf8"));
+	assert.equal(state.stage, "activating");
+	assert.equal(state.activation.phase, "replacement_starting");
+	assert.ok(state.activation.recoveryId?.startsWith("nyx-same-"));
+	assert.equal((await inspect(oldManager.Id)).State.Running, false);
+	assert.equal((await inspect(newManager.Id)).State.Running, true);
+	console.log(`PASS ${process.env.NYX_TASK1A_TOPOLOGY} hard interruption retained recovery evidence and stopped old runtime`);
+	process.exit(0);
+}
 assert.equal(helperStatus.State.ExitCode, 1, "post-mutation health failure must fail handover");
 for (let i = 0; i < 90; i++) {
 	const current = await inspect(oldManager.Id);

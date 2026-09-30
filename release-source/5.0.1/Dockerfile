@@ -1,0 +1,29 @@
+# The exact local 5.0.0 DEV base is checked by build-dev.sh before this build.
+FROM nyxguardmanager:5.0.0-dev
+
+ARG NYXGUARD_SOURCE_REVISION=uncommitted
+
+COPY release-source/5.0.1/update-manager/update-manager.js /app/internal/update-manager.js
+COPY release-source/5.0.1/update-manager/update-state.mjs /app/internal/update-state.mjs
+COPY release-source/5.0.1/update-manager/update-handover.js /app/internal/update-handover.js
+COPY release-source/5.0.1/update-manager/same-major-recovery.js /app/internal/same-major-recovery.js
+COPY release-source/5.0.1/frontend/patch-legacy-ui.mjs /tmp/nyxguard-501/patch-legacy-ui.mjs
+COPY release-source/5.0.1/frontend/patch-current-version.mjs /tmp/nyxguard-501/patch-current-version.mjs
+
+RUN set -eu; \
+	node /tmp/nyxguard-501/patch-legacy-ui.mjs /app/frontend; \
+	node /tmp/nyxguard-501/patch-current-version.mjs /app; \
+	node --check /app/internal/update-manager.js; \
+	node --check /app/internal/update-state.mjs; \
+	node --check /app/internal/update-handover.js; \
+	node --check /app/internal/same-major-recovery.js; \
+	grep -q '"version": "5.0.1-dev"' /app/package.json; \
+	rm -rf /tmp/nyxguard-501
+
+ENV NPM_BUILD_VERSION=5.0.1-dev \
+	NPM_BUILD_COMMIT=${NYXGUARD_SOURCE_REVISION} \
+	NPM_BUILD_DATE=2026-09-30
+
+LABEL org.opencontainers.image.version="5.0.1-dev" \
+	org.opencontainers.image.revision="${NYXGUARD_SOURCE_REVISION}" \
+	org.opencontainers.image.title="NyxGuard Manager"

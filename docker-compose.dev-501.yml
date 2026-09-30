@@ -1,0 +1,5 @@
+# DEV-only image selection after the 5.0.0 -> 5.0.1-dev same-major handover.
+# Use with docker-compose.yml; do not apply to PROD.
+services:
+  nyxguard-manager:
+    image: nyxguardmanager:5.0.1-dev

@@ -61,7 +61,7 @@ async function waitHealthy(id, timeoutMs = 120000) {
 	throw new Error(`${id} did not become healthy in time`);
 }
 
-async function updateState(success, error = null, manualRecoveryRequired = false, recoveryStatus = null, migrationBoundary = null, reconcileFailure = false) {
+async function updateState(success, error = null, manualRecoveryRequired = false, recoveryStatus = null, migrationBoundary = null, reconcileFailure = false, recoveryId = null) {
 	const file = "/handover-data/update-manager/state.json";
 	let state = {};
 	try {
@@ -72,6 +72,11 @@ async function updateState(success, error = null, manualRecoveryRequired = false
 	if (success) {
 		const record = { from: env.CURRENT_VERSION, to: env.TARGET_VERSION, at: new Date().toISOString() };
 		state.currentVersion = env.TARGET_VERSION;
+		state.stage = "success";
+		state.downloadedVersion = null;
+		state.downloadedImageId = null;
+		state.activation = null;
+		state.recoveryCleanupPending = recoveryId || null;
 		state.pendingVersion = null;
 		state.restartPending = false;
 		state.updateAvailable = false;
@@ -79,19 +84,47 @@ async function updateState(success, error = null, manualRecoveryRequired = false
 		state.updateHistory = Array.isArray(state.updateHistory) ? state.updateHistory : [];
 		state.updateHistory.unshift(record);
 		state.updateHistory = state.updateHistory.slice(0, 50);
-		delete state.stage;
 		delete state.lastApplyFailure;
 		delete state.manualRecoveryRequired;
 	} else {
-		state.restartPending = !reconcileFailure;
-		state.pendingVersion = reconcileFailure ? null : env.TARGET_VERSION;
-		if (reconcileFailure) state.stage = manualRecoveryRequired ? "recovery_required" : "failed";
+		state.restartPending = false;
+		state.pendingVersion = null;
+		state.stage = manualRecoveryRequired ? "recovery_required" : "failed";
+		state.activation = null;
 		state.lastApplyFailure = { at: new Date().toISOString(), error: String(error || "handover failed"),
 			...(recoveryStatus ? { recoveryStatus } : {}), ...(migrationBoundary ? { migrationBoundary } : {}) };
 		state.manualRecoveryRequired = manualRecoveryRequired;
 	}
 	await fs.mkdir("/handover-data/update-manager", { recursive: true });
-	await fs.writeFile(file, JSON.stringify(state, null, 2), "utf8");
+	const temporary = `${file}.handover.tmp`;
+	await fs.writeFile(temporary, JSON.stringify(state, null, 2), { mode: 0o600 });
+	await fs.rename(temporary, file);
+}
+
+async function finishRecoveryCleanup(recoveryId) {
+	const file = "/handover-data/update-manager/state.json";
+	const state = JSON.parse(await fs.readFile(file, "utf8"));
+	if (state.stage !== "success" || state.recoveryCleanupPending !== recoveryId)
+		throw new Error("Recovery cleanup state changed");
+	state.recoveryCleanupPending = null;
+	const temporary = `${file}.cleanup.tmp`;
+	await fs.writeFile(temporary, JSON.stringify(state, null, 2), { mode: 0o600 });
+	await fs.rename(temporary, file);
+}
+
+async function updatePhase(phase, recoveryId) {
+	const file = "/handover-data/update-manager/state.json";
+	let state;
+	try { state = JSON.parse(await fs.readFile(file, "utf8")); }
+	catch (error) { if (error.code === "ENOENT") return; throw error; }
+	// Task 1A's standalone handover fixtures intentionally have no update caller.
+	if (state.stage !== "activating") return;
+	if (state.activation?.newManagerId !== env.NEW_MANAGER_ID)
+		throw new Error("Activation state does not match handover");
+	state.activation = { ...state.activation, phase, recoveryId };
+	const temporary = `${file}.handover.tmp`;
+	await fs.writeFile(temporary, JSON.stringify(state, null, 2), { mode: 0o600 });
+	await fs.rename(temporary, file);
 }
 
 function requiredVolume(container, destination, expectedName) {
@@ -133,7 +166,7 @@ async function runSameMajorWorker(mode, recoveryId, volumes) {
 		...volumes.map((v) => `${v.name}:/source/${v.key}:${mode === "restore" ? "rw" : "ro"}`)];
 	const name = `nyxguard-same-major-${mode}-${Date.now()}`;
 	const created = await api("POST", `/containers/create?name=${name}`, {
-		Image: `nyxmael/nyxguardmanager:${env.TARGET_VERSION}`,
+		Image: env.TARGET_IMAGE_ID || `nyxmael/nyxguardmanager:${env.TARGET_VERSION}`,
 		Entrypoint: ["node", "/app/internal/same-major-recovery.js"], Cmd: [],
 		Env: [`RECOVERY_ID=${recoveryId}`, `RECOVERY_MODE=${mode}`,
 			`RECOVERY_VOLUMES=${JSON.stringify(volumes)}`],
@@ -347,12 +380,15 @@ async function runSameMajorHandover() {
 			Labels: { "nyxguard.purpose": "same-major-update-recovery" } });
 		await sleep(1500);
 		assertNotInterrupted();
+		await updatePhase("quiescing", recoveryId);
 		if (hasVpn) await api("POST", `/containers/${env.OLD_VPN_ID}/stop?t=15`);
 		await api("POST", `/containers/${env.OLD_MANAGER_ID}/stop?t=20`);
 		await runSameMajorWorker("backup", recoveryId, volumes);
 		recoveryReady = true;
+		await updatePhase("recovery_ready", recoveryId);
 		assertNotInterrupted();
 		newStarted = true; // A failed Docker start may still have written persistent state.
+		await updatePhase("replacement_starting", recoveryId);
 		await api("POST", `/containers/${env.NEW_MANAGER_ID}/start`);
 		await waitHealthy(env.NEW_MANAGER_ID);
 		if (hasVpn) {
@@ -363,11 +399,11 @@ async function runSameMajorHandover() {
 				throw new Error("VPN Agent joined the wrong Manager namespace");
 		}
 		assertNotInterrupted();
-		await updateState(true);
+		await updateState(true, null, false, null, null, false, recoveryId);
 		if (hasVpn) await ignore(api("DELETE", `/containers/${env.OLD_VPN_ID}?force=1`));
 		await ignore(api("DELETE", `/containers/${env.OLD_MANAGER_ID}?force=1`));
-		await runSameMajorWorker("cleanup", recoveryId, volumes).catch((error) =>
-			console.error(`Recovery cleanup deferred: ${error instanceof Error ? error.message : String(error)}`));
+		await runSameMajorWorker("cleanup", recoveryId, volumes).then(() => finishRecoveryCleanup(recoveryId))
+			.catch((error) => console.error(`Recovery cleanup deferred: ${error instanceof Error ? error.message : String(error)}`));
 		console.log(`Same-major handover to v${env.TARGET_VERSION} completed`);
 	} catch (error) {
 		recovering = true;
