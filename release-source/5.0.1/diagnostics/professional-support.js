@@ -464,18 +464,20 @@
     var update = operations.update || {};
     var vpn = operations.vpn || {};
     var runtime = card(output, "Runtime & services", "Current observations from this Manager and its installed services.");
-    field(runtime, "Manager version", manager.version || "Unavailable");
-    field(runtime, "Build", manager.revision ? manager.revision.slice(0, 12) : "Unavailable");
-    field(runtime, "Manager health", manager.health || "unknown");
-    field(runtime, "Uptime", Number.isSafeInteger(manager.uptimeSeconds) ? Math.floor(manager.uptimeSeconds / 60) + " minutes" : "Unavailable");
-    field(runtime, "Database", database.reachable === true ? "Reachable" : "Unavailable");
-    field(runtime, "Migrations", Number.isSafeInteger(database.appliedMigrations) && Number.isSafeInteger(database.expectedMigrations)
+    var runtimeGrid = element("div", "nyx-support-metrics nyx-support-runtime-grid");
+    runtime.append(runtimeGrid);
+    field(runtimeGrid, "Manager version", manager.version || "Unavailable");
+    field(runtimeGrid, "Build", manager.revision ? manager.revision.slice(0, 12) : "Unavailable");
+    field(runtimeGrid, "Manager health", manager.health || "unknown");
+    field(runtimeGrid, "Uptime", Number.isSafeInteger(manager.uptimeSeconds) ? Math.floor(manager.uptimeSeconds / 60) + " minutes" : "Unavailable");
+    field(runtimeGrid, "Database", database.reachable === true ? "Reachable" : "Unavailable");
+    field(runtimeGrid, "Migrations", Number.isSafeInteger(database.appliedMigrations) && Number.isSafeInteger(database.expectedMigrations)
       ? database.appliedMigrations + " / " + database.expectedMigrations + (database.migrationsCurrent ? " current" : " needs attention") : "Unavailable");
-    field(runtime, "Update", update.stage && update.stage !== "unavailable" ? (update.currentVersion || "Unknown") + " · " + update.stage : "Unavailable");
-    field(runtime, "Update follow-up", update.interventionRequired ? "Operator action required" : update.cleanupPending ? "Cleanup pending"
+    field(runtimeGrid, "Update", update.stage && update.stage !== "unavailable" ? (update.currentVersion || "Unknown") + " · " + update.stage : "Unavailable");
+    field(runtimeGrid, "Update follow-up", update.interventionRequired ? "Operator action required" : update.cleanupPending ? "Cleanup pending"
       : update.stage && update.stage !== "unavailable" ? "None" : "Unavailable");
-    field(runtime, "VPN Agent", vpn.installed === false ? "Not installed" : vpn.installed === true ? vpn.health || "unknown" : "Unavailable");
-    field(runtime, "VPN topology", vpn.topology === "manager_namespace" ? "Shares Manager network namespace"
+    field(runtimeGrid, "VPN Agent", vpn.installed === false ? "Not installed" : vpn.installed === true ? vpn.health || "unknown" : "Unavailable");
+    field(runtimeGrid, "VPN topology", vpn.topology === "manager_namespace" ? "Shares Manager network namespace"
       : vpn.topology === "not_installed" ? "Not installed" : vpn.topology === "unexpected" ? "Unexpected" : "Unavailable");
     checkGroup(output, "System", system);
     if (hosts.length) {
@@ -485,43 +487,18 @@
       var allButton = button("All hosts", function () { setHostFilter(false); }, "nyx-support-button-secondary");
       var attentionButton = button("Needs attention", function () { setHostFilter(true); }, "nyx-support-button-secondary");
       var hostRows = element("div", "nyx-support-host-rows");
-      var hostDetail = element("section", "nyx-support-host-detail");
-      hostDetail.setAttribute("aria-label", "Selected proxy host diagnostics");
-      var hostLayout = element("div", "nyx-support-host-layout");
-      hostLayout.append(hostRows, hostDetail);
       hostControls.append(allButton, attentionButton);
-      hostList.append(hostControls, hostLayout);
-      var selectedHostButton = null;
-      function selectHost(host, control, name, state, counts, hostChecks) {
-        if (selectedHostButton) selectedHostButton.setAttribute("aria-expanded", "false");
-        if (selectedHostButton === control) {
-          selectedHostButton = null;
-          hostDetail.replaceChildren(element("p", "nyx-support-muted", "Select a proxy host to inspect its checks."));
-          return;
-        }
-        selectedHostButton = control;
-        control.setAttribute("aria-expanded", "true");
-        hostDetail.replaceChildren();
-        var heading = element("div", "nyx-support-host-detail-heading");
-        heading.append(element("h3", "", name), element("span", "nyx-support-state state-" + (!host.enabled ? "skipped" : counts.FAIL ? "fail" : counts.WARNING ? "warning" : "pass"), state));
-        hostDetail.append(heading, element("p", "nyx-support-host-counts", "PASS " + counts.PASS + " · WARNING " + counts.WARNING + " · FAIL " + counts.FAIL + " · SKIPPED " + counts.SKIPPED));
-        var checks = element("div", "nyx-support-host-check-grid");
-        if (!hostChecks.length) checks.append(element("p", "nyx-support-muted", "No checks available for this host."));
-        hostChecks.forEach(function (record) { resultCard(checks, record); });
-        hostDetail.append(checks, button("Troubleshoot this host", function () { troubleshootHost(host.id); }, "nyx-support-button-secondary"));
-      }
+      hostList.append(hostControls, hostRows);
       function setHostFilter(attentionOnly) {
         allButton.setAttribute("aria-pressed", String(!attentionOnly));
         attentionButton.setAttribute("aria-pressed", String(attentionOnly));
         hostRows.querySelectorAll(".nyx-support-host-row").forEach(function (row) {
           row.hidden = attentionOnly && row.dataset.attention !== "true";
+          if (row.hidden) row.open = false;
         });
-        if (selectedHostButton && selectedHostButton.hidden) selectedHostButton.click();
-        if (!selectedHostButton) {
-          var first = hostRows.querySelector('.nyx-support-host-row[data-attention="true"]:not([hidden])') || hostRows.querySelector(".nyx-support-host-row:not([hidden])");
-          if (first) first.click();
-          else hostDetail.replaceChildren(element("p", "nyx-support-muted", "No hosts need attention in this run."));
-        }
+        var empty = hostRows.querySelector(".nyx-support-host-empty");
+        if (empty) empty.remove();
+        if (!hostRows.querySelector(".nyx-support-host-row:not([hidden])")) hostRows.append(element("p", "nyx-support-muted nyx-support-host-empty", "No hosts need attention in this run."));
       }
       hosts.forEach(function (host) {
         if (!Number.isSafeInteger(host.id) || host.id < 1) return;
@@ -531,13 +508,21 @@
         hostChecks.forEach(function (record) { if (Object.hasOwn(counts, record.state)) counts[record.state]++; else counts.SKIPPED++; });
         var state = !host.enabled ? "Disabled" : counts.FAIL ? "Error" : counts.WARNING ? "Warning" : "Healthy";
         var name = names.slice(0, 2).join(", ") || "Proxy host #" + host.id;
-        var control = button("", function () { selectHost(host, control, name, state, counts, hostChecks); }, "nyx-support-host-row");
-        control.dataset.attention = String(host.enabled && (counts.FAIL > 0 || counts.WARNING > 0));
-        control.setAttribute("aria-expanded", "false");
-        control.append(element("strong", "nyx-support-host-name", name));
-        control.append(element("span", "nyx-support-state state-" + (!host.enabled ? "skipped" : counts.FAIL ? "fail" : counts.WARNING ? "warning" : "pass"), state));
-        control.append(element("span", "nyx-support-host-counts", "PASS " + counts.PASS + " · WARNING " + counts.WARNING + " · FAIL " + counts.FAIL + " · SKIPPED " + counts.SKIPPED));
-        hostRows.append(control);
+        var row = element("details", "nyx-support-host-row");
+        row.dataset.attention = String(host.enabled && (counts.FAIL > 0 || counts.WARNING > 0));
+        var header = element("summary", "nyx-support-host-summary");
+        header.append(element("strong", "nyx-support-host-name", name));
+        header.append(element("span", "nyx-support-state state-" + (!host.enabled ? "skipped" : counts.FAIL ? "fail" : counts.WARNING ? "warning" : "pass"), state));
+        header.append(element("span", "nyx-support-host-counts", "PASS " + counts.PASS + " · WARNING " + counts.WARNING + " · FAIL " + counts.FAIL + " · SKIPPED " + counts.SKIPPED));
+        var checks = element("div", "nyx-support-host-checks");
+        if (!hostChecks.length) checks.append(element("p", "nyx-support-muted", "No checks available for this host."));
+        hostChecks.forEach(function (record) { resultCard(checks, record); });
+        checks.append(button("Troubleshoot this host", function () { troubleshootHost(host.id); }, "nyx-support-button-secondary"));
+        row.append(header, checks);
+        row.addEventListener("toggle", function () {
+          if (row.open) hostRows.querySelectorAll(".nyx-support-host-row[open]").forEach(function (other) { if (other !== row) other.open = false; });
+        });
+        hostRows.append(row);
       });
       setHostFilter(false);
     } else {
