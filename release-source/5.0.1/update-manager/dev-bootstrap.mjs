@@ -25,6 +25,11 @@ const request = (endpoint) => new Promise((resolve, reject) => {
   req.on("error", reject);
 });
 const stateFile = "/data/update-manager/state.json";
+const stateOwner = await fs.stat(stateFile);
+assert.equal(process.getuid(), stateOwner.uid,
+  "DEV bootstrap must run as the Manager state owner");
+assert.equal(process.getgid(), stateOwner.gid,
+  "DEV bootstrap must run with the Manager state group");
 const state = async () => JSON.parse(await fs.readFile(stateFile, "utf8"));
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const old = await request("/containers/nyxguard-manager/json");
