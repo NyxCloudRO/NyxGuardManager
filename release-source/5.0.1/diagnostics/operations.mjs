@@ -49,7 +49,7 @@ export async function operationalSnapshot({ version, revision, uptimeSeconds, da
     : !managerId || !vpn?.networkMode ? 'unknown'
       : vpn.networkMode === `container:${managerId}` ? 'manager_namespace' : 'unexpected';
   return {
-    manager: { version, revision: revision || null, uptimeSeconds,
+    manager: { version, revision: revision || null, uptimeSeconds, uptimeScope: 'manager_process',
       health: manager?.running && manager.health === 'healthy' ? 'healthy'
         : !manager ? 'unknown' : manager.health },
     database: { reachable: databaseReachable === true,

@@ -293,7 +293,7 @@
       var manager = data.manager || {}, database = data.database || {}, vpn = data.vpn || {}, update = data.update || {};
       field(healthGrid, "Manager", manager.health === "healthy" ? "Healthy" : manager.health === "unhealthy" ? "Error" : "Unavailable");
       field(healthGrid, "Version and build", (manager.version || "Unknown") + (manager.revision ? " · " + manager.revision.slice(0, 12) : ""));
-      field(healthGrid, "Uptime", Number.isSafeInteger(manager.uptimeSeconds) ? Math.floor(manager.uptimeSeconds / 60) + " minutes" : "Unavailable");
+      field(healthGrid, "Manager process uptime", Number.isSafeInteger(manager.uptimeSeconds) ? Math.floor(manager.uptimeSeconds / 60) + " minutes" : "Unavailable");
       field(healthGrid, "Database", database.reachable === true ? "Healthy" : "Unavailable");
       field(healthGrid, "Migrations", Number.isSafeInteger(database.appliedMigrations) && Number.isSafeInteger(database.expectedMigrations)
         ? database.appliedMigrations + " / " + database.expectedMigrations + (database.migrationsCurrent ? " current" : " · Warning") : "Unavailable");
@@ -353,6 +353,7 @@
   }
 
   function friendlyCheck(name) {
+    if (name === "uptime") return "Manager Process Uptime";
     return String(name || "Check").replaceAll("_", " ").replace(/\b\w/g, function (letter) { return letter.toUpperCase(); });
   }
 
@@ -369,7 +370,7 @@
     if (Number.isSafeInteger(evidence.status_code)) primaryEvidence.push("HTTP " + evidence.status_code);
     if (Number.isFinite(evidence.free_percent)) primaryEvidence.push(Math.round(evidence.free_percent) + "% free");
     if (Number.isFinite(evidence.days_remaining)) primaryEvidence.push(evidence.days_remaining + " days remaining");
-    if (Number.isFinite(evidence.seconds)) primaryEvidence.push(evidence.seconds + " seconds uptime");
+    if (Number.isFinite(evidence.seconds)) primaryEvidence.push(evidence.seconds + " seconds process uptime");
     if (Number.isSafeInteger(evidence.count)) primaryEvidence.push(evidence.count + " occurrences");
     if (typeof evidence.failure === "string" && /^[a-z_]{1,32}$/.test(evidence.failure)) primaryEvidence.push(friendlyCheck(evidence.failure));
     if (primaryEvidence.length) primary.append(element("span", "nyx-support-evidence", primaryEvidence.join(" · ")));
@@ -469,7 +470,7 @@
     field(runtimeGrid, "Manager version", manager.version || "Unavailable");
     field(runtimeGrid, "Build", manager.revision ? manager.revision.slice(0, 12) : "Unavailable");
     field(runtimeGrid, "Manager health", manager.health || "unknown");
-    field(runtimeGrid, "Uptime", Number.isSafeInteger(manager.uptimeSeconds) ? Math.floor(manager.uptimeSeconds / 60) + " minutes" : "Unavailable");
+    field(runtimeGrid, "Manager process uptime", Number.isSafeInteger(manager.uptimeSeconds) ? Math.floor(manager.uptimeSeconds / 60) + " minutes" : "Unavailable");
     field(runtimeGrid, "Database", database.reachable === true ? "Reachable" : "Unavailable");
     field(runtimeGrid, "Migrations", Number.isSafeInteger(database.appliedMigrations) && Number.isSafeInteger(database.expectedMigrations)
       ? database.appliedMigrations + " / " + database.expectedMigrations + (database.migrationsCurrent ? " current" : " needs attention") : "Unavailable");

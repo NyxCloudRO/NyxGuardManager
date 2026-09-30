@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { operationalSnapshot } from './operations.mjs';
-import { buildSupportBundle } from '../../5.0.0/professional-support/bundle.mjs';
+import { buildSupportBundle } from './bundle.mjs';
 import { redact } from '../../5.0.0/professional-support/redaction.mjs';
 
 const base = { version: '5.0.1-dev', revision: 'a'.repeat(40), uptimeSeconds: 120,
@@ -15,6 +15,7 @@ test('operational diagnostics preserve runtime, database, update, and VPN truth'
   const actual = await operationalSnapshot(base);
   assert.equal(actual.manager.version, '5.0.1-dev');
   assert.equal(actual.manager.health, 'healthy');
+  assert.equal(actual.manager.uptimeScope, 'manager_process');
   assert.deepEqual([actual.database.appliedMigrations, actual.database.expectedMigrations], [42, 42]);
   assert.equal(actual.update.stage, 'success');
   assert.equal(actual.update.interventionRequired, false);
@@ -44,8 +45,12 @@ test('unexpected VPN namespace and recovery state are visible without identifier
 test('support bundle keeps the development version and rejects secret fields', () => {
   const { bundle, bytes } = buildSupportBundle({ version: '5.0.1-dev',
     buildRevision: 'b'.repeat(40), installationId: '123e4567-e89b-42d3-a456-426614174000',
-    now: new Date(), systemSnapshot: { uptimeSeconds: 120, databasePassword: 'synthetic-never-export' } });
+    now: new Date(), systemSnapshot: { uptimeSeconds: 120, databasePassword: 'synthetic-never-export' },
+    system: [{ check: 'uptime', state: 'PASS', evidence: { seconds: 120 } }] });
   assert.equal(bundle.application.version, '5.0.1-dev');
   assert.equal(bundle.application.revision, 'b'.repeat(40));
+  assert.equal(bundle.system_snapshot.uptime_seconds, 120);
+  assert.equal(bundle.system_snapshot.uptime_scope, 'manager_process');
+  assert.equal(bundle.diagnostics.system[0].reason, 'Manager process uptime was observed.');
   assert.equal(bytes.includes('synthetic-never-export'), false);
 });

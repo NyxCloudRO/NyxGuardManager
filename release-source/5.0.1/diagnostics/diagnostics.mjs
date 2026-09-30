@@ -33,7 +33,7 @@ const guidance = {
 	disk_capacity: ["Disk free space is within the monitored range.", "Disk free space is low.", "Continue monitoring disk capacity.", "Free space and check for failed writes."],
 	memory_pressure: ["Free memory is within the monitored range.", "Free memory is low.", "Continue monitoring available memory.", "Inspect memory consumers and service stability."],
 	cpu_usage: ["CPU usage is within the monitored range.", "CPU usage is high.", "Continue monitoring CPU usage.", "Inspect sustained CPU load and service responsiveness."],
-	uptime: ["Application uptime was observed.", "Application uptime was not observed.", "Compare uptime with deployment history.", "Collect process uptime."],
+	uptime: ["Manager process uptime was observed.", "Manager process uptime was not observed.", "Compare Manager process uptime with deployment history.", "Collect Manager process uptime."],
 	restart_indicator: ["The observed restart count is low.", "The observed restart count is elevated.", "Continue monitoring restarts.", "Inspect container exit reasons and recent logs."],
 	error_indicator: ["No classified backend or OpenResty errors were found in the observed interval.", "Recent backend or OpenResty errors were observed.", "Continue monitoring service errors.", "Inspect recent backend and OpenResty problem summaries."],
 	listener_match: ["A listener match was observed.", "No listener match was observed.", "Continue checking route behavior.", "Check listener bindings and host names."],
@@ -88,7 +88,8 @@ export function systemDiagnostics(snapshot = {}) {
 	checks.push(percentage("memory_pressure", snapshot.memoryFreePercent));
 	const uptime = finiteNumber(snapshot.uptimeSeconds);
 	checks.push(diagnostic("uptime", uptime === null || uptime < 0 ? "SKIPPED" : "PASS",
-		uptime === null || uptime < 0 ? {} : { seconds: Math.floor(uptime) }));
+		uptime === null || uptime < 0 ? {} : { seconds: Math.floor(uptime) },
+		uptime === null || uptime < 0 ? { reason: "Manager process uptime was not observed.", recommendation: "Collect Manager process uptime." } : {}));
 	const restarts = finiteNumber(snapshot.restartCount);
 	checks.push(diagnostic("restart_indicator", restarts === null || restarts < 0 ? "SKIPPED" : restarts > 2 ? "WARNING" : "PASS",
 		restarts === null || restarts < 0 ? {} : { count: Math.floor(restarts) }));

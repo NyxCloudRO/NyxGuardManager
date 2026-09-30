@@ -32,6 +32,14 @@ replace(main,
   'g.jsx("p",{children:T.isPending?"Checking for updates…":T.isError||T.data?.lastCheckError?"Update check unavailable. Use Check now to retry.":T.data?.updateAvailable?g.jsx(K,{id:"site-header.step-2-desc",data:{version:T.data.latest}}):"No newer update is available."})', 1);
 
 const translations = [
+  // Dashboard reports the age of the oldest monitored Manager/database
+  // container; it does not measure the Docker daemon's uptime.
+  ["Docker Uptime", "Oldest monitored container uptime"],
+  ["Docker-Laufzeit", "Laufzeit des ältesten überwachten Containers"],
+  ["Tiempo de actividad de Docker", "Tiempo activo del contenedor supervisado más antiguo"],
+  ["Temps de fonctionnement Docker", "Durée du conteneur surveillé le plus ancien"],
+  ["Uptime Docker", "Uptime del container monitorato più vecchio"],
+  ["Timp funcționare Docker", "Timp activ al celui mai vechi container monitorizat"],
   ["Restart now", "Activate update"],
   ["Restart required to activate update {version}.", "Update {version} is downloaded. Activate it when ready."],
   ["Update image is ready. Restart is required to activate the new version.", "Update image is downloaded. Activate it when ready."],
