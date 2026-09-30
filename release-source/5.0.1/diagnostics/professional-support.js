@@ -480,14 +480,43 @@
       var allButton = button("All hosts", function () { setHostFilter(false); }, "nyx-support-button-secondary");
       var attentionButton = button("Needs attention", function () { setHostFilter(true); }, "nyx-support-button-secondary");
       var hostRows = element("div", "nyx-support-host-rows");
+      var hostDetail = element("section", "nyx-support-host-detail");
+      hostDetail.setAttribute("aria-label", "Selected proxy host diagnostics");
+      var hostLayout = element("div", "nyx-support-host-layout");
+      hostLayout.append(hostRows, hostDetail);
       hostControls.append(allButton, attentionButton);
-      hostList.append(hostControls, hostRows);
+      hostList.append(hostControls, hostLayout);
+      var selectedHostButton = null;
+      function selectHost(host, control, name, state, counts, hostChecks) {
+        if (selectedHostButton) selectedHostButton.setAttribute("aria-expanded", "false");
+        if (selectedHostButton === control) {
+          selectedHostButton = null;
+          hostDetail.replaceChildren(element("p", "nyx-support-muted", "Select a proxy host to inspect its checks."));
+          return;
+        }
+        selectedHostButton = control;
+        control.setAttribute("aria-expanded", "true");
+        hostDetail.replaceChildren();
+        var heading = element("div", "nyx-support-host-detail-heading");
+        heading.append(element("h3", "", name), element("span", "nyx-support-state state-" + (!host.enabled ? "skipped" : counts.FAIL ? "fail" : counts.WARNING ? "warning" : "pass"), state));
+        hostDetail.append(heading, element("p", "nyx-support-host-counts", "PASS " + counts.PASS + " · WARNING " + counts.WARNING + " · FAIL " + counts.FAIL + " · SKIPPED " + counts.SKIPPED));
+        var checks = element("div", "nyx-support-host-check-grid");
+        if (!hostChecks.length) checks.append(element("p", "nyx-support-muted", "No checks available for this host."));
+        hostChecks.forEach(function (record) { resultCard(checks, record); });
+        hostDetail.append(checks, button("Troubleshoot this host", function () { troubleshootHost(host.id); }, "nyx-support-button-secondary"));
+      }
       function setHostFilter(attentionOnly) {
         allButton.setAttribute("aria-pressed", String(!attentionOnly));
         attentionButton.setAttribute("aria-pressed", String(attentionOnly));
         hostRows.querySelectorAll(".nyx-support-host-row").forEach(function (row) {
           row.hidden = attentionOnly && row.dataset.attention !== "true";
         });
+        if (selectedHostButton && selectedHostButton.hidden) selectedHostButton.click();
+        if (!selectedHostButton) {
+          var first = hostRows.querySelector('.nyx-support-host-row[data-attention="true"]:not([hidden])') || hostRows.querySelector(".nyx-support-host-row:not([hidden])");
+          if (first) first.click();
+          else hostDetail.replaceChildren(element("p", "nyx-support-muted", "No hosts need attention in this run."));
+        }
       }
       hosts.forEach(function (host) {
         if (!Number.isSafeInteger(host.id) || host.id < 1) return;
@@ -496,17 +525,14 @@
         var counts = { PASS: 0, WARNING: 0, FAIL: 0, SKIPPED: 0 };
         hostChecks.forEach(function (record) { if (Object.hasOwn(counts, record.state)) counts[record.state]++; else counts.SKIPPED++; });
         var state = !host.enabled ? "Disabled" : counts.FAIL ? "Error" : counts.WARNING ? "Warning" : "Healthy";
-        var details = element("details", "nyx-support-host-row");
-        details.dataset.attention = String(host.enabled && (counts.FAIL > 0 || counts.WARNING > 0));
-        var summary = element("summary", "nyx-support-host-summary");
-        summary.append(element("strong", "nyx-support-host-name", names.slice(0, 2).join(", ") || "Proxy host #" + host.id));
-        summary.append(element("span", "nyx-support-state state-" + (!host.enabled ? "skipped" : counts.FAIL ? "fail" : counts.WARNING ? "warning" : "pass"), state));
-        summary.append(element("span", "nyx-support-host-counts", "PASS " + counts.PASS + " · WARNING " + counts.WARNING + " · FAIL " + counts.FAIL + " · SKIPPED " + counts.SKIPPED));
-        details.append(summary);
-        if (!hostChecks.length) details.append(element("p", "nyx-support-muted", "No checks available for this host."));
-        hostChecks.forEach(function (record) { resultCard(details, record); });
-        details.append(button("Troubleshoot this host", function () { troubleshootHost(host.id); }, "nyx-support-button-secondary"));
-        hostRows.append(details);
+        var name = names.slice(0, 2).join(", ") || "Proxy host #" + host.id;
+        var control = button("", function () { selectHost(host, control, name, state, counts, hostChecks); }, "nyx-support-host-row");
+        control.dataset.attention = String(host.enabled && (counts.FAIL > 0 || counts.WARNING > 0));
+        control.setAttribute("aria-expanded", "false");
+        control.append(element("strong", "nyx-support-host-name", name));
+        control.append(element("span", "nyx-support-state state-" + (!host.enabled ? "skipped" : counts.FAIL ? "fail" : counts.WARNING ? "warning" : "pass"), state));
+        control.append(element("span", "nyx-support-host-counts", "PASS " + counts.PASS + " · WARNING " + counts.WARNING + " · FAIL " + counts.FAIL + " · SKIPPED " + counts.SKIPPED));
+        hostRows.append(control);
       });
       setHostFilter(false);
     } else {
@@ -580,6 +606,7 @@
   function troubleshootingContent(parent) {
     sectionHeading(parent, "Troubleshooting", "Guided routing and upstream checks for an existing proxy host.");
     var cardNode = card(parent, "Configured host workflow", "Choose an authorized proxy host and focus. The same bounded connectivity probe checks the configured upstream; arbitrary URLs and addresses are not accepted.");
+    cardNode.classList.add("nyx-support-workflow-card");
     notice(cardNode, "");
     var form = element("div", "nyx-support-actions");
     var hostSelect = element("select", "nyx-support-input");
@@ -658,6 +685,7 @@
   function bundleContent(parent) {
     sectionHeading(parent, "Support Bundle", "Generate and review safe metadata before downloading or uploading a structured support bundle.");
     var cardNode = card(parent, "Bundle workflow", "The bundle is redacted JSON, never a filesystem archive.");
+    cardNode.classList.add("nyx-support-bundle-card");
     notice(cardNode, "");
     var info = element("div", "nyx-support-metrics");
     var actions = element("div", "nyx-support-actions");
