@@ -14,6 +14,59 @@ changes were `release-source/README.md`, the two
 material, not the recent Task 0A edits. The Task 0A material was reviewed,
 tested, and committed as `f03cde7`.
 
+Its initial `git status --short --untracked-files=all` consisted of the
+modified `release-source/README.md` and these untracked paths:
+
+```text
+docker/4.0.14/Dockerfile
+docker/4.0.14/README.md
+docker/4.0.14/agent/Dockerfile
+docker/4.0.14/agent/agent.js
+docker/4.0.14/agent/agent.test.mjs
+docker/4.0.14/app/CHANGELOG_PUBLIC.md
+docker/4.0.14/app/internal/waf-rules.js
+docker/4.0.14/app/models/proxy_host.js
+docker/4.0.14/app/patch-auth-rate-limit.mjs
+docker/4.0.14/app/routes/main.js
+docker/4.0.14/app/routes/nyxguard/waf-rules.js
+docker/4.0.14/app/routes/vpn-client.js
+docker/4.0.14/frontend/assets/vpn-client-4014.css
+docker/4.0.14/frontend/assets/vpn-client-4014.js
+docker/4.0.14/frontend/index.html
+docker/4.0.15/Dockerfile
+docker/4.0.15/README.md
+docker/4.0.15/agent/Dockerfile
+docker/4.0.15/agent/agent.js
+docker/4.0.15/agent/agent.test.mjs
+docker/4.0.15/app/CHANGELOG_PUBLIC.md
+docker/4.0.15/app/internal/update-handover.js
+docker/4.0.15/app/internal/waf-rules.js
+docker/4.0.15/app/models/proxy_host.js
+docker/4.0.15/app/patch-auth-rate-limit.mjs
+docker/4.0.15/app/patch-update-manager-handover.mjs
+docker/4.0.15/app/patch-update-manager-ui.mjs
+docker/4.0.15/app/routes/main.js
+docker/4.0.15/app/routes/nyxguard/waf-rules.js
+docker/4.0.15/app/routes/update-manager.js
+docker/4.0.15/app/routes/vpn-client.js
+docker/4.0.15/frontend/assets/update-manager-visibility-4010.js
+docker/4.0.15/frontend/assets/vpn-client-4014.css
+docker/4.0.15/frontend/assets/vpn-client-4014.js
+docker/4.0.15/frontend/index.html
+docs/releases/4.0.14.md
+docs/service-discovery-proposal.md
+docs/vpn-client.md
+release-source/5.0.1/frontend/patch-legacy-ui.mjs
+release-source/5.0.1/frontend/patch-legacy-ui.test.mjs
+```
+
+The old canonical `upstream` checkout began at `283f534` with a modified
+`docker-compose.yml` plus six `.hotfix-4.0.11`–`.hotfix-4.0.13` folders and two
+untracked root discovery notes. No stash existed in either checkout. The
+`nyxguard-5-regression` initial diff was 15 added lines in
+`release-source/README.md`; its untracked files were not included in that
+`git diff --stat`.
+
 ## Feature groups
 
 | Legacy source | Classification | Evidence and disposition |
