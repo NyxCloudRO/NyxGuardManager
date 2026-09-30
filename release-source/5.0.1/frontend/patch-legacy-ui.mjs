@@ -46,6 +46,14 @@ patches.push(preparePatch(
 
 patches.push(preparePatches('vpn-client-4014.js', [
   [
+    'var summary = currentData.summary || {};\n\t\treturn \'<span><strong>\' + Number(summary.connected || 0) + \'</strong> connected</span><span><strong>\' + Number(summary.total || 0) + \'</strong> configured</span>\';',
+    'if (currentData.error) return \'<span><strong>Unavailable</strong> · VPN Agent</span>\';\n\t\tvar summary = currentData.summary || {};\n\t\treturn \'<span><strong>\' + Number(summary.connected || 0) + \'</strong> connected</span><span><strong>\' + Number(summary.total || 0) + \'</strong> configured</span>\';',
+  ],
+  [
+    'if (!sites.length) return \'<div class="nyx-vpn-empty-list"><span>No VPN sites yet</span><small>Add a client profile to begin.</small></div>\';',
+    'if (currentData.error) return \'<div class="nyx-vpn-empty-list"><span>VPN sites unavailable</span><small>Refresh to retry the Agent connection.</small></div>\';\n\t\tif (!sites.length) return \'<div class="nyx-vpn-empty-list"><span>No VPN sites yet</span><small>Add a client profile to begin.</small></div>\';',
+  ],
+  [
     'var route = (site.allowedIps || []).join(", ") || "No routes";',
     'var route = (Array.isArray(site.allowedIps) ? site.allowedIps.join(", ") : "") || "No routes";',
   ],
@@ -55,11 +63,15 @@ patches.push(preparePatches('vpn-client-4014.js', [
   ],
   [
     'currentData = await api("/sites");\n\t\t\tcurrentData.loaded = true;',
-    'var nextData = await api("/sites");\n\t\t\tif (!nextData || !Array.isArray(nextData.sites)) throw new Error("VPN site response is unavailable.");\n\t\t\tcurrentData = Object.assign({}, nextData, { sites: nextData.sites.filter(function (site) { return site && typeof site === "object"; }), loaded: true, error: null });',
+    'var nextData = await api("/sites");\n\t\t\tif (!nextData || nextData.agentAvailable === false) throw new Error("VPN Agent unavailable. Refresh to retry.");\n\t\t\tif (!Array.isArray(nextData.sites)) throw new Error("VPN site response is unavailable.");\n\t\t\tcurrentData = Object.assign({}, nextData, { sites: nextData.sites.filter(function (site) { return site && typeof site === "object"; }), loaded: true, error: null });',
+  ],
+  [
+    'if (currentData.loaded && !sites.length) adding = true;',
+    'if (currentData.error) adding = false;\n\t\telse if (currentData.loaded && !sites.length) adding = true;',
   ],
   [
     'if (!quiet) message(panel, error.message, "error");\n\t\t\treturn null;',
-    'currentData.error = error.message;\n\t\t\tcurrentData.loaded = true;\n\t\t\trender(panel);\n\t\t\tif (!quiet) message(panel, error.message, "error");\n\t\t\treturn null;',
+    'currentData = { loaded: true, agentAvailable: false, sites: [], summary: {}, error: error.message };\n\t\t\tselectedId = null;\n\t\t\tadding = false;\n\t\t\trender(panel);\n\t\t\tif (!quiet) message(panel, error.message, "error");\n\t\t\treturn null;',
   ],
 ]));
 

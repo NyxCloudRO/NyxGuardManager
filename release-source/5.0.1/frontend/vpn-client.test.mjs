@@ -18,8 +18,8 @@ function viewContext(currentData) {
     stateLabel: (state) => state === 'disconnected' ? 'Disconnected' : 'Unknown',
     formatHandshake: () => 'No handshake yet', formatBytes: () => '0 B' };
   vm.createContext(context);
-  vm.runInContext(section('function detailMarkup(', 'function render(') +
-    section('function siteListMarkup(', 'function addFormMarkup('), context);
+  vm.runInContext(section('function summaryMarkup(', 'function addFormMarkup(') +
+    section('function detailMarkup(', 'function render('), context);
   return context;
 }
 
@@ -60,4 +60,24 @@ test('failed initial fetch renders error without an unhandled exception', async 
   assert.equal(context.currentData.loaded, true);
   assert.equal(context.currentData.error, 'VPN API offline');
   assert.deepEqual(events, ['render', 'VPN API offline']);
+});
+
+test('HTTP 200 Agent failure is unavailable rather than an empty site list', async () => {
+  const events = [];
+  const context = { currentData: { loaded: false, sites: [{ id: 'stale' }], summary: { total: 1 } },
+    selectedId: 'stale', adding: false, renaming: false,
+    api: async () => ({ agentAvailable: false, sites: [], summary: { total: 0 }, error: 'Agent offline' }),
+    render: () => events.push('render'), message: (_panel, text) => events.push(text) };
+  vm.createContext(context);
+  vm.runInContext(section('async function refresh(', 'async function runAction('), context);
+  assert.equal(await context.refresh({}, false), null);
+  assert.equal(context.currentData.agentAvailable, false);
+  assert.deepEqual(context.currentData.sites, []);
+  assert.equal(context.selectedId, null);
+  assert.equal(context.adding, false);
+  const view = viewContext(context.currentData);
+  assert.match(vm.runInContext('summaryMarkup()', view), /Unavailable/);
+  assert.match(vm.runInContext('siteListMarkup()', view), /VPN sites unavailable/);
+  assert.doesNotMatch(vm.runInContext('siteListMarkup()', view), /No VPN sites yet/);
+  assert.deepEqual(events, ['render', 'VPN Agent unavailable. Refresh to retry.']);
 });

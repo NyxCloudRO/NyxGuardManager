@@ -11,9 +11,12 @@ const mainName = 'index-CTHAIRmi-409dev-4012certfix4-threatpagination3.js';
 const certName = 'index-BfJf9XXp-4012certfix4.js';
 const vpnName = 'vpn-client-4014.js';
 const vpnBefore = [
+  'var summary = currentData.summary || {};\n\t\treturn \'<span><strong>\' + Number(summary.connected || 0) + \'</strong> connected</span><span><strong>\' + Number(summary.total || 0) + \'</strong> configured</span>\';',
+  'if (!sites.length) return \'<div class="nyx-vpn-empty-list"><span>No VPN sites yet</span><small>Add a client profile to begin.</small></div>\';',
   'var route = (site.allowedIps || []).join(", ") || "No routes";',
   'function detailMarkup(site, preservedTarget) {\n\t\tvar warnings = site.warnings && site.warnings.length',
   'currentData = await api("/sites");\n\t\t\tcurrentData.loaded = true;',
+  'if (currentData.loaded && !sites.length) adding = true;',
   'if (!quiet) message(panel, error.message, "error");\n\t\t\treturn null;',
 ].join('\n');
 
@@ -34,7 +37,9 @@ test('patches both form controls and numeric certificate ordering', () => {
     const vpn = fs.readFileSync(path.join(root, 'assets', vpnName), 'utf8');
     assert.match(vpn, /if \(!site\) return/);
     assert.match(vpn, /VPN site response is unavailable/);
-    assert.match(vpn, /currentData\.error = error\.message/);
+    assert.match(vpn, /VPN Agent unavailable\. Refresh to retry/);
+    assert.match(vpn, /VPN sites unavailable/);
+    assert.match(vpn, /agentAvailable: false, sites: \[\], summary: \{\}, error: error\.message/);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
