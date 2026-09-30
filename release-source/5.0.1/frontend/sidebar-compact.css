@@ -1,28 +1,28 @@
 /* Preserve comfortable desktop spacing; compact the navigation only when
    viewport height makes the complete menu otherwise scroll internally. */
 @media (min-width:768px) and (max-height:820px) {
-  aside[class*="_sideMenu_"] #navbar-menu .nav-link {
+  #root aside[aria-label="Main navigation"] #navbar-menu .navbar-nav .nav-link {
     min-height:26px !important;
     padding-block:0 !important;
   }
-  aside[class*="_sideMenu_"] #navbar-menu .nav-link-icon {
+  #root aside[aria-label="Main navigation"] #navbar-menu .nav-link-icon {
     height:22px !important;
   }
-  aside[class*="_sideMenu_"] [class*="_sidebarFooter_"] {
+  #root aside[aria-label="Main navigation"] [class*="_sidebarFooter_"] {
     padding-block:3px !important;
     gap:2px;
   }
-  aside[class*="_sideMenu_"] [class*="_prefsDropdown_"] {
+  #root aside[aria-label="Main navigation"] [class*="_prefsDropdown_"] {
     margin-top:3px !important;
   }
-  aside[class*="_sideMenu_"] [class*="_prefsToggle_"] {
+  #root aside[aria-label="Main navigation"] [class*="_prefsToggle_"] {
     min-height:28px;
   }
-  aside[class*="_sideMenu_"] .prefs-action-links {
+  #root aside[aria-label="Main navigation"] .prefs-action-links {
     gap:2px;
     padding-top:1px;
   }
-  aside[class*="_sideMenu_"] .prefs-action-link {
+  #root aside[aria-label="Main navigation"] .prefs-action-link {
     min-height:25px;
     padding-block:2px;
   }

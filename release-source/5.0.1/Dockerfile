@@ -27,7 +27,7 @@ RUN set -eu; \
 	node /tmp/nyxguard-501/patch-page.mjs /app/frontend; \
 	node /tmp/nyxguard-501/patch-backend-version.mjs /app; \
 	cat /tmp/nyxguard-501/task3-polish.css >> /app/frontend/assets/professional-support.css; \
-	cat /tmp/nyxguard-501/sidebar-compact.css >> /app/frontend/assets/index-j7fgCarU.css; \
+	cat /tmp/nyxguard-501/sidebar-compact.css >> /app/frontend/assets/professional-support.css; \
 	node --check /app/internal/update-manager.js; \
 	node --check /app/internal/remote-version.js; \
 	node --check /app/routes/main.js; \
