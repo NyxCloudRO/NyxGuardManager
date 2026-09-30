@@ -298,7 +298,7 @@
       field(healthGrid, "Migrations", Number.isSafeInteger(database.appliedMigrations) && Number.isSafeInteger(database.expectedMigrations)
         ? database.appliedMigrations + " / " + database.expectedMigrations + (database.migrationsCurrent ? " current" : " · Warning") : "Unavailable");
       field(healthGrid, "VPN Agent", vpn.installed === false ? "Not installed" : vpn.health === "healthy" ? "Healthy" : vpn.health === "unhealthy" || vpn.health === "stopped" ? "Error" : "Unavailable");
-      field(healthGrid, "VPN topology", vpn.topology === "manager_namespace" ? "Manager network" : vpn.topology === "not_installed" ? "Not installed" : vpn.topology === "unexpected" ? "Warning" : "Unknown");
+      field(healthGrid, "VPN topology", vpn.topology === "manager_namespace" ? "Manager network" : vpn.topology === "not_installed" ? "Not installed" : vpn.topology === "agent_unreachable" ? "Agent unreachable" : vpn.topology === "unexpected" ? "Warning" : "Unknown");
       field(healthGrid, "Update", update.stage === "unavailable" || !update.stage ? "Unavailable" : update.stage === "success" ? "Ready · " + (update.currentVersion || "Unknown") : friendlyCheck(update.stage));
       field(healthGrid, "Update follow-up", update.interventionRequired ? "Recovery required" : update.cleanupPending ? "Cleanup pending" : update.downloadedVersion ? "Update downloaded" : update.stage === "unavailable" ? "Unavailable" : "None");
     }).catch(function (error) { if (health.isConnected) notice(health, error.message, true); });
@@ -479,7 +479,7 @@
       : update.stage && update.stage !== "unavailable" ? "None" : "Unavailable");
     field(runtimeGrid, "VPN Agent", vpn.installed === false ? "Not installed" : vpn.installed === true ? vpn.health || "unknown" : "Unavailable");
     field(runtimeGrid, "VPN topology", vpn.topology === "manager_namespace" ? "Shares Manager network namespace"
-      : vpn.topology === "not_installed" ? "Not installed" : vpn.topology === "unexpected" ? "Unexpected" : "Unavailable");
+      : vpn.topology === "not_installed" ? "Not installed" : vpn.topology === "agent_unreachable" ? "Agent unreachable" : vpn.topology === "unexpected" ? "Unexpected" : "Unavailable");
     checkGroup(output, "System", system);
     if (hosts.length) {
       var hostList = card(output, "Proxy hosts", hosts.length + " configured hosts · select a host to see every check and its troubleshooting action.");

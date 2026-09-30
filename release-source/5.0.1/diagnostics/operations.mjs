@@ -40,12 +40,12 @@ export function inspectContainer(name, { socketPath = '/var/run/docker.sock' } =
 }
 
 export async function operationalSnapshot({ version, revision, uptimeSeconds, databaseReachable,
-  migrationsCurrent, appliedMigrations, expectedMigrations, updateStatus, manager, vpn }) {
+  migrationsCurrent, appliedMigrations, expectedMigrations, updateStatus, manager, vpn, vpnReachable }) {
   const managerId = manager?.id;
   const vpnInstalled = vpn?.missing === true ? false : vpn ? true : null;
-  const vpnHealth = vpnInstalled === false ? 'not_installed' : !vpn ? 'unknown'
+  const vpnHealth = vpnInstalled === false ? 'not_installed' : vpnReachable === false ? 'unavailable' : !vpn ? 'unknown'
     : !vpn.running ? 'stopped' : vpn.health;
-  const topology = vpnInstalled === false ? 'not_installed'
+  const topology = vpnInstalled === false ? 'not_installed' : vpnReachable === false ? 'agent_unreachable'
     : !managerId || !vpn?.networkMode ? 'unknown'
       : vpn.networkMode === `container:${managerId}` ? 'manager_namespace' : 'unexpected';
   return {

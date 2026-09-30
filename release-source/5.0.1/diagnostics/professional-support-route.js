@@ -227,18 +227,32 @@ async function systemSnapshot(problems = [], logAvailable = false) {
 	return snapshot;
 }
 
+async function vpnAgentReachable() {
+	try {
+		const tokenPath = process.env.NYXGUARD_VPN_AGENT_TOKEN_PATH || "/run/nyxguard-vpn-auth/token";
+		const token = (await readFile(tokenPath, "utf8")).trim();
+		if (!token) return false;
+		const url = new URL("/status", process.env.NYXGUARD_VPN_AGENT_URL || "http://127.0.0.1:3198");
+		if (url.protocol !== "http:" || !["127.0.0.1", "localhost"].includes(url.hostname)) return false;
+		const response = await fetch(url, { headers: { "X-NyxGuard-VPN-Token": token }, signal: AbortSignal.timeout(1500) });
+		await response.body?.cancel();
+		return response.ok;
+	} catch { return false; }
+}
+
 async function currentOperations(snapshot) {
-	const [manager, vpn, updateStatus, applied, migrationFiles] = await Promise.all([
+	const [manager, vpn, updateStatus, applied, migrationFiles, vpnReachable] = await Promise.all([
 		inspectContainer("nyxguard-manager"), inspectContainer("nyxguard-vpn-agent"),
 		updateManager.getStatusForUser({}).catch(() => null),
 		db()("migrations").count({ count: "id" }).first().then((row) => Number(row?.count)).catch(() => null),
 		readdir("/app/migrations").then((names) => names.filter((name) => name.endsWith(".js")).length).catch(() => null),
+		vpnAgentReachable(),
 	]);
 	return operationalSnapshot({ version: VERSION, revision: BUILD_REVISION,
 		uptimeSeconds: snapshot.uptimeSeconds, databaseReachable: snapshot.databaseReachable,
 		migrationsCurrent: snapshot.migrationsCurrent,
 		appliedMigrations: applied, expectedMigrations: migrationFiles,
-		updateStatus, manager, vpn });
+		updateStatus, manager, vpn, vpnReachable });
 }
 
 async function activeHosts() {

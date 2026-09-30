@@ -72,7 +72,7 @@ test('HTTP 200 Agent failure is unavailable rather than an empty site list', asy
   vm.runInContext(section('async function refresh(', 'async function runAction('), context);
   assert.equal(await context.refresh({}, false), null);
   assert.equal(context.currentData.agentAvailable, false);
-  assert.deepEqual(context.currentData.sites, []);
+  assert.equal(context.currentData.sites.length, 0);
   assert.equal(context.selectedId, null);
   assert.equal(context.adding, false);
   const view = viewContext(context.currentData);

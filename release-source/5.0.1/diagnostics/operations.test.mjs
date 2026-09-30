@@ -9,7 +9,8 @@ const base = { version: '5.0.1-dev', revision: 'a'.repeat(40), uptimeSeconds: 12
   updateStatus: { current: '5.0.1-dev', stage: 'success', downloadedVersion: null,
     pendingVersion: null, restartPending: false, recoveryRequired: false, recoveryCleanupPending: null },
   manager: { id: 'manager-id', running: true, health: 'healthy' },
-  vpn: { id: 'vpn-id', running: true, health: 'healthy', networkMode: 'container:manager-id' } };
+  vpn: { id: 'vpn-id', running: true, health: 'healthy', networkMode: 'container:manager-id' },
+  vpnReachable: true };
 
 test('operational diagnostics preserve runtime, database, update, and VPN truth', async () => {
   const actual = await operationalSnapshot(base);
@@ -40,6 +41,15 @@ test('unexpected VPN namespace and recovery state are visible without identifier
   assert.equal(actual.vpn.topology, 'unexpected');
   assert.equal(actual.update.interventionRequired, true);
   assert.equal(JSON.stringify(actual).includes('vpn-id'), false);
+});
+
+test('running Agent in a stale network namespace is unavailable', async () => {
+  const actual = await operationalSnapshot({ ...base, vpnReachable: false });
+  assert.equal(actual.vpn.installed, true);
+  assert.equal(actual.vpn.health, 'unavailable');
+  assert.equal(actual.vpn.topology, 'agent_unreachable');
+  const absent = await operationalSnapshot({ ...base, vpn: { missing: true }, vpnReachable: false });
+  assert.equal(absent.vpn.health, 'not_installed');
 });
 
 test('support bundle keeps the development version and rejects secret fields', () => {
