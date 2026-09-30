@@ -1,5 +1,20 @@
 # Release source map
 
+## Development checkout
+
+On this DEV machine, `/home/ubuntu/NyxGuardManager/upstream` is the only
+authorized NyxGuard Manager development worktree. Reconcile that checkout if
+it is dirty, behind, divergent, or broken; do not use another clone as a
+workaround. Keep disposable test fixtures disposable and remove temporary
+acceptance artifacts after use. `release-source/` is intentional versioned
+source and must remain. DEV tasks never imply changes to the separate PROD
+installation.
+
+The 5.0.1 frontend source includes an asserted patch for two form controls
+and certificate list ordering inherited from older React work. Apply and test
+that patch against the validated compiled base when constructing a future
+5.0.1 image; it has not been deployed by this repository cleanup.
+
 The published Manager and VPN images are the customer runtime. `install.sh`
 pulls those images; `update.sh` downloads the SHA-256-pinned
 `upgrade/cli-bootstrap.mjs`, selects a release route, and uses the handover
