@@ -18,6 +18,17 @@ function preparePatch(name, oldText, newText, expectedCount) {
   return { asset, patched: original.replaceAll(oldText, newText) };
 }
 
+function preparePatches(name, changes) {
+  const asset = path.join(root, 'assets', name);
+  let patched = fs.readFileSync(asset, 'utf8');
+  for (const [oldText, newText] of changes) {
+    const count = patched.split(oldText).length - 1;
+    if (count !== 1) throw new Error(`${name}: expected one source match; found ${count}`);
+    patched = patched.replace(oldText, newText);
+  }
+  return { asset, patched };
+}
+
 const patches = [];
 patches.push(preparePatch(
   'index-CTHAIRmi-409dev-4012certfix4-threatpagination3.js',
@@ -32,5 +43,24 @@ patches.push(preparePatch(
   'e.sort((a,b)=>a.id-b.id),t.sort((a,b)=>a.id-b.id),r.sort((a,b)=>a.id-b.id),n.sort((a,b)=>a.id-b.id)',
   1,
 ));
+
+patches.push(preparePatches('vpn-client-4014.js', [
+  [
+    'var route = (site.allowedIps || []).join(", ") || "No routes";',
+    'var route = (Array.isArray(site.allowedIps) ? site.allowedIps.join(", ") : "") || "No routes";',
+  ],
+  [
+    'function detailMarkup(site, preservedTarget) {\n\t\tvar warnings = site.warnings && site.warnings.length',
+    'function detailMarkup(site, preservedTarget) {\n\t\tif (!site) return \'<section class="nyx-vpn-detail-card"><p>\' + escapeHtml(currentData.error || (currentData.loaded ? "Select a VPN site." : "Loading VPN sites…")) + \'</p></section>\';\n\t\tsite = Object.assign({ warnings: [], addresses: [], allowedIps: [], endpoints: [] }, site);\n\t\t["warnings", "addresses", "allowedIps", "endpoints"].forEach(function (key) { if (!Array.isArray(site[key])) site[key] = []; });\n\t\tvar warnings = site.warnings && site.warnings.length',
+  ],
+  [
+    'currentData = await api("/sites");\n\t\t\tcurrentData.loaded = true;',
+    'var nextData = await api("/sites");\n\t\t\tif (!nextData || !Array.isArray(nextData.sites)) throw new Error("VPN site response is unavailable.");\n\t\t\tcurrentData = Object.assign({}, nextData, { sites: nextData.sites.filter(function (site) { return site && typeof site === "object"; }), loaded: true, error: null });',
+  ],
+  [
+    'if (!quiet) message(panel, error.message, "error");\n\t\t\treturn null;',
+    'currentData.error = error.message;\n\t\t\tcurrentData.loaded = true;\n\t\t\trender(panel);\n\t\t\tif (!quiet) message(panel, error.message, "error");\n\t\t\treturn null;',
+  ],
+]));
 
 for (const { asset, patched } of patches) fs.writeFileSync(asset, patched);
