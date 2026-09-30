@@ -8,8 +8,10 @@ COPY release-source/5.0.1/update-manager/update-state.mjs /app/internal/update-s
 COPY release-source/5.0.1/update-manager/update-handover.js /app/internal/update-handover.js
 COPY release-source/5.0.1/update-manager/same-major-recovery.js /app/internal/same-major-recovery.js
 COPY release-source/5.0.1/diagnostics/operations.mjs /app/internal/nyxcloud-support/operations.mjs
+COPY release-source/5.0.1/diagnostics/diagnostics.mjs /app/internal/nyxcloud-support/diagnostics.mjs
 COPY release-source/5.0.1/diagnostics/professional-support-route.js /app/routes/professional-support.js
 COPY release-source/5.0.1/diagnostics/professional-support.js /app/frontend/assets/professional-support.js
+COPY release-source/5.0.1/diagnostics/task3-polish.css /tmp/nyxguard-501/task3-polish.css
 COPY release-source/5.0.1/traffic-rules/rules.js /app/routes/nyxguard/rules.js
 COPY release-source/5.0.1/frontend/patch-legacy-ui.mjs /tmp/nyxguard-501/patch-legacy-ui.mjs
 COPY release-source/5.0.1/frontend/patch-current-version.mjs /tmp/nyxguard-501/patch-current-version.mjs
@@ -21,6 +23,7 @@ RUN set -eu; \
 	node /tmp/nyxguard-501/patch-current-version.mjs /app; \
 	node /tmp/nyxguard-501/patch-page.mjs /app/frontend; \
 	node /tmp/nyxguard-501/patch-backend-version.mjs /app; \
+	cat /tmp/nyxguard-501/task3-polish.css >> /app/frontend/assets/professional-support.css; \
 	node --check /app/internal/update-manager.js; \
 	node --check /app/internal/remote-version.js; \
 	node --check /app/routes/main.js; \
@@ -29,6 +32,7 @@ RUN set -eu; \
 	node --check /app/internal/update-handover.js; \
 	node --check /app/internal/same-major-recovery.js; \
 	node --check /app/internal/nyxcloud-support/operations.mjs; \
+	node --check /app/internal/nyxcloud-support/diagnostics.mjs; \
 	node --check /app/routes/professional-support.js; \
 	node --check /app/frontend/assets/professional-support.js; \
 	node --check /app/routes/nyxguard/rules.js; \

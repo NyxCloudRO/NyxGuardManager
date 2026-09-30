@@ -405,6 +405,10 @@ route("get", "/problems", async (req, res) => {
 		backend_source_available: backendAvailable,
 		window_minutes: windowMinutes, generated_at: new Date().toISOString() }));
 });
+route("get", "/operations", async (_req, res) => {
+	const snapshot = await systemSnapshot();
+	res.set("Cache-Control", "no-store").json(redact(await currentOperations(snapshot)));
+});
 route("get", "/diagnostics", async (_req, res) => {
 	const allowed = await permitted(res); if (!allowed) return;
 	if (diagnosticsBusy) return res.sendStatus(429);
@@ -518,7 +522,10 @@ route("post", "/upload", async (req, res) => {
 });
 
 const timer = setInterval(async () => {
-	try { const c = await client(); if (c && (await c.status()).state === "REFRESH_REQUIRED") await c.refresh(); } catch {}
+	try {
+		const c = await client();
+		if (c && ["REFRESH_REQUIRED", "OFFLINE_GRACE", "AUTHORITY_UNAVAILABLE"].includes((await c.status()).state)) await c.refresh();
+	} catch {}
 }, 15 * 60 * 1000);
 timer.unref();
 

@@ -282,11 +282,32 @@
   function overviewContent(parent) {
     var grid = element("div", "nyx-support-overview-grid");
     parent.append(grid);
-    var license = card(grid, "Professional Support", "Current entitlement and authority state.");
-    notice(license, "Loading status…");
-    var workflow = card(grid, "Support workflow", "Generate a redacted bundle and upload when entitled.");
+    var health = card(grid, "Installation health", "Current Manager, database, VPN, and update state.");
+    var healthGrid = element("div", "nyx-support-metrics");
+    health.append(healthGrid);
+    notice(health, "Loading service status…");
+    request("/api/professional-support/operations").then(function (data) {
+      if (!health.isConnected) return;
+      notice(health, "");
+      healthGrid.replaceChildren();
+      var manager = data.manager || {}, database = data.database || {}, vpn = data.vpn || {}, update = data.update || {};
+      field(healthGrid, "Manager", manager.health === "healthy" ? "Healthy" : manager.health === "unhealthy" ? "Error" : "Unavailable");
+      field(healthGrid, "Version and build", (manager.version || "Unknown") + (manager.revision ? " · " + manager.revision.slice(0, 12) : ""));
+      field(healthGrid, "Uptime", Number.isSafeInteger(manager.uptimeSeconds) ? Math.floor(manager.uptimeSeconds / 60) + " minutes" : "Unavailable");
+      field(healthGrid, "Database", database.reachable === true ? "Healthy" : "Unavailable");
+      field(healthGrid, "Migrations", Number.isSafeInteger(database.appliedMigrations) && Number.isSafeInteger(database.expectedMigrations)
+        ? database.appliedMigrations + " / " + database.expectedMigrations + (database.migrationsCurrent ? " current" : " · Warning") : "Unavailable");
+      field(healthGrid, "VPN Agent", vpn.installed === false ? "Not installed" : vpn.health === "healthy" ? "Healthy" : vpn.health === "unhealthy" || vpn.health === "stopped" ? "Error" : "Unavailable");
+      field(healthGrid, "VPN topology", vpn.topology === "manager_namespace" ? "Manager network" : vpn.topology === "not_installed" ? "Not installed" : vpn.topology === "unexpected" ? "Warning" : "Unknown");
+      field(healthGrid, "Update", update.stage === "unavailable" || !update.stage ? "Unavailable" : update.stage === "success" ? "Ready · " + (update.currentVersion || "Unknown") : friendlyCheck(update.stage));
+      field(healthGrid, "Update follow-up", update.interventionRequired ? "Recovery required" : update.cleanupPending ? "Cleanup pending" : update.downloadedVersion ? "Update downloaded" : update.stage === "unavailable" ? "Unavailable" : "None");
+    }).catch(function (error) { if (health.isConnected) notice(health, error.message, true); });
+
+    var license = card(grid, "Professional Support", "Entitlement and authority state for support tools.");
+    notice(license, "Loading support status…");
+    var workflow = card(grid, "Support bundle", "Generate a redacted JSON bundle, then download or upload it when entitled.");
     field(workflow, "Bundle", lastBundle ? "Generated " + dateLabel(lastBundle.generated_at) : "Not generated this session");
-    var supportIdField = field(workflow, "Support ID", lastSupportId || "No upload recorded for this installation");
+    var supportIdField = field(workflow, "Last support ID", lastSupportId || "No upload recorded");
     var uploadField = field(workflow, "Upload", "Checking entitlement…");
     var bundleAction = button("Generate Support Bundle", function () {
       pendingBundleGeneration = true;
@@ -313,7 +334,7 @@
       troubleshootAction.disabled = !canDiagnose();
       problemsPanel(problems, true);
     }, license);
-    var diagnostics = card(grid, "Diagnostics summary", "System, proxy and routing, and TLS.");
+    var diagnostics = card(grid, "Diagnostic checks", "Run service and configured-host checks when you need detail.");
     field(diagnostics, "Last run", lastDiagnostics ? dateLabel(lastDiagnostics.at) : "Not run this session");
     field(diagnostics, "System", lastDiagnostics ? lastDiagnostics.system : "Not run");
     field(diagnostics, "Proxy & Routing", lastDiagnostics ? lastDiagnostics.routing : "Not run");
@@ -453,22 +474,41 @@
       : vpn.topology === "not_installed" ? "Not installed" : vpn.topology === "unexpected" ? "Unexpected" : "Unavailable");
     checkGroup(output, "System", system);
     if (hosts.length) {
+      var hostList = card(output, "Proxy hosts", hosts.length + " configured hosts · select a host to see every check and its troubleshooting action.");
+      hostList.classList.add("nyx-support-host-list");
+      var hostControls = element("div", "nyx-support-host-controls");
+      var allButton = button("All hosts", function () { setHostFilter(false); }, "nyx-support-button-secondary");
+      var attentionButton = button("Needs attention", function () { setHostFilter(true); }, "nyx-support-button-secondary");
+      var hostRows = element("div", "nyx-support-host-rows");
+      hostControls.append(allButton, attentionButton);
+      hostList.append(hostControls, hostRows);
+      function setHostFilter(attentionOnly) {
+        allButton.setAttribute("aria-pressed", String(!attentionOnly));
+        attentionButton.setAttribute("aria-pressed", String(attentionOnly));
+        hostRows.querySelectorAll(".nyx-support-host-row").forEach(function (row) {
+          row.hidden = attentionOnly && row.dataset.attention !== "true";
+        });
+      }
       hosts.forEach(function (host) {
         if (!Number.isSafeInteger(host.id) || host.id < 1) return;
         var names = Array.isArray(host.domains) ? host.domains.filter(function (name) { return typeof name === "string" && name.length <= 253; }) : [];
-        var group = card(output, "Proxy host #" + host.id, names.slice(0, 2).join(", ") || "Configured proxy host");
-        group.classList.add("nyx-support-result-group", "nyx-support-host-group");
-        group.append(element("p", "nyx-support-muted", host.enabled ? "Enabled" : "Disabled"));
         var hostChecks = Array.isArray(host.checks) ? host.checks : [];
-        var details = element("details", "nyx-support-host-details");
-        var summary = element("summary", "", summarize(hostChecks) + " · " + hostChecks.length + " checks");
+        var counts = { PASS: 0, WARNING: 0, FAIL: 0, SKIPPED: 0 };
+        hostChecks.forEach(function (record) { if (Object.hasOwn(counts, record.state)) counts[record.state]++; else counts.SKIPPED++; });
+        var state = !host.enabled ? "Disabled" : counts.FAIL ? "Error" : counts.WARNING ? "Warning" : "Healthy";
+        var details = element("details", "nyx-support-host-row");
+        details.dataset.attention = String(host.enabled && (counts.FAIL > 0 || counts.WARNING > 0));
+        var summary = element("summary", "nyx-support-host-summary");
+        summary.append(element("strong", "nyx-support-host-name", names.slice(0, 2).join(", ") || "Proxy host #" + host.id));
+        summary.append(element("span", "nyx-support-state state-" + (!host.enabled ? "skipped" : counts.FAIL ? "fail" : counts.WARNING ? "warning" : "pass"), state));
+        summary.append(element("span", "nyx-support-host-counts", "PASS " + counts.PASS + " · WARNING " + counts.WARNING + " · FAIL " + counts.FAIL + " · SKIPPED " + counts.SKIPPED));
         details.append(summary);
-        if (hostChecks.some(function (record) { return record.state === "FAIL" || record.state === "WARNING"; })) details.open = true;
         if (!hostChecks.length) details.append(element("p", "nyx-support-muted", "No checks available for this host."));
         hostChecks.forEach(function (record) { resultCard(details, record); });
         details.append(button("Troubleshoot this host", function () { troubleshootHost(host.id); }, "nyx-support-button-secondary"));
-        group.append(details);
+        hostRows.append(details);
       });
+      setHostFilter(false);
     } else {
       checkGroup(output, "Proxy & Routing", routing);
       checkGroup(output, "TLS", tls);

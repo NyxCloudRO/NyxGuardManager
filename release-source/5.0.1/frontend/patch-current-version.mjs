@@ -22,6 +22,14 @@ replace(path.join(assets, "notification-visibility-4010.js"), 'desiredVersion = 
 replace(main, 'T.data?.restartPending', 'T.data?.downloadedVersion', 2);
 replace(main, 'T.data?.pendingVersion', 'T.data?.downloadedVersion', 1);
 replace(main, 'T.data.pendingVersion', 'T.data.downloadedVersion', 1);
+// Keep the updater truthful when a DEV build is newer than the published channel
+// or the release check fails. The action remains disabled without a newer target.
+replace(main,
+  'g.jsx("div",{children:g.jsx(K,{id:"site-header.latest-version",data:{version:T.data?.latest||"N/A"}})})',
+  'g.jsx("div",{children:g.jsx(K,{id:"site-header.latest-version",data:{version:T.data?.latest||T.data?.latestPublished||"N/A"}})})', 1);
+replace(main,
+  'g.jsx("p",{children:g.jsx(K,{id:"site-header.step-2-desc",data:{version:T.data?.latest||"N/A"}})})',
+  'g.jsx("p",{children:T.isPending?"Checking for updates…":T.isError||T.data?.lastCheckError?"Update check unavailable. Use Check now to retry.":T.data?.updateAvailable?g.jsx(K,{id:"site-header.step-2-desc",data:{version:T.data.latest}}):"No newer update is available."})', 1);
 
 const translations = [
   ["Restart now", "Activate update"],
