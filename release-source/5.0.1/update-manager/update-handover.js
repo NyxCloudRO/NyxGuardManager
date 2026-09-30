@@ -61,6 +61,27 @@ async function waitHealthy(id, timeoutMs = 120000) {
 	throw new Error(`${id} did not become healthy in time`);
 }
 
+async function writeState(file, state, suffix) {
+	// Handover runs as root, while the Manager reads this file as npm.
+	// Keep the existing state owner's uid/gid across the atomic rename.
+	let owner;
+	try { owner = await fs.stat(file); }
+	catch (error) {
+		if (error.code !== "ENOENT") throw error;
+		owner = await fs.stat(path.dirname(file));
+	}
+	const temporary = `${file}.${suffix}.tmp`;
+	await fs.writeFile(temporary, JSON.stringify(state, null, 2), { mode: 0o600 });
+	try {
+		if (owner.uid !== process.getuid?.() || owner.gid !== process.getgid?.())
+			await fs.chown(temporary, owner.uid, owner.gid);
+		await fs.rename(temporary, file);
+	} catch (error) {
+		await fs.rm(temporary, { force: true }).catch(() => undefined);
+		throw error;
+	}
+}
+
 async function updateState(success, error = null, manualRecoveryRequired = false, recoveryStatus = null, migrationBoundary = null, reconcileFailure = false, recoveryId = null) {
 	const file = "/handover-data/update-manager/state.json";
 	let state = {};
@@ -96,9 +117,7 @@ async function updateState(success, error = null, manualRecoveryRequired = false
 		state.manualRecoveryRequired = manualRecoveryRequired;
 	}
 	await fs.mkdir("/handover-data/update-manager", { recursive: true });
-	const temporary = `${file}.handover.tmp`;
-	await fs.writeFile(temporary, JSON.stringify(state, null, 2), { mode: 0o600 });
-	await fs.rename(temporary, file);
+	await writeState(file, state, "handover");
 }
 
 async function finishRecoveryCleanup(recoveryId) {
@@ -107,9 +126,7 @@ async function finishRecoveryCleanup(recoveryId) {
 	if (state.stage !== "success" || state.recoveryCleanupPending !== recoveryId)
 		throw new Error("Recovery cleanup state changed");
 	state.recoveryCleanupPending = null;
-	const temporary = `${file}.cleanup.tmp`;
-	await fs.writeFile(temporary, JSON.stringify(state, null, 2), { mode: 0o600 });
-	await fs.rename(temporary, file);
+	await writeState(file, state, "cleanup");
 }
 
 async function updatePhase(phase, recoveryId) {
@@ -122,9 +139,7 @@ async function updatePhase(phase, recoveryId) {
 	if (state.activation?.newManagerId !== env.NEW_MANAGER_ID)
 		throw new Error("Activation state does not match handover");
 	state.activation = { ...state.activation, phase, recoveryId };
-	const temporary = `${file}.handover.tmp`;
-	await fs.writeFile(temporary, JSON.stringify(state, null, 2), { mode: 0o600 });
-	await fs.rename(temporary, file);
+	await writeState(file, state, "handover");
 }
 
 function requiredVolume(container, destination, expectedName) {

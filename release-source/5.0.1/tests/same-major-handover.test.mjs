@@ -11,12 +11,13 @@ const socket = "/var/run/docker.sock";
 const helper = path.resolve("release-source/5.0.1/update-manager/update-handover.js");
 const stateFile = "/handover-data/update-manager/state.json";
 
-async function scenario({ vpn = false, fault = "none", extraMount = false, brokenVpn = false, initialState = null } = {}) {
+async function scenario({ vpn = false, fault = "none", extraMount = false, brokenVpn = false, initialState = null, stateOwner = null } = {}) {
 	await fs.rm(socket, { force: true });
 	await fs.rm("/handover-data", { recursive: true, force: true });
 	if (initialState) {
 		await fs.mkdir(path.dirname(stateFile), { recursive: true });
 		await fs.writeFile(stateFile, JSON.stringify(initialState));
+		if (stateOwner) await fs.chown(stateFile, stateOwner.uid, stateOwner.gid);
 	}
 	const events = [];
 	const mounted = (name, destination) => ({ Type: "volume", Name: name, Destination: destination, RW: true });
@@ -96,8 +97,17 @@ async function scenario({ vpn = false, fault = "none", extraMount = false, broke
 	}
 	let state = {};
 	try { state = JSON.parse(await fs.readFile(stateFile, "utf8")); } catch { /* failure assertions inspect empty state */ }
-	return { events, exitCode, state, output };
+	const owner = await fs.stat(stateFile).catch(() => null);
+	return { events, exitCode, state, output, owner };
 }
+
+test("root handover preserves the Manager's state file ownership", { skip: !enabled }, async () => {
+	const result = await scenario({ initialState: { stage: "downloaded" }, stateOwner: { uid: 1000, gid: 1000 } });
+	assert.equal(result.exitCode, 0, result.output);
+	assert.equal(result.owner.uid, 1000);
+	assert.equal(result.owner.gid, 1000);
+	assert.equal(result.owner.mode & 0o777, 0o600);
+});
 
 test("Manager-only recovery precedes activation and does not create VPN state", { skip: !enabled }, async () => {
 	const result = await scenario();
