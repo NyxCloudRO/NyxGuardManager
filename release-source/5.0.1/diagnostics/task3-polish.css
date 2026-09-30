@@ -21,6 +21,16 @@
 .nyx-support-host-detail-heading h3{min-width:0;margin:0;font-size:16px;overflow-wrap:anywhere}
 .nyx-support-host-check-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:8px;margin:14px 0}
 .nyx-support-host-check-grid .nyx-support-result{min-width:0}
+.nyx-support-result-group{gap:6px}
+.nyx-support-result{min-width:0;padding:0}
+.nyx-support-result-main{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;min-width:0;padding:8px 10px;cursor:pointer;font-size:12px;line-height:1.4}
+.nyx-support-result-main:focus-visible{outline:2px solid var(--app-primary,#6cdcff);outline-offset:2px}
+.nyx-support-result-main .nyx-support-result-heading{flex:1 1 145px;min-width:0;gap:8px}
+.nyx-support-result-main .nyx-support-result-heading strong{font-size:12px}
+.nyx-support-result-message{flex:2 1 180px;min-width:0;overflow-wrap:anywhere;color:var(--app-text-secondary,#b7cbda)}
+.nyx-support-result-main .nyx-support-evidence{font-size:11px;color:var(--app-text-primary,#eaf5ff)}
+.nyx-support-result-extra{padding:4px 10px 8px;border-top:1px solid var(--app-border,#29495e)}
+.nyx-support-result-extra p{margin:4px 0;line-height:1.4}
 .nyx-support-workflow-card .nyx-support-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) auto;align-items:end}
 .nyx-support-workflow-card .nyx-support-input{width:100%}
 .nyx-support-workflow-card .nyx-support-results{grid-template-columns:repeat(2,minmax(0,1fr))}

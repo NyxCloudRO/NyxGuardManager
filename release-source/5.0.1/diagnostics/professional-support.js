@@ -358,23 +358,28 @@
 
   function resultCard(parent, record) {
     var state = ["PASS", "WARNING", "FAIL", "SKIPPED"].includes(record.state) ? record.state : "SKIPPED";
-    var row = element("article", "nyx-support-result");
+    var row = element("details", "nyx-support-result");
+    var primary = element("summary", "nyx-support-result-main");
     var heading = element("div", "nyx-support-result-heading");
     heading.append(element("strong", "", friendlyCheck(record.check)), element("span", "nyx-support-state state-" + state.toLowerCase(), state));
-    row.append(heading);
-    if (typeof record.summary === "string" && record.summary) row.append(element("p", "", record.summary.slice(0, 240)));
+    primary.append(heading);
+    if (typeof record.summary === "string" && record.summary) primary.append(element("span", "nyx-support-result-message", record.summary.slice(0, 240)));
     var evidence = record.evidence || {};
-    var safeEvidence = [];
-    if (Number.isSafeInteger(evidence.host_id)) safeEvidence.push("Proxy host " + evidence.host_id);
-    if (Number.isSafeInteger(evidence.status_code)) safeEvidence.push("HTTP " + evidence.status_code);
-    if (Number.isFinite(evidence.free_percent)) safeEvidence.push(Math.round(evidence.free_percent) + "% free");
-    if (Number.isFinite(evidence.days_remaining)) safeEvidence.push(evidence.days_remaining + " days remaining");
-    if (Number.isFinite(evidence.seconds)) safeEvidence.push(evidence.seconds + " seconds uptime");
-    if (Number.isSafeInteger(evidence.count)) safeEvidence.push(evidence.count + " occurrences");
-    if (typeof evidence.failure === "string" && /^[a-z_]{1,32}$/.test(evidence.failure)) safeEvidence.push(friendlyCheck(evidence.failure));
-    if (safeEvidence.length) row.append(element("p", "nyx-support-evidence", safeEvidence.join(" · ")));
+    var primaryEvidence = [];
+    if (Number.isSafeInteger(evidence.status_code)) primaryEvidence.push("HTTP " + evidence.status_code);
+    if (Number.isFinite(evidence.free_percent)) primaryEvidence.push(Math.round(evidence.free_percent) + "% free");
+    if (Number.isFinite(evidence.days_remaining)) primaryEvidence.push(evidence.days_remaining + " days remaining");
+    if (Number.isFinite(evidence.seconds)) primaryEvidence.push(evidence.seconds + " seconds uptime");
+    if (Number.isSafeInteger(evidence.count)) primaryEvidence.push(evidence.count + " occurrences");
+    if (typeof evidence.failure === "string" && /^[a-z_]{1,32}$/.test(evidence.failure)) primaryEvidence.push(friendlyCheck(evidence.failure));
+    if (primaryEvidence.length) primary.append(element("span", "nyx-support-evidence", primaryEvidence.join(" · ")));
+    row.append(primary);
+    var extra = element("div", "nyx-support-result-extra");
+    if (Number.isSafeInteger(evidence.host_id)) extra.append(element("p", "nyx-support-evidence", "Proxy host #" + evidence.host_id));
     var recommendation = record.recommendation || record.remediation;
-    if (state !== "PASS") row.append(element("p", "nyx-support-guidance", typeof recommendation === "string" && recommendation.length <= 240 ? recommendation : guidance[record.check] || (state === "SKIPPED" ? "This check needs more configured data or a reachable service." : "Review this check and its configured resource.")));
+    if (typeof recommendation === "string" && recommendation.length <= 240) extra.append(element("p", "nyx-support-guidance", recommendation));
+    else if (state !== "PASS") extra.append(element("p", "nyx-support-guidance", guidance[record.check] || (state === "SKIPPED" ? "This check needs more configured data or a reachable service." : "Review this check and its configured resource.")));
+    if (extra.childNodes.length) row.append(extra);
     parent.append(row);
   }
 
