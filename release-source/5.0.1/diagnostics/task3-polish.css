@@ -35,5 +35,11 @@
 .nyx-support-workflow-card .nyx-support-results{grid-template-columns:1fr}
 .nyx-support-bundle-card .nyx-support-metrics{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
 .nyx-support-field strong,.nyx-support-result,.nyx-support-problem{overflow-wrap:anywhere}
+/* The Dashboard title and live status pills share a row. Let the pills use
+   the remaining space or wrap below it as the viewport narrows. */
+#root [class*="_heroTitleRow_"]{flex-wrap:wrap}
+#root [class*="_heroPills_"]{flex:1 1 420px;min-width:0;justify-content:flex-start}
+#root [class*="_miniPill_"]{max-width:100%;flex-wrap:wrap}
+#root [class*="_miniPillLabel_"]{white-space:normal;overflow-wrap:anywhere}
 @media(min-width:1500px){.nyx-support-overview-grid>.nyx-support-card:last-child{grid-column:1/-1}.nyx-support-overview-grid>.nyx-support-card:last-child .nyx-support-problems{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}}
 @media(max-width:560px){.nyx-support-overview-grid>.nyx-support-card:first-child .nyx-support-metrics{grid-template-columns:1fr}.nyx-support-host-summary{align-items:flex-start}.nyx-support-host-counts{width:100%}.nyx-support-workflow-card .nyx-support-input{flex-basis:100%}}
