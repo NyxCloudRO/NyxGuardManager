@@ -1,9 +1,7 @@
-# 5.0.x same-major recovery contract (Task 1A)
+# 5.0.x same-major recovery contract
 
 This is the target-image handover implementation for same-major updates. It
-does not change the immutable 5.0.0 image or the accepted public 4.0.18 host
-updater. The rest of the 5.0.1 updater, topology UI, version, and deployment
-work remains in Task 1.
+does not change the immutable 5.0.0 image or the public 4.0.18 host updater.
 
 ## Write boundary and protected state
 
@@ -58,8 +56,8 @@ This contract relies on the old Manager and VPN Agent being the only normal
 application writers while MariaDB is dumped. Unexpected writers and unknown
 writable application mounts must be handled before activation. An abrupt host
 failure can leave a retained recovery point requiring operator intervention;
-automatic resume after power loss belongs to the remaining Task 1 state
-machine work. A hard SIGKILL likewise requires inspection of the retained
+automatic resume after power loss is not supported. A hard SIGKILL likewise
+requires inspection of the retained
 recovery point before the old runtime is restarted.
 
 ## Test scope

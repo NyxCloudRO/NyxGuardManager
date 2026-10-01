@@ -1,4 +1,4 @@
-# Legacy UI corrections for a future 5.0.1 build
+# Legacy UI corrections for 5.0.1
 
 The original React source matching the validated compiled frontend base is
 unavailable. This asserted script carries forward two changes found in the
@@ -25,7 +25,6 @@ populated sites, and failed API responses.
 Verify the base asset hashes, then run
 `node release-source/5.0.1/frontend/patch-legacy-ui.mjs FRONTEND_ROOT` and
 `node --test release-source/5.0.1/frontend/patch-legacy-ui.test.mjs release-source/5.0.1/frontend/vpn-client.test.mjs`.
-The script asserts exact match counts before writing the files. It has been
-tested on copies of the saved assets at `/home/ubuntu/nyx-recovery/base-ui`
-and the current 5.0.0 DEV container.
+The script asserts exact match counts before writing the files. It was
+validated against the saved compiled base and the 5.0.0 image.
 The immutable 5.0.0 image and source are unchanged.

@@ -1,9 +1,8 @@
-# Developer Message — DEV-only 4.0.18 candidate
+# Developer Message source layer
 
-This layer adds the post-login Developer Message while preserving the accepted
-Custom Location port and Threat Activity pagination layers. It starts from the
-digest-pinned public 4.0.16 Manager image and produces only the local DEV image
-`nyxguardmanager:4.0.18-dev-developer-message`.
+This layer adds the post-login Developer Message while preserving the Custom
+Location port and Threat Activity pagination layers. The versioned 4.0.18
+Dockerfile starts from the digest-pinned public 4.0.16 Manager image.
 
 ## Semantics
 
@@ -25,24 +24,11 @@ Migration `20260830120000_developer_message_acknowledgement.js` adds the nullabl
 `user.developer_message_acknowledged_on` column. Existing and new users default
 to unacknowledged. No existing user data is rewritten.
 
-## Build and DEV deployment
+## Build source
 
-```sh
-NYXGUARD_SOURCE_REVISION="$(git rev-parse HEAD)" docker compose --env-file .env \
-  -f docker-compose.yml \
-  -f docker-compose.dev-developer-message.yml \
-  up -d --build --remove-orphans
-```
-
-This overlay is not referenced by the production Compose file or public update
-metadata. The root `.version` remains at the last public version until the
-separate release workflow.
-
-The DEV health endpoint reports version `4.0.18`. `NYXGUARD_SOURCE_REVISION`
-is passed into both the image label and runtime health metadata so the commit
-field is the exact source revision, never the misleading `release-4.0.18`.
-Leaving the variable unset deliberately reports `uncommitted`, rather than
-inventing a public-release identity.
+`docker/4.0.18/Dockerfile` includes this layer and its image assertions.
+`NYXGUARD_SOURCE_REVISION` supplies the image label and runtime health
+metadata with the source commit.
 
 ## Validation
 
@@ -62,16 +48,6 @@ Normal dismissal lasts only for the current authenticated login session. The
 Developer Message is shown again on every new login until the user explicitly
 chooses Support NyxGuard. Support acknowledgement is persisted server-side per
 user.
-
-## Acceptance record
-
-The final acceptance record belongs in `ACCEPTANCE.md`. It covers the migration,
-authorization, browser behavior, responsive and accessibility checks, the two
-accepted regression workstreams, DEV health, and exact candidate identity.
-
-The polished release-note wording is retained in
-`RELEASE-NOTES-4.0.18-UNPUBLISHED.md`; that file is a draft only and is not wired
-to any public release or update channel.
 
 ## Known limitations
 

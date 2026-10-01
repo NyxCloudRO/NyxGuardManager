@@ -21,7 +21,7 @@ cleared. The same-major handover has no user-triggered restart step.
 | `recovery_required` | Interrupted/failed handover cannot be proven safe automatically | Target may remain cached | Incomplete | No | Operator recovery; update disabled | `interruptedActivation` and retained recovery ID/material |
 
 For both topologies, activation creates replacement containers but does not
-start them. The accepted Task 1A helper quiesces the old runtime, creates the
+start them. The handover helper quiesces the old runtime, creates the
 MariaDB/volume/vault recovery point, starts and checks the replacement, then
 commits success. The Manager-only path never inspects or creates a VPN Agent
 or VPN state volume. With VPN, the existing Agent image and state volumes are

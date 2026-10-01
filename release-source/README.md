@@ -1,14 +1,8 @@
 # Release source map
 
-## Development checkout
-
-On this DEV machine, `/home/ubuntu/NyxGuardManager/upstream` is the only
-authorized NyxGuard Manager development worktree. Reconcile that checkout if
-it is dirty, behind, divergent, or broken; do not use another clone as a
-workaround. Keep disposable test fixtures disposable and remove temporary
-acceptance artifacts after use. `release-source/` is intentional versioned
-source and must remain. DEV tasks never imply changes to the separate PROD
-installation.
+`release-source/` contains the versioned build inputs, asserted compiled
+frontend patches, and tests for supported releases. Disposable test output
+belongs outside the repository.
 
 The 5.0.1 frontend source includes asserted patches for inherited form controls,
 certificate list ordering, version display, and responsive layout. Its release

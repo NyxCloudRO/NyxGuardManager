@@ -1,26 +1,22 @@
-# Professional Support V2: DEV data sources
+# Professional Support diagnostic data sources
 
-Read-only inventory of the live `upstream` Compose project on 2026-09-24. The
-DEV manager uses the named `nyxguard_data` and `nyxguard_db` volumes. Access
-to these sources is restricted by the existing administrator plus verified
-Professional Support gate; source files and database rows must not be copied
-verbatim into an API response or support bundle.
+Diagnostics are available only through the administrator and verified
+Professional Support gates. Source records must not be copied verbatim into an
+API response or support bundle.
 
-| Source | Format and current DEV state | Retention and access | Safe diagnostic use |
-| --- | --- | --- | --- |
-| OpenResty current logs | `/data/logs/fallback_error.log`, `fallback_http_error.log`, `proxy-host-<id>_error.log`, and corresponding access logs. Current error/access files exist; some are empty. `recent-problems.mjs` reads current error files only, not rotated `.gz` files. | Files are in `nyxguard_data`, owned by `npm:npm`, mode `0644`; directory is `npm:npm` mode `0755`. Container logrotate policy is daily, 90 rotations, `maxage 90`, compressed. | Error categories, count, first/last time, and numeric host ID. Limit to allowlisted files, 20 hosts, 64 KiB/file, 1,000 lines/file, 40 groups, and 15/60/1440 minute windows. Never export raw lines: they can contain IPs, domains, paths, request data, and upstream details. Current files are a bounded recent view, not a complete 90-day history. |
-| OpenResty global error log | `/var/log/nginx/error.log` exists separately from `/data/logs`; this DEV file is mode `0777`. | Container-local file, outside the named data volume; its retention is not established by the `/data/logs` rotate rule. | Do not use as a support-bundle source without a separate ownership, retention, and redaction design. |
-| Audit records | MariaDB `audit_log`: `created_on`, user and object IDs, `action`, and free-form `meta`. DEV has 608 rows, oldest February 2026. | `nyxguard_db`; application cleanup reads `setting.id='audit-log-retention-days'`, currently 180 days, and deletes older rows best effort. Database credentials are private. | Aggregate counts and bounded action categories only. User IDs and especially `meta` can identify people or contain sensitive data; do not export rows. |
-| Traffic statistics | MariaDB `nyxguard_traffic_stat`: numeric host ID, time bucket, request and byte counts, and 2xx/3xx/4xx/5xx counters; `nyxguard_traffic_state` tracks file path, inode, and offset. DEV has 3 statistic rows, latest August 2026. | `nyxguard_db`; no verified retention policy for these two tables. | Bounded aggregate counters by time window and host ID. Treat missing or old buckets as no recent observation, never as zero traffic. Exclude internal log paths and ingestion offsets. |
-| Threat events | MariaDB `web_threat_events`: timestamp, app/route IDs, category, rule ID, action, reason, source IP, request ID, and JSON `meta`. DEV has 4 rows, latest May 2026. Legacy attack events are also present in the app schema and have a 30-day best-effort cleanup in `attack-monitor.js`. | `nyxguard_db`; retention for `web_threat_events` itself was not verified. | Aggregate counts by fixed category/action and bounded interval. Never export source IP, request ID, raw reason, rule ID, or `meta` without a reviewed redaction contract. Old rows must not be labeled current incidents. |
-| Proxy host metadata | MariaDB `proxy_host`: IDs, domains, upstream scheme/host/port, enabled state, certificate ID, websocket flag, locations, advanced configuration, and `meta`. DEV currently has no active (`is_deleted=0`) hosts. Generated `/data/nginx/proxy_host/<id>.conf` provides listener/route observations. | `nyxguard_db` and `nyxguard_data`; no verified retention for soft-deleted rows. Route limits reads to 20 active hosts and config files to 64 KiB. | Use numeric IDs, booleans, scheme, port, counts, and fixed check outcomes. Domains and upstream names are operationally sensitive; avoid full configuration, locations, advanced text, or metadata in bundles. No current DEV route can demonstrate a live proxy success. |
-| Certificate metadata | MariaDB `certificate`: ID, provider, domain names, expiry, and `meta`; public fullchain files are under `/etc/letsencrypt/live` or `/data/custom_ssl`. DEV has no active certificates. | DB and named certificate/data volumes. Route only reads assigned records for selected hosts and bounds fullchain reads to 64 KiB. | Export ID, provider class, domain count, expiry, and derived validity states. Never include private keys, PEM contents, ACME account material, or raw metadata. No current DEV certificate can demonstrate renewal or SAN checks. |
-| Backend stdout/stderr and container state | Docker `json-file` logging is configured for the manager. Docker's own-container inspect and logs endpoints are available through the existing socket mount. | Docker log rotation/retention is not configured in Compose and daemon policy was not verified. Inspect is fixed to the container hostname, limited to 128 KiB and 750 ms, and selects only `RestartCount`. Recent logs are fixed to the same container, capped at 200 lines, 256 KiB, and 1 second for each 15/60/1440 minute window. | Report measured restart count and grouped backend exception, database connectivity, or migration errors. Redact each log line before classification, discard all raw content, and export fixed categories/counts/times only. Missing Docker evidence remains unavailable. |
+| Source | Safe diagnostic use |
+| --- | --- |
+| OpenResty error logs | Read only allowlisted current files with bounded size, line count, host count, and time windows. Export fixed error categories, counts, and times, never raw lines or request details. |
+| Audit records | Aggregate bounded action categories only. Do not export user identifiers or free-form metadata. |
+| Traffic statistics | Use bounded aggregate counters by time window and host ID. Missing observations are unavailable, not zero traffic. Exclude internal log paths and ingestion offsets. |
+| Threat events | Aggregate fixed categories and actions. Do not export source addresses, request IDs, reasons, rule IDs, or metadata. |
+| Proxy host metadata | Use numeric IDs, booleans, scheme, port, counts, and fixed check outcomes. Do not export domains, upstream names, locations, advanced configuration, or metadata. |
+| Certificate metadata | Export provider class, domain count, expiry, and derived validity states. Never include private keys, PEM contents, ACME account material, or raw metadata. |
+| Backend container state and logs | Inspect only the fixed Manager container with strict time and size limits. Redact before classifying errors; export counts and times only. |
 
-The current V2 route directly observes backend request handling, a bounded
-database query and migration row, OpenResty process/configuration, CPU over a
-100 ms interval, memory, `/data` disk capacity, current OpenResty errors,
-generated host config, public certificate validity, and optional configured
-upstream DNS/TCP/TLS/HEAD probes. It does not currently read audit, traffic,
-or threat rows for diagnostics. Missing observations must remain `SKIPPED` or
-be reported as unavailable; they must not become healthy zeroes.
+The V2 route observes backend request handling, a bounded database query and
+migration row, OpenResty process and configuration, resource capacity, current
+OpenResty errors, generated host configuration, public certificate validity,
+and optional configured upstream probes. It does not read audit, traffic, or
+threat rows for diagnostics. Missing observations remain `SKIPPED` or
+unavailable; they must not become healthy zeroes.

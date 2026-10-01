@@ -1,11 +1,11 @@
-# NyxGuard Manager 5.0.0 development candidate
+# NyxGuard Manager 5.0.0 release source
 
-This is an application-side development build over the validated running 4.0.18
+This is an application-side build over the validated 4.0.18
 image identity `sha256:c45403bf3ed25c31b59c49e32e09ac55ddcf7bb1f7311705562ca1b32712e75a`.
 The matching 4.0.18 React source is unavailable. The 5.0.0 UI therefore uses
 the established, assertion-protected frontend overlay; it is not a complete
 React-source build. `build-dev.sh` refuses a changed local base image and builds
-only the local `nyxguardmanager:5.0.0-dev` tag. No image is pushed.
+only the local `nyxguardmanager:5.0.0-dev` tag.
 
 ## Application integration map
 
@@ -67,19 +67,13 @@ upload state. It was run after all 41 prior migrations on an isolated MariaDB,
 with seeded user, proxy host, certificate, and setting records; those records
 survived, and a second migration run applied zero migrations.
 
-Before replacing any DEV runtime, create and verify a fresh restorable backup
-of all five named persistent volumes, the MariaDB database, Compose definition,
-and the exact running image ID. Preserve the vault key file with access controls.
-The current local `nyxmael/nyxguardmanager:4.0.18` tag differs from the running
-image, so rollback must pin the saved running image ID, never the drifting tag.
-The app and VPN share a network namespace; inspect the Compose plan and VPN
-impact before replacement. Replace only the application workload when an
-operator has a tested restore, then verify old customer records, login, proxy,
-TLS, WAF, settings, OpenResty, MariaDB, and VPN health. The 4.0.18 application
-cannot safely use the migration-42 database. A rollback to 4.0.18 requires
-the verified pre-upgrade database backup as well as the exact rollback image
-and previous Compose configuration. Do not run `compose down -v` or recreate
-MariaDB storage during this DEV deployment.
+Before an upgrade, create and verify a restorable backup of persistent volumes,
+MariaDB, Compose configuration, the licensing vault key, and the exact running
+image ID. The app and VPN Agent share a network namespace, so review both
+services before replacement. Verify customer records and service health after
+handover. A 4.0.18 application cannot safely use a migration-42 database;
+rollback requires the matching pre-upgrade database, volumes, configuration,
+and image. Do not remove persistent volumes during an upgrade.
 
 ## Verification and limits
 
@@ -104,10 +98,3 @@ show 5.0.0; the backend package version controls backup export metadata and
 the exact-version import gate. Live
 Support API, Authority, S3, Cloudflare path, and production acceptance remain
 separate controlled work.
-# DEV authority connectivity
-
-The DEV Compose runtime uses `NYXCLOUD_AUTHORITY_URL=https://licensing.nyxcloud.ro`.
-The exact licensing API paths pass through the Cloudflare public HTTPS rule.
-The existing MariaDB license row and bind-mounted vault key persist across app
-recreation. The former DEV-only SSH tunnel is disabled; future images do not
-include its loopback OpenResty listener.

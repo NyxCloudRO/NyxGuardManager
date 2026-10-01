@@ -56,13 +56,10 @@ before proceeding. Preserve the database and vault key as one recovery set.
    the new installation UUID from the local licensing state through the
    approved operator method. Do not guess or reuse a DEV UUID.
 
-5. On the licensing Primary, use the protected operator environment and the
-   exact `nyxguard-owner-prod-provision` command in
-   `docs/NYXGUARD_OWNER_OPERATIONS.md` in the shared licensing platform source.
-   Supply the verified PROD UUID, `nyxguard-manager-professional-support`,
-   `nyxguard_diagnostics_support`, and ten years. The command emails the
-   one-time claim; it does not create a BMAC purchase. Enter that claim in the
-   ordinary License page, activate, and refresh through the public authority.
+5. If the installation has Professional Support, obtain its claim through the
+   approved purchase or support process. Enter the claim in the License page,
+   activate, and refresh through the public authority. Do not reuse a claim
+   or installation identity from another environment.
 
 6. Confirm `Active`, the correct product/capability/expiry, Authority Available,
    and Diagnostics & Support unlocked. Recreate only the app under the

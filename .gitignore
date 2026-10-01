@@ -2,6 +2,8 @@
 .idea
 .vscode
 .env
+.env.*
+!.env.example
 
 # Local-only build and extracted-image artifacts. Production uses the
 # published nyxmael/nyxguardmanager image, not checked-in app source.
@@ -12,6 +14,23 @@ docker-compose.local*.yml
 dev-image-*/
 backend/
 security-reports/
+
+# Local audit, test, and runtime output
+*.log
+*.sql
+*.sqlite*
+*.tar
+*.tar.gz
+*.zip
+*.pem
+*.key
+*.p12
+*.pfx
+*support-bundle*.json
+artifacts/
+test-output/
+browser-profiles/
+.nyxguard-local/
 
 # Local release build overlays
 overlay/
