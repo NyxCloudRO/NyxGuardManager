@@ -2,6 +2,8 @@
 FROM nyxguardmanager:5.0.0-dev
 
 ARG NYXGUARD_SOURCE_REVISION=uncommitted
+ARG NYXGUARD_RELEASE_VERSION=5.0.1
+ARG NYXGUARD_BUILD_DATE=2026-10-01
 
 COPY release-source/5.0.1/update-manager/update-manager.js /app/internal/update-manager.js
 COPY release-source/5.0.1/update-manager/update-state.mjs /app/internal/update-state.mjs
@@ -23,7 +25,7 @@ COPY release-source/5.0.1/patch-backend-version.mjs /tmp/nyxguard-501/patch-back
 
 RUN set -eu; \
 	node /tmp/nyxguard-501/patch-legacy-ui.mjs /app/frontend; \
-	node /tmp/nyxguard-501/patch-current-version.mjs /app; \
+	node /tmp/nyxguard-501/patch-current-version.mjs /app "$NYXGUARD_RELEASE_VERSION"; \
 	node /tmp/nyxguard-501/patch-page.mjs /app/frontend; \
 	node /tmp/nyxguard-501/patch-backend-version.mjs /app; \
 	cat /tmp/nyxguard-501/task3-polish.css >> /app/frontend/assets/professional-support.css; \
@@ -42,13 +44,13 @@ RUN set -eu; \
 	node --check /app/frontend/assets/professional-support.js; \
 	node --check /app/routes/nyxguard/rules.js; \
 	node --check /app/frontend/assets/index-DHuZiE1T-task2.js; \
-	grep -q '"version": "5.0.1-dev"' /app/package.json; \
+	grep -q "\"version\": \"$NYXGUARD_RELEASE_VERSION\"" /app/package.json; \
 	rm -rf /tmp/nyxguard-501
 
-ENV NPM_BUILD_VERSION=5.0.1-dev \
+ENV NPM_BUILD_VERSION=${NYXGUARD_RELEASE_VERSION} \
 	NPM_BUILD_COMMIT=${NYXGUARD_SOURCE_REVISION} \
-	NPM_BUILD_DATE=2026-09-30
+	NPM_BUILD_DATE=${NYXGUARD_BUILD_DATE}
 
-LABEL org.opencontainers.image.version="5.0.1-dev" \
+LABEL org.opencontainers.image.version="${NYXGUARD_RELEASE_VERSION}" \
 	org.opencontainers.image.revision="${NYXGUARD_SOURCE_REVISION}" \
 	org.opencontainers.image.title="NyxGuard Manager"

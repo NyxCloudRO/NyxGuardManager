@@ -10,10 +10,9 @@ acceptance artifacts after use. `release-source/` is intentional versioned
 source and must remain. DEV tasks never imply changes to the separate PROD
 installation.
 
-The 5.0.1 frontend source includes an asserted patch for two form controls
-and certificate list ordering inherited from older React work. Apply and test
-that patch against the validated compiled base when constructing a future
-5.0.1 image; it has not been deployed by this repository cleanup.
+The 5.0.1 frontend source includes asserted patches for inherited form controls,
+certificate list ordering, version display, and responsive layout. Its release
+build uses the validated compiled base and checks the resulting image.
 
 The published Manager and VPN images are the customer runtime. `install.sh`
 pulls those images; `update.sh` downloads the SHA-256-pinned
@@ -28,6 +27,7 @@ this directory from GitHub at runtime.
 | `5.0.0/professional-support` | `5.0.0/Dockerfile` | Diagnostics, redaction, support bundle, and compiled frontend overlay inside the Manager image. These files are authoritative source, including the build patch. |
 | `5.0.0/update-manager` | `5.0.0/Dockerfile` | In-app updater, major handover, and recovery workers inside the Manager image. |
 | `5.0.0/tests` and `5.0.0/professional-support/*.test.mjs` | Automated verification | Source and build behavior tests; not customer runtime files. |
+| `5.0.1` | `5.0.1/Dockerfile` via `5.0.1/build-release.sh` | Guarded 5.0.1 Manager image with same-major update recovery, diagnostics, support, VPN UI, and layout fixes. The matching VPN Agent tag reuses the unchanged 5.0.0 Agent image. |
 
 The 5.0.0 Dockerfile layers on the validated local
 `nyxguardmanager:4.0.18-clean-rc` image (`sha256:c45403bf3ed25c31b59c49e32e09ac55ddcf7bb1f7311705562ca1b32712e75a`).

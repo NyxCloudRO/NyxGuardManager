@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [5.0.1] - 2026-10-01
+
+### Improved
+
+- Added a guarded same-major Update Manager handover with verified recovery data and clearer download, activation, and recovery states.
+- Made Diagnostics & Support use available page width more naturally, with compact checks, clearer selected-host details, and a sidebar that fits common laptop displays.
+- Clarified Manager process uptime and build information in diagnostics and support bundles.
+
+### Fixed
+
+- Corrected licensing refresh when a valid authority response follows a stale offline state.
+- Corrected VPN Agent failure reporting so an unreachable agent shows an error and retry action instead of an empty site list; preserved sites return after recovery.
+- Corrected Traffic Rules and Threat Activity presentation inherited from the previous release.
+- Kept support-bundle version claims and redaction aligned with the running Manager build.
+- Improved dashboard, settings, and diagnostics layout at narrower widths.
+
+### Upgrade notes
+
+- 5.0.0 installations can update to 5.0.1 through the supported same-major handover. Retain an independent backup before updating. The VPN Agent is published under the matching 5.0.1 tag with unchanged 5.0.0 image content.
+- Database migration count remains 42; no new migration is added.
+
 ## [5.0.0] - 2026-09-27
 
 ### Added

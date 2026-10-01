@@ -4,6 +4,8 @@ import path from "node:path";
 
 const app = process.argv[2];
 if (!app) throw new Error("Usage: node patch-current-version.mjs APP_ROOT");
+const version = process.argv[3] || "5.0.1-dev";
+if (!["5.0.1-dev", "5.0.1"].includes(version)) throw new Error("Unsupported 5.0.1 build version");
 
 function replace(file, from, to, count) {
   const original = fs.readFileSync(file, "utf8");
@@ -14,11 +16,11 @@ function replace(file, from, to, count) {
 
 const assets = path.join(app, "frontend", "assets");
 const main = path.join(assets, "index-CTHAIRmi-409dev-4012certfix4-threatpagination3.js");
-replace(path.join(app, "package.json"), '"version": "5.0.0"', '"version": "5.0.1-dev"', 1);
-replace(main, 'VC="app_theme_ver",$C="5.0.0"', 'VC="app_theme_ver",$C="5.0.1-dev"', 1);
-replace(main, 'Coe="5.0.0"', 'Coe="5.0.1-dev"', 1);
-replace(path.join(assets, "index-DTnhxNQ_.js"), 'K="5.0.0",Bt=', 'K="5.0.1-dev",Bt=', 1);
-replace(path.join(assets, "notification-visibility-4010.js"), 'desiredVersion = "5.0.0"', 'desiredVersion = "5.0.1-dev"', 1);
+replace(path.join(app, "package.json"), '"version": "5.0.0"', `"version": "${version}"`, 1);
+replace(main, 'VC="app_theme_ver",$C="5.0.0"', `VC="app_theme_ver",$C="${version}"`, 1);
+replace(main, 'Coe="5.0.0"', `Coe="${version}"`, 1);
+replace(path.join(assets, "index-DTnhxNQ_.js"), 'K="5.0.0",Bt=', `K="${version}",Bt=`, 1);
+replace(path.join(assets, "notification-visibility-4010.js"), 'desiredVersion = "5.0.0"', `desiredVersion = "${version}"`, 1);
 replace(main, 'T.data?.restartPending', 'T.data?.downloadedVersion', 2);
 replace(main, 'T.data?.pendingVersion', 'T.data?.downloadedVersion', 1);
 replace(main, 'T.data.pendingVersion', 'T.data.downloadedVersion', 1);

@@ -1,7 +1,7 @@
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:5.0.0
+    image: nyxmael/nyxguardmanager:5.0.1
     restart: unless-stopped
     ports:
       - "80:80"
@@ -45,7 +45,7 @@ services:
 
   vpn-client-agent:
     container_name: nyxguard-vpn-agent
-    image: nyxmael/nyxguardmanager-vpn-agent:5.0.0
+    image: nyxmael/nyxguardmanager-vpn-agent:5.0.1
     restart: unless-stopped
     network_mode: "service:nyxguard-manager"
     cap_add:
