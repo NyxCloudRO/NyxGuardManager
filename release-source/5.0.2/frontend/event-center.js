@@ -9,7 +9,7 @@ export default function EventCenter() {
   React.useEffect(()=>{let live=true;setLoading(true);setError('');get({url:'event-center/events',params:{...scope,limit:100,offset:page*100}}).then(d=>{if(live)setData(d);}).catch(()=>{if(live){setData(null);setError('Unable to load events. Retry to check the current state.');}}).finally(()=>{if(live)setLoading(false);});return()=>{live=false;};},[scope,page,revision]);
   const change=(key)=>(e)=>{setPage(0);setScope(s=>({...s,[key]:e.target.value}));};
   const clear=async()=>{if(!window.confirm(`Permanently delete all Event Center records matching these filters (${data.total} records)? This cannot be undone.`))return;setClearing(true);setError('');try{await post({url:'event-center/clear',data:{...scope,confirm:true}});setPage(0);setData(null);refresh(v=>v+1);}catch{setError('Clear failed. Reload to verify the persistent state.');}finally{setClearing(false);}};
-  const summaries = h('div',{className:'event-summary','aria-label':'Counters in selected scope'},...Object.entries(labels).map(([category,label])=>h('div',{key:category,className:'event-summary-card'},h('span',null,category==='all'?'Selected events':label),h('strong',{'data-counter':category},loading?'…':data?(category==='all'?data.total:data.counters[category]).toLocaleString():'—'))));
+  const summaries = h('div',{className:'event-summary','aria-label':'Counters in selected scope'},...Object.entries(labels).map(([category,label])=>h('div',{key:category,className:'_panel_1gz5u_56 event-summary-card'},h('span',null,category==='all'?'Selected events':label),h('strong',{'data-counter':category},loading?'…':data?(category==='all'?data.total:data.counters[category]).toLocaleString():'—'))));
   const rows = (data?.items || []).map(e=>h('tr',{key:e.id,'data-event-id':e.id},
     h('td',null,h('time',{dateTime:e.timestamp},new Date(e.timestamp).toLocaleString())),
     h('td',null,e.actorId?`${e.actor} (#${e.actorId})`:e.actor),h('td',null,labels[e.category]),h('td',null,e.action),
@@ -21,10 +21,10 @@ export default function EventCenter() {
     h('button',{disabled:page===0,onClick:()=>setPage(p=>p-1)},'Previous'),h('span',null,`Page ${page+1}`),
     h('button',{disabled:(page+1)*100>=(data?.total||0),onClick:()=>setPage(p=>p+1)},'Next'));
   const content = loading ? h('p',{role:'status'},'Loading events…') : data ? h(React.Fragment,null,
-    h('p',{'data-testid':'event-total'},`${data.total} events in selected scope`),
     data.total ? h(React.Fragment,null,table,pagination) : h('p',{'data-testid':'event-empty'},'No events match the selected filters.')) : null;
-  return h(AppPage,{framed:false},h('section',{className:'nyx-event-center'},
-    h('header',{className:'event-header'},h('h2',null,'Event Center'),h('p',null,'Administrative and operational audit history')),summaries,
+  return h(AppPage,{framed:true},h('section',{className:'_card_1gz5u_1 nyx-event-center'},
+    h('header',null,h('div',{className:'_headerRow_1gz5u_12'},h('h2',{className:'_title_1gz5u_20'},'Event Center'),h('span',{className:'_versionTag_1gz5u_25'},'Version 5.0.2-dev')),h('p',{className:'_subtitle_1gz5u_34'},'Administrative and operational audit history')),summaries,
+    h('section',{className:'_panel_1gz5u_56 event-filter-panel','aria-label':'Filters and actions'},
     h('div',{className:'event-filters'},
       h('label',null,'Category',h('select',{'aria-label':'Category',value:scope.category,onChange:change('category')},...Object.entries(labels).map(([id,label])=>h('option',{key:id,value:id},label)))),
       h('label',null,'Actor',h('select',{'aria-label':'Actor',value:scope.actor,onChange:change('actor')},h('option',{value:''},'All actors'),h('option',{value:'0'},'System / Unauthenticated'),...options.actors.map(a=>h('option',{key:a.id,value:String(a.id)},a.name?`${a.name} (#${a.id})`:`User #${a.id}`)))),
@@ -33,5 +33,7 @@ export default function EventCenter() {
       h('label',null,'Search',h('input',{'aria-label':'Search',value:scope.search,maxLength:100,onChange:change('search'),placeholder:'Actor, action or target'})),
       h('button',{onClick:()=>refresh(v=>v+1),disabled:loading||clearing},'Reload'),
       h('button',{className:'event-clear',onClick:clear,disabled:loading||clearing||!data?.total},clearing?'Clearing…':'Clear selected scope')),
-    filtersError?h('p',{role:'alert'},filtersError):null,error?h('p',{role:'alert'},error):null,content));
+    ),
+    filtersError?h('p',{role:'alert'},filtersError):null,error?h('p',{role:'alert'},error):null,
+    h('section',{className:'_panel_1gz5u_56 event-history','aria-label':'Event History'},h('div',{className:'event-history-header'},h('h3',{className:'_panelTitle_1gz5u_63'},'Event History'),!loading&&data?h('p',{'data-testid':'event-total'},`${data.total} events in selected scope`):null),content)));
 }

@@ -12,7 +12,8 @@ patch(main,'$C="5.0.1"','$C="5.0.2-dev"');
 patch(main,'Coe="5.0.1"','Coe="5.0.2-dev"');
 patch('frontend/assets/index-DTnhxNQ_.js','K="5.0.1",Bt=','K="5.0.2-dev",Bt=');
 patch('frontend/assets/notification-visibility-4010.js','desiredVersion = "5.0.1"','desiredVersion = "5.0.2-dev"');
-patch('frontend/index.html','</head>','<link rel="stylesheet" href="/assets/event-center.css?v=5.0.2-dev">\n</head>');
+if (!fs.readFileSync(path.join(app,'frontend/assets/index-DGvEdm6P.css'),'utf8').includes('._card_1gz5u_1')) throw new Error('Settings layout prerequisite changed');
+patch('frontend/index.html','</head>','<link rel="stylesheet" href="/assets/index-DGvEdm6P.css">\n<link rel="stylesheet" href="/assets/event-center.css?v=5.0.2-dev">\n</head>');
 // Replace the inherited Event Center module from authored source at build time.
 const event=fs.readFileSync(path.join(app,'frontend/assets/event-center-source.js'),'utf8');
 fs.writeFileSync(path.join(app,'frontend/assets/index-DJfFx4nu.js'),event);
