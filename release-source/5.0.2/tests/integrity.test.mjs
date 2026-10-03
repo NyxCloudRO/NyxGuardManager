@@ -83,6 +83,10 @@ test('different Manager/database clocks: real Date expiry and exact database aud
  assert.equal((await listEvents(k,{action:'timezone_probe',hours:168})).total,3);
  const event=(await listEvents(k,{action:'timezone_probe',hours:24})).items[0];assert.ok(Math.abs(Date.parse(event.timestamp)-(Date.now()-23*3600000))<5000);
  await k('audit_log').where('action','timezone_probe').delete();
+ const [recent]=await k('audit_log').insert({user_id:1,object_id:90,object_type:'user',category:'users',action:'retention_probe',result:'success',meta:'{}',created_on:k.raw('DATE_SUB(NOW(), INTERVAL ? HOUR)',[180*24-1]),modified_on:k.fn.now()});
+ const [old]=await k('audit_log').insert({user_id:1,object_id:90,object_type:'user',category:'users',action:'retention_probe',result:'success',meta:'{}',created_on:k.raw('DATE_SUB(NOW(), INTERVAL ? HOUR)',[180*24+1]),modified_on:k.fn.now()});
+ await retainHistory(k);assert.ok(await k('audit_log').where('id',recent).first());assert.equal(await k('audit_log').where('id',old).first(),undefined);
+ await k('audit_log').where('id',recent).delete();
 });
 test('automatic expiry exact boundary; manual/disabled/permanent remain; crawler expiry',async()=>{
  await k('nyxguard_ip_rule').delete();

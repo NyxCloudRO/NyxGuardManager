@@ -9,5 +9,5 @@ export async function retainHistory(k, now = Date.now()) {
     .where('created_on','<',new Date(now - 30 * 86400000)).delete();
   const setting = await k('setting').where('id','audit-log-retention-days').first();
   const days = Number(setting?.value ?? 180);
-  if (Number.isInteger(days) && days > 0) await k('audit_log').where('created_on','<',new Date(now - days * 86400000)).delete();
+  if (Number.isInteger(days) && days > 0) await k('audit_log').where('created_on','<',k.raw('DATE_SUB(NOW(), INTERVAL ? DAY)',[days])).delete();
 }
