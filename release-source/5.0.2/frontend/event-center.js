@@ -9,10 +9,11 @@ export default function EventCenter() {
   React.useEffect(()=>{let live=true;setLoading(true);setError('');get({url:'event-center/events',params:{...scope,limit:100,offset:page*100}}).then(d=>{if(live)setData(d);}).catch(()=>{if(live){setData(null);setError('Unable to load events. Retry to check the current state.');}}).finally(()=>{if(live)setLoading(false);});return()=>{live=false;};},[scope,page,revision]);
   const change=(key)=>(e)=>{setPage(0);setScope(s=>({...s,[key]:e.target.value}));};
   const clear=async()=>{if(!window.confirm(`Permanently delete all Event Center records matching these filters (${data.total} records)? This cannot be undone.`))return;setClearing(true);setError('');try{await post({url:'event-center/clear',data:{...scope,confirm:true}});setPage(0);setData(null);refresh(v=>v+1);}catch{setError('Clear failed. Reload to verify the persistent state.');}finally{setClearing(false);}};
+  const summaries = h('div',{className:'event-summary','aria-label':'Counters in selected scope'},...Object.entries(labels).map(([category,label])=>h('div',{key:category,className:'event-summary-card'},h('span',null,category==='all'?'Selected events':label),h('strong',{'data-counter':category},loading?'…':data?(category==='all'?data.total:data.counters[category]).toLocaleString():'—'))));
   const rows = (data?.items || []).map(e=>h('tr',{key:e.id,'data-event-id':e.id},
     h('td',null,h('time',{dateTime:e.timestamp},new Date(e.timestamp).toLocaleString())),
     h('td',null,e.actorId?`${e.actor} (#${e.actorId})`:e.actor),h('td',null,labels[e.category]),h('td',null,e.action),
-    h('td',null,`${e.targetType} #${e.targetId}`),h('td',null,e.result)));
+    h('td',null,`${e.targetType} #${e.targetId}`),h('td',null,h('span',{className:'event-result','data-result':e.result},e.result))));
   const table = h('div',{className:'event-table-wrap'},h('table',null,
     h('thead',null,h('tr',null,...['Time','Actor','Category','Action','Target','Result'].map(t=>h('th',{key:t},t)))),
     h('tbody',null,...rows)));
@@ -22,8 +23,8 @@ export default function EventCenter() {
   const content = loading ? h('p',{role:'status'},'Loading events…') : data ? h(React.Fragment,null,
     h('p',{'data-testid':'event-total'},`${data.total} events in selected scope`),
     data.total ? h(React.Fragment,null,table,pagination) : h('p',{'data-testid':'event-empty'},'No events match the selected filters.')) : null;
-  return h(AppPage,{framed:true},h('section',{className:'nyx-event-center'},
-    h('h2',null,'Event Center'),h('p',null,'Administrative and operational audit history'),
+  return h(AppPage,{framed:false},h('section',{className:'nyx-event-center'},
+    h('header',{className:'event-header'},h('h2',null,'Event Center'),h('p',null,'Administrative and operational audit history')),summaries,
     h('div',{className:'event-filters'},
       h('label',null,'Category',h('select',{'aria-label':'Category',value:scope.category,onChange:change('category')},...Object.entries(labels).map(([id,label])=>h('option',{key:id,value:id},label)))),
       h('label',null,'Actor',h('select',{'aria-label':'Actor',value:scope.actor,onChange:change('actor')},h('option',{value:''},'All actors'),h('option',{value:'0'},'System / Unauthenticated'),...options.actors.map(a=>h('option',{key:a.id,value:String(a.id)},a.name?`${a.name} (#${a.id})`:`User #${a.id}`)))),
@@ -31,6 +32,6 @@ export default function EventCenter() {
       h('label',null,'Time window',h('select',{'aria-label':'Time window',value:scope.hours,onChange:change('hours')},...[[24,'Last 24 hours'],[168,'Last 7 days'],[720,'Last 30 days'],[4320,'Last 180 days'],[0,'All retained history']].map(([v,t])=>h('option',{key:v,value:String(v)},t)))),
       h('label',null,'Search',h('input',{'aria-label':'Search',value:scope.search,maxLength:100,onChange:change('search'),placeholder:'Actor, action or target'})),
       h('button',{onClick:()=>refresh(v=>v+1),disabled:loading||clearing},'Reload'),
-      h('button',{onClick:clear,disabled:loading||clearing||!data?.total},clearing?'Clearing…':'Clear selected scope')),
+      h('button',{className:'event-clear',onClick:clear,disabled:loading||clearing||!data?.total},clearing?'Clearing…':'Clear selected scope')),
     filtersError?h('p',{role:'alert'},filtersError):null,error?h('p',{role:'alert'},error):null,content));
 }
