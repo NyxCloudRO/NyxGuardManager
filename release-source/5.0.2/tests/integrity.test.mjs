@@ -13,6 +13,8 @@ const legacy = (id,type,producer='nyxguard_attack_monitor')=>({id,ts:new Date(so
 let initialIds=[];
 before(async()=>{
   assert.equal(process.env.DB_MYSQL_HOST,'nyxguard-task1-db','Fixture refuses any other database host');
+  assert.equal(k.client.config.connection.host,'nyxguard-task1-db','Validate effective connection, not just environment');
+  assert.equal(k.client.config.connection.database,'task1_fixture','Fixture refuses any other database');
   const schema=JSON.parse(await fs.readFile('/app/fixture-schema.json','utf8'));
   for(const ddl of schema) await k.schema.dropTableIfExists(ddl.match(/CREATE TABLE `([^`]+)`/)[1]);
   for (const ddl of schema) await k.raw(ddl.replace(/AUTO_INCREMENT=\d+/g,''));
