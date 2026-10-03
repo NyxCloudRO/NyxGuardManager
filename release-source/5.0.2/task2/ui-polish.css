@@ -38,6 +38,8 @@ html[data-app-theme] [data-task2-rules] [class*="_actions_"]{display:flex;flex-w
 html[data-app-theme] [data-task2-rules] td.text-end button+button{margin-left:10px}
 html[data-app-theme] [data-task2-rules] td{padding-block:10px;border-bottom:1px solid var(--app-border)}
 html[data-app-theme] .nyx-waf-partial{color:#ffd580!important;background:#3b2d16!important;border:1px solid #a27a38!important;font-weight:700!important}
+/* PARTIAL keeps its shared semantic colors; remove excess horizontal badge width. */
+html[data-app-theme] .nyx-waf-partial{min-width:0!important;width:max-content!important;padding-inline:8px!important;white-space:nowrap!important;display:inline-flex!important;align-items:center!important;justify-content:center!important}
 html[data-app-theme] .nyx-waf-partial:focus-visible{outline:2px solid var(--app-primary);outline-offset:2px}
 .task2-ip-pagination{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:8px 10px;font-size:.85rem;border-bottom:1px solid var(--app-border);background:var(--app-surface-2)}
 

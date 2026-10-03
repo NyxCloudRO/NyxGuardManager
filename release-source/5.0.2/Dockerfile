@@ -13,9 +13,10 @@ COPY release-source/5.0.2/task2/traffic-selection.mjs /app/internal/traffic-sele
 COPY release-source/5.0.2/task2/manager-duration.mjs /app/frontend/assets/manager-duration-source.mjs
 COPY release-source/5.0.2/task2/ui-polish.css /app/frontend/assets/task2-ui-polish.css
 COPY release-source/5.0.2/task2/patch-task2.mjs /tmp/patch-task2.mjs
-RUN node /tmp/patch-backend.mjs /app && node /tmp/patch-frontend.mjs /app && node /tmp/patch-task2.mjs /app && \
+COPY release-source/5.0.2/task3/patch-task3.mjs /tmp/patch-task3.mjs
+RUN node /tmp/patch-backend.mjs /app && node /tmp/patch-frontend.mjs /app && node /tmp/patch-task2.mjs /app && node /tmp/patch-task3.mjs /app && \
     (find /app/internal /app/routes /app/migrations -type f \( -name '*.js' -o -name '*.mjs' \) -print0 | xargs -0 -n 1 node --check) && \
     (find /app/frontend/assets -maxdepth 1 -type f -name '*.js' -print0 | xargs -0 -n 1 node --check) && \
-    rm /tmp/patch-task2.mjs /app/frontend/assets/manager-duration-source.mjs /tmp/patch-backend.mjs /tmp/patch-frontend.mjs /app/frontend/assets/event-center-source.js
+    rm /tmp/patch-task3.mjs /tmp/patch-task2.mjs /app/frontend/assets/manager-duration-source.mjs /tmp/patch-backend.mjs /tmp/patch-frontend.mjs /app/frontend/assets/event-center-source.js
 ENV NPM_BUILD_VERSION=5.0.2-dev NPM_BUILD_COMMIT=${NYXGUARD_SOURCE_REVISION} NPM_BUILD_DATE=2026-10-03
 LABEL org.opencontainers.image.version="5.0.2-dev" org.opencontainers.image.revision="${NYXGUARD_SOURCE_REVISION}"
