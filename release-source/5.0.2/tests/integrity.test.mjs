@@ -73,6 +73,17 @@ test('actor/action/category and 24h/7d filters; physical scoped clear and unrela
  assert.equal(Number((await k('web_threat_events').count({n:'*'}))[0].n),beforeWeb);
  assert.throws(()=>normalizeScope({hours:12}),/window/);
 });
+test('different Manager/database clocks: real Date expiry and exact database audit windows',async()=>{
+ const now=Date.now(), [expired]=await k('nyxguard_ip_rule').insert({rule_origin:'automatic_ban',enabled:1,action:'deny',ip_cidr:'192.0.2.90',expires_on:new Date(now-1000),created_on:k.fn.now(),modified_on:k.fn.now()});
+ const [active]=await k('nyxguard_ip_rule').insert({rule_origin:'automatic_ban',enabled:1,action:'deny',ip_cidr:'192.0.2.91',expires_on:new Date(now+60000),created_on:k.fn.now(),modified_on:k.fn.now()});
+ await expireSecurityState(k,now);assert.equal(await k('nyxguard_ip_rule').where('id',expired).first(),undefined);assert.ok(await k('nyxguard_ip_rule').where('id',active).first());
+ await k('nyxguard_ip_rule').where('id',active).delete();
+ for (const hours of [23,25,167,169])await k('audit_log').insert({user_id:1,object_id:90,object_type:'user',category:'users',action:'timezone_probe',result:'success',meta:'{}',created_on:k.raw('DATE_SUB(NOW(), INTERVAL ? HOUR)',[hours]),modified_on:k.fn.now()});
+ assert.equal((await listEvents(k,{action:'timezone_probe',hours:24})).total,1);
+ assert.equal((await listEvents(k,{action:'timezone_probe',hours:168})).total,3);
+ const event=(await listEvents(k,{action:'timezone_probe',hours:24})).items[0];assert.ok(Math.abs(Date.parse(event.timestamp)-(Date.now()-23*3600000))<5000);
+ await k('audit_log').where('action','timezone_probe').delete();
+});
 test('automatic expiry exact boundary; manual/disabled/permanent remain; crawler expiry',async()=>{
  await k('nyxguard_ip_rule').delete();
  const insert=async(origin,enabled,expiry,action='deny')=>{const [id]=await k('nyxguard_ip_rule').insert({rule_origin:origin,enabled,expires_on:expiry,action,ip_cidr:'192.0.2.10',created_on:k.fn.now(),modified_on:k.fn.now(),note:origin==='manual'?'Manual ban (Attacks)':'fixture'});return id;};

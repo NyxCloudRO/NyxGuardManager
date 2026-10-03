@@ -1,6 +1,6 @@
-export async function expireSecurityState(k) {
+export async function expireSecurityState(k, now = Date.now()) {
   const deleted = await k('nyxguard_ip_rule').whereIn('rule_origin', ['automatic_ban','verified_crawler'])
-    .whereNotNull('expires_on').where('expires_on','<=',k.fn.now()).delete();
+    .whereNotNull('expires_on').where('expires_on','<=',new Date(now)).delete();
   return deleted;
 }
 export async function retainHistory(k, now = Date.now()) {

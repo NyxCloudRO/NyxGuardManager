@@ -14,7 +14,9 @@ Event Center reads only `audit_log`, with explicit security, user,
 application, access and configuration categories. Filters and physical
 clears use the same actor/action/category/time predicates. A clear never
 accesses Threat Activity or native Web Threat history. Counts cover the
-entire selected scope, independently of pagination. Old audit results are
+entire selected scope, independently of pagination. Audit windows use database
+time, matching the audit producer, and UNIX_TIMESTAMP preserves the database
+timestamp's session timezone when returning an absolute API timestamp. Old audit results are
 marked unknown unless the old action records a known authentication outcome.
 
 Authenticated audit actors come from the validated server token, regardless
@@ -46,7 +48,7 @@ manual rules. Manual edits adopt automatic state as manual configuration.
 
 The existing single-flight attack worker performs expiry maintenance before
 opening or ingesting logs. It deletes only expired temporary state owned by
-automatic bans or verified crawlers, using `expires_on <= database NOW()`.
+automatic bans or verified crawlers, using a driver-bound server timestamp, matching the automatic producer's Date serialization even when Manager and database timezones differ.
 Missing, unchanged or empty logs cannot skip maintenance. Enforcement reloads
 are retried; startup requests a full enforcement regeneration even if a
 previous process stopped after deletion. Disabled, expired and permanent

@@ -22,7 +22,7 @@ export function scopedQuery(k, scope) {
       .orWhereRaw('LOCATE(?, CAST(object_id AS CHAR)) > 0',[scope.search])
       .orWhereExists(k('user as actor').select(k.raw('1')).whereColumn('actor.id','audit_log.user_id').whereRaw('LOCATE(?, actor.name) > 0',[scope.search]));
   });
-  if (scope.after) q.where('created_on', '>=', scope.after);
+  if (scope.after) q.where('created_on', '>=', k.raw('DATE_SUB(NOW(), INTERVAL ? HOUR)', [scope.hours]));
   return q;
 }
 export async function listEvents(k, input = {}) {
@@ -33,13 +33,13 @@ export async function listEvents(k, input = {}) {
   const counters = Object.fromEntries(CATEGORIES.map(c => [c, 0]));
   for (const row of counts) counters[row.category] = Number(row.count);
   const total = Object.values(counters).reduce((a,b)=>a+b,0);
-  const rows = await scopedQuery(k, scope).select('*').orderBy('created_on','desc').orderBy('id','desc').limit(limit).offset(offset);
+  const rows = await scopedQuery(k, scope).select('*', k.raw('UNIX_TIMESTAMP(created_on) * 1000 AS timestamp_ms')).orderBy('created_on','desc').orderBy('id','desc').limit(limit).offset(offset);
   const ids = [...new Set(rows.map(r=>r.user_id).filter(Boolean))];
   const actors = ids.length ? await k('user').select('id','name').whereIn('id',ids) : [];
   const names = new Map(actors.map(r=>[r.id,r.name]));
   return {total, counters, limit, offset, items: rows.map(r=>({id:r.id, actorId:r.user_id,
     actor: r.user_id ? names.get(r.user_id) || `User #${r.user_id}` : r.actor_kind === 'system' ? 'System' : 'Unauthenticated', actorKind:r.actor_kind, action:r.action,
-    category:r.category, targetType:r.object_type, targetId:r.object_id, timestamp:r.created_on,
+    category:r.category, targetType:r.object_type, targetId:r.object_id, timestamp:new Date(Number(r.timestamp_ms)).toISOString(),
     result:r.result, context:sanitizeContext(typeof r.meta === 'string' ? JSON.parse(r.meta || '{}') : r.meta)}))};
 }
 export async function clearEvents(k, input) {
