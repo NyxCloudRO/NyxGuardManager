@@ -16,6 +16,19 @@ CLI_BOOTSTRAP_SHA256="89eb4165bfdde3664a07d4a25385cc442ff0862bb01829e0783a817a5a
 MANAGER_ONLY_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upgrade/manager-only-handover.mjs"
 MANAGER_ONLY_SHA256="8a374930d5f421d5296886bc9b05141a79fafb6522d2bd8870b41d1cb476a470"
 
+SAME_MAJOR_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upgrade/same-major-bootstrap.mjs"
+SAME_MAJOR_SHA256="18a2e0930aba6706b85fb3544e1e747bcdf2fd94455f11f75f36799935d82745"
+
+# Published release contracts; new Manager tags require an explicit Agent decision.
+vpn_agent_tag_for_manager() {
+  case "$(normalize_semver "$1")" in
+    5.0.2|5.0.1) echo 5.0.1 ;;
+    5.0.0) echo 5.0.0 ;;
+    4.0.14|4.0.15|4.0.16|4.0.17|4.0.18) normalize_semver "$1" ;;
+    *) echo "ERROR: No published VPN compatibility contract for Manager $1." >&2; return 1 ;;
+  esac
+}
+
 need_root() {
   if [[ "${EUID}" -ne 0 ]]; then
     echo "ERROR: Run as root (or with sudo)." >&2
@@ -517,6 +530,49 @@ run_major_handover_500() (
   fi
 )
 
+run_same_major_handover_502() (
+  local tmp bootstrap vpn_installed
+  tmp="$(mktemp -d)"
+  chmod 700 "$tmp"
+  trap 'rm -rf "$tmp"' EXIT
+  bootstrap="$tmp/same-major-bootstrap.mjs"
+  if [[ -n "${NYXGUARD_SAME_MAJOR_BOOTSTRAP_FILE:-}" ]]; then
+    cp -- "$NYXGUARD_SAME_MAJOR_BOOTSTRAP_FILE" "$bootstrap"
+  else
+    curl -fsSL "$SAME_MAJOR_URL" -o "$bootstrap"
+  fi
+  if [[ "$(sha256sum "$bootstrap" | cut -d' ' -f1)" != "$SAME_MAJOR_SHA256" ]]; then
+    echo "ERROR: Same-major bootstrap checksum mismatch; installation was not changed." >&2
+    return 1
+  fi
+  chmod 600 "$bootstrap"
+  # Runtime Compose labels, rather than host TUN availability, identify installed VPN.
+  vpn_installed="$(docker ps -a --filter label=com.docker.compose.service=vpn-client-agent \
+    --format '{{.Label "com.docker.compose.project.config_files"}}' | \
+    while IFS= read -r files; do
+      if [[ "${files%%,*}" == "$INSTALL_DIR/docker-compose.yml" ]]; then echo 1; fi
+    done)"
+  echo "Pulling $target_ref..."
+  docker pull "$target_ref"
+  if [[ -n "$vpn_installed" ]]; then
+    echo "Pulling compatible $vpn_agent_ref..."
+    docker pull "$vpn_agent_ref"
+  fi
+  docker run --rm --network none --user 0:0 --entrypoint node \
+    --mount "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock" \
+    --mount "type=bind,src=$bootstrap,dst=/tmp/same-major-bootstrap.mjs,readonly" \
+    -e CURRENT_VERSION=5.0.1 -e TARGET_VERSION=5.0.2 \
+    -e "HOST_INSTALL_DIR=$INSTALL_DIR" \
+    "$target_ref" /tmp/same-major-bootstrap.mjs
+  # The immutable helper has verified health and persistence before config changes.
+  update_compose_image_ref "$target_ref"
+  if [[ -n "$vpn_installed" && -f "$INSTALL_DIR/docker-compose.vpn.yml" ]]; then
+    write_vpn_compose_overlay "$vpn_agent_ref"
+  fi
+  echo "$target_tag" > "$INSTALL_DIR/.version"
+  echo "Update complete. Now running: $target_ref"
+)
+
 main() {
   need_root
   require_commands
@@ -552,13 +608,13 @@ main() {
   fi
 
   target_ref="${IMAGE_REPO}:${target_tag}"
-  vpn_agent_ref="${VPN_AGENT_REPO}:${target_tag}"
   local route
   route="$(upgrade_route "$current_tag" "$target_tag")"
   if [[ "$route" == unsupported ]]; then
     echo "ERROR: No supported upgrade path from ${current_tag} to ${target_tag}. Installation was not changed." >&2
     exit 1
   fi
+  vpn_agent_ref="${VPN_AGENT_REPO}:$(vpn_agent_tag_for_manager "$target_tag")"
   if [[ "$route" == major_handover_500 ]]; then
     if [[ "$IMAGE_REPO" != nyxmael/nyxguardmanager || "$VPN_AGENT_REPO" != nyxmael/nyxguardmanager-vpn-agent ]]; then
       echo "ERROR: The verified 4.0.18 to 5.0.0 handover requires the published paired images." >&2
@@ -568,6 +624,15 @@ main() {
     docker pull "$target_ref"
     docker pull "$vpn_agent_ref"
     run_major_handover_500
+    return
+  fi
+  if [[ "$current_tag" == 5.0.1 && "$target_tag" == 5.0.2 ]]; then
+    if [[ "$IMAGE_REPO" != nyxmael/nyxguardmanager || "$VPN_AGENT_REPO" != nyxmael/nyxguardmanager-vpn-agent ]]; then
+      echo "ERROR: Guarded handover requires the published compatible images." >&2
+      exit 1
+    fi
+    confirm_update "$current_ref" "$target_ref" || exit 0
+    run_same_major_handover_502
     return
   fi
   vpn_enabled=0

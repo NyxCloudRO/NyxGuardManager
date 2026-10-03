@@ -1,0 +1,205 @@
+// Host adapter for the guarded same-major engine in the published Manager image.
+// The root handover helper owns backup, replacement, health gates and recovery.
+import http from "node:http";
+import fs from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+
+const api = (method, endpoint, body = null) => new Promise((resolve, reject) => {
+	const request = http.request({ socketPath: "/var/run/docker.sock", path: `/v1.41${endpoint}`, method,
+		headers: body ? { "Content-Type": "application/json" } : undefined }, (response) => {
+		let raw = "";
+		response.setEncoding("utf8");
+		response.on("data", (part) => { raw += part; });
+		response.on("end", () => {
+			if ((response.statusCode || 500) >= 400) return reject(new Error(`Docker ${method} ${endpoint}: ${response.statusCode}`));
+			try { resolve(raw ? JSON.parse(raw) : {}); } catch { resolve(raw); }
+		});
+	});
+	request.on("error", reject);
+	if (body) request.write(JSON.stringify(body));
+	request.end();
+});
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const q = encodeURIComponent;
+let image;
+let vpnImage;
+let oldManager, oldVpn, newManagerId, newVpnId, helperId;
+let managerRenamed = false, vpnRenamed = false, helperStartAttempted = false;
+
+export function groupAddForSocket(previous, socketGid) {
+	if (!Number.isSafeInteger(socketGid) || socketGid < 0) throw new Error("Invalid Docker socket GID");
+	const groups = Array.isArray(previous) ? previous.map(String) : [];
+	return [...new Set(socketGid === 0 ? groups : [...groups, String(socketGid)])];
+}
+
+export function selectTopology(containers, installDir) {
+	const configFile = `${installDir}/docker-compose.yml`;
+	const matching = (service) => containers.filter((item) =>
+		item.Labels?.["com.docker.compose.service"] === service &&
+		String(item.Labels?.["com.docker.compose.project.config_files"] || "").split(",")[0] === configFile);
+	const managers = matching("nyxguard-manager");
+	if (managers.length !== 1) throw new Error(`Expected exactly one installed Manager; found ${managers.length}`);
+	const manager = managers[0];
+	const project = manager.Labels?.["com.docker.compose.project"];
+	if (!project) throw new Error("Manager has no Compose project identity");
+	const withinProject = (service) => matching(service).filter((item) => item.Labels?.["com.docker.compose.project"] === project);
+	const databases = withinProject("db");
+	if (databases.length !== 1) throw new Error(`Expected exactly one installed database; found ${databases.length}`);
+	const vpns = withinProject("vpn-client-agent");
+	if (vpns.length > 1) throw new Error(`Ambiguous VPN agents in Compose project ${project}`);
+	if (matching("vpn-client-agent").length !== vpns.length) throw new Error("VPN service has inconsistent Compose project labels");
+	if (containers.some((item) => item.Id !== vpns[0]?.Id &&
+		(item.Names || []).includes("/nyxguard-vpn-agent"))) {
+		throw new Error("A VPN container exists outside the installed Compose service");
+	}
+	return { manager, database: databases[0], vpn: vpns[0] || null, project };
+}
+
+async function checkedContainer(summary, expectedImage) {
+	const container = await api("GET", `/containers/${q(summary.Id)}/json`);
+	if (!container.State?.Running || container.State.Health?.Status !== "healthy" || container.Config?.Image !== expectedImage) {
+		throw new Error(`Expected one healthy running ${expectedImage} Compose service`);
+	}
+	return container;
+}
+
+async function setup() {
+	if (process.env.CURRENT_VERSION !== "5.0.1" || process.env.TARGET_VERSION !== "5.0.2") {
+		throw new Error("Unsupported CLI handover transition");
+	}
+	const target = await api("GET", "/images/nyxmael%2Fnyxguardmanager%3A5.0.2/json");
+	if (target.Config?.Labels?.["org.opencontainers.image.version"] !== "5.0.2") throw new Error("Unexpected target Manager version");
+	image = target.Id;
+	const agent = await api("GET", "/images/nyxmael%2Fnyxguardmanager-vpn-agent%3A5.0.1/json").catch((error) => {
+		if (!String(error.message).endsWith(": 404")) throw error;
+		return null;
+	});
+	vpnImage = agent?.Id;
+	const all = await api("GET", "/containers/json?all=1");
+	const installDir = process.env.HOST_INSTALL_DIR;
+	if (!installDir?.startsWith("/") || installDir.includes("..")) throw new Error("Invalid installed Compose directory");
+	const topology = selectTopology(all, installDir);
+	oldManager = await checkedContainer(topology.manager, "nyxmael/nyxguardmanager:5.0.1");
+	const database = await api("GET", `/containers/${q(topology.database.Id)}/json`);
+	if (!database.State?.Running) throw new Error("Installed database is not running");
+	const names = all.flatMap((item) => item.Names || []);
+	if (names.some((name) => /^\/nyxguard-(update-handover|recovery-|manager-rollback-|vpn-agent-rollback-)/.test(name))) {
+		throw new Error("An existing handover or rollback container needs review before retrying");
+	}
+	if (topology.vpn) {
+		oldVpn = await checkedContainer(topology.vpn, "nyxmael/nyxguardmanager-vpn-agent:5.0.1");
+		if (!vpnImage || oldVpn.Image !== vpnImage) throw new Error("Installed VPN Agent differs from the published compatible image");
+	}
+	const data = (oldManager.Mounts || []).find((mount) => mount.Destination === "/data");
+	if (!data || !["volume", "bind"].includes(data.Type)) throw new Error("Persistent Manager /data mount not found");
+	const dataSource = data.Type === "volume" ? data.Name : data.Source;
+	if (!dataSource) throw new Error("Invalid Manager /data mount");
+	const socketGid = (await fs.stat("/var/run/docker.sock")).gid;
+	const token = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+	const oldManagerName = String(oldManager.Name).replace(/^\//, "");
+	const oldVpnName = oldVpn ? String(oldVpn.Name).replace(/^\//, "") : "";
+	const safeLabels = (labels = {}) => Object.fromEntries(Object.entries(labels).filter(([key]) =>
+		!["org.opencontainers.image.version", "org.opencontainers.image.revision", "org.opencontainers.image.created"].includes(key)));
+	const managerConfig = {
+		Image: image,
+		Env: (oldManager.Config.Env || []).filter((entry) => !/^NPM_BUILD_(VERSION|COMMIT|DATE)=/.test(entry)),
+		Cmd: oldManager.Config.Cmd, Entrypoint: oldManager.Config.Entrypoint,
+		WorkingDir: oldManager.Config.WorkingDir, ExposedPorts: oldManager.Config.ExposedPorts,
+		Healthcheck: oldManager.Config.Healthcheck, Labels: safeLabels(oldManager.Config.Labels),
+		HostConfig: {
+			Binds: oldManager.HostConfig.Binds, PortBindings: oldManager.HostConfig.PortBindings,
+			RestartPolicy: oldManager.HostConfig.RestartPolicy, NetworkMode: oldManager.HostConfig.NetworkMode,
+			GroupAdd: groupAddForSocket(oldManager.HostConfig.GroupAdd, socketGid), ExtraHosts: oldManager.HostConfig.ExtraHosts,
+			LogConfig: oldManager.HostConfig.LogConfig, CapAdd: oldManager.HostConfig.CapAdd,
+			Devices: oldManager.HostConfig.Devices,
+		},
+	};
+	const vpnConfig = oldVpn ? {
+		Image: vpnImage, Env: oldVpn.Config.Env, Cmd: oldVpn.Config.Cmd,
+		Entrypoint: oldVpn.Config.Entrypoint, WorkingDir: oldVpn.Config.WorkingDir,
+		ExposedPorts: oldVpn.Config.ExposedPorts, Healthcheck: oldVpn.Config.Healthcheck,
+		Labels: safeLabels(oldVpn.Config.Labels),
+		HostConfig: {
+			Binds: oldVpn.HostConfig.Binds, RestartPolicy: oldVpn.HostConfig.RestartPolicy,
+			NetworkMode: `container:${oldManager.Id}`, ExtraHosts: oldVpn.HostConfig.ExtraHosts,
+			GroupAdd: oldVpn.HostConfig.GroupAdd, LogConfig: oldVpn.HostConfig.LogConfig,
+			CapAdd: oldVpn.HostConfig.CapAdd, Devices: oldVpn.HostConfig.Devices,
+		},
+	} : null;
+	await api("POST", `/containers/${oldManager.Id}/rename?name=${q(`${oldManagerName}-rollback-${token}`)}`);
+	managerRenamed = true;
+	if (oldVpn) {
+		await api("POST", `/containers/${oldVpn.Id}/rename?name=${q(`${oldVpnName}-rollback-${token}`)}`);
+		vpnRenamed = true;
+	}
+	newManagerId = (await api("POST", `/containers/create?name=${q(oldManagerName)}`, managerConfig)).Id;
+	if (vpnConfig) {
+		vpnConfig.HostConfig.NetworkMode = `container:${newManagerId}`;
+		newVpnId = (await api("POST", `/containers/create?name=${q(oldVpnName)}`, vpnConfig)).Id;
+	}
+	const helper = await api("POST", `/containers/create?name=${q(`nyxguard-update-handover-${token}`)}`, {
+		Image: image, Entrypoint: ["node", "/app/internal/update-handover.js"], Cmd: [],
+		Env: [
+			`OLD_MANAGER_ID=${oldManager.Id}`, `OLD_MANAGER_NAME=${oldManagerName}`,
+			`NEW_MANAGER_ID=${newManagerId}`, `TARGET_IMAGE_ID=${image}`,
+			...(oldVpn ? [`OLD_VPN_ID=${oldVpn.Id}`, `OLD_VPN_NAME=${oldVpnName}`, `NEW_VPN_ID=${newVpnId}`] : []),
+			"CURRENT_VERSION=5.0.1", "TARGET_VERSION=5.0.2",
+		],
+		HostConfig: { Binds: ["/var/run/docker.sock:/var/run/docker.sock", `${dataSource}:/handover-data`], NetworkMode: "none" },
+	});
+	helperId = helper.Id;
+	helperStartAttempted = true;
+	await api("POST", `/containers/${helper.Id}/start`);
+	console.log("Verified handover helper started; waiting for recovery and health gates...");
+	for (let attempt = 0; attempt < 1800; attempt++) {
+		const state = await api("GET", `/containers/${helper.Id}/json`);
+		if (!state.State.Running) {
+			const logs = await new Promise((resolve, reject) => {
+				const request = http.get({ socketPath: "/var/run/docker.sock", path: `/v1.41/containers/${helper.Id}/logs?stdout=1&stderr=1&tail=60` }, (response) => {
+					const chunks = []; response.on("data", (chunk) => chunks.push(chunk));
+					response.on("end", () => resolve(Buffer.concat(chunks).toString("utf8").replace(/[^\x09\x0A\x0D\x20-\x7E]/g, "")));
+				}); request.on("error", reject);
+			});
+			console.log(logs);
+			if (state.State.ExitCode !== 0) throw new Error(`Handover failed (helper exit ${state.State.ExitCode}); inspect persistent recovery state before retrying`);
+			console.log("Upgrade complete. Now running: 5.0.2");
+			return;
+		}
+		await sleep(1000);
+	}
+	throw new Error("Handover helper is still running; inspect it before retrying");
+}
+
+
+async function main() {
+	try { await setup(); }
+	catch (error) {
+		let safeToClean = !helperStartAttempted;
+		if (helperStartAttempted && helperId) {
+			try {
+				const helper = await api("GET", `/containers/${helperId}/json`);
+				safeToClean = helper.State?.Status === "created";
+			} catch {
+				// A lost start response is ambiguous. Do not remove containers the
+				// handover helper may already be using.
+			}
+		}
+		if (safeToClean) {
+			try {
+				if (helperId) await api("DELETE", `/containers/${helperId}?force=1`);
+				if (newVpnId) await api("DELETE", `/containers/${newVpnId}?force=1`);
+				if (newManagerId) await api("DELETE", `/containers/${newManagerId}?force=1`);
+				if (managerRenamed) await api("POST", `/containers/${oldManager.Id}/rename?name=${q(String(oldManager.Name).replace(/^\//, ""))}`);
+				if (vpnRenamed) await api("POST", `/containers/${oldVpn.Id}/rename?name=${q(String(oldVpn.Name).replace(/^\//, ""))}`);
+			} catch (cleanupError) {
+				console.error(`Setup cleanup is incomplete; inspect containers before retrying: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`);
+			}
+		} else {
+			console.error(`Handover helper state requires review before retrying (container ${helperId}).`);
+		}
+		console.error(`ERROR: ${error instanceof Error ? error.message : String(error)}`);
+		process.exitCode = 1;
+	}
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) await main();
