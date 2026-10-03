@@ -1,0 +1,44 @@
+/* Keep the established sidebar and page shells. Fit all controls through density. */
+@media(min-width:768px){
+ #root aside[aria-label="Main navigation"]{--task2-nav-height:32px;--task2-icon-size:20px}
+ #root aside[aria-label="Main navigation"] #navbar-menu .navbar-nav .nav-link{min-height:var(--task2-nav-height)!important;height:var(--task2-nav-height)!important;padding-block:0!important;font-size:14px!important}
+ #root aside[aria-label="Main navigation"] #navbar-menu .nav-link-icon{width:var(--task2-icon-size)!important;height:var(--task2-icon-size)!important}
+ #root aside[aria-label="Main navigation"] [class*="_sidebarFooter_"]{gap:3px!important;padding-block:5px!important}
+ #root aside[aria-label="Main navigation"] .prefs-action-links{gap:3px!important}
+ #root aside[aria-label="Main navigation"] .prefs-action-link{min-height:27px!important;padding-block:3px!important}
+}
+@media(min-width:768px) and (max-height:820px){
+ #root aside[aria-label="Main navigation"]{--task2-nav-height:26px}
+ #root aside[aria-label="Main navigation"] [class*="_sidebarFooter_"]{padding-block:3px!important;gap:2px!important}
+ #root aside[aria-label="Main navigation"] .prefs-action-link{min-height:25px!important;padding-block:2px!important}
+}
+@media(min-width:768px) and (max-height:740px){
+ #root aside[aria-label="Main navigation"]{--task2-nav-height:24px;--task2-icon-size:18px}
+ #root aside[aria-label="Main navigation"] #navbar-menu{padding-block:0!important}
+ #root aside[aria-label="Main navigation"] [class*="_prefsDropdown_"]{margin-top:2px!important}
+ #root aside[aria-label="Main navigation"] [class*="_prefsToggle_"]{min-height:26px!important;padding-block:2px!important}
+ #root aside[aria-label="Main navigation"] .prefs-action-link{min-height:24px!important}
+}
+/* The existing Traffic Rules action group receives intentional separation. */
+html[data-app-theme] [data-task2-rules] [class*="_actions_"]{display:flex;flex-wrap:wrap;align-items:center;gap:12px!important}
+html[data-app-theme] [data-task2-rules] td.text-end button+button{margin-left:10px}
+html[data-app-theme] [data-task2-rules] td{padding-block:10px;border-bottom:1px solid var(--app-border)}
+html[data-app-theme] .nyx-waf-partial{color:#ffd580!important;background:#3b2d16!important;border:1px solid #a27a38!important;font-weight:700!important}
+html[data-app-theme] .nyx-waf-partial:focus-visible{outline:2px solid var(--app-primary);outline-offset:2px}
+.task2-ip-pagination{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:8px 10px;font-size:.85rem;border-bottom:1px solid var(--app-border);background:var(--app-surface-2)}
+
+/* Preserve the complete Proxy Hosts row; reduce cell and avatar dead space. */
+[data-task2-proxy] .table>tbody>tr>td{padding-top:8px!important;padding-bottom:8px!important}
+[data-task2-proxy] .table .avatar{width:32px;height:32px;min-width:32px}
+[data-task2-proxy] .table td .py-1{padding-block:0!important}
+[data-task2-proxy] .table .text-secondary.mt-1{margin-top:2px!important}
+
+[data-task2-rules] .nyx-traffic-save-rule-action-slot>button{margin:0!important;transform:none!important;position:static!important}
+[data-task2-rules] td.text-end{white-space:nowrap}
+
+@media(min-width:768px){
+ #root aside[aria-label="Main navigation"] a:focus-visible,
+ #root aside[aria-label="Main navigation"] button:focus-visible{outline:2px solid var(--app-primary);outline-offset:1px}
+}
+
+.task2-scan-notice{padding:8px 12px;margin-block:8px;color:var(--app-text);border:1px solid var(--app-border);border-radius:8px;background:var(--app-surface-2);font-size:.875rem}

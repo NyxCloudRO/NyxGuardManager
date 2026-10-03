@@ -8,10 +8,14 @@ COPY release-source/5.0.2/frontend/event-center.js /app/frontend/assets/event-ce
 COPY release-source/5.0.2/frontend/event-center.css /app/frontend/assets/event-center.css
 COPY release-source/5.0.2/patch-backend.mjs /tmp/patch-backend.mjs
 COPY release-source/5.0.2/patch-frontend.mjs /tmp/patch-frontend.mjs
-RUN node /tmp/patch-backend.mjs /app && node /tmp/patch-frontend.mjs /app && \
+COPY release-source/5.0.2/task2/log-scan.mjs /app/internal/log-scan.mjs
+COPY release-source/5.0.2/task2/traffic-selection.mjs /app/internal/traffic-selection.mjs
+COPY release-source/5.0.2/task2/manager-duration.mjs /app/frontend/assets/manager-duration-source.mjs
+COPY release-source/5.0.2/task2/ui-polish.css /app/frontend/assets/task2-ui-polish.css
+COPY release-source/5.0.2/task2/patch-task2.mjs /tmp/patch-task2.mjs
+RUN node /tmp/patch-backend.mjs /app && node /tmp/patch-frontend.mjs /app && node /tmp/patch-task2.mjs /app && \
     (find /app/internal /app/routes /app/migrations -type f \( -name '*.js' -o -name '*.mjs' \) -print0 | xargs -0 -n 1 node --check) && \
-    node --check /app/frontend/assets/index-DJfFx4nu.js && \
-    node --check /app/frontend/assets/index-W-QFtloY.js && \
-    rm /tmp/patch-backend.mjs /tmp/patch-frontend.mjs /app/frontend/assets/event-center-source.js
+    (find /app/frontend/assets -maxdepth 1 -type f -name '*.js' -print0 | xargs -0 -n 1 node --check) && \
+    rm /tmp/patch-task2.mjs /app/frontend/assets/manager-duration-source.mjs /tmp/patch-backend.mjs /tmp/patch-frontend.mjs /app/frontend/assets/event-center-source.js
 ENV NPM_BUILD_VERSION=5.0.2-dev NPM_BUILD_COMMIT=${NYXGUARD_SOURCE_REVISION} NPM_BUILD_DATE=2026-10-03
 LABEL org.opencontainers.image.version="5.0.2-dev" org.opencontainers.image.revision="${NYXGUARD_SOURCE_REVISION}"
