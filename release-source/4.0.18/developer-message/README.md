@@ -33,16 +33,9 @@ metadata with the source commit.
 ## Validation
 
 The image build runs source, approved-copy, accessibility, responsive-style,
-auth-route, support-action, and version assertions. After deployment:
-
-```sh
-docker exec nyxguard-manager node /app/dev-tests/developer-message.test.mjs --integration
-docker exec nyxguard-manager node /app/dev-tests/threat-activity-pagination.test.mjs --integration
-python3 release-source/4.0.18/developer-message/browser-acceptance.py
-```
-
-The acceptance fixture creates uniquely named temporary DEV users for browser
-acceptance and deletes only those exact fixture users afterward.
+auth-route, support-action, and version assertions. Run integration and browser
+acceptance against disposable installations, with authentication and output
+kept outside the public source tree.
 
 Normal dismissal lasts only for the current authenticated login session. The
 Developer Message is shown again on every new login until the user explicitly

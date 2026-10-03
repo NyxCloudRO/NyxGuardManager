@@ -29,7 +29,6 @@ COPY release-source/4.0.18/developer-message/frontend/developer-message.css /app
 COPY release-source/4.0.18/developer-message/patch-backend.mjs /tmp/developer-message/patch-backend.mjs
 COPY release-source/4.0.18/developer-message/patch-frontend.mjs /tmp/developer-message/patch-frontend.mjs
 COPY release-source/4.0.18/developer-message/developer-message.test.mjs /app/dev-tests/developer-message.test.mjs
-COPY release-source/4.0.18/developer-message/acceptance-fixture.mjs /app/dev-tests/developer-message-acceptance-fixture.mjs
 COPY docker/4.0.18/app/CHANGELOG_PUBLIC.md /app/CHANGELOG_PUBLIC.md
 
 RUN set -eu; \
