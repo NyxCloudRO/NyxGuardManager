@@ -1,6 +1,7 @@
-# build-dev.sh validates this immutable local prerequisite before building.
+# build-release.sh validates this immutable local prerequisite before building.
 FROM nyxguardmanager:5.0.1
 ARG NYXGUARD_SOURCE_REVISION
+COPY release-source/5.0.2/RELEASE-NOTES.md /app/CHANGELOG_PUBLIC.md
 COPY release-source/5.0.2/internal/ /app/internal/
 COPY release-source/5.0.2/routes/event-center.js /app/routes/event-center.js
 COPY release-source/5.0.2/migrations/ /app/migrations/
