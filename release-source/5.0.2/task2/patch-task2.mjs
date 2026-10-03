@@ -12,7 +12,7 @@ patch(route,'recent.sort((a, b) => b.ts - a.ts);','recent.sort(newestFirst);',2)
 const support='frontend/assets/professional-support.js';
 patch(support,'  "use strict";', '  "use strict";\n  '+fs.readFileSync(path.join(root,'frontend/assets/manager-duration-source.mjs'),'utf8').replace('export ',''));
 patch(support,'Number.isSafeInteger(manager.uptimeSeconds) ? Math.floor(manager.uptimeSeconds / 60) + " minutes" : "Unavailable"','managerProcessDuration(manager.uptimeSeconds)',2);
-patch('frontend/index.html','</head>','<link rel="stylesheet" href="/assets/task2-ui-polish.css?v=5.0.2-dev">\n</head>');
+patch('frontend/index.html','</head>','<link rel="stylesheet" href="/assets/task2-ui-polish.css?v=5.0.2">\n</head>');
 const summary='frontend/assets/getNyxGuardAttacksSummary-C48hTUOS.js';
 patch(summary,'m(a=15,t=50,n=0)','m(a=15,t=50,n=0,signal)');
 patch(summary,'params:{minutes:a,limit:t,offset:n}})','params:{minutes:a,limit:t,offset:n}},{signal})');

@@ -23,7 +23,7 @@ export default function EventCenter() {
   const content = loading ? h('p',{role:'status'},'Loading events…') : data ? h(React.Fragment,null,
     data.total ? h(React.Fragment,null,table,pagination) : h('p',{'data-testid':'event-empty'},'No events match the selected filters.')) : null;
   return h(AppPage,{framed:true},h('section',{className:'_card_1gz5u_1 nyx-event-center'},
-    h('header',null,h('div',{className:'_headerRow_1gz5u_12'},h('h2',{className:'_title_1gz5u_20'},'Event Center'),h('span',{className:'_versionTag_1gz5u_25'},'Version 5.0.2-dev')),h('p',{className:'_subtitle_1gz5u_34'},'Administrative and operational audit history')),summaries,
+    h('header',null,h('div',{className:'_headerRow_1gz5u_12'},h('h2',{className:'_title_1gz5u_20'},'Event Center'),h('span',{className:'_versionTag_1gz5u_25'},'Version 5.0.2')),h('p',{className:'_subtitle_1gz5u_34'},'Administrative and operational audit history')),summaries,
     h('section',{className:'_panel_1gz5u_56 event-filter-panel','aria-label':'Filters and actions'},
     h('div',{className:'event-filters'},
       h('label',null,'Category',h('select',{'aria-label':'Category',value:scope.category,onChange:change('category')},...Object.entries(labels).map(([id,label])=>h('option',{key:id,value:id},label)))),

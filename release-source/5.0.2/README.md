@@ -1,12 +1,17 @@
-# 5.0.2 development: audit integrity and security lifecycle
+# NyxGuard Manager 5.0.2 release source
 
-This overlay builds a DEV candidate on the immutable 5.0.1 image validated
-by `build-dev.sh`. The inherited application remains an external image
+This overlay builds the official release on the immutable public 5.0.1 image
+validated by `build-release.sh`. The inherited application remains an external image
 prerequisite. New Event Center code is authored JavaScript; its build step
 replaces the asserted inherited route module. Backend and other inherited
 frontend changes use source-controlled patches with match-count assertions.
-No generated output needs to be edited manually. The public release pointer
-is unchanged. This directory does not publish images or releases.
+No generated output needs to be edited manually. The build script requires a clean, versioned checkout and records its exact
+source revision. It builds locally; registry publication is a separate step.
+
+To build, pull `nyxmael/nyxguardmanager:5.0.1`, tag that validated image locally
+as `nyxguardmanager:5.0.1`, and run `release-source/5.0.2/build-release.sh`.
+The script rejects a different base image or architecture. The VPN Agent
+remains on the unchanged public 5.0.1 image.
 
 ## Architecture and ownership
 

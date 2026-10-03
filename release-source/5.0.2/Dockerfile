@@ -18,5 +18,5 @@ RUN node /tmp/patch-backend.mjs /app && node /tmp/patch-frontend.mjs /app && nod
     (find /app/internal /app/routes /app/migrations -type f \( -name '*.js' -o -name '*.mjs' \) -print0 | xargs -0 -n 1 node --check) && \
     (find /app/frontend/assets -maxdepth 1 -type f -name '*.js' -print0 | xargs -0 -n 1 node --check) && \
     rm /tmp/patch-task3.mjs /tmp/patch-task2.mjs /app/frontend/assets/manager-duration-source.mjs /tmp/patch-backend.mjs /tmp/patch-frontend.mjs /app/frontend/assets/event-center-source.js
-ENV NPM_BUILD_VERSION=5.0.2-dev NPM_BUILD_COMMIT=${NYXGUARD_SOURCE_REVISION} NPM_BUILD_DATE=2026-10-03
-LABEL org.opencontainers.image.version="5.0.2-dev" org.opencontainers.image.revision="${NYXGUARD_SOURCE_REVISION}"
+ENV NPM_BUILD_VERSION=5.0.2 NPM_BUILD_COMMIT=${NYXGUARD_SOURCE_REVISION} NPM_BUILD_DATE=2026-10-03
+LABEL org.opencontainers.image.version="5.0.2" org.opencontainers.image.revision="${NYXGUARD_SOURCE_REVISION}"

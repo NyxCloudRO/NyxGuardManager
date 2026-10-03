@@ -22,7 +22,7 @@ this directory from GitHub at runtime.
 | `5.0.0/update-manager` | `5.0.0/Dockerfile` | In-app updater, major handover, and recovery workers inside the Manager image. |
 | `5.0.0/tests` and `5.0.0/professional-support/*.test.mjs` | Automated verification | Source and build behavior tests; not customer runtime files. |
 | `5.0.1` | `5.0.1/Dockerfile` via `5.0.1/build-release.sh` | Guarded 5.0.1 Manager image with same-major update recovery, diagnostics, support, VPN UI, and layout fixes. The matching VPN Agent tag reuses the unchanged 5.0.0 Agent image. |
-| `5.0.2` | `5.0.2/Dockerfile` via `5.0.2/build-dev.sh` | DEV-only audit integrity, legacy threat-history recovery, and automatic security-state lifecycle overlay. Requires the validated 5.0.1 image. |
+| `5.0.2` | `5.0.2/Dockerfile` via `5.0.2/build-release.sh` | Audit integrity, legacy threat-history recovery, security-state lifecycle, responsive presentation, and traffic-selection performance. Requires the validated public 5.0.1 image. |
 
 The 5.0.0 Dockerfile layers on the validated local
 `nyxguardmanager:4.0.18-clean-rc` image (`sha256:c45403bf3ed25c31b59c49e32e09ac55ddcf7bb1f7311705562ca1b32712e75a`).
