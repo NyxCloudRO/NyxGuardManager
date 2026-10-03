@@ -2,7 +2,7 @@
 
 This overlay preserves the accepted Task 1 source and migration 43. It uses the existing page shells, controls and table structure.
 
-The desktop sidebar uses 32px navigation rows, 26px below 820px viewport height, and 24px below 740px, with corresponding footer spacing. It keeps every entry and control and does not hide overflow. The existing desktop breakpoint is 768px wide. Acceptance covers all requested sizes and an additional 1280×680 viewport. There is no documented minimum height; a 640px probe remains below the fit range, so this change does not claim support there. Mobile keeps its existing navigation behavior.
+The desktop sidebar retains 14px labels and every control. Task 3 corrects the accepted over-compaction: at heights of 880px and above rows grow with CSS `clamp(35px, calc(5vh - 10px), 44px)`, with larger icons and comfortable footer spacing. Rows use 32px below that range, then 30px at 820px, 28px at 780px, 26px at 740px and 24px at 700px. This preserves the supported 1280×680 fit while using normal desktop space. The existing desktop breakpoint is 768px wide; mobile keeps its existing navigation behavior. No support is claimed below the measured desktop height range. The authenticated browser gate records row/icon/font density separately from scroll geometry and can capture screenshots outside source.
 
 Proxy Hosts retains all columns and visible row details, reducing cell padding and avatar dead space. Traffic Rules styles are scoped to its page, including a 12px Save/Cancel gap. Amber PARTIAL styling applies only to WAF badges. The duration formatter reads Manager process uptime; Dashboard system and oldest-container uptime readers remain unchanged.
 
