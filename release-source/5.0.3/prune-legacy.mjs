@@ -109,5 +109,18 @@ for(const [binding,file,url]of [['redirectionHostsRoutes','redirection_hosts','r
  fs.unlinkSync(path.join(root,'routes/nginx',file+'.js'));manifest.removedFiles.push('routes/nginx/'+file+'.js');
 }
 fs.writeFileSync(path.join(root,'routes/main.js'),backend);
+const swaggerPath=path.join(root,'schema/swagger.json');
+const swagger=JSON.parse(fs.readFileSync(swaggerPath,'utf8'));
+for(const type of ['redirection-hosts','dead-hosts','streams']){
+ const prefix='/nginx/'+type;
+ const keys=Object.keys(swagger.paths).filter(key=>key===prefix||key.startsWith(prefix+'/'));
+ if(keys.length!==4)throw Error('Unexpected legacy API schema paths: '+type);
+ for(const key of keys)delete swagger.paths[key];
+ const directory=path.join(root,'schema/paths/nginx',type);
+ const entries=fs.readdirSync(directory,{recursive:true}).filter(name=>fs.statSync(path.join(directory,name)).isFile());
+ for(const entry of entries)manifest.removedFiles.push('schema/paths/nginx/'+type+'/'+entry);
+ fs.rmSync(directory,{recursive:true});
+}
+fs.writeFileSync(swaggerPath,JSON.stringify(swagger,null,2)+'\n');
 fs.writeFileSync(path.join(root,'nyxguard-legacy-removal.json'),JSON.stringify(manifest,null,2)+'\n');
 console.log(JSON.stringify({removedFiles:manifest.removedFiles.length,removedBindings:removed.size,removedCssSelectors:manifest.removedCssSelectors.length}));
