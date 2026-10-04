@@ -131,12 +131,70 @@ require_install_files() {
 }
 
 read_current_image_ref() {
-  awk '
-    $1 == "image:" && $2 ~ /nyxguardmanager:/ {
-      print $2
-      exit
-    }
-  ' "${INSTALL_DIR}/docker-compose.yml"
+  # Built-in handovers replace containers by immutable image ID; host Compose
+  # and .version can legitimately retain the old tag. Neither is runtime truth.
+  local config containers matches container image evidence project id version configured
+  config="$(docker compose --env-file "$INSTALL_DIR/.env" -f "$INSTALL_DIR/docker-compose.yml" config --format json)" || return 1
+  project="$(jq -er '.name | select(length > 0)' <<<"$config")" || return 1
+  configured="$(jq -er '.services["nyxguard-manager"].image' <<<"$config")" || return 1
+  case "$configured" in "$IMAGE_REPO":*|"$IMAGE_REPO"@sha256:*) ;;
+    *) echo "ERROR: Compose Manager image is outside the configured repository." >&2; return 1 ;;
+  esac
+  containers="$(docker ps -aq --filter label=com.docker.compose.service=nyxguard-manager)" || return 1
+  [[ -n "$containers" ]] || { echo "ERROR: No installed Manager Compose container." >&2; return 1; }
+  # Docker emits hexadecimal IDs only. Include stopped containers so an
+  # interrupted handover/rollback cannot masquerade as an unambiguous runtime.
+  local -a ids
+  mapfile -t ids <<<"$containers"
+  matches="$(docker inspect "${ids[@]}" | jq --arg file "$INSTALL_DIR/docker-compose.yml" --arg project "$project" '
+    [.[] | select((.Config.Labels["com.docker.compose.project.config_files"] // "" | split(",") | .[0]) == $file
+      or .Config.Labels["com.docker.compose.project"] == $project)]')" || return 1
+  if [[ "$(jq length <<<"$matches")" != 1 ]]; then
+    echo "ERROR: Expected exactly one installed Manager Compose container; runtime identity is ambiguous." >&2
+    return 1
+  fi
+  container="$(jq -e --arg project "$project" --arg file "$INSTALL_DIR/docker-compose.yml" '.[0] |
+    select(.Config.Labels["com.docker.compose.project"] == $project and
+      (.Config.Labels["com.docker.compose.project.config_files"] | split(",") | .[0]) == $file and
+      .State.Running == true and .State.Health.Status == "healthy")' <<<"$matches")" || {
+    echo "ERROR: Installed Manager identity/health does not match Compose." >&2; return 1;
+  }
+  id="$(jq -r .Id <<<"$container")"
+  image="$(docker image inspect "$(jq -r .Image <<<"$container")")" || return 1
+  # Read only the application version and handover guards. Never print state,
+  # environment, or configuration that might include private installation data.
+  evidence="$(docker exec "$id" node -e '
+    const fs = require("fs");
+    const file = "/data/update-manager/state.json";
+    const state = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : {};
+    console.log(JSON.stringify({ version: require("/app/package.json").version,
+      runtimeVersion: process.env.NPM_BUILD_VERSION || null,
+      blocked: !!(state.manualRecoveryRequired || state.recoveryCleanupPending || state.activation ||
+        state.restartPending || ["activating", "restart_pending", "recovery_required"].includes(state.stage)) }));
+  ')" || return 1
+  version="$(jq -ern --argjson image "$image" --argjson container "$container" --argjson app "$evidence" --arg repo "$IMAGE_REPO" '
+    $image[0] as $i |
+    [$i.Config.Labels["org.opencontainers.image.version"],
+      ($i.Config.Env[]? | select(startswith("NPM_BUILD_VERSION=")) | ltrimstr("NPM_BUILD_VERSION="))] |
+    map(select(. != null and . != "") | ltrimstr("v")) | unique as $versions |
+    select($i.Id == $container.Image and $app.blocked == false) |
+    select(any($i.RepoTags[]?; startswith($repo + ":")) or any($i.RepoDigests[]?; startswith($repo + "@sha256:"))) |
+    select(($versions | length) == 1) | $versions[0] as $v |
+    select($v | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) |
+    select(($app.version | ltrimstr("v")) == $v and ($app.runtimeVersion == null or ($app.runtimeVersion | ltrimstr("v")) == $v)) |
+    # A tag supplied when creating the container must agree with its image.
+    select(($container.Config.Image == $i.Id) or
+      ($container.Config.Image == ($repo + ":" + $v)) or
+      ($container.Config.Image == ($repo + ":v" + $v)) or
+      any($i.RepoDigests[]?; . == $container.Config.Image)) | $v
+  ')" || {
+    echo "ERROR: Manager image/application versions disagree or handover requires review; installation was not changed." >&2
+    return 1
+  }
+  if [[ "$configured" != "$IMAGE_REPO:$version" ]]; then
+    echo "Verified Manager runtime is $version; Compose image reference is $configured (configuration retained)." >&2
+  fi
+  echo "$IMAGE_REPO:$version"
 }
 
 update_compose_image_ref() {
@@ -577,18 +635,11 @@ main() {
   need_root
   require_commands
   require_install_files
-  local lock_fd
-  exec {lock_fd}>"${INSTALL_DIR}/.update.lock"
-  if ! flock -n "$lock_fd"; then
-    echo "ERROR: Another host-side update is running." >&2
-    exit 1
-  fi
-
   local current_ref current_repo current_tag latest_tag target_tag target_ref vpn_agent_ref vpn_enabled vpn_requested
 
   current_ref="$(read_current_image_ref)"
   if [[ -z "${current_ref}" ]]; then
-    echo "ERROR: Could not detect current NyxGuard image in docker-compose.yml." >&2
+    echo "ERROR: Could not verify the installed NyxGuard Manager runtime." >&2
     exit 1
   fi
 
@@ -608,6 +659,29 @@ main() {
   fi
 
   target_ref="${IMAGE_REPO}:${target_tag}"
+  # A current-version check must precede pulls, TUN setup and all handover work.
+  if ! version_is_newer "$current_tag" "$target_tag" && [[ "${NYXGUARD_REPAIR_VPN:-0}" != 1 ]]; then
+    echo "Current Manager: $(normalize_semver "$current_tag")"
+    echo "Latest Manager : $(normalize_semver "$target_tag")"
+    if [[ "$(normalize_semver "$current_tag")" == "$(normalize_semver "$target_tag")" ]]; then
+      echo "NyxGuard Manager is already up to date."
+    else
+      echo "No newer release found."
+    fi
+    echo "No changes required."
+    return
+  fi
+  local lock_fd verified_ref
+  exec {lock_fd}>"${INSTALL_DIR}/.update.lock"
+  if ! flock -n "$lock_fd"; then
+    echo "ERROR: Another host-side update is running." >&2
+    exit 1
+  fi
+  verified_ref="$(read_current_image_ref)" || return 1
+  if [[ "$verified_ref" != "$current_ref" ]]; then
+    echo "ERROR: Manager runtime changed during discovery; rerun the updater." >&2
+    return 1
+  fi
   local route
   route="$(upgrade_route "$current_tag" "$target_tag")"
   if [[ "$route" == unsupported ]]; then

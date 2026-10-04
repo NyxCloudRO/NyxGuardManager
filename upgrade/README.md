@@ -20,3 +20,23 @@ remain available for operator review. The host updates Compose and `.version`
 only after a successful handover, and retains the previous image for recovery.
 
 The published Manager image, migration 43 and v5.0.2 release tag are unchanged.
+
+The public updater determines the installed Manager version from one healthy
+Compose Manager container associated with the installation's resolved project
+and configuration path. It inspects that container's immutable image ID and
+reconciles image version metadata with the application package and runtime build
+version. Conflicting versions, ambiguous containers, or unresolved handover and
+recovery state stop discovery before any upgrade work.
+
+Built-in updates replace the runtime through Docker's API and may leave the host
+Compose image tag and `.version` unchanged. These fields describe configuration,
+not the running version. A verified current runtime returns an already-current
+result without pulling images, creating a lock, rewriting configuration,
+preparing VPN/TUN, running migrations, or recreating services. Explicit
+`NYXGUARD_REPAIR_VPN=1` retains the existing opt-in repair behavior.
+
+Runtime reconciliation regression tests require Bash, jq and Python 3:
+
+```sh
+python3 release-source/5.0.1/tests/public-updater-runtime.test.py
+```
