@@ -52,3 +52,14 @@ html[data-app-theme] .nyx-app-frame .nyx-app-shell .nyx-dashboard-viewport .nyx-
  html[data-app-theme] .nyx-central-scroll-frame [class*="_card_rygrh_"]{min-width:0;width:100%;box-sizing:border-box}
  html[data-app-theme] .nyx-central-scroll-frame [class*="_formGrid_rygrh_"]{grid-template-columns:minmax(0,1fr)}
 }
+
+/* VPN detail cards can be narrow inside the desktop split workspace. Stack
+   the ping-test fields only when their existing minimum widths cannot fit. */
+html[data-app-theme] .nyx-central-scroll-frame .nyx-vpn-detail-card{container-type:inline-size}
+@container(max-width:466px){
+ html[data-app-theme] .nyx-central-scroll-frame .nyx-vpn-site-test{grid-template-columns:minmax(0,1fr)}
+}
+/* Keep existing Integrations action dimensions while wrapping the group. */
+@media(max-width:767px){
+ html[data-app-theme] .nyx-central-scroll-frame [class*="_integrationActions_1gz5u_"]{max-width:100%;min-width:0;flex-shrink:1}
+}
