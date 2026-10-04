@@ -34,8 +34,9 @@ Historical retrieval errors expose an explicit Retry action for the active query
 ## Administrative workspace refinements
 
 Traffic Rules uses moderate row and bottom spacing while retaining its columns,
-controls and enforcement behavior. Long mobile pages regain natural document
-scrolling. Rule editing follows the active desktop content viewport.
+controls and enforcement behavior. Mobile keeps the authenticated shell fitted
+to the viewport; its central frame owns page scrolling and expanded navigation
+has a bounded scroll region. Rule editing follows the active content viewport.
 
 Profile-picture uploads support an exact 5 MiB file boundary with a shared
 browser/API policy, scoped multipart protection and validated image containers.

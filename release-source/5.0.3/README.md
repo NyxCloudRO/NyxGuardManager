@@ -71,7 +71,7 @@ including their occurrence totals. It cannot alter Threat Activity.
 
 Desktop layout constrains the page frame to the existing dashboard shell. Title,
 summary, filters and pagination stay visible; the remaining history area scrolls
-with sticky headers. Mobile uses natural page flow plus bounded table overflow.
+with sticky headers. Mobile keeps a fixed authenticated shell, central content scrolling and bounded table overflow.
 Request generations prevent stale data/counts overwriting newer filters. An
 uncertain clear response hides stale counts until Retry verifies persistence.
 
@@ -107,7 +107,7 @@ Browser/performance acceptance artifacts and session state stay outside git.
 The common frame, shell, dashboard viewport and route wrapper have named layout
 primitives. Desktop ordinary long pages scroll in the dashboard viewport. Event
 Center retains its accepted table-region ownership; Diagnostics/License retain
-one existing page scroller. Mobile uses natural document flow. Existing code
+one existing page scroller. Mobile keeps the authenticated shell fitted to the viewport. Existing code
 editors and data tables retain justified local overflow. Shared action styles
 adjust adjacent groups only; button sizing, order and operations are preserved.
 
@@ -178,9 +178,10 @@ remains a permanent gate; Task 2 makes no updater changes or publication.
 Traffic Rules retains its columns, controls, filtering and table overflow. Row
 padding is reduced moderately from 10px to 6px; card bottom padding is 12px.
 Edit scrolls the existing builder into the active content viewport on desktop
-and into the document on mobile. No rule enforcement or pagination changes.
-Authenticated mobile pages use real document scrolling; inherited html/body
-overflow locks no longer prevent wheel/touch scrolling of long pages.
+and inside the central frame on mobile. No rule enforcement or pagination changes.
+Authenticated mobile pages keep the shell fitted to the viewport, with wheel,
+touch and keyboard scrolling inside the central content frame. Expanded mobile
+navigation has its own bounded scroll region.
 
 Profile-picture uploads support PNG, JPEG/JPG and WebP up to exactly **5 MiB
 (5,242,880 bytes)**. `internal/avatar-policy.mjs` is the authoritative limit,
