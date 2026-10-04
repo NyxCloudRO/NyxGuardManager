@@ -259,10 +259,12 @@ DB_MYSQL_PASSWORD=CHANGE_ME_STRONG_PASSWORD
 MYSQL_ROOT_PASSWORD=CHANGE_ME_STRONG_ROOT_PASSWORD
 ENV
 
-printf 'DOCKER_SOCK_GID=%s\n' "$(stat -c %g /var/run/docker.sock)" >> .env
+nyx_socket_gid="$(stat -c %g /var/run/docker.sock)"
+sed -i "s/^PGID=.*/PGID=${nyx_socket_gid}/" .env
+printf 'DOCKER_SOCK_GID=%s\n' "$nyx_socket_gid" >> .env
 sudo install -d -m 0700 /var/lib/nyxguard-licensing
 sudo sh -c 'test ! -e /var/lib/nyxguard-licensing/vault.key && test ! -L /var/lib/nyxguard-licensing/vault.key && umask 077 && set -C && head -c 32 /dev/urandom > /var/lib/nyxguard-licensing/vault.key'
-sudo chown 1000:1000 /var/lib/nyxguard-licensing/vault.key
+sudo chown "1000:${nyx_socket_gid}" /var/lib/nyxguard-licensing /var/lib/nyxguard-licensing/vault.key
 sudo chmod 0600 /var/lib/nyxguard-licensing/vault.key
 
 docker compose --env-file .env up -d
