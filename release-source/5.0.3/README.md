@@ -223,3 +223,7 @@ Run the mandatory live geometry regression with Playwright installed:
 `NYX_DEV_URL=https://your-dev-manager NYX_BROWSER_STATE=/private/state.json NYX_ACCEPTANCE_DIR=/private/evidence python3 release-source/5.0.3/tests/browser-shell.py`.
 It rejects a full-width scrolling shell even when `window.scrollY` is zero,
 and captures every route for mandatory visual review of scrollbar placement.
+
+Legacy Redirection/404/Streams lists use their existing direct card/dashboard as
+the scroll frame with shared responsive bounds. The authenticated error page
+retains its narrower existing container. No DOM content is reparented.

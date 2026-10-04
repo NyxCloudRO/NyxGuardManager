@@ -6,8 +6,8 @@
     const main = document.querySelector('.nyx-dashboard-viewport');
     if (!main) return;
     const support = main.querySelector(':scope > .nyx-support-page');
-    const bounded = main.querySelector('.nyx-route-content .container-xl');
-    const legacy = !support && !bounded ? main.querySelector('.nyx-route-content > .card') : null;
+    const bounded = main.querySelector('.nyx-route-content .container-xl,.nyx-route-content .container-tight');
+    const legacy = !support && !bounded ? main.querySelector('.nyx-route-content > .card,.nyx-route-content > .nyx-dashboard') : null;
     const frame = support || bounded || legacy;
     if (legacy) legacy.classList.add('nyx-legacy-central-frame');
     if (!frame) return;
