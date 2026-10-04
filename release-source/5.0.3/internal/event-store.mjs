@@ -40,12 +40,7 @@ export async function listEvents(k, input = {}) {
   for (const row of counts) counters[row.category] = Number(row.occurrences);
   const total = counts.reduce((n,r)=>n+Number(r.count),0);
   const occurrences = Object.values(counters).reduce((a,b)=>a+b,0);
-  // Apply every scope predicate before the offset. The derived page scans narrow
-  // IDs first, then fetches only returned payloads in one Aria read statement.
-  const page = scopedQuery(k, scope).select('id').orderBy('created_on','desc').orderBy('id','desc').limit(limit).offset(offset);
-  const rows = await k('audit_log').join(page.as('selected_page'),'selected_page.id','audit_log.id')
-    .select('audit_log.*', k.raw('UNIX_TIMESTAMP(audit_log.created_on) * 1000 AS timestamp_ms'), k.raw('UNIX_TIMESTAMP(audit_log.last_seen) * 1000 AS last_seen_ms'))
-    .orderBy('audit_log.created_on','desc').orderBy('audit_log.id','desc');
+  const rows = await scopedQuery(k, scope).select('*', k.raw('UNIX_TIMESTAMP(created_on) * 1000 AS timestamp_ms'), k.raw('UNIX_TIMESTAMP(last_seen) * 1000 AS last_seen_ms')).orderBy('created_on','desc').orderBy('id','desc').limit(limit).offset(offset);
   const ids = [...new Set(rows.map(r=>r.user_id).filter(Boolean))];
   const actors = ids.length ? await k('user').select('id','name').whereIn('id',ids) : [];
   const names = new Map(actors.map(r=>[r.id,r.name]));

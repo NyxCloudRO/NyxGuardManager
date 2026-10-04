@@ -154,9 +154,11 @@ Schema 45 adds a covering traffic-summary index justified by real Aria plans.
 It covers the existing global time predicate/host grouping and aggregate counters,
 at an additional write/storage cost. No rollup tables or historical data migration
 are introduced. Audit exact-count indexing was investigated but not added because
-the measured benefit did not justify its write/storage cost. Event Center uses one
-statement to select scoped ordered page IDs and join their payloads; deep offset
-still scans index entries linearly while fetching only the returned payloads.
+the measured benefit did not justify its write/storage cost. Event Center retains
+the accepted scoped pagination query. A derived-ID join looked faster in an early
+SQL-only trial but regressed the actual API workload and was rejected. Deep offset
+and exact counts continue to scale with matching history; both remain documented
+follow-up costs rather than unproven performance claims.
 
 IP retrieval aggregates the full interval before its existing API result limit.
 The UI requests the existing 50k ceiling, retains its 100-row pagination, filters

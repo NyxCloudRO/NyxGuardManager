@@ -29,5 +29,4 @@ without trimming requested intervals; traffic-summary aggregation uses a measure
 MariaDB covering index. Historical recent-row pagination includes archived logs.
 IPs & Locations exposes the supported 180-day interval and the API's complete
 bounded dataset, with an explicit notice if the IP result ceiling is reached.
-Event Center deep pages fetch narrow selected IDs before audit payloads, preserving
-its accepted exact occurrence, filter, ordering and scoped-clear contracts.
+Historical retrieval errors expose an explicit Retry action for the active query.
