@@ -11,6 +11,7 @@ COPY release-source/5.0.3/patch-task2.mjs /tmp/patch-task2.mjs
 COPY release-source/5.0.3/patch.mjs /tmp/patch-503.mjs
 COPY release-source/5.0.3/CHANGELOG.md /app/CHANGELOG_PUBLIC.md
 RUN chmod -R a+rX /app/internal /app/migrations /app/frontend && node /tmp/patch-503.mjs /app && node /tmp/patch-task2.mjs /app && \
+    node --check /app/app.js && \
     (find /app/internal /app/routes /app/migrations /app/frontend/assets -type f \( -name '*.js' -o -name '*.mjs' \) -print0 | xargs -0 -n 1 node --check) && \
     rm /tmp/patch-task2.mjs /tmp/patch-503.mjs /app/frontend/assets/event-center-source.js
 ENV NPM_BUILD_VERSION=5.0.3-dev NPM_BUILD_COMMIT=${NYXGUARD_SOURCE_REVISION} NPM_BUILD_DATE=2026-10-04
