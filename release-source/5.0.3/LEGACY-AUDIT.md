@@ -25,7 +25,6 @@ removes build tools from the runtime image. It fails closed on unexpected route,
 import, binding or filename consumers. `nyxguard-legacy-removal.json` records the
 actual removed files, routes, exports and bindings inside the built image.
 
-The user's explicit audit decision permits removal of confirmed-unused surfaces
-while retaining shared/data dependencies. No table/column or historical migration
+Removal is limited to unused product surfaces while retaining shared/data dependencies. No table/column or historical migration
 is removed. Runtime nginx, certificates, Proxy Hosts, Applications and Access
 Lists retain their existing shared services and data semantics.

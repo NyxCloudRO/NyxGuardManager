@@ -5,7 +5,7 @@ after(async()=>{if(server)await new Promise(r=>server.close(r));await k.destroy(
 async function state(latest,error=null,stage='idle') {await fs.mkdir('/data/update-manager',{recursive:true});await fs.writeFile('/data/update-manager/state.json',JSON.stringify({currentVersion:'4.0.18',latestVersion:latest,lastCheckAt:new Date().toISOString(),lastCheckError:error,stage,updateAvailable:false}),{mode:0o600});}
 async function api(route){const r=await fetch(base+route,{headers:{Authorization:'Bearer '+token}});assert.equal(r.status,200);return r.json();}
 test('report cache follows fresh reconciled Update Manager state, not stale Compose/version or cached package values',async()=>{
- await state('5.0.2');let status=await api('/update-manager/status'),report=await api('/reports/hosts');assert.equal(status.current,'5.0.3-dev');assert.equal(status.updateAvailable,false);assert.equal(report.system.pendingUpdatesCount,0);
+ await state('5.0.2');let status=await api('/update-manager/status'),report=await api('/reports/hosts');assert.equal(status.current,'5.0.3');assert.equal(status.updateAvailable,false);assert.equal(report.system.pendingUpdatesCount,0);
  await state('5.0.4');status=await api('/update-manager/status');report=await api('/reports/hosts');assert.equal(status.updateAvailable,true);assert.equal(report.system.pendingUpdatesCount,1);
  await state('5.0.2');report=await api('/reports/hosts');assert.equal(report.system.pendingUpdatesCount,0);
 });

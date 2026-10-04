@@ -1,3 +1,5 @@
+# NyxGuard Manager 5.0.3
+
 ## [5.0.3] - 2026-10-04
 
 NyxGuard Manager 5.0.3 extends historical analytics, administrative audit intelligence, and the shared application workspace. The database advances to 45 migrations.

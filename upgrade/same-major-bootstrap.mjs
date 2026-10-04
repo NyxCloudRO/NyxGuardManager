@@ -57,18 +57,25 @@ export function selectTopology(containers, installDir) {
 
 async function checkedContainer(summary, expectedImage) {
 	const container = await api("GET", `/containers/${q(summary.Id)}/json`);
-	if (!container.State?.Running || container.State.Health?.Status !== "healthy" || container.Config?.Image !== expectedImage) {
+	if (!container.State?.Running || container.State.Health?.Status !== "healthy" || container.Image !== (await api("GET", `/images/${q(expectedImage)}/json`)).Id) {
 		throw new Error(`Expected one healthy running ${expectedImage} Compose service`);
 	}
 	return container;
 }
 
+export function supportedTransition(current, target) {
+	return (current === "5.0.1" && ["5.0.2", "5.0.3"].includes(target)) ||
+		(current === "5.0.2" && target === "5.0.3");
+}
+
 async function setup() {
-	if (process.env.CURRENT_VERSION !== "5.0.1" || process.env.TARGET_VERSION !== "5.0.2") {
+	const currentVersion = process.env.CURRENT_VERSION;
+	const targetVersion = process.env.TARGET_VERSION;
+	if (!supportedTransition(currentVersion, targetVersion)) {
 		throw new Error("Unsupported CLI handover transition");
 	}
-	const target = await api("GET", "/images/nyxmael%2Fnyxguardmanager%3A5.0.2/json");
-	if (target.Config?.Labels?.["org.opencontainers.image.version"] !== "5.0.2") throw new Error("Unexpected target Manager version");
+	const target = await api("GET", `/images/${q(`nyxmael/nyxguardmanager:${targetVersion}`)}/json`);
+	if (target.Config?.Labels?.["org.opencontainers.image.version"] !== targetVersion) throw new Error("Unexpected target Manager version");
 	image = target.Id;
 	const agent = await api("GET", "/images/nyxmael%2Fnyxguardmanager-vpn-agent%3A5.0.1/json").catch((error) => {
 		if (!String(error.message).endsWith(": 404")) throw error;
@@ -79,7 +86,7 @@ async function setup() {
 	const installDir = process.env.HOST_INSTALL_DIR;
 	if (!installDir?.startsWith("/") || installDir.includes("..")) throw new Error("Invalid installed Compose directory");
 	const topology = selectTopology(all, installDir);
-	oldManager = await checkedContainer(topology.manager, "nyxmael/nyxguardmanager:5.0.1");
+	oldManager = await checkedContainer(topology.manager, `nyxmael/nyxguardmanager:${currentVersion}`);
 	const database = await api("GET", `/containers/${q(topology.database.Id)}/json`);
 	if (!database.State?.Running) throw new Error("Installed database is not running");
 	const names = all.flatMap((item) => item.Names || []);
@@ -143,7 +150,7 @@ async function setup() {
 			`OLD_MANAGER_ID=${oldManager.Id}`, `OLD_MANAGER_NAME=${oldManagerName}`,
 			`NEW_MANAGER_ID=${newManagerId}`, `TARGET_IMAGE_ID=${image}`,
 			...(oldVpn ? [`OLD_VPN_ID=${oldVpn.Id}`, `OLD_VPN_NAME=${oldVpnName}`, `NEW_VPN_ID=${newVpnId}`] : []),
-			"CURRENT_VERSION=5.0.1", "TARGET_VERSION=5.0.2",
+			`CURRENT_VERSION=${currentVersion}`, `TARGET_VERSION=${targetVersion}`,
 		],
 		HostConfig: { Binds: ["/var/run/docker.sock:/var/run/docker.sock", `${dataSource}:/handover-data`], NetworkMode: "none" },
 	});
@@ -162,7 +169,7 @@ async function setup() {
 			});
 			console.log(logs);
 			if (state.State.ExitCode !== 0) throw new Error(`Handover failed (helper exit ${state.State.ExitCode}); inspect persistent recovery state before retrying`);
-			console.log("Upgrade complete. Now running: 5.0.2");
+			console.log(`Upgrade complete. Now running: ${targetVersion}`);
 			return;
 		}
 		await sleep(1000);

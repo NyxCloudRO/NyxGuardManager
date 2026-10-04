@@ -13,7 +13,7 @@ patch(main,'localStorage.setItem(rp,JSON.stringify([{token:t,expires:n}]))','loc
 patch(main,'localStorage.setItem(rp,JSON.stringify(a))','localStorage.setItem(rp,JSON.stringify(a)),window.NyxThemePreferences.changed()');
 patch(main,'localStorage.setItem(rp,JSON.stringify(t))','localStorage.setItem(rp,JSON.stringify(t)),window.NyxThemePreferences.changed()');
 patch(main,'clear(){localStorage.removeItem(rp)}','clear(){localStorage.removeItem(rp),window.NyxThemePreferences.changed()}');
-const html=path.join(root,'frontend/index.html');let h=fs.readFileSync(html,'utf8');const start=h.indexOf('\t\t<script>'),end=h.indexOf('</script>',start);if(start<0||end<0||!h.slice(start,end).includes('app_theme_ver'))throw Error('Legacy theme head missing');h=h.slice(0,start)+'\t\t<script src="/assets/theme-preferences.js?v=5.0.3-task2"></script>'+h.slice(end+9);h=h.replace('</head>','<link rel="stylesheet" href="/assets/application-shell.css?v=5.0.3-task2">\n<script defer src="/assets/application-shell.js?v=5.0.3-task2"></script>\n</head>');fs.writeFileSync(html,h);
+const html=path.join(root,'frontend/index.html');let h=fs.readFileSync(html,'utf8');const start=h.indexOf('\t\t<script>'),end=h.indexOf('</script>',start);if(start<0||end<0||!h.slice(start,end).includes('app_theme_ver'))throw Error('Legacy theme head missing');h=h.slice(0,start)+'\t\t<script src="/assets/theme-preferences.js?v=5.0.3"></script>'+h.slice(end+9);h=h.replace('</head>','<link rel="stylesheet" href="/assets/application-shell.css?v=5.0.3">\n<script defer src="/assets/application-shell.js?v=5.0.3"></script>\n</head>');fs.writeFileSync(html,h);
 patch('routes/nyxguard/attack-log.js','import {scanLogFile as scanAccessLog} from "../../internal/log-scan.mjs";','import {scanHistoricalLog as scanAccessLog,clearHistoricalLogCache} from "../../internal/historical-log-cache.mjs";');
 // Complete historical sources: memory/cache eviction must never trim the interval.
 patch('routes/nyxguard/attack-log.js','if (totalScanBytes >= MAX_TOTAL_SCAN_BYTES) break;','',2);
@@ -57,7 +57,7 @@ patch(users,'"Avatar too large (max 2MB)"','AVATAR_TOO_LARGE');
 patch('app.js','import fileUpload from "express-fileupload";','import avatarAwareUploads from "./internal/avatar-upload.mjs";');
 patch('app.js','app.use(fileUpload());','app.use(avatarAwareUploads());');
 fs.writeFileSync(path.join(root,'frontend/assets/avatar-policy.js'),'window.NyxAvatarPolicy=Object.freeze('+JSON.stringify(avatarPolicy.browserAvatarPolicy)+');\n');
-patch('frontend/index.html','</head>','<script src="/assets/avatar-policy.js?v=5.0.3-avatar5m"></script>\n</head>');
+patch('frontend/index.html','</head>','<script src="/assets/avatar-policy.js?v=5.0.3"></script>\n</head>');
 patch(main,'return $6(a.id,ne)','if(ne.size>window.NyxAvatarPolicy.maxBytes)throw new Error(window.NyxAvatarPolicy.tooLarge);if(!window.NyxAvatarPolicy.mimeTypes.includes(ne.type))throw new Error(window.NyxAvatarPolicy.formatsError);return $6(a.id,ne)');
 patch(main,'onChange:fe=>T(fe.target.files?.[0]??null),className:"form-control form-control-sm",style:{width:320}','onChange:fe=>T(fe.target.files?.[0]??null),className:"form-control form-control-sm",style:{width:320,maxWidth:"100%"}');
 let avatarMain=fs.readFileSync(path.join(root,main),'utf8');
@@ -83,6 +83,6 @@ patch('internal/report.js','let pendingUpdatesCache = { expiresAt: 0, value: nul
 const pendingFunction=pendingNyxguardFunctionSource();
 function pendingNyxguardFunctionSource(){const source=fs.readFileSync(path.join(root,'internal/pending-updates.mjs'),'utf8');if(!source.includes('export function pendingNyxguardUpdates(status)'))throw Error('Pending policy changed');return source.replace('export function','function');}
 fs.writeFileSync(path.join(root,'frontend/assets/pending-updates-policy.js'),pendingFunction+'\nwindow.NyxPendingUpdates=pendingNyxguardUpdates;\n');
-patch('frontend/index.html','</head>','<script src="/assets/pending-updates-policy.js?v=5.0.3-pending"></script>\n</head>');
+patch('frontend/index.html','</head>','<script src="/assets/pending-updates-policy.js?v=5.0.3"></script>\n</head>');
 patch('frontend/assets/index-CP-DF6LG.js','q=Ue(),de=','q=Ue(),pendingUpdateQuery=L({queryKey:["update-manager","status"],queryFn:()=>Ce({url:"/update-manager/status"}),refetchInterval:5e3}),pendingUpdateCount=pendingUpdateQuery.isError?null:window.NyxPendingUpdates(pendingUpdateQuery.data),de=');
 patch('frontend/assets/index-CP-DF6LG.js','children:q.isLoading?e.jsx("span",{className:s.miniPillMuted,children:"..."}):typeof o?.pendingUpdatesCount=="number"?o.pendingUpdatesCount.toLocaleString():"N/A"','children:pendingUpdateQuery.isLoading?e.jsx("span",{className:s.miniPillMuted,children:"..."}):typeof pendingUpdateCount=="number"?pendingUpdateCount.toLocaleString():"N/A"');

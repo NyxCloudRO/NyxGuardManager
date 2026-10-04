@@ -45,3 +45,10 @@ html[data-app-theme] [class*="_prefsPanel_"]{overflow:visible!important}
 /* Compatibility for an unframed older layout: keep its existing width and
    make content reachable without changing or modernizing that surface. */
 html[data-app-theme] .nyx-app-frame .nyx-app-shell .nyx-dashboard-viewport .nyx-route-content:not(:has(.nyx-central-scroll-frame)){overflow:auto!important;overscroll-behavior:contain}
+
+/* Web Controls' single-column mobile form must not inherit intrinsic grid
+   width from its editors. Preserve full desktop card/control dimensions. */
+@media(max-width:767px){
+ html[data-app-theme] .nyx-central-scroll-frame [class*="_card_rygrh_"]{min-width:0;width:100%;box-sizing:border-box}
+ html[data-app-theme] .nyx-central-scroll-frame [class*="_formGrid_rygrh_"]{grid-template-columns:minmax(0,1fr)}
+}

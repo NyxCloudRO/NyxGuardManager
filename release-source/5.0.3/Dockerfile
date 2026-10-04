@@ -20,5 +20,5 @@ RUN chmod -R a+rX /app/internal /app/migrations /app/frontend && node /tmp/patch
     (find /app/internal /app/routes /app/migrations /app/frontend/assets -type f \( -name '*.js' -o -name '*.mjs' \) -print0 | xargs -0 -n 1 node --check) && \
     rm -rf /tmp/nyxguard-tool-source /tmp/nyxguard-build-tools /tmp/prune-legacy.mjs && \
     rm /tmp/patch-task2.mjs /tmp/patch-503.mjs /app/frontend/assets/event-center-source.js
-ENV NPM_BUILD_VERSION=5.0.3-dev NPM_BUILD_COMMIT=${NYXGUARD_SOURCE_REVISION} NPM_BUILD_DATE=2026-10-04
-LABEL org.opencontainers.image.version="5.0.3-dev" org.opencontainers.image.revision="${NYXGUARD_SOURCE_REVISION}"
+ENV NPM_BUILD_VERSION=5.0.3 NPM_BUILD_COMMIT=${NYXGUARD_SOURCE_REVISION} NPM_BUILD_DATE=2026-10-04
+LABEL org.opencontainers.image.version="5.0.3" org.opencontainers.image.revision="${NYXGUARD_SOURCE_REVISION}"

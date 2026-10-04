@@ -17,14 +17,14 @@ test('Manager 5.0.2 explicitly retains published VPN Agent 5.0.1', () => {
  assert.match(script, /VPN_AGENT_REPO.*vpn_agent_tag_for_manager/);
 });
 test('future Manager tags never synthesize equally versioned Agent tags', () => {
- for(const tag of ['5.0.3','5.1.0','6.0.0']) {
+ for(const tag of ['5.0.4','5.1.0','6.0.0']) {
   const result = mapped(tag);
   assert.notEqual(result.status, 0);
   assert.equal(result.stdout.trim(), '');
  }
 });
 test('explicit previous release contracts are retained', () => {
- for(const [manager,agent] of [['5.0.1','5.0.1'],['5.0.0','5.0.0'],['v5.0.2','5.0.1']]) {
+ for(const [manager,agent] of [['5.0.1','5.0.1'],['5.0.0','5.0.0'],['v5.0.2','5.0.1'],['5.0.3','5.0.1']]) {
   const result = mapped(manager);assert.equal(result.status, 0);assert.equal(result.stdout.trim(),agent);
  }
 });

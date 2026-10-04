@@ -4,9 +4,9 @@
 
 ## Security and Reverse Proxy Platform
 
-NyxGuard Manager runs reverse proxy, certificate, access, traffic visibility, and security controls on your own Docker host. It manages HTTP, TCP, and UDP services, with per-host protection and operational tools in one interface.
+NyxGuard Manager runs reverse proxy, certificate, access, traffic visibility, and security controls on your own Docker host. It manages HTTP proxy services, with per-host protection and operational tools in one interface.
 
-**Current release: 5.0.2.** See [GitHub Releases](https://github.com/NyxCloudRO/NyxGuardManager/releases) for release notes and upgrade guidance.
+**Current release: 5.0.3.** See [GitHub Releases](https://github.com/NyxCloudRO/NyxGuardManager/releases) for release notes and upgrade guidance.
 
 The [release source map](release-source/README.md) explains the versioned
 build inputs and their relationship to the published images and updater.
@@ -19,9 +19,9 @@ build inputs and their relationship to the published images and updater.
 - Connect remote sites with the separately isolated WireGuard VPN agent.
 - Back up configuration and update an existing Docker installation in place.
 
-## What's new in 5.0.2
+## What's new in 5.0.3
 
-Version 5.0.2 separates administrative audit history from attack history, improves temporary security-rule cleanup, and makes traffic views faster and more responsive. It also improves sidebar density, compact Proxy Hosts and WAF PARTIAL presentation, loading and error states, and readable Manager process uptime. The supported upgrade from 5.0.1 applies migration 43; see the [release notes](release-source/5.0.2/RELEASE-NOTES.md).
+Version 5.0.3 extends complete-window historical analytics and occurrence-aware administrative audit history, unifies central-page scrolling, and preserves user-specific browser themes through reauthentication. Guarded updates reconcile actual runtime state and retain VPN Agent 5.0.1 compatibility. The supported upgrade from 5.0.2 applies migrations 44 and 45; see the [release notes](release-source/5.0.3/RELEASE-NOTES.md).
 
 ## Professional Support
 
@@ -139,7 +139,7 @@ By default the installer:
 
 Optional:
 - Use a different image/repo: `IMAGE_REPO=youruser/nyxguardmanager`
-- Install a specific version: `APP_TAG=5.0.2`
+- Install a specific version: `APP_TAG=5.0.3`
 
 ### Install Via Docker (Compose)
 
@@ -157,7 +157,7 @@ cat > docker-compose.yml <<'YAML'
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:5.0.2
+    image: nyxmael/nyxguardmanager:5.0.3
     restart: unless-stopped
     ports:
       - "80:80"
@@ -316,7 +316,7 @@ curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upd
 Optional environment variables:
 - Pull from a different repo: `IMAGE_REPO=youruser/nyxguardmanager`
 - Pull the VPN agent from a different repo: `VPN_AGENT_REPO=youruser/nyxguardmanager-vpn-agent`
-- Force a specific version: `FORCE_TAG=5.0.2`
+- Force a specific version: `FORCE_TAG=5.0.3`
 - Run non-interactively: `NYXGUARD_AUTO_YES=1`
 - Require VPN support instead of continuing without it when TUN is missing: `NYXGUARD_REQUIRE_VPN=1`
 
@@ -324,14 +324,14 @@ Example:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh \
-  | sudo env FORCE_TAG=5.0.2 NYXGUARD_AUTO_YES=1 bash
+  | sudo env FORCE_TAG=5.0.3 NYXGUARD_AUTO_YES=1 bash
 ```
 
 The 4.0.18 updater installs the isolated VPN agent Compose overlay and its reboot-persistent systemd override when the host provides `/dev/net/tun`. Running it again repairs a missing VPN agent even when the manager is already on 4.0.18. If TUN is unavailable, the updater keeps the manager and database running, removes any stale VPN startup override, and prints host-specific remediation instead of failing the whole deployment.
 
 The public command above detects a supported 4.0.18 installation and enters the 5.0.0 recovery and handover workflow automatically. It preserves MariaDB, the source installation's persistent volumes, Compose configuration, the rollback image, and the vault key before migration 42. When the source has a healthy VPN agent, it preserves VPN state, recreates the agent in the new Manager network namespace, and verifies both services. A public-installer Manager-only installation that never had VPN because TUN was unavailable upgrades as Manager-only; it does not create a VPN container or VPN state volume and verifies Manager health. If the new runtime fails, the handover restores the verified pre-upgrade database and volumes for that source topology. A manual rollback after migration requires the saved SQL database and source volumes before starting 4.0.18; do not start 4.0.18 against migration 42. Retain your own backup as well; a post-migration rollback loses writes made after the recovery point.
 
-The same command handles compatible 5.x updates, including 5.0.1 to 5.0.2. Use the public host command for the 4.0.18 to 5.0.0 transition. The immutable 4.0.18 browser updater can show "Restart required" after downloading an image before the major handover is ready; its "Restart now" action fails on Manager-only installations because it assumes a VPN container. The host command reconciles stale pending state from its own failed attempt when the old runtime and migration 41 can be verified. When recreating a Manager container with an existing VPN agent, recreate the agent with it so the agent joins the current Manager network namespace.
+The same command handles compatible 5.x updates, including 5.0.2 to 5.0.3. Use the public host command for the 4.0.18 to 5.0.0 transition. The immutable 4.0.18 browser updater can show "Restart required" after downloading an image before the major handover is ready; its "Restart now" action fails on Manager-only installations because it assumes a VPN container. The host command reconciles stale pending state from its own failed attempt when the old runtime and migration 41 can be verified. When recreating a Manager container with an existing VPN agent, recreate the agent with it so the agent joins the current Manager network namespace.
 
 ### Proxmox LXC and `/dev/net/tun`
 
@@ -352,11 +352,11 @@ Run the general updater again to install and persist the VPN agent. Regular VM a
 
 ### Update Via Docker Compose (Manual Installs)
 
-For a fresh manual install, use the 5.0.2 services and volumes from the repository's [`docker-compose.yml`](docker-compose.yml). Pulling only the manager image does not enable VPN Client because `NET_ADMIN` intentionally belongs only to the separate agent. For an existing supported 4.0.18 installation, use the public update command above. For other customized 4.x layouts, use the [operator runbook](release-source/5.0.0/RELEASE_DAY_RUNBOOK.md) with a verified recovery set.
+For a fresh manual install, use the 5.0.3 services and volumes from the repository's [`docker-compose.yml`](docker-compose.yml). Pulling only the manager image does not enable VPN Client because `NET_ADMIN` intentionally belongs only to the separate agent. For an existing supported 4.0.18 installation, use the public update command above. For other customized 4.x layouts, use the [operator runbook](release-source/5.0.0/RELEASE_DAY_RUNBOOK.md) with a verified recovery set.
 
 ```bash
 cd /opt/nyxguardmanager
-docker pull nyxmael/nyxguardmanager:5.0.2
+docker pull nyxmael/nyxguardmanager:5.0.3
 docker pull nyxmael/nyxguardmanager-vpn-agent:5.0.1
 docker compose --env-file .env pull
 docker compose --env-file .env up -d --remove-orphans
@@ -378,7 +378,7 @@ docker logs --tail=100 nyxguard-manager
 docker logs --tail=100 nyxguard-vpn-agent
 ```
 
-Expected containers for a VPN-capable 5.0.2 host are `nyxguard-manager`, `nyxguard-vpn-agent`, and `nyxguard-db`. Without host TUN access, `nyxguard-manager` and `nyxguard-db` remain healthy while VPN Client reports unavailable.
+Expected containers for a VPN-capable 5.0.3 host are `nyxguard-manager`, `nyxguard-vpn-agent`, and `nyxguard-db`. Without host TUN access, `nyxguard-manager` and `nyxguard-db` remain healthy while VPN Client reports unavailable.
 
 ## Start On Boot (systemd)
 

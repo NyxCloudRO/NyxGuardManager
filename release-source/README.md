@@ -38,3 +38,7 @@ assertions are part of the release build and must remain until a future
 release supplies a complete native frontend source and its own validated
 build path. New product work belongs in a separately versioned source area;
 the 5.0.0 source and tests remain available for maintenance and recovery.
+
+The `5.0.3` overlay builds with `5.0.3/build-release.sh` on the validated public
+5.0.2 image: audit intelligence, complete-window historical retrieval, shared
+application shell, and guarded update compatibility. VPN Agent remains 5.0.1.

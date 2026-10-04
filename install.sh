@@ -7,9 +7,18 @@ set -euo pipefail
 INSTALL_DIR="${INSTALL_DIR:-/opt/nyxguardmanager}"
 IMAGE_REPO="${IMAGE_REPO:-nyxmael/nyxguardmanager}"
 VPN_AGENT_REPO="${VPN_AGENT_REPO:-nyxmael/nyxguardmanager-vpn-agent}"
-APP_TAG="${APP_TAG:-}" # Optional override (example: 5.0.2). If empty, auto-detect latest.
+APP_TAG="${APP_TAG:-}" # Optional override (example: 5.0.3). If empty, auto-detect latest.
 NYXGUARD_PROMETHEUS_SCRAPER_IP="${NYXGUARD_PROMETHEUS_SCRAPER_IP:-}"
 REQUIRE_VPN="${NYXGUARD_REQUIRE_VPN:-0}" # Set to 1 to abort when /dev/net/tun is unavailable.
+
+vpn_agent_tag_for_manager() {
+  case "$(normalize_semver "$1")" in
+    5.0.3|5.0.2|5.0.1) echo 5.0.1 ;;
+    5.0.0) echo 5.0.0 ;;
+    4.0.14|4.0.15|4.0.16|4.0.17|4.0.18) normalize_semver "$1" ;;
+    *) echo "ERROR: No published VPN compatibility contract for Manager $1." >&2; return 1 ;;
+  esac
+}
 
 need_root() {
   if [[ "${EUID}" -ne 0 ]]; then
@@ -477,7 +486,7 @@ main() {
   fi
 
   image_ref="${IMAGE_REPO}:${selected_tag}"
-  vpn_agent_ref="${VPN_AGENT_REPO}:${selected_tag}"
+  vpn_agent_ref="${VPN_AGENT_REPO}:$(vpn_agent_tag_for_manager "$selected_tag")"
   vpn_enabled=0
   if is_semver "${selected_tag}" && version_at_least "${selected_tag}" "4.0.14"; then
     if prepare_tun_device; then

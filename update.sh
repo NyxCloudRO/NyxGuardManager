@@ -17,12 +17,12 @@ MANAGER_ONLY_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/m
 MANAGER_ONLY_SHA256="8a374930d5f421d5296886bc9b05141a79fafb6522d2bd8870b41d1cb476a470"
 
 SAME_MAJOR_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upgrade/same-major-bootstrap.mjs"
-SAME_MAJOR_SHA256="18a2e0930aba6706b85fb3544e1e747bcdf2fd94455f11f75f36799935d82745"
+SAME_MAJOR_SHA256="63030f424bc51ec363abfda0a7aab20a80a398d0ad0ac46a509a80ff3d9873fb"
 
 # Published release contracts; new Manager tags require an explicit Agent decision.
 vpn_agent_tag_for_manager() {
   case "$(normalize_semver "$1")" in
-    5.0.2|5.0.1) echo 5.0.1 ;;
+    5.0.3|5.0.2|5.0.1) echo 5.0.1 ;;
     5.0.0) echo 5.0.0 ;;
     4.0.14|4.0.15|4.0.16|4.0.17|4.0.18) normalize_semver "$1" ;;
     *) echo "ERROR: No published VPN compatibility contract for Manager $1." >&2; return 1 ;;
@@ -588,7 +588,7 @@ run_major_handover_500() (
   fi
 )
 
-run_same_major_handover_502() (
+run_same_major_handover() (
   local tmp bootstrap vpn_installed
   tmp="$(mktemp -d)"
   chmod 700 "$tmp"
@@ -619,7 +619,7 @@ run_same_major_handover_502() (
   docker run --rm --network none --user 0:0 --entrypoint node \
     --mount "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock" \
     --mount "type=bind,src=$bootstrap,dst=/tmp/same-major-bootstrap.mjs,readonly" \
-    -e CURRENT_VERSION=5.0.1 -e TARGET_VERSION=5.0.2 \
+    -e "CURRENT_VERSION=$current_tag" -e "TARGET_VERSION=$target_tag" \
     -e "HOST_INSTALL_DIR=$INSTALL_DIR" \
     "$target_ref" /tmp/same-major-bootstrap.mjs
   # The immutable helper has verified health and persistence before config changes.
@@ -700,13 +700,14 @@ main() {
     run_major_handover_500
     return
   fi
-  if [[ "$current_tag" == 5.0.1 && "$target_tag" == 5.0.2 ]]; then
+  if [[ "$current_tag" == 5.0.1 && ( "$target_tag" == 5.0.2 || "$target_tag" == 5.0.3 ) ]] ||
+     [[ "$current_tag" == 5.0.2 && "$target_tag" == 5.0.3 ]]; then
     if [[ "$IMAGE_REPO" != nyxmael/nyxguardmanager || "$VPN_AGENT_REPO" != nyxmael/nyxguardmanager-vpn-agent ]]; then
       echo "ERROR: Guarded handover requires the published compatible images." >&2
       exit 1
     fi
     confirm_update "$current_ref" "$target_ref" || exit 0
-    run_same_major_handover_502
+    run_same_major_handover
     return
   fi
   vpn_enabled=0
