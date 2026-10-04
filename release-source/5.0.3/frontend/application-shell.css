@@ -1,6 +1,8 @@
 /* Shared ownership: viewport frame -> dashboard viewport -> ordinary page.
    Event Center keeps its accepted table scroll; support already owns one page scroll. */
 @media(min-width:768px){
+ html[data-app-theme]:has(.nyx-app-shell),html[data-app-theme]:has(.nyx-app-shell)>body{height:100dvh!important;min-height:0!important;overflow:hidden!important}
+ html[data-app-theme]:has(.nyx-app-shell) #root{height:100%;min-height:0}
  html[data-app-theme] .nyx-app-frame:has(.nyx-app-shell){height:100dvh!important;min-height:0!important;grid-template-rows:auto minmax(0,1fr) auto!important;overflow:hidden!important}
  html[data-app-theme] .nyx-app-shell{height:100%!important;min-height:0!important;min-width:0}
  html[data-app-theme] .nyx-dashboard-viewport{min-height:0!important;min-width:0!important;overflow:auto!important;overscroll-behavior:contain;scrollbar-gutter:stable}
@@ -11,6 +13,9 @@
  html[data-app-theme] .nyx-dashboard-viewport.nyx-support-main-active>.nyx-support-page{height:100%;min-height:0;overflow:auto}
 }
 @media(max-width:767px){
+ html[data-app-theme]:has(.nyx-app-shell){height:auto!important;overflow:visible!important}
+ html[data-app-theme]:has(.nyx-app-shell)>body:not(.modal-open){height:auto!important;min-height:100dvh;overflow:visible!important}
+ html[data-app-theme]:has(.nyx-app-shell) #root{height:auto!important;min-height:100dvh;overflow:visible}
  html[data-app-theme] .nyx-app-frame:has(.nyx-app-shell){height:auto!important;min-height:100dvh!important;overflow:visible!important}
  html[data-app-theme] .nyx-app-shell{height:auto!important;overflow:visible!important;min-width:0}
  html[data-app-theme] .nyx-dashboard-viewport{height:auto!important;overflow:visible!important;min-width:0}
