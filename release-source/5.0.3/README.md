@@ -101,3 +101,72 @@ an isolated synthetic `task1_fixture` on `nyxguard-task1-db`. Initialize that
 fixture using the existing 5.0.2 integrity schema/test workflow and apply the
 5.0.3 migration. Never run those destructive fixture tests on a deployed database.
 Browser/performance acceptance artifacts and session state stay outside git.
+
+## Task 2: shared shell, preferences and historical retrieval
+
+The common frame, shell, dashboard viewport and route wrapper have named layout
+primitives. Desktop ordinary long pages scroll in the dashboard viewport. Event
+Center retains its accepted table-region ownership; Diagnostics/License retain
+one existing page scroller. Mobile uses natural document flow. Existing code
+editors and data tables retain justified local overflow. Shared action styles
+adjust adjacent groups only; button sizing, order and operations are preserved.
+
+| Surface | Classification | Scroll owner |
+|---|---|---|
+| Dashboard | Mixed metrics and datasets | Dashboard viewport; existing bounded recent table |
+| Live Traffic | Large dataset | Existing table viewport; dashboard fallback for controls |
+| IPs & Locations | Mixed data and provider/settings controls | Existing paginated table; dashboard for long controls |
+| Traffic Rules | Mixed editors and management tables | Dashboard and established list/table regions |
+| Applications | Management list | Dashboard viewport |
+| Threat Activity | Large dataset | Established paginated table; dashboard fallback |
+| Web Controls | Long form and policy editors | Dashboard; local code-editor overflow |
+| GlobalGate | Long form and telemetry | Dashboard viewport |
+| Proxy/Redirection/404 Hosts, Streams | Management tables and modal editors | Dashboard/table region; dialog body for long editors |
+| Access Lists, Certificates, Users | Management tables and modal editors | Dashboard/table region; dialog body |
+| Event Center | Large audit dataset | Accepted internal history table |
+| Settings tabs (Backup, Notifications, Integrations, SSO, Grafana, LAN, VPN) | Short or long forms | Dashboard viewport; local editor where appropriate |
+| Preferences | Small portal panel | Panel/dropdown overflow within viewport |
+| License; Support Overview/Diagnostics/Troubleshooting/Bundle | Mixed operations and observations | Existing support page scroller |
+| Login/setup/2FA, error/not-found, legacy route redirects | Short forms or routing aliases | Existing unauthenticated/mobile flow |
+
+There was no backend presentation-preference store: theme existed in React and a
+single global localStorage key. Two startup version checks reset it on each load.
+The existing browser preference mechanism now uses user-scoped theme keys,
+validated against supported themes. Session identity is read only to choose a
+presentation key; JWT decoding grants no permissions. Login/logout/impersonation
+and cross-tab changes notify the existing theme provider. Logged-out/invalid or
+missing preferences use the default. Preferences persist in that browser/origin,
+not across devices; no parallel backend preference database is introduced.
+Unattributed legacy global theme values are not copied between users.
+
+Large-window IP analytics uses access logs, not attack-event rows. Parsed file
+snapshots validate device/inode, size, modification and change timestamps before
+reuse. Concurrent scans share work; callers receive fresh event objects. Cache
+ceilings (250k events/file, 300k total, 32 files) bound retained snapshots and never
+truncate the scan. Eviction/restart causes a complete source rescan. Read errors
+remain errors. Clear logs invalidates snapshots; log disappearance/rotation,
+append/truncate/replace and compressed-file changes invalidate fingerprints.
+Existing result-cache TTLs remain the visible freshness contract (short queries
+about two seconds, long summaries up to sixty seconds). Available log retention
+still defines the historical source; no missing historical data is invented.
+
+Schema 45 adds a covering traffic-summary index justified by real Aria plans.
+It covers the existing global time predicate/host grouping and aggregate counters,
+at an additional write/storage cost. No rollup tables or historical data migration
+are introduced. Audit exact-count indexing was investigated but not added because
+the measured benefit did not justify its write/storage cost. Event Center uses one
+statement to select scoped ordered page IDs and join their payloads; deep offset
+still scans index entries linearly while fetching only the returned payloads.
+
+IP retrieval aggregates the full interval before its existing API result limit.
+The UI requests the existing 50k ceiling, retains its 100-row pagination, filters
+and JSON export, and reports an explicit top-IP notice if that ceiling is reached.
+Historical summaries include archived recent rows; realtime intervals/polling are
+preserved. Source cache optimizes parsing; it is not a persistent rollup or a
+substitute for authoritative MariaDB traffic-stat aggregates.
+
+Task 2 contracts run inside the candidate image with the source mounted. Its real
+DB suite, like other destructive fixture suites, refuses any database except
+`task1_fixture` on `nyxguard-task1-db`. Browser/performance/restart evidence and
+credentials belong outside public source. Release/runtime updater interoperability
+remains a permanent gate; Task 2 makes no updater changes or publication.
