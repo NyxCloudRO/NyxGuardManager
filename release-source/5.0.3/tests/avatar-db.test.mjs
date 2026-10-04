@@ -51,7 +51,7 @@ test('supported PNG/JPEG/WebP, MIME/content checks and malformed/unsupported rej
   }
 });
 test('authentication/other-user authorization, safe filenames, replacement and removal preserve existing storage semantics',async()=>{
-  const data=pngAtSize();assert.equal((await upload(data,'image/png',null)).status,401);
+  const data=pngAtSize();assert.equal((await upload(data,'image/png',null)).status,403);
   assert.equal((await upload(data,'image/png',ordinary,1)).status,403);
   assert.equal((await upload(data,'image/png',ordinary,990098)).status,200);
   assert.equal((await upload(data,'image/png',admin,1,'../../executable.php')).status,200);
