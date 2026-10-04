@@ -205,3 +205,10 @@ fixed on desktop and mobile; short content does not acquire an automatic scroll
 thumb. Floating Preferences selectors keep bounded list scrolling without the
 small parent panel clipping their options. The Dashboard English container-uptime
 label is shorter; its value, source and calculation are unchanged.
+
+Dashboard pending updates counts discovered NyxGuard Manager updates, using the
+same reconciled Update Manager status and shared UI/API count policy. The old
+container APT simulation and hour-long package-count cache are no longer the
+source. Failed, incomplete or recovery-ambiguous discovery is `N/A`, not a
+fabricated update. The current updater discovers Manager only; this counter does
+not include unrelated OS packages or invent an independent VPN Agent release.

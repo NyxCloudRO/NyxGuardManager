@@ -68,3 +68,21 @@ fs.writeFileSync(path.join(root,main),avatarMain);
 
 // Dashboard copy only; keep the status value and its existing data/calculation path.
 patch(main,'"nyxguard.docker-uptime":"Oldest monitored container uptime"','"nyxguard.docker-uptime":"Container uptime"');
+// Replace the old container OS-package estimate with reconciled NyxGuard discovery.
+patch('internal/report.js','import { getTrustedSelfIps } from "./trusted-ips.js";',
+ 'import { getTrustedSelfIps } from "./trusted-ips.js";\nimport updateManager from "./update-manager.js";\nimport {pendingNyxguardUpdates} from "./pending-updates.mjs";');
+let report=fs.readFileSync(path.join(root,'internal/report.js'),'utf8');
+const pendingStart=report.indexOf('const getPendingUpdatesCount = async () => {'),pendingEnd=report.indexOf('const getDockerContainerStartedAt = async',pendingStart);
+if(pendingStart<0||pendingEnd<pendingStart||!report.slice(pendingStart,pendingEnd).includes('apt-get -s upgrade'))throw Error('Pending-updates report prerequisite changed');
+report=report.slice(0,pendingStart)+'const getPendingUpdatesCount = async () => {\n try{return pendingNyxguardUpdates(await updateManager.getStatusForUser({}));}catch{return null;}\n};\nconst withCurrentPendingUpdates = async value => ({...value,system:{...value.system,pendingUpdatesCount:await getPendingUpdatesCount()}});\n\n'+report.slice(pendingEnd);
+report=report.replace('if (cached && cached.expiresAt > now) return cached.value;','if (cached && cached.expiresAt > now) return withCurrentPendingUpdates(cached.value);').replace('if (inflight) return inflight;','if (inflight) return withCurrentPendingUpdates(await inflight);');
+fs.writeFileSync(path.join(root,'internal/report.js'),report);
+patch('internal/report.js','const PENDING_UPDATES_CACHE_TTL_MS = Number.parseInt(process.env.NYXGUARD_PENDING_UPDATES_CACHE_TTL_MS ?? \"\", 10) || 3600000;\n','');
+patch('internal/report.js','const PENDING_UPDATES_TIMEOUT_MS = Number.parseInt(process.env.NYXGUARD_PENDING_UPDATES_TIMEOUT_MS ?? \"\", 10) || 1500;\n','');
+patch('internal/report.js','let pendingUpdatesCache = { expiresAt: 0, value: null, inflight: null };\n','');
+const pendingFunction=pendingNyxguardFunctionSource();
+function pendingNyxguardFunctionSource(){const source=fs.readFileSync(path.join(root,'internal/pending-updates.mjs'),'utf8');if(!source.includes('export function pendingNyxguardUpdates(status)'))throw Error('Pending policy changed');return source.replace('export function','function');}
+fs.writeFileSync(path.join(root,'frontend/assets/pending-updates-policy.js'),pendingFunction+'\nwindow.NyxPendingUpdates=pendingNyxguardUpdates;\n');
+patch('frontend/index.html','</head>','<script src="/assets/pending-updates-policy.js?v=5.0.3-pending"></script>\n</head>');
+patch('frontend/assets/index-CP-DF6LG.js','q=Ue(),de=','q=Ue(),pendingUpdateQuery=L({queryKey:["update-manager","status"],queryFn:()=>Ce({url:"/update-manager/status"}),refetchInterval:5e3}),pendingUpdateCount=pendingUpdateQuery.isError?null:window.NyxPendingUpdates(pendingUpdateQuery.data),de=');
+patch('frontend/assets/index-CP-DF6LG.js','children:q.isLoading?e.jsx("span",{className:s.miniPillMuted,children:"..."}):typeof o?.pendingUpdatesCount=="number"?o.pendingUpdatesCount.toLocaleString():"N/A"','children:pendingUpdateQuery.isLoading?e.jsx("span",{className:s.miniPillMuted,children:"..."}):typeof pendingUpdateCount=="number"?pendingUpdateCount.toLocaleString():"N/A"');

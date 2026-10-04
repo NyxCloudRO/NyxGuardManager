@@ -45,3 +45,6 @@ Existing profile editing, permissions and avatar replacement/removal are retaine
 The Dashboard container-uptime pill uses a shorter English label while retaining
 its existing calculation. Preferences selectors retain their own bounded scroll
 without clipping choices against the floating panel.
+
+Dashboard pending-update status follows reconciled Update Manager discovery,
+including truthful unknown/error states and current-runtime reconciliation.

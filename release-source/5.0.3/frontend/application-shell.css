@@ -34,3 +34,6 @@ html[data-app-theme] [data-task2-rules] [class*="_card_"]{padding-bottom:12px}
 
 /* Preferences is a small fixed portal; its selector owns the bounded list scroll. */
 html[data-app-theme] [class*="_prefsPanel_"]{overflow:visible!important}
+@media(min-width:1280px){
+ html[data-app-theme] .nyx-dashboard-viewport [role="group"][aria-label="NyxGuard live stats"]{position:relative;left:12px}
+}
