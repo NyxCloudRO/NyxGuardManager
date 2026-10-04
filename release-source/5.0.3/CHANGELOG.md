@@ -41,3 +41,7 @@ has a bounded scroll region. Rule editing follows the active content viewport.
 Profile-picture uploads support an exact 5 MiB file boundary with a shared
 browser/API policy, scoped multipart protection and validated image containers.
 Existing profile editing, permissions and avatar replacement/removal are retained.
+
+The Dashboard container-uptime pill uses a shorter English label while retaining
+its existing calculation. Preferences selectors retain their own bounded scroll
+without clipping choices against the floating panel.

@@ -198,3 +198,10 @@ This is container validation, not pixel decoding or image transformation. SVG,
 GIF and renamed non-images remain unsupported. Authorization and numeric
 server-generated storage filenames are preserved. Upload/replacement/removal
 persist immediately, as before; Cancel discards unrelated unsaved profile fields.
+
+The authenticated main scroll frame is inset 12 CSS pixels from the window edge
+so the route scrollbar is visibly part of the workspace. html/body/window stay
+fixed on desktop and mobile; short content does not acquire an automatic scroll
+thumb. Floating Preferences selectors keep bounded list scrolling without the
+small parent panel clipping their options. The Dashboard English container-uptime
+label is shorter; its value, source and calculation are unchanged.

@@ -4,7 +4,7 @@
  html[data-app-theme]:has(.nyx-app-shell) #root{height:100%;min-height:0}
  html[data-app-theme] .nyx-app-frame:has(.nyx-app-shell){height:100dvh!important;min-height:0!important;grid-template-rows:auto minmax(0,1fr) auto!important;overflow:hidden!important}
  html[data-app-theme] .nyx-app-shell{height:100%!important;min-height:0!important;min-width:0}
- html[data-app-theme] .nyx-dashboard-viewport{min-height:0!important;min-width:0!important;overflow:auto!important;overscroll-behavior:contain;scrollbar-gutter:stable}
+ html[data-app-theme] .nyx-dashboard-viewport{min-height:0!important;min-width:0!important;margin-inline-end:12px!important;overflow:auto!important;overscroll-behavior:contain;scrollbar-gutter:stable}
  html[data-app-theme] .nyx-route-content{min-height:100%;height:auto!important;min-width:0;overflow:visible!important;box-sizing:border-box}
 @media(min-width:768px){
  html[data-app-theme] .nyx-dashboard-viewport:has(.nyx-event-center){overflow:hidden!important;scrollbar-gutter:auto}
@@ -31,3 +31,6 @@ html[data-app-theme] :is([class*="_actions_"],[class*="_formActions_"],[class*="
 html[data-app-theme] [data-task2-rules] .table>tbody>tr>td{padding-block:6px!important}
 html[data-app-theme] [data-task2-rules] [class*="_rulesTable_"]{margin-bottom:0!important}
 html[data-app-theme] [data-task2-rules] [class*="_card_"]{padding-bottom:12px}
+
+/* Preferences is a small fixed portal; its selector owns the bounded list scroll. */
+html[data-app-theme] [class*="_prefsPanel_"]{overflow:visible!important}

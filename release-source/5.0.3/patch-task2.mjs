@@ -65,3 +65,6 @@ const hints=/"user\.avatar-hint":"([^"\n]+)"/g;
 if([...avatarMain.matchAll(hints)].length!==6)throw Error('Avatar hint locale prerequisite changed');
 avatarMain=avatarMain.replace(hints,(whole,text)=>{if(!/\b2(?=\s*(?:MB|Mo))/.test(text))throw Error('Avatar hint limit changed');return '"user.avatar-hint":'+JSON.stringify(text.replace(/\b2(?=\s*(?:MB|Mo))/,String(avatarPolicy.AVATAR_MAX_MIB)));});
 fs.writeFileSync(path.join(root,main),avatarMain);
+
+// Dashboard copy only; keep the status value and its existing data/calculation path.
+patch(main,'"nyxguard.docker-uptime":"Oldest monitored container uptime"','"nyxguard.docker-uptime":"Container uptime"');
