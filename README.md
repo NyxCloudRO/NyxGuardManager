@@ -13,7 +13,7 @@ build inputs and their relationship to the published images and updater.
 
 ## Highlights
 
-- Manage proxy hosts, streams, certificates, custom locations, access lists, and users.
+- Manage proxy hosts, certificates, custom locations, access lists, and users.
 - Apply WAF, bot, DDoS, SQL injection, and authentication protection policies per host.
 - Investigate attacks, traffic, IPs, locations, and operational events.
 - Connect remote sites with the separately isolated WireGuard VPN agent.

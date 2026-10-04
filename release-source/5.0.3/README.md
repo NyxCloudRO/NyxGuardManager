@@ -121,7 +121,7 @@ adjust adjacent groups only; button sizing, order and operations are preserved.
 | Threat Activity | Large dataset | Established paginated table; dashboard fallback |
 | Web Controls | Long form and policy editors | Dashboard; local code-editor overflow |
 | GlobalGate | Long form and telemetry | Dashboard viewport |
-| Proxy/Redirection/404 Hosts, Streams | Management tables and modal editors | Dashboard/table region; dialog body for long editors |
+| Proxy Hosts | Management tables and modal editors | Dashboard/table region; dialog body for long editors |
 | Access Lists, Certificates, Users | Management tables and modal editors | Dashboard/table region; dialog body |
 | Event Center | Large audit dataset | Accepted internal history table |
 | Settings tabs (Backup, Notifications, Integrations, SSO, Grafana, LAN, VPN) | Short or long forms | Dashboard viewport; local editor where appropriate |
@@ -225,6 +225,7 @@ It rejects a full-width scrolling shell even when `window.scrollY` is zero,
 and captures every route for mandatory visual review of scrollbar placement.
 
 Acceptance covers the current navigation/product workflows, including the
-Preferences, License and Support surfaces. Unused Redirection/404/Streams pages
-retain their existing geometry and routing through the generic compatibility
-scroll path; they do not define the current central-frame design.
+Preferences, License and Support surfaces. Unused Redirection/404/Streams pages and their aliases now use the existing
+not-found route. Their dedicated controllers and frontend clients/editors are
+removed at build time; shared certificate/host/report services, models, schema
+and historical migrations remain intact. See `LEGACY-AUDIT.md`.
