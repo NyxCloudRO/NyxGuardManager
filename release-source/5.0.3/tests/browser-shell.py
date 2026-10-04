@@ -18,7 +18,7 @@ with sync_playwright() as p:
         page=context.new_page(); page.goto(URL+'/',wait_until='domcontentloaded')
         for index,route in enumerate(ROUTES):
             page.evaluate("r=>{history.pushState(null,'',r);dispatchEvent(new PopStateEvent('popstate'));dispatchEvent(new HashChangeEvent('hashchange'))}",route)
-            page.locator('.nyx-central-scroll-frame').wait_for(); page.wait_for_timeout(1200)
+            page.locator('.nyx-central-scroll-frame:visible').first.wait_for(); page.wait_for_timeout(1200)
             if page.get_by_role('button',name='Continue',exact=True).count(): page.get_by_role('button',name='Continue',exact=True).click()
             before=page.evaluate(GEOMETRY); assert before, (route,'missing bounded route frame')
             assert before['mainOverflow']=='hidden' and before['mainTop']==0, (route,'full-width shell must not scroll')
