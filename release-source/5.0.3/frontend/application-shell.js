@@ -7,9 +7,7 @@
     if (!main) return;
     const support = main.querySelector(':scope > .nyx-support-page');
     const bounded = main.querySelector('.nyx-route-content .container-xl,.nyx-route-content .container-tight');
-    const legacy = !support && !bounded ? main.querySelector('.nyx-route-content > .card,.nyx-route-content > .nyx-dashboard') : null;
-    const frame = support || bounded || legacy;
-    if (legacy) legacy.classList.add('nyx-legacy-central-frame');
+    const frame = support || bounded;
     if (!frame) return;
     if (!frame.classList.contains('nyx-central-scroll-frame')) {
       frame.classList.add('nyx-central-scroll-frame');

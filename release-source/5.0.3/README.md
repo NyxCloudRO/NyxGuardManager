@@ -224,6 +224,7 @@ Run the mandatory live geometry regression with Playwright installed:
 It rejects a full-width scrolling shell even when `window.scrollY` is zero,
 and captures every route for mandatory visual review of scrollbar placement.
 
-Legacy Redirection/404/Streams lists use their existing direct card/dashboard as
-the scroll frame with shared responsive bounds. The authenticated error page
-retains its narrower existing container. No DOM content is reparented.
+Acceptance covers the current navigation/product workflows, including the
+Preferences, License and Support surfaces. Unused Redirection/404/Streams pages
+retain their existing geometry and routing through the generic compatibility
+scroll path; they do not define the current central-frame design.

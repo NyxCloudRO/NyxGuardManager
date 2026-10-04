@@ -42,11 +42,6 @@ html[data-app-theme] [class*="_prefsPanel_"]{overflow:visible!important}
  html[data-app-theme] .nyx-dashboard-viewport [role="group"][aria-label="NyxGuard live stats"]{position:relative;left:12px}
 }
 
-/* Legacy host lists have a direct card rather than the shared page container.
-   Give that existing card the same bounded shell geometry, preserving its
-   contents, padding, columns, controls and existing top margin. */
-html[data-app-theme] .nyx-app-frame .nyx-app-shell .nyx-dashboard-viewport .nyx-legacy-central-frame{width:100%;max-width:100%;margin-inline:auto!important;max-height:100%}
-@media(min-width:1200px){html[data-app-theme] .nyx-app-frame .nyx-app-shell .nyx-dashboard-viewport .nyx-legacy-central-frame{max-width:1140px}}
-@media(min-width:1400px){html[data-app-theme] .nyx-app-frame .nyx-app-shell .nyx-dashboard-viewport .nyx-legacy-central-frame{max-width:1320px}}
-
-html[data-app-theme] .nyx-app-frame .nyx-app-shell .nyx-dashboard-viewport .nyx-legacy-central-frame.mt-4{max-height:calc(100% - 24px)}
+/* Compatibility for an unframed older layout: keep its existing width and
+   make content reachable without changing or modernizing that surface. */
+html[data-app-theme] .nyx-app-frame .nyx-app-shell .nyx-dashboard-viewport .nyx-route-content:not(:has(.nyx-central-scroll-frame)){overflow:auto!important;overscroll-behavior:contain}
