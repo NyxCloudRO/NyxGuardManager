@@ -671,6 +671,12 @@ main() {
     echo "No changes required."
     return
   fi
+  # Preserve published artifacts while unsafe upgrade readiness/recovery is corrected.
+  if [[ "$(normalize_semver "$target_tag")" == 5.0.3 && "$(normalize_semver "$current_tag")" != 5.0.3 ]]; then
+    echo "ERROR: Upgrades to Manager 5.0.3 are temporarily paused for upgrade/recovery safety." >&2
+    echo "Keep the current installation running and wait for the corrective release. Installation was not changed." >&2
+    return 1
+  fi
   local lock_fd verified_ref
   exec {lock_fd}>"${INSTALL_DIR}/.update.lock"
   if ! flock -n "$lock_fd"; then

@@ -6,6 +6,8 @@
 
 NyxGuard Manager runs reverse proxy, certificate, access, traffic visibility, and security controls on your own Docker host. It manages HTTP proxy services, with per-host protection and operational tools in one interface.
 
+> **Upgrade safety notice:** Upgrades from earlier Manager versions to 5.0.3 are temporarily paused while a corrective release is validated. Keep your current installation running; do not use the built-in updater for this transition. The public host updater blocks it before changing the installation. Existing running 5.0.3 installations and fresh installations are unaffected.
+
 **Current release: 5.0.3.** See [GitHub Releases](https://github.com/NyxCloudRO/NyxGuardManager/releases) for release notes and upgrade guidance.
 
 The [release source map](release-source/README.md) explains the versioned
