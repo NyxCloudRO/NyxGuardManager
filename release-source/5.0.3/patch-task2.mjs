@@ -36,3 +36,9 @@ patch('frontend/assets/index-BqF3trRq.js','e.jsx("button",{type:"button",classNa
 // Exact totals for shorter windows too: byte tails cannot prove completeness in
 // bursts. Parsed snapshots keep repeat reads bounded without early aggregation limits.
 patch('routes/nyxguard/attack-log.js','const scanAll = minutes > 24 * 60;','const scanAll = true;',2);
+// Historical retrieval failures need an explicit recovery action. Retry the
+// active query only; its existing key/signal owns interval and stale responses.
+patch('frontend/assets/index-BqF3trRq.js','o.isError?e.jsx("div",{className:s.emptyState,children:e.jsx(n,{id:"nyxguard.ips.load-error"})})','o.isError?e.jsxs("div",{className:s.emptyState,children:[e.jsx(n,{id:"nyxguard.ips.load-error"}),e.jsx("button",{type:"button",className:s.window,onClick:()=>o.refetch(),children:"Retry"})]})');
+patch('frontend/assets/index-B_A1pRP7.js','d.isError?t.jsx("div",{className:s.placeholder,children:t.jsx(a,{id:"nyxguard.traffic.load-error"})})','d.isError?t.jsxs("div",{className:s.placeholder,children:[t.jsx(a,{id:"nyxguard.traffic.load-error"}),t.jsx("button",{type:"button",className:s.window,onClick:()=>d.refetch(),children:"Retry"})]})');
+patch('frontend/assets/index-CP-DF6LG.js','f.isError?e.jsx("div",{className:s.sparklinePlaceholder,children:a.formatMessage({id:"nyxguard.traffic-error"})})','f.isError?e.jsxs("div",{className:s.sparklinePlaceholder,children:[a.formatMessage({id:"nyxguard.traffic-error"}),e.jsx("button",{type:"button",className:s.ghostButton,onClick:()=>f.refetch(),children:"Retry"})]})');
+patch('frontend/assets/index-CP-DF6LG.js','$.isError?e.jsx("div",{className:s.emptyState,children:a.formatMessage({id:"nyxguard.section.ip-intelligence.error"})})','$.isError?e.jsxs("div",{className:s.emptyState,children:[a.formatMessage({id:"nyxguard.section.ip-intelligence.error"}),e.jsx("button",{type:"button",className:s.ghostButton,onClick:()=>$.refetch(),children:"Retry"})]})');
