@@ -172,3 +172,28 @@ DB suite, like other destructive fixture suites, refuses any database except
 `task1_fixture` on `nyxguard-task1-db`. Browser/performance/restart evidence and
 credentials belong outside public source. Release/runtime updater interoperability
 remains a permanent gate; Task 2 makes no updater changes or publication.
+
+### Traffic Rules and avatar upload follow-up
+
+Traffic Rules retains its columns, controls, filtering and table overflow. Row
+padding is reduced moderately from 10px to 6px; card bottom padding is 12px.
+Edit scrolls the existing builder into the active content viewport on desktop
+and into the document on mobile. No rule enforcement or pagination changes.
+Authenticated mobile pages use real document scrolling; inherited html/body
+overflow locks no longer prevent wheel/touch scrolling of long pages.
+
+Profile-picture uploads support PNG, JPEG/JPG and WebP up to exactly **5 MiB
+(5,242,880 bytes)**. `internal/avatar-policy.mjs` is the authoritative limit,
+MIME map and message source; the build generates the browser policy from it.
+The UI hint says `PNG/JPEG/WebP, max 5MB`. Frontend and API reject files larger
+than the byte boundary. Avatar multipart parsing alone has a bounded file-size
+threshold, with one guard byte to preserve Busboy's exact-boundary behavior.
+Ordinary upload and JSON request limits are unchanged. The inherited admin
+Nginx request-body allowance already exceeds 5 MiB and is not increased.
+
+The API validates MIME against image container content, including complete PNG
+chunk structure/CRCs, JPEG frame/scan markers and WebP RIFF/chunk structure.
+This is container validation, not pixel decoding or image transformation. SVG,
+GIF and renamed non-images remain unsupported. Authorization and numeric
+server-generated storage filenames are preserved. Upload/replacement/removal
+persist immediately, as before; Cancel discards unrelated unsaved profile fields.

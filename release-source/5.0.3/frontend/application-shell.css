@@ -32,3 +32,8 @@ html[data-app-theme] td.text-end>button+button{margin-inline-start:8px}
 html[data-app-theme] :is([class*="_actions_"],[class*="_formActions_"],[class*="_modalFooter_"],[class*="_footerActions_"],[class*="_buttonRow_"],[class*="_actionRow_"],[class*="_toolbarActions_"],[class*="_restartActions_"],[class*="_updateActions_"]):has(>button+button){display:flex;flex-wrap:wrap;align-items:center;gap:8px!important}
 html[data-app-theme] :is([class*="_actions_"],[class*="_formActions_"],[class*="_modalFooter_"],[class*="_footerActions_"],[class*="_buttonRow_"],[class*="_actionRow_"])>button{margin:0!important}
 .nyx-dashboard-viewport:focus-visible{outline:1px solid var(--app-primary);outline-offset:-1px}
+
+/* Traffic Rules: reduce cell whitespace, retain readable controls and columns. */
+html[data-app-theme] [data-task2-rules] .table>tbody>tr>td{padding-block:6px!important}
+html[data-app-theme] [data-task2-rules] [class*="_rulesTable_"]{margin-bottom:0!important}
+html[data-app-theme] [data-task2-rules] [class*="_card_"]{padding-bottom:12px}

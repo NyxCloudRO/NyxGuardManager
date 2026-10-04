@@ -1,4 +1,4 @@
-import fs from 'node:fs';import path from 'node:path';
+import fs from 'node:fs';import path from 'node:path';import {pathToFileURL} from 'node:url';
 const root=process.argv[2];function patch(file,from,to,count=1){const p=path.join(root,file),s=fs.readFileSync(p,'utf8');if(s.split(from).length-1!==count)throw Error('Task2 prerequisite mismatch: '+file+' '+from.slice(0,65));fs.writeFileSync(p,s.replaceAll(from,to));}
 const main='frontend/assets/index-CTHAIRmi-409dev-4012certfix4-threatpagination3.js';
 patch(main,'className:kt(t,Aoe.page)','className:kt(t,Aoe.page,"nyx-app-frame")');
@@ -42,3 +42,26 @@ patch('frontend/assets/index-BqF3trRq.js','o.isError?e.jsx("div",{className:s.em
 patch('frontend/assets/index-B_A1pRP7.js','d.isError?t.jsx("div",{className:s.placeholder,children:t.jsx(a,{id:"nyxguard.traffic.load-error"})})','d.isError?t.jsxs("div",{className:s.placeholder,children:[t.jsx(a,{id:"nyxguard.traffic.load-error"}),t.jsx("button",{type:"button",className:s.window,onClick:()=>d.refetch(),children:"Retry"})]})');
 patch('frontend/assets/index-CP-DF6LG.js','f.isError?e.jsx("div",{className:s.sparklinePlaceholder,children:a.formatMessage({id:"nyxguard.traffic-error"})})','f.isError?e.jsxs("div",{className:s.sparklinePlaceholder,children:[a.formatMessage({id:"nyxguard.traffic-error"}),e.jsx("button",{type:"button",className:s.ghostButton,onClick:()=>f.refetch(),children:"Retry"})]})');
 patch('frontend/assets/index-CP-DF6LG.js','$.isError?e.jsx("div",{className:s.emptyState,children:a.formatMessage({id:"nyxguard.section.ip-intelligence.error"})})','$.isError?e.jsxs("div",{className:s.emptyState,children:[a.formatMessage({id:"nyxguard.section.ip-intelligence.error"}),e.jsx("button",{type:"button",className:s.ghostButton,onClick:()=>$.refetch(),children:"Retry"})]})');
+// Preserve Edit's existing jump to the builder with the new scroll owner.
+patch('frontend/assets/index-DHuZiE1T-task2.js','window.scrollTo({top:0,behavior:"smooth"})','document.querySelector("[data-task2-rules]").scrollIntoView({block:"start",behavior:"smooth"})',2);
+
+const avatarPolicy=await import(pathToFileURL(path.join(root,'internal/avatar-policy.mjs')).href);
+const users='routes/users.js';
+patch(users,'import fs from "node:fs/promises";','import {AVATAR_MAX_BYTES,AVATAR_TOO_LARGE,AVATAR_MIME_TO_EXT,detectAvatarImageType as detectImageType} from "../internal/avatar-policy.mjs";\nimport fs from "node:fs/promises";');
+patch(users,'const AVATAR_MAX_BYTES = 2 * 1024 * 1024; // 2 MiB\nconst AVATAR_MIME_TO_EXT = {\n\t"image/png": "png",\n\t"image/jpeg": "jpg",\n\t"image/webp": "webp",\n};','');
+let userSource=fs.readFileSync(path.join(root,users),'utf8');
+const detectorStart=userSource.indexOf('/**\n * Verify that the file buffer'),detectorEnd=userSource.indexOf('/**\n * /api/users',detectorStart);
+if(detectorStart<0||detectorEnd<detectorStart||!userSource.slice(detectorStart,detectorEnd).includes('function detectImageType(buf)'))throw Error('Avatar detector prerequisite changed');
+userSource=userSource.slice(0,detectorStart)+userSource.slice(detectorEnd);fs.writeFileSync(path.join(root,users),userSource);
+patch(users,'"Avatar too large (max 2MB)"','AVATAR_TOO_LARGE');
+patch('app.js','import fileUpload from "express-fileupload";','import avatarAwareUploads from "./internal/avatar-upload.mjs";');
+patch('app.js','app.use(fileUpload());','app.use(avatarAwareUploads());');
+fs.writeFileSync(path.join(root,'frontend/assets/avatar-policy.js'),'window.NyxAvatarPolicy=Object.freeze('+JSON.stringify(avatarPolicy.browserAvatarPolicy)+');\n');
+patch('frontend/index.html','</head>','<script src="/assets/avatar-policy.js?v=5.0.3-avatar5m"></script>\n</head>');
+patch(main,'return $6(a.id,ne)','if(ne.size>window.NyxAvatarPolicy.maxBytes)throw new Error(window.NyxAvatarPolicy.tooLarge);if(!window.NyxAvatarPolicy.mimeTypes.includes(ne.type))throw new Error(window.NyxAvatarPolicy.formatsError);return $6(a.id,ne)');
+patch(main,'onChange:fe=>T(fe.target.files?.[0]??null),className:"form-control form-control-sm",style:{width:320}','onChange:fe=>T(fe.target.files?.[0]??null),className:"form-control form-control-sm",style:{width:320,maxWidth:"100%"}');
+let avatarMain=fs.readFileSync(path.join(root,main),'utf8');
+const hints=/"user\.avatar-hint":"([^"\n]+)"/g;
+if([...avatarMain.matchAll(hints)].length!==6)throw Error('Avatar hint locale prerequisite changed');
+avatarMain=avatarMain.replace(hints,(whole,text)=>{if(!/\b2\b/.test(text))throw Error('Avatar hint limit changed');return '"user.avatar-hint":'+JSON.stringify(text.replace(/\b2\b/,String(avatarPolicy.AVATAR_MAX_MIB)));});
+fs.writeFileSync(path.join(root,main),avatarMain);

@@ -30,3 +30,13 @@ MariaDB covering index. Historical recent-row pagination includes archived logs.
 IPs & Locations exposes the supported 180-day interval and the API's complete
 bounded dataset, with an explicit notice if the IP result ceiling is reached.
 Historical retrieval errors expose an explicit Retry action for the active query.
+
+## Administrative workspace refinements
+
+Traffic Rules uses moderate row and bottom spacing while retaining its columns,
+controls and enforcement behavior. Long mobile pages regain natural document
+scrolling. Rule editing follows the active desktop content viewport.
+
+Profile-picture uploads support an exact 5 MiB file boundary with a shared
+browser/API policy, scoped multipart protection and validated image containers.
+Existing profile editing, permissions and avatar replacement/removal are retained.
