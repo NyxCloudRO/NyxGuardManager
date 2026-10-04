@@ -4,14 +4,17 @@
  html[data-app-theme]:has(.nyx-app-shell) #root{height:100%;min-height:0}
  html[data-app-theme] .nyx-app-frame:has(.nyx-app-shell){height:100dvh!important;min-height:0!important;grid-template-rows:auto minmax(0,1fr) auto!important;overflow:hidden!important}
  html[data-app-theme] .nyx-app-shell{height:100%!important;min-height:0!important;min-width:0}
- html[data-app-theme] .nyx-dashboard-viewport{min-height:0!important;min-width:0!important;margin-inline-end:12px!important;overflow:auto!important;overscroll-behavior:contain;scrollbar-gutter:stable}
- html[data-app-theme] .nyx-route-content{min-height:100%;height:auto!important;min-width:0;overflow:visible!important;box-sizing:border-box}
+/* The full-width main is a stable bridge, never a scroll owner. The existing
+   bounded route container owns overflow; its Bootstrap width/centering/padding
+   remain authoritative. A short container keeps its natural height. */
+ html[data-app-theme] .nyx-dashboard-viewport{min-height:0!important;min-width:0!important;margin-inline-end:12px!important;overflow:hidden!important;scrollbar-gutter:auto}
+ html[data-app-theme] .nyx-app-shell .nyx-dashboard-viewport .nyx-route-content,
+ html[data-app-theme] .nyx-app-shell .nyx-dashboard-viewport .nyx-scroll-bridge{height:100%!important;min-height:0!important;min-width:0;overflow:hidden!important;box-sizing:border-box}
+ html[data-app-theme] .nyx-app-frame .nyx-app-shell .nyx-dashboard-viewport .nyx-central-scroll-frame{max-height:100%;min-height:0!important;overflow:auto!important;overscroll-behavior:contain;scrollbar-gutter:stable;box-sizing:border-box}
 @media(min-width:768px){
- html[data-app-theme] .nyx-dashboard-viewport:has(.nyx-event-center){overflow:hidden!important;scrollbar-gutter:auto}
- html[data-app-theme] .nyx-dashboard-viewport:has(.nyx-event-center)>.nyx-route-content{height:100%!important;min-height:0!important}
+ html[data-app-theme] .nyx-app-frame .nyx-app-shell .nyx-dashboard-viewport .nyx-central-scroll-frame:has(.nyx-event-center){height:100%!important;overflow:hidden!important;scrollbar-gutter:auto}
 }
- html[data-app-theme] .nyx-dashboard-viewport.nyx-support-main-active{overflow:hidden!important;scrollbar-gutter:auto}
- html[data-app-theme] .nyx-dashboard-viewport.nyx-support-main-active>.nyx-support-page{height:100%;min-height:0;overflow:auto}
+ html[data-app-theme] .nyx-dashboard-viewport.nyx-support-main-active>.nyx-support-page{height:100%;min-height:0;max-width:1440px;margin-inline:auto}
 @media(max-width:767px){
  html[data-app-theme] .nyx-app-shell>[class*="_sidebarWrap_"]{flex:0 0 auto;max-height:calc(100% - 80px);overflow:auto;overscroll-behavior:contain}
  html[data-app-theme] .nyx-dashboard-viewport{flex:1 1 0!important}
@@ -25,7 +28,7 @@ html[data-app-theme] td.text-end>button+button{margin-inline-start:8px}
 /* Existing form/toolbars use CSS modules; only adjacent action groups change. */
 html[data-app-theme] :is([class*="_actions_"],[class*="_formActions_"],[class*="_modalFooter_"],[class*="_footerActions_"],[class*="_buttonRow_"],[class*="_actionRow_"],[class*="_toolbarActions_"],[class*="_restartActions_"],[class*="_updateActions_"]):has(>button+button){display:flex;flex-wrap:wrap;align-items:center;gap:8px!important}
 html[data-app-theme] :is([class*="_actions_"],[class*="_formActions_"],[class*="_modalFooter_"],[class*="_footerActions_"],[class*="_buttonRow_"],[class*="_actionRow_"])>button{margin:0!important}
-.nyx-dashboard-viewport:focus-visible{outline:1px solid var(--app-primary);outline-offset:-1px}
+.nyx-central-scroll-frame:focus-visible{outline:1px solid var(--app-primary);outline-offset:-1px}
 
 /* Traffic Rules: reduce cell whitespace, retain readable controls and columns. */
 html[data-app-theme] [data-task2-rules] .table>tbody>tr>td{padding-block:6px!important}

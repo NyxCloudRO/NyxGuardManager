@@ -212,3 +212,14 @@ container APT simulation and hour-long package-count cache are no longer the
 source. Failed, incomplete or recovery-ambiguous discovery is `N/A`, not a
 fabricated update. The current updater discovers Manager only; this counter does
 not include unrelated OS packages or invent an independent VPN Agent release.
+
+The authenticated full-width shell does not scroll. The existing bounded
+`.container-xl` page frame owns vertical overflow; its width, centering and
+padding remain intact. Short frames retain their natural height. Event Center
+keeps its bounded table scroll on desktop. Support uses a centered bounded frame.
+Keyboard focus is available on each central frame.
+
+Run the mandatory live geometry regression with Playwright installed:
+`NYX_DEV_URL=https://your-dev-manager NYX_BROWSER_STATE=/private/state.json NYX_ACCEPTANCE_DIR=/private/evidence python3 release-source/5.0.3/tests/browser-shell.py`.
+It rejects a full-width scrolling shell even when `window.scrollY` is zero,
+and captures every route for mandatory visual review of scrollbar placement.

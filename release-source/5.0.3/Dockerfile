@@ -6,6 +6,7 @@ COPY release-source/5.0.3/migrations/ /app/migrations/
 COPY release-source/5.0.3/frontend/event-center.js /app/frontend/assets/event-center-source.js
 COPY release-source/5.0.3/frontend/event-center.css /app/frontend/assets/event-center.css
 COPY release-source/5.0.3/frontend/application-shell.css /app/frontend/assets/application-shell.css
+COPY release-source/5.0.3/frontend/application-shell.js /app/frontend/assets/application-shell.js
 COPY release-source/5.0.3/frontend/theme-preferences.js /app/frontend/assets/theme-preferences.js
 COPY release-source/5.0.3/patch-task2.mjs /tmp/patch-task2.mjs
 COPY release-source/5.0.3/patch.mjs /tmp/patch-503.mjs
