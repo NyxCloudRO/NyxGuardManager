@@ -7,11 +7,12 @@
 /* The full-width main is a stable bridge, never a scroll owner. The existing
    bounded route container owns overflow; its Bootstrap width/centering/padding
    remain authoritative. A short container keeps its natural height. */
- html[data-app-theme] .nyx-dashboard-viewport{min-height:0!important;min-width:0!important;margin-inline-end:12px!important;overflow:hidden!important;scrollbar-gutter:auto}
+ html[data-app-theme] .nyx-dashboard-viewport{height:100%!important;max-height:100%;min-height:0!important;min-width:0!important;margin-inline-end:12px!important;overflow:hidden!important;scrollbar-gutter:auto}
  html[data-app-theme] .nyx-app-shell .nyx-dashboard-viewport .nyx-route-content,
  html[data-app-theme] .nyx-app-shell .nyx-dashboard-viewport .nyx-scroll-bridge{height:100%!important;min-height:0!important;min-width:0;overflow:hidden!important;box-sizing:border-box}
  html[data-app-theme] .nyx-app-frame .nyx-app-shell .nyx-dashboard-viewport .nyx-central-scroll-frame{max-height:100%;min-height:0!important;overflow:auto!important;overscroll-behavior:contain;scrollbar-gutter:stable;box-sizing:border-box}
 @media(min-width:768px){
+ html[data-app-theme] .nyx-app-shell>[class*="_sidebarWrap_"]{height:100%!important;max-height:100%;min-height:0}
  html[data-app-theme] .nyx-app-frame .nyx-app-shell .nyx-dashboard-viewport .nyx-central-scroll-frame:has(.nyx-event-center){height:100%!important;overflow:hidden!important;scrollbar-gutter:auto}
 }
  html[data-app-theme] .nyx-dashboard-viewport.nyx-support-main-active>.nyx-support-page{height:100%;min-height:0;max-width:1440px;margin-inline:auto}
