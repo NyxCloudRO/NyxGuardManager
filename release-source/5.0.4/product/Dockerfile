@@ -1,6 +1,7 @@
 # Product overlay on the accepted corrective runtime image.
 ARG NYXGUARD_CORRECTIVE_BASE=nyxguardmanager:5.0.4-corrective-base
 FROM ${NYXGUARD_CORRECTIVE_BASE}
+COPY release-source/5.0.4/internal/update-handover.js /app/internal/update-handover.js
 COPY release-source/5.0.4/product/rule-state.mjs /app/internal/rule-state.mjs
 COPY release-source/5.0.4/product/frontend/AppPage.js /app/frontend/assets/AppPage-CHaZeb42.js
 COPY release-source/5.0.4/product/patch-product.mjs /tmp/patch-product.mjs

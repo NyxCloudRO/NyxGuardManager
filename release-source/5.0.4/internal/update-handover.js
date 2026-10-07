@@ -38,24 +38,39 @@ async function waitHealthy(id, timeoutMs = policy.handoverDeadlineMs) {
 
 async function normalizeReplacement() {
   const manager=await api('GET',`/containers/${env.NEW_MANAGER_ID}/json`);
+  // Keep Compose's real source-config identity. A changed target model is
+  // reconciled by normal Compose startup; do not invent a matching target hash.
+  const composeLabels=async (replacement,sourceId)=>{
+    const labels={...replacement.Config.Labels,'com.docker.compose.image':replacement.Image};
+    if(!labels['com.docker.compose.config-hash']) {
+      const source=await api('GET',`/containers/${sourceId}/json`);
+      for(const key of ['com.docker.compose.project','com.docker.compose.service','com.docker.compose.project.config_files'])
+        if(!labels[key]||labels[key]!==source.Config.Labels?.[key])throw new Error('Replacement Compose identity differs from source');
+      labels['com.docker.compose.config-hash']=source.Config.Labels?.['com.docker.compose.config-hash'];
+    }
+    if(!/^[a-f0-9]{64}$/.test(labels['com.docker.compose.config-hash']||''))throw new Error('Verified source Compose config identity missing');
+    return labels;
+  };
+  const managerLabels=await composeLabels(manager,env.OLD_MANAGER_ID);
   const wanted=dockerHealthcheck();
   const actual=manager.Config.Healthcheck||{};
-  if(Object.keys(wanted).every(key=>JSON.stringify(wanted[key])===JSON.stringify(actual[key])) && manager.Config.Labels?.['com.docker.compose.image']===manager.Image && !manager.Config.Labels?.['com.docker.compose.config-hash']) return;
+  if(Object.keys(wanted).every(key=>JSON.stringify(wanted[key])===JSON.stringify(actual[key])) && manager.Config.Labels?.['com.docker.compose.image']===manager.Image && manager.Config.Labels?.['com.docker.compose.config-hash']===managerLabels['com.docker.compose.config-hash']) return;
   if(manager.State.Running)throw new Error('Cannot normalize a running replacement');
   const beforeManager=env.NEW_MANAGER_ID,beforeVpn=env.NEW_VPN_ID;
   const vpn=beforeVpn?await api('GET',`/containers/${beforeVpn}/json`):null;
   if(vpn?.State.Running)throw new Error('Cannot normalize a running replacement VPN Agent');
+  const vpnLabels=vpn?await composeLabels(vpn,env.OLD_VPN_ID):null;
   if(vpn)await api('DELETE',`/containers/${beforeVpn}`);
   await api('DELETE',`/containers/${beforeManager}`);
   const replacement=await api('POST',`/containers/create?name=${encodeURIComponent(manager.Name.replace(/^\//,''))}`,{
     ...manager.Config,Hostname:manager.Config.Hostname===beforeManager.slice(0,12)?'':manager.Config.Hostname,
     Image:manager.Image,Healthcheck:wanted,HostConfig:manager.HostConfig,
-    Labels:{...Object.fromEntries(Object.entries(manager.Config.Labels||{}).filter(([key])=>key!=="com.docker.compose.config-hash")),"com.docker.compose.image":manager.Image},
+    Labels:managerLabels,
     NetworkingConfig:{EndpointsConfig:Object.fromEntries(Object.entries(manager.NetworkSettings.Networks).map(([name,network])=>[name,{Aliases:network.Aliases,IPAMConfig:network.IPAMConfig}]))},
   });
   env.NEW_MANAGER_ID=replacement.Id;
   if(vpn)env.NEW_VPN_ID=(await api('POST',`/containers/create?name=${encodeURIComponent(vpn.Name.replace(/^\//,''))}`,{
-    ...vpn.Config,Hostname:'',Image:vpn.Image,HostConfig:{...vpn.HostConfig,NetworkMode:`container:${replacement.Id}`},
+    ...vpn.Config,Labels:vpnLabels,Hostname:'',Image:vpn.Image,HostConfig:{...vpn.HostConfig,NetworkMode:`container:${replacement.Id}`},
   })).Id;
   const file='/handover-data/update-manager/state.json';
   let state;

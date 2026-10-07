@@ -114,7 +114,7 @@ async function setup() {
 	const oldManagerName = String(oldManager.Name).replace(/^\//, "");
 	const oldVpnName = oldVpn ? String(oldVpn.Name).replace(/^\//, "") : "";
 	const safeLabels = (labels = {}) => Object.fromEntries(Object.entries(labels).filter(([key]) =>
-		!["org.opencontainers.image.version", "org.opencontainers.image.revision", "org.opencontainers.image.created", "com.docker.compose.config-hash", "com.docker.compose.image"].includes(key)));
+		!["org.opencontainers.image.version", "org.opencontainers.image.revision", "org.opencontainers.image.created", "com.docker.compose.image"].includes(key)));
 	const managerConfig = {
 		Image: image,
 		Env: (oldManager.Config.Env || []).filter((entry) => !/^NPM_BUILD_(VERSION|COMMIT|DATE)=/.test(entry)),
