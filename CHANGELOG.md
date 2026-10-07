@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [5.0.4] - 2026-10-07
+
+Corrective upgrade/recovery release; schema 45 and VPN Agent 5.0.1 retained.
+License and Diagnostics & Support reuse the shared page shell. Expired crawler
+allowances expose effective state and require fresh verification for renewal.
+Ubuntu 26.04 LTS Manager operation is supported (tested on 26.04.1).
+See the [release notes](release-source/5.0.4/RELEASE-NOTES.md).
+
 ## [5.0.3] - 2026-10-04
 
 NyxGuard Manager 5.0.3 extends historical analytics, administrative audit intelligence, and the shared application workspace. The database advances to 45 migrations.

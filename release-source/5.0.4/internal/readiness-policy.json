@@ -1,0 +1,11 @@
+{
+  "format": "nyxguard-readiness-v1",
+  "intervalMs": 10000,
+  "timeoutMs": 5000,
+  "retries": 5,
+  "startPeriodMs": 60000,
+  "probeDeadlineMs": 4000,
+  "startupDeadlineMs": 120000,
+  "handoverDeadlineMs": 180000,
+  "command": ["CMD", "node", "/app/internal/readiness-probe.mjs"]
+}

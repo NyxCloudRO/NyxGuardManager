@@ -159,3 +159,9 @@ Common states:
 - **Agent unavailable**: confirm `/dev/net/tun`, rerun the general updater, and inspect `nyxguard-vpn-agent` logs. On LXC, configure TUN passthrough on the hypervisor first.
 
 Never include client private keys in screenshots, logs, support tickets, exported diagnostics, or public repositories.
+
+## Supported host systems
+
+See the current [supported operating systems](../README.md#requirements), including Ubuntu 26.04 LTS (tested on 26.04.1). VPN requires the host to expose TUN; a restricted LXC guest without that device remains Manager-only.
+
+For a manual restart, restart Manager and then its VPN Agent as a pair. The Agent must join the current Manager network namespace. Check availability through **Settings → VPN Client**, in addition to individual container health.

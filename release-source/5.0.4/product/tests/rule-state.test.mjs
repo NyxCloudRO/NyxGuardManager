@@ -1,0 +1,6 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {ruleState,assertRuleUpdate} from '../rule-state.mjs';
+const now=Date.parse('2026-10-07T10:00:00Z');const expired={enabled:1,rule_origin:'verified_crawler',expires_on:new Date(now-1)};
+test('expired verified allowance reports inactive even before maintenance deletes it',()=>{const s=ruleState(expired,now);assert.equal(s.enabled,false);assert.equal(s.configuredEnabled,true);assert.equal(s.expired,true);});
+test('checkbox cannot revive expired verification or make it permanent',()=>{for(const data of [{enabled:true},{expiresOn:null},{expiresInDays:1},{action:'allow'}])assert.throws(()=>assertRuleUpdate(expired,data,now),/fresh verification/);});
+test('fresh verification enables a renewed finite allowance',()=>{const fresh={...expired,expires_on:new Date(now+86400000)};assert.equal(ruleState(fresh,now).enabled,true);assert.doesNotThrow(()=>assertRuleUpdate(fresh,{enabled:false},now));});
+test('explicit manual disable is retained; manual expired rules require a fresh duration',()=>{assert.equal(ruleState({...expired,enabled:0,rule_origin:'manual'},now).enabled,false);assert.throws(()=>assertRuleUpdate({...expired,rule_origin:'manual'},{enabled:true},now));assert.doesNotThrow(()=>assertRuleUpdate({...expired,rule_origin:'manual'},{enabled:true,expiresInDays:1},now));});

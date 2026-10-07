@@ -4,7 +4,7 @@ import http from "node:http";
 import fs from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
-const api = (method, endpoint, body = null) => new Promise((resolve, reject) => {
+const legacyApi = (method, endpoint, body = null) => new Promise((resolve, reject) => {
 	const request = http.request({ socketPath: "/var/run/docker.sock", path: `/v1.41${endpoint}`, method,
 		headers: body ? { "Content-Type": "application/json" } : undefined }, (response) => {
 		let raw = "";
@@ -19,6 +19,10 @@ const api = (method, endpoint, body = null) => new Promise((resolve, reject) => 
 	if (body) request.write(JSON.stringify(body));
 	request.end();
 });
+const api = async (...args) => {
+  if(process.env.TARGET_VERSION==='5.0.4') return (await import('/app/internal/recovery-docker.mjs')).docker(...args);
+  return legacyApi(...args);
+};
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const q = encodeURIComponent;
 let image;
@@ -64,7 +68,8 @@ async function checkedContainer(summary, expectedImage) {
 }
 
 export function supportedTransition(current, target) {
-	return (current === "5.0.1" && ["5.0.2", "5.0.3"].includes(target)) ||
+	return (["5.0.1","5.0.2","5.0.3"].includes(current) && target === "5.0.4") ||
+		(current === "5.0.1" && ["5.0.2", "5.0.3"].includes(target)) ||
 		(current === "5.0.2" && target === "5.0.3");
 }
 
@@ -74,7 +79,7 @@ async function setup() {
 	if (!supportedTransition(currentVersion, targetVersion)) {
 		throw new Error("Unsupported CLI handover transition");
 	}
-	const target = await api("GET", `/images/${q(`nyxmael/nyxguardmanager:${targetVersion}`)}/json`);
+	const target = await api("GET", `/images/${q(process.env.TARGET_IMAGE_REF || `nyxmael/nyxguardmanager:${targetVersion}`)}/json`);
 	if (target.Config?.Labels?.["org.opencontainers.image.version"] !== targetVersion) throw new Error("Unexpected target Manager version");
 	image = target.Id;
 	const agent = await api("GET", "/images/nyxmael%2Fnyxguardmanager-vpn-agent%3A5.0.1/json").catch((error) => {
@@ -90,7 +95,10 @@ async function setup() {
 	const database = await api("GET", `/containers/${q(topology.database.Id)}/json`);
 	if (!database.State?.Running) throw new Error("Installed database is not running");
 	const names = all.flatMap((item) => item.Names || []);
-	if (names.some((name) => /^\/nyxguard-(update-handover|recovery-|manager-rollback-|vpn-agent-rollback-)/.test(name))) {
+	const activeHelpers = all.some(item=>(item.Names||[]).some(name=>/^\/nyxguard-update-handover/.test(name)) && item.State!=='exited');
+	// Stopped helpers remain evidence. A healthy canonical previous runtime and
+	// absence of rollback containers identify a completed, reconciled attempt.
+	if (activeHelpers || names.some((name) => /^\/nyxguard-(recovery-|manager-rollback-|vpn-agent-rollback-)/.test(name))) {
 		throw new Error("An existing handover or rollback container needs review before retrying");
 	}
 	if (topology.vpn) {
@@ -106,13 +114,13 @@ async function setup() {
 	const oldManagerName = String(oldManager.Name).replace(/^\//, "");
 	const oldVpnName = oldVpn ? String(oldVpn.Name).replace(/^\//, "") : "";
 	const safeLabels = (labels = {}) => Object.fromEntries(Object.entries(labels).filter(([key]) =>
-		!["org.opencontainers.image.version", "org.opencontainers.image.revision", "org.opencontainers.image.created"].includes(key)));
+		!["org.opencontainers.image.version", "org.opencontainers.image.revision", "org.opencontainers.image.created", "com.docker.compose.config-hash", "com.docker.compose.image"].includes(key)));
 	const managerConfig = {
 		Image: image,
 		Env: (oldManager.Config.Env || []).filter((entry) => !/^NPM_BUILD_(VERSION|COMMIT|DATE)=/.test(entry)),
 		Cmd: oldManager.Config.Cmd, Entrypoint: oldManager.Config.Entrypoint,
 		WorkingDir: oldManager.Config.WorkingDir, ExposedPorts: oldManager.Config.ExposedPorts,
-		Healthcheck: oldManager.Config.Healthcheck, Labels: safeLabels(oldManager.Config.Labels),
+		Healthcheck: targetVersion === "5.0.4" ? target.Config.Healthcheck : oldManager.Config.Healthcheck, Labels: {...safeLabels(oldManager.Config.Labels),"com.docker.compose.image":image},
 		HostConfig: {
 			Binds: oldManager.HostConfig.Binds, PortBindings: oldManager.HostConfig.PortBindings,
 			RestartPolicy: oldManager.HostConfig.RestartPolicy, NetworkMode: oldManager.HostConfig.NetworkMode,
@@ -125,7 +133,7 @@ async function setup() {
 		Image: vpnImage, Env: oldVpn.Config.Env, Cmd: oldVpn.Config.Cmd,
 		Entrypoint: oldVpn.Config.Entrypoint, WorkingDir: oldVpn.Config.WorkingDir,
 		ExposedPorts: oldVpn.Config.ExposedPorts, Healthcheck: oldVpn.Config.Healthcheck,
-		Labels: safeLabels(oldVpn.Config.Labels),
+		Labels: {...safeLabels(oldVpn.Config.Labels),"com.docker.compose.image":vpnImage},
 		HostConfig: {
 			Binds: oldVpn.HostConfig.Binds, RestartPolicy: oldVpn.HostConfig.RestartPolicy,
 			NetworkMode: `container:${oldManager.Id}`, ExtraHosts: oldVpn.HostConfig.ExtraHosts,
@@ -145,7 +153,7 @@ async function setup() {
 		newVpnId = (await api("POST", `/containers/create?name=${q(oldVpnName)}`, vpnConfig)).Id;
 	}
 	const helper = await api("POST", `/containers/create?name=${q(`nyxguard-update-handover-${token}`)}`, {
-		Image: image, Entrypoint: ["node", "/app/internal/update-handover.js"], Cmd: [],
+		Image: image, Entrypoint: ["node", "/app/internal/update-handover.js"], Cmd: [], Healthcheck:{Test:["NONE"]},
 		Env: [
 			`OLD_MANAGER_ID=${oldManager.Id}`, `OLD_MANAGER_NAME=${oldManagerName}`,
 			`NEW_MANAGER_ID=${newManagerId}`, `TARGET_IMAGE_ID=${image}`,
@@ -162,7 +170,7 @@ async function setup() {
 		const state = await api("GET", `/containers/${helper.Id}/json`);
 		if (!state.State.Running) {
 			const logs = await new Promise((resolve, reject) => {
-				const request = http.get({ socketPath: "/var/run/docker.sock", path: `/v1.41/containers/${helper.Id}/logs?stdout=1&stderr=1&tail=60` }, (response) => {
+				const request = http.get({ socketPath: "/var/run/docker.sock", path: `/containers/${helper.Id}/logs?stdout=1&stderr=1&tail=60` }, (response) => {
 					const chunks = []; response.on("data", (chunk) => chunks.push(chunk));
 					response.on("end", () => resolve(Buffer.concat(chunks).toString("utf8").replace(/[^\x09\x0A\x0D\x20-\x7E]/g, "")));
 				}); request.on("error", reject);

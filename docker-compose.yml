@@ -1,7 +1,7 @@
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:5.0.3
+    image: nyxmael/nyxguardmanager:5.0.4
     restart: unless-stopped
     ports:
       - "80:80"
@@ -24,12 +24,7 @@ services:
       NYXGUARD_VPN_AGENT_TOKEN_PATH: "/run/nyxguard-vpn-auth/token"
       # Persistent access-portal session. Chromium caps persistent cookies at 400 days.
       NYXGUARD_ACCESS_SESSION_TTL_SEC: "34560000"
-    healthcheck:
-      test: ["CMD", "curl", "-fs", "http://localhost:3000/"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
+    # Manager readiness is inherited from the accepted image.
     group_add:
       - "${DOCKER_SOCK_GID:?Set DOCKER_SOCK_GID to the numeric GID of /var/run/docker.sock}"
     volumes:

@@ -17,12 +17,12 @@ MANAGER_ONLY_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/m
 MANAGER_ONLY_SHA256="8a374930d5f421d5296886bc9b05141a79fafb6522d2bd8870b41d1cb476a470"
 
 SAME_MAJOR_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upgrade/same-major-bootstrap.mjs"
-SAME_MAJOR_SHA256="63030f424bc51ec363abfda0a7aab20a80a398d0ad0ac46a509a80ff3d9873fb"
+SAME_MAJOR_SHA256="dedc53929d74b6d97d50d57a888c25b69124f90eecb65e58150294253a680a4b"
 
 # Published release contracts; new Manager tags require an explicit Agent decision.
 vpn_agent_tag_for_manager() {
   case "$(normalize_semver "$1")" in
-    5.0.3|5.0.2|5.0.1) echo 5.0.1 ;;
+    5.0.4|5.0.3|5.0.2|5.0.1) echo 5.0.1 ;;
     5.0.0) echo 5.0.0 ;;
     4.0.14|4.0.15|4.0.16|4.0.17|4.0.18) normalize_semver "$1" ;;
     *) echo "ERROR: No published VPN compatibility contract for Manager $1." >&2; return 1 ;;
@@ -172,13 +172,14 @@ read_current_image_ref() {
       blocked: !!(state.manualRecoveryRequired || state.recoveryCleanupPending || state.activation ||
         state.restartPending || ["activating", "restart_pending", "recovery_required"].includes(state.stage)) }));
   ')" || return 1
-  version="$(jq -ern --argjson image "$image" --argjson container "$container" --argjson app "$evidence" --arg repo "$IMAGE_REPO" '
+  version="$(jq -ern --argjson image "$image" --argjson container "$container" --argjson app "$evidence" --arg repo "$IMAGE_REPO" --arg accepted "${NYXGUARD_ACCEPTED_IMAGE_ID:-}" '
     $image[0] as $i |
     [$i.Config.Labels["org.opencontainers.image.version"],
       ($i.Config.Env[]? | select(startswith("NPM_BUILD_VERSION=")) | ltrimstr("NPM_BUILD_VERSION="))] |
     map(select(. != null and . != "") | ltrimstr("v")) | unique as $versions |
     select($i.Id == $container.Image and $app.blocked == false) |
-    select(any($i.RepoTags[]?; startswith($repo + ":")) or any($i.RepoDigests[]?; startswith($repo + "@sha256:"))) |
+    select(any($i.RepoTags[]?; startswith($repo + ":")) or any($i.RepoDigests[]?; startswith($repo + "@sha256:")) or
+      ($accepted | test("^sha256:[a-f0-9]{64}$")) and $i.Id == $accepted) |
     select(($versions | length) == 1) | $versions[0] as $v |
     select($v | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) |
     select(($app.version | ltrimstr("v")) == $v and ($app.runtimeVersion == null or ($app.runtimeVersion | ltrimstr("v")) == $v)) |
@@ -610,8 +611,16 @@ run_same_major_handover() (
     while IFS= read -r files; do
       if [[ "${files%%,*}" == "$INSTALL_DIR/docker-compose.yml" ]]; then echo 1; fi
     done)"
-  echo "Pulling $target_ref..."
-  docker pull "$target_ref"
+  if [[ -n "${NYXGUARD_ACCEPTED_IMAGE_ID:-}" ]]; then
+    [[ "$target_tag" == 5.0.4 && "$NYXGUARD_ACCEPTED_IMAGE_ID" =~ ^sha256:[a-f0-9]{64}$ ]] || return 1
+    target_ref="${NYXGUARD_TARGET_IMAGE_REF:-$target_ref}"
+    [[ "$(docker image inspect -f '{{.Id}}' "$target_ref")" == "$NYXGUARD_ACCEPTED_IMAGE_ID" ]] || {
+      echo "ERROR: Prefetched artifact differs from the accepted image." >&2; return 1;
+    }
+  else
+    echo "Pulling $target_ref..."
+    docker pull "$target_ref"
+  fi
   if [[ -n "$vpn_installed" ]]; then
     echo "Pulling compatible $vpn_agent_ref..."
     docker pull "$vpn_agent_ref"
@@ -620,6 +629,7 @@ run_same_major_handover() (
     --mount "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock" \
     --mount "type=bind,src=$bootstrap,dst=/tmp/same-major-bootstrap.mjs,readonly" \
     -e "CURRENT_VERSION=$current_tag" -e "TARGET_VERSION=$target_tag" \
+    -e "TARGET_IMAGE_REF=$target_ref" \
     -e "HOST_INSTALL_DIR=$INSTALL_DIR" \
     "$target_ref" /tmp/same-major-bootstrap.mjs
   # The immutable helper has verified health and persistence before config changes.
@@ -706,7 +716,8 @@ main() {
     run_major_handover_500
     return
   fi
-  if [[ "$current_tag" == 5.0.1 && ( "$target_tag" == 5.0.2 || "$target_tag" == 5.0.3 ) ]] ||
+  if [[ ( "$current_tag" == 5.0.1 || "$current_tag" == 5.0.2 || "$current_tag" == 5.0.3 ) && "$target_tag" == 5.0.4 ]] ||
+     [[ "$current_tag" == 5.0.1 && ( "$target_tag" == 5.0.2 || "$target_tag" == 5.0.3 ) ]] ||
      [[ "$current_tag" == 5.0.2 && "$target_tag" == 5.0.3 ]]; then
     if [[ "$IMAGE_REPO" != nyxmael/nyxguardmanager || "$VPN_AGENT_REPO" != nyxmael/nyxguardmanager-vpn-agent ]]; then
       echo "ERROR: Guarded handover requires the published compatible images." >&2

@@ -1,165 +1,80 @@
-<p align="center">
-  <img src="assets/nyxguard-cover.png" alt="NyxGuard Manager" width="1000" />
-</p>
+<p align="center"><img src="assets/nyxguard-cover.png" alt="NyxGuard Manager" width="1000" /></p>
 
-## Security and Reverse Proxy Platform
+# NyxGuard Manager
 
-NyxGuard Manager runs reverse proxy, certificate, access, traffic visibility, and security controls on your own Docker host. It manages HTTP proxy services, with per-host protection and operational tools in one interface.
+[![Release 5.0.4](https://img.shields.io/badge/release-5.0.4-00c8e8)](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.4)
+[![Docker pulls](https://img.shields.io/docker/pulls/nyxmael/nyxguardmanager?color=00c8e8)](https://hub.docker.com/r/nyxmael/nyxguardmanager)
+[![License NMPLA](https://img.shields.io/badge/license-NMPLA-5279b8)](LICENSE.md)
 
-> **Upgrade safety notice:** Upgrades from earlier Manager versions to 5.0.3 are temporarily paused while a corrective release is validated. Keep your current installation running; do not use the built-in updater for this transition. The public host updater blocks it before changing the installation. Existing running 5.0.3 installations and fresh installations are unaffected.
+A self-hosted reverse proxy and application security platform. Manage certificates, protected applications, traffic, remote VPN sites, and operational diagnostics from one interface. Your configuration, certificates, and history stay on your infrastructure.
 
-**Current release: 5.0.3.** See [GitHub Releases](https://github.com/NyxCloudRO/NyxGuardManager/releases) for release notes and upgrade guidance.
+[Website](https://nyxcloud.ro/nyxguard/) · [Releases](https://github.com/NyxCloudRO/NyxGuardManager/releases) · [VPN guide](docs/vpn-client.md) · [Support](https://community.nyxcloud.ro/) · [License](LICENSE.md)
 
-The [release source map](release-source/README.md) explains the versioned
-build inputs and their relationship to the published images and updater.
+## Release
 
-## Highlights
+**Latest release: 5.0.4 — corrective and stability release.** Safer upgrades and recovery, consistent License and Support pages, accurate Traffic Rules expiration, and Ubuntu 26.04 LTS support.
 
-- Manage proxy hosts, certificates, custom locations, access lists, and users.
-- Apply WAF, bot, DDoS, SQL injection, and authentication protection policies per host.
-- Investigate attacks, traffic, IPs, locations, and operational events.
-- Connect remote sites with the separately isolated WireGuard VPN agent.
-- Back up configuration and update an existing Docker installation in place.
+5.0.4 retains the guarded upgrade/recovery baseline, aligns License and Diagnostics & Support with the shared page shell, and makes expired verified-crawler rules accurately reflect their effective state. Detailed changes belong in [5.0.4 release notes](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.4), not this guide. See the [source map](release-source/README.md) for build inputs.
 
-## What's new in 5.0.3
+## Capabilities
 
-Version 5.0.3 extends complete-window historical analytics and occurrence-aware administrative audit history, unifies central-page scrolling, and preserves user-specific browser themes through reauthentication. Guarded updates reconcile actual runtime state and retain VPN Agent 5.0.1 compatibility. The supported upgrade from 5.0.2 applies migrations 44 and 45; see the [release notes](release-source/5.0.3/RELEASE-NOTES.md).
+| Workspace | What it provides |
+| --- | --- |
+| Reverse proxy | HTTP/HTTPS Proxy Hosts, custom locations, Nginx configuration, access lists, users/roles, Let's Encrypt HTTP/DNS certificates and renewal |
+| Security | Per-host WAF, Bot Defence, DDoS Shield, SQL Shield and Auth Bypass; GlobalGate master controls; versioned Web Controls with activation/rollback; custom WAF rules |
+| Visibility | Live traffic and RX/TX, complete-window historical analytics, Threat Activity, IPs & Locations, GeoIP, administrative audit history and Event Center |
+| Traffic policies | IP/CIDR and country allow/deny rules with expiration; verified crawler allowances require fresh verification after expiry |
+| Remote access | Multi-site WireGuard profiles, independent interfaces/routes, handshakes, counters, ping checks, automatic reconnect and overlap protection |
+| Operations | Setup wizard, notifications (webhook/Slack/email), token-protected Prometheus metrics, SSO/OIDC mapping, LAN access with ARP discovery, backups and built-in updates |
+| Professional Support | License status, installation health, bounded host checks, guided troubleshooting and redacted support bundles with Support ID upload/readback |
 
-## Professional Support
+Professional Support is optional. Signed entitlements are verified locally and stored in an encrypted persistent vault. Licensing failure does not disable core proxy management or security controls. Support bundles select structured fields and redact sensitive values; they are not raw configuration/log archives.
 
-Professional Support unlocks the Diagnostics & Support workspace and the support bundle workflow. Licensing status is visible in the License page. Entitlements are verified locally from signed authority responses and stored in a persistent encrypted vault. Licensing failure does not disable core proxy management or security controls.
+## Requirements
 
-## Diagnostics & Support
+| Resource | Small installation | Recommended |
+| --- | --- | --- |
+| CPU | 2 vCPU | 4 vCPU |
+| Memory | 2 GB | 8 GB |
+| Storage | 40 GB | 60 GB SSD; more for high traffic or 60–180 day retention |
+| Network | Host access to Docker registries and certificate services | Inbound TCP 80/443 for public applications; administration on HTTPS 8443 |
 
-The workspace shows application, database, migration, OpenResty, and resource health. It groups recent problems and provides bounded checks for configured hosts, including DNS, routing, TCP, HTTP, and TLS observations. Support bundles select structured diagnostic fields and redact sensitive values; they are not raw configuration or log archives. Upload and readback use a Support ID.
+An observed clean Ubuntu 24 deployment used about 219 MiB RAM and 3.81 GiB disk while idle (Manager + DB); this is an observation, not a capacity guarantee. Usage depends on traffic, protected applications and retention.
 
-## Changelog
-<a href="CHANGELOG.md">
-  <img src="assets/view-changelog.svg" alt="View Changelog" height="48" />
-</a>
+| Operating system | Support |
+| --- | --- |
+| Ubuntu 22.x / 24.x / 25.x | Tested |
+| Ubuntu 26.04 LTS | Tested on 26.04.1 LTS; Manager/MariaDB, installer, systemd and reboot persistence |
+| Debian 12 / 13 | Tested |
+| Other distributions | Not fully tested; install Docker/Compose yourself before evaluating |
 
-## Support
-<a href="https://buymeacoffee.com/nyxmael" target="_blank" rel="noopener noreferrer">
-  <img src="assets/buy-me-a-coffee.svg" alt="Buy me a coffee" height="54" />
-</a>
+VPN needs host TUN access and a reachable WireGuard endpoint. A restricted LXC guest needs device permission from its hypervisor. Manager and MariaDB can operate without VPN.
 
-## What You Get
+## Quick install
 
-### Reverse Proxy Manager
-- Proxy Hosts (HTTP) (HTTPS)
-- Per-host SSL controls, access policies, advanced/custom Nginx controls, and custom locations
-- Let's Encrypt certificates (HTTP-01 and DNS providers), certificate management, and renew flows
-- Access Lists, Users/Roles, and full audit logging
-- Setup wizard, dashboard, and system settings panels for day-2 operations
-
-### NyxGuard Security Layer
-- Per-proxy toggles: WAF, Bot Defence, DDoS Shield, SQL Shield, Auth Bypass
-- Global toggles (GlobalGate): Bot Defence (master), DDoS Shield (master), SQL Shield (master), Auth Bypass (master)
-- Web Controls policy engine with versioning, activate/rollback, and effective-policy visibility
-- WAF custom rule management with live Nginx apply
-- Dashboard + Traffic: live service posture, active hosts, and RX/TX analytics
-- Attacks center: centralized stream and counters (SQLi / Bot / DDoS / AuthFail) with response actions
-- IPs & Locations: 15m / 1h / 1d / 7d windows, GeoIP attribution, and retention controls
-- Rules engine: allow/deny by IP/CIDR or Country (ISO), with optional expiries
-
-### Operations & Integrations
-- Event Center to review and clear operational, security, and change activity streams
-- Notification channels (Webhook, Slack, Email) with per-event selection and test-send
-- Integrations with token-based metrics endpoint for Prometheus/Grafana pipelines
-- Built-in Update Manager (check/download/apply workflow, changelog, What's New acknowledgements)
-- SSO (OIDC/Auth provider flow) and local-account mapping controls
-- LAN Access controls with ARP-assisted host discovery and IP/MAC rule management
-
-### Multi-site WireGuard VPN Client
-- Connect NyxGuard to multiple independent remote sites without exposing their applications publicly
-- Upload and validate standard WireGuard client profiles from the **VPN Client** tab beside **LAN Access** in Settings
-- Separate interface, routes, lifecycle controls, handshake, transfer counters, and ping test for every site
-- Prominent Connect VPN controls in both the selected-site workspace and every disconnected site card
-- Automatic reconnect after the first successful connection
-- Route and tunnel-address overlap protection so traffic cannot enter the wrong VPN
-- Local-network collision protection before a profile is stored or connected
-- Privileged networking isolated in the dedicated `nyxguard-vpn-agent` container
-- Setup, routing, firewall, and troubleshooting guidance is included in the deployment section below
-
-### GeoIP Country (Optional)
-NyxGuard can show the **country code** for each IP (RO/FR/GB/etc). For accurate results you need a local GeoIP database.
-
-Supported providers:
-- **MaxMind GeoLite2 Country** (`.mmdb`) (free)
-- **IP2Location Country** (`.mmdb`) (Lite/paid)
-
-Resolution order:
-1. Cloudflare header (`CF-IPCountry`) if you are behind Cloudflare
-2. MaxMind GeoLite2 (if installed)
-3. IP2Location (if installed)
-
-Option A (manual upload, MaxMind GeoLite2):
-1. Create a free MaxMind account.
-2. Enable GeoLite2 downloads (this creates a License Key).
-3. Download **GeoLite2 Country** (`.mmdb`).
-4. Upload in the UI: **NyxGuard -> IPs & Locations -> GeoIP DB** (select `MaxMind GeoLite2`) -> **Upload**.
-
-Option B (recommended, auto-update):
-1. In **NyxGuard -> IPs & Locations**, enter your MaxMind `AccountID` and `LicenseKey` and save.
-2. NyxGuard will keep the GeoLite2 database updated automatically.
-
-Option C (manual upload, IP2Location):
-1. Download an IP2Location **Country** database in `.mmdb` format (Lite or paid).
-2. Upload in the UI: **NyxGuard -> IPs & Locations -> GeoIP DB** (select `IP2Location (.mmdb)`) -> **Upload**.
-
-## Install (Production)
-
-NyxGuard Manager is published as a prebuilt Docker image on Docker Hub (`nyxmael/nyxguardmanager`).
-
-### Install Via curl (Recommended)
-
-On a fresh Ubuntu/Debian VM (or container), do a quick OS update first and ensure `curl` is installed:
+On a fresh supported Ubuntu/Debian host:
 
 ```bash
 sudo apt update
 sudo apt -y upgrade
 sudo apt install -y curl
-```
-
-Why this method is recommended:
-- Installs into a predictable location: `/opt/nyxguardmanager` (override with `INSTALL_DIR=/your/path`)
-- Ensures required dependencies are present (Docker + Compose on Ubuntu/Debian)
-- Creates `.env` on first install and keeps upgrades in-place (data stays in Docker volumes)
-- Keeps future updates consistent: `update.sh` expects the same install directory
-
-Then run the installer:
-
-```bash
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | sudo bash
 ```
 
-By default the installer:
-- detects the latest published image tag from Docker Hub
-- pulls the matching manager and VPN agent images
-- creates the local Docker Compose stack in `/opt/nyxguardmanager`
-- starts the stack and enables reboot persistence via systemd
+The installer selects the latest published Manager image, maps its compatible VPN Agent, prepares persistent volumes and `.env`, starts the stack, and enables systemd boot persistence. It installs Docker/Compose dependencies when needed. The default directory is `/opt/nyxguardmanager`; set `INSTALL_DIR` to customize it. After installation, open `https://<your-host>:8443` and complete the setup wizard. The initial self-signed certificate requires browser confirmation.
 
-Optional:
-- Use a different image/repo: `IMAGE_REPO=youruser/nyxguardmanager`
-- Install a specific version: `APP_TAG=5.0.3`
+HTTP-01 certificates need inbound public TCP 80; DNS challenges need the provider's credentials. Open TCP 443 for HTTPS applications. “Protected Apps” are proxy hosts with WAF enabled.
 
-### Install Via Docker (Compose)
+<details>
+<summary>Manual Docker Compose installation</summary>
 
-1. Create an install directory:
+For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.4 uses VPN Agent 5.0.1. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
 
-```bash
-sudo mkdir -p /opt/nyxguardmanager
-cd /opt/nyxguardmanager
-```
-
-2. Create `docker-compose.yml` locally (Docker image only):
-
-```bash
-cat > docker-compose.yml <<'YAML'
+```yaml
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:5.0.3
+    image: nyxmael/nyxguardmanager:5.0.4
     restart: unless-stopped
     ports:
       - "80:80"
@@ -180,16 +95,11 @@ services:
       NYXCLOUD_SUPPORT_URL: "https://support-storage.nyxcloud.ro"
       NYXGUARD_VPN_AGENT_URL: "http://127.0.0.1:3198"
       NYXGUARD_VPN_AGENT_TOKEN_PATH: "/run/nyxguard-vpn-auth/token"
-      # Maximum persistent-cookie lifetime supported by current Chromium browsers.
+      # Persistent access-portal session. Chromium caps persistent cookies at 400 days.
       NYXGUARD_ACCESS_SESSION_TTL_SEC: "34560000"
-    healthcheck:
-      test: ["CMD", "curl", "-fs", "http://localhost:3000/"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
+    # Manager readiness is inherited from the accepted image.
     group_add:
-      - "${DOCKER_SOCK_GID:?Set DOCKER_SOCK_GID in .env}"
+      - "${DOCKER_SOCK_GID:?Set DOCKER_SOCK_GID to the numeric GID of /var/run/docker.sock}"
     volumes:
       - nyxguard_data:/data
       - nyxguard_letsencrypt:/etc/letsencrypt
@@ -219,6 +129,12 @@ services:
     depends_on:
       nyxguard-manager:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "const fs=require('fs');fetch('http://127.0.0.1:3198/status',{headers:{'X-NyxGuard-VPN-Token':fs.readFileSync('/run/nyxguard-vpn-auth/token','utf8').trim()}}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   db:
     container_name: nyxguard-db
@@ -245,13 +161,11 @@ volumes:
     name: nyxguard_vpn
   nyxguard_vpn_auth:
     name: nyxguard_vpn_auth
-YAML
 ```
 
-3. Edit `.env` (set strong passwords for `DB_MYSQL_PASSWORD` and `MYSQL_ROOT_PASSWORD`), then start:
+Create `.env` with strong, distinct database passwords:
 
-```bash
-cat > .env <<'ENV'
+```dotenv
 TZ=UTC
 PUID=1000
 PGID=1000
@@ -259,8 +173,12 @@ DB_MYSQL_USER=nyxguard
 DB_MYSQL_NAME=nyxguard
 DB_MYSQL_PASSWORD=CHANGE_ME_STRONG_PASSWORD
 MYSQL_ROOT_PASSWORD=CHANGE_ME_STRONG_ROOT_PASSWORD
-ENV
+```
 
+Prepare socket access and a persistent licensing vault key. Preserve an existing key; never generate a replacement during an update.
+
+```bash
+chmod 600 .env
 nyx_socket_gid="$(stat -c %g /var/run/docker.sock)"
 sed -i "s/^PGID=.*/PGID=${nyx_socket_gid}/" .env
 printf 'DOCKER_SOCK_GID=%s\n' "$nyx_socket_gid" >> .env
@@ -272,172 +190,89 @@ sudo chmod 0600 /var/lib/nyxguard-licensing/vault.key
 docker compose --env-file .env up -d
 ```
 
-## Supported Distributions
-- Ubuntu 22.xx / Ubuntu 24.xx / Ubuntu 25.xx (tested)
-- Debian 12 / Debian 13 (tested)
-- Other distributions: not fully tested yet. We might plan to validate and add them over time.
+Without TUN, start only `nyxguard-manager db`. Keep both services persistent; the installer configures Manager-only boot startup automatically. For a manual VPN-capable deployment, the included [systemd unit](systemd/nyxguardmanager.service) can be installed with `systemctl daemon-reload` and `systemctl enable --now nyxguardmanager.service`. A Manager-only unit must start only its two services.
 
-## Hardware Requirements (Guidelines)
+Do not change volume names for an existing installation. Preserve any `NYXGUARD_*_VOLUME` overrides. Keep the VPN Agent in the current Manager network namespace; recreating Manager alone can strand it in the old namespace. Restart Manager and then Agent as a pair; restarting Manager also replaces its network namespace. Verify Agent availability from the VPN Client page, because individual container health flags do not prove their communication.
 
-Actual resource usage depends heavily on traffic volume, number of protected apps, and log retention.
+</details>
 
-- Baseline we observed on a clean Ubuntu 24 VM (idle, fresh install, NyxGuard Manager + DB running):
-  - CPU: ~0.04% (on an 8 vCPU VM)
-  - RAM: ~219 MiB
-  - Disk: ~3.81 GiB used (on an ~78 GiB disk)
-- Minimum (small install / short retention):
-  - 2 vCPU
-  - 2 GB RAM
-  - 40 GB disk
-- Recommended (multiple apps / longer retention):
-  - 4 vCPU
-  - 8 GB RAM
-  - 60 GB disk
+## Update in place
 
-Notes:
-- Prefer SSD storage (log-heavy workloads are disk I/O sensitive).
-- If you plan 60-180 days retention and/or high traffic, allocate more disk.
-- If you plan to use NyxGuard for long term - 60 GB should be more then sufficient. 
+Use the guarded host updater for standard installations:
 
-## Update (In-Place)
-
-Use this if you already have NyxGuard Manager running and want to update without wiping config/data.
-
-### Update Via curl (Installed In /opt/nyxguardmanager)
-
-This is the default path when you installed via `install.sh`.
-
-As root:
-```bash
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | bash
-```
-
-As non-root with sudo:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | sudo bash
 ```
 
-Optional environment variables:
-- Pull from a different repo: `IMAGE_REPO=youruser/nyxguardmanager`
-- Pull the VPN agent from a different repo: `VPN_AGENT_REPO=youruser/nyxguardmanager-vpn-agent`
-- Force a specific version: `FORCE_TAG=5.0.3`
-- Run non-interactively: `NYXGUARD_AUTO_YES=1`
-- Require VPN support instead of continuing without it when TUN is missing: `NYXGUARD_REQUIRE_VPN=1`
+The 5.0.4 supported source paths are **5.0.1, 5.0.2 and 5.0.3**. The updater protects the previous installation's DB/files/configuration, verifies the replacement and application data, and restores the protected source if activation fails. It preserves Manager-only or installed VPN topology. Retain your own independent database and volume backup.
 
-Example:
+The built-in updater offers check/download/apply. Do not force an unsupported transition or replace guarded updates with a bare Compose image switch. After updating, verify login, settings, proxy hosts, traffic/history, License, diagnostics, and configured VPN sites, then verify restart persistence.
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh \
-  | sudo env FORCE_TAG=5.0.3 NYXGUARD_AUTO_YES=1 bash
-```
+<details>
+<summary>Update options, legacy paths and recovery</summary>
 
-The 4.0.18 updater installs the isolated VPN agent Compose overlay and its reboot-persistent systemd override when the host provides `/dev/net/tun`. Running it again repairs a missing VPN agent even when the manager is already on 4.0.18. If TUN is unavailable, the updater keeps the manager and database running, removes any stale VPN startup override, and prints host-specific remediation instead of failing the whole deployment.
+| Variable | Use |
+| --- | --- |
+| `INSTALL_DIR` | Existing directory containing Compose and `.env` |
+| `FORCE_TAG` | Select a supported, published version |
+| `IMAGE_REPO` / `VPN_AGENT_REPO` | Alternative Manager/Agent repositories |
+| `NYXGUARD_AUTO_YES=1` | Noninteractive confirmation |
+| `NYXGUARD_REQUIRE_VPN=1` | Require TUN/VPN rather than accepting Manager-only topology |
 
-The public command above detects a supported 4.0.18 installation and enters the 5.0.0 recovery and handover workflow automatically. It preserves MariaDB, the source installation's persistent volumes, Compose configuration, the rollback image, and the vault key before migration 42. When the source has a healthy VPN agent, it preserves VPN state, recreates the agent in the new Manager network namespace, and verifies both services. A public-installer Manager-only installation that never had VPN because TUN was unavailable upgrades as Manager-only; it does not create a VPN container or VPN state volume and verifies Manager health. If the new runtime fails, the handover restores the verified pre-upgrade database and volumes for that source topology. A manual rollback after migration requires the saved SQL database and source volumes before starting 4.0.18; do not start 4.0.18 against migration 42. Retain your own backup as well; a post-migration rollback loses writes made after the recovery point.
+For a manual installation, pass its actual `INSTALL_DIR` to the host updater. For a specific version, use `FORCE_TAG` only after checking its public release guidance. The installer uses `APP_TAG` to select a fresh-install image.
 
-The same command handles compatible 5.x updates, including 5.0.2 to 5.0.3. Use the public host command for the 4.0.18 to 5.0.0 transition. The immutable 4.0.18 browser updater can show "Restart required" after downloading an image before the major handover is ready; its "Restart now" action fails on Manager-only installations because it assumes a VPN container. The host command reconciles stale pending state from its own failed attempt when the old runtime and migration 41 can be verified. When recreating a Manager container with an existing VPN agent, recreate the agent with it so the agent joins the current Manager network namespace.
+The historical 4.0.18 → 5.0.0 transition uses the verified host handover; see the [major-transition runbook](release-source/5.0.0/RELEASE_DAY_RUNBOOK.md) and documented intermediate release paths. The old 4.0.18 browser updater can report “Restart required” prematurely and assumes a VPN container; use the host workflow for that transition. Customized 4.x layouts require a verified recovery set.
 
-### Proxmox LXC and `/dev/net/tun`
+Schema migrations are forward-only. Manual rollback requires the **pre-upgrade SQL database and matching source files/volumes**, Compose configuration, previous image and vault key. Never start an old image against a newer schema. Rollback loses writes after the recovery point. Retain the protected recovery artifacts if activation fails; inspect the reported transaction state before retrying.
 
-WireGuard needs the host kernel TUN device. A restricted LXC container cannot create it with `mknod` or load the Proxmox kernel module itself. On the **Proxmox host**, load TUN and add these entries to `/etc/pve/lxc/<CTID>.conf`:
+The host updater reconciles actual runtime state. On supported installations, rerunning the updater can install/persist a missing VPN Agent once TUN is available. Without TUN, Manager/DB continue without creating VPN state, and the updater supplies host-specific remediation.
+
+</details>
+
+<details>
+<summary>Proxmox LXC: expose TUN</summary>
+
+On the **Proxmox host**, run `modprobe tun` and add to `/etc/pve/lxc/<CTID>.conf`:
 
 ```text
 lxc.cgroup2.devices.allow: c 10:200 rwm
 lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
 ```
 
-Then restart that LXC and verify inside it:
+Restart the guest, then verify `test -c /dev/net/tun` inside it. Rerun the guarded updater to install and persist the Agent. A guest cannot load its hypervisor's kernel module or grant its own cgroup permission. Regular VMs/bare metal are prepared automatically when their kernel exposes TUN. See the [complete VPN guide](docs/vpn-client.md) for profiles, AllowedIPs, NAT/firewalls, overlap rules, remote gateways and layered troubleshooting.
 
-```bash
-test -c /dev/net/tun && echo "TUN ready"
-```
+</details>
 
-Run the general updater again to install and persist the VPN agent. Regular VM and bare-metal installations are prepared automatically when their kernel exposes the TUN module.
+<details>
+<summary>Optional GeoIP databases</summary>
 
-### Update Via Docker Compose (Manual Installs)
+Country resolution prefers Cloudflare's `CF-IPCountry`, then local MaxMind GeoLite2 Country, then IP2Location Country. Both local providers use `.mmdb` files.
 
-For a fresh manual install, use the 5.0.3 services and volumes from the repository's [`docker-compose.yml`](docker-compose.yml). Pulling only the manager image does not enable VPN Client because `NET_ADMIN` intentionally belongs only to the separate agent. For an existing supported 4.0.18 installation, use the public update command above. For other customized 4.x layouts, use the [operator runbook](release-source/5.0.0/RELEASE_DAY_RUNBOOK.md) with a verified recovery set.
+For MaxMind, create an account and license key, download GeoLite2 Country, and upload under **NyxGuard → IPs & Locations → GeoIP DB**. Alternatively save the MaxMind AccountID/LicenseKey there to enable automatic updates. For IP2Location, download a Country `.mmdb` (Lite or paid) and select that provider when uploading.
 
-```bash
-cd /opt/nyxguardmanager
-docker pull nyxmael/nyxguardmanager:5.0.3
-docker pull nyxmael/nyxguardmanager-vpn-agent:5.0.1
-docker compose --env-file .env pull
-docker compose --env-file .env up -d --remove-orphans
-```
+</details>
 
-### Notes
-
-- Your data is stored in Docker volumes, so updates should not wipe config/certs/DB unless you delete volumes.
-- If you previously migrated volumes (via `NYXGUARD_*_VOLUME` in `.env`), keep those values unchanged.
-- If you want to update to a specific release, use `FORCE_TAG=<version>` with `update.sh` or update the compose `image:` tag explicitly.
-
-## Quick Health Checks
+## Quick health checks
 
 ```bash
 curl -kI https://127.0.0.1:8443/
 curl -ksS https://127.0.0.1:8443/api/ | jq
 docker ps
+docker exec nyxguard-manager node /app/internal/readiness-probe.mjs
 docker logs --tail=100 nyxguard-manager
 docker logs --tail=100 nyxguard-vpn-agent
 ```
 
-Expected containers for a VPN-capable 5.0.3 host are `nyxguard-manager`, `nyxguard-vpn-agent`, and `nyxguard-db`. Without host TUN access, `nyxguard-manager` and `nyxguard-db` remain healthy while VPN Client reports unavailable.
+Expect healthy Manager and DB, plus the VPN Agent on TUN-capable hosts. HTTP 200 alone does not prove database readiness, data preservation or working VPN sites. The Settings **VPN Client** tab shows Agent availability, site controls, handshakes, traffic and ping results. Connect controls appear in both the selected site and disconnected site cards; automatic reconnect starts after the first successful connection. Network/tunnel overlaps and local-network collisions are rejected.
 
-## Start On Boot (systemd)
+## Support and project
 
-If you run the stack with Docker Compose, you can enable the included systemd unit:
+Use [GitHub releases](https://github.com/NyxCloudRO/NyxGuardManager/releases), the [community](https://community.nyxcloud.ro/) and [NyxCloud](https://nyxcloud.ro/nyxguard/) for release and operational guidance. Professional Support adds Diagnostics & Support and Support ID workflows. [Support development](https://buymeacoffee.com/nyxmael).
 
-```bash
-sudo install -m 0644 systemd/nyxguardmanager.service /etc/systemd/system/nyxguardmanager.service
-sudo systemctl daemon-reload
-sudo systemctl enable --now nyxguardmanager.service
-```
+Created by **Vlad-Eusebiu Cardei** to bring security, observability and predictable day-to-day operations into the same local-first proxy workflow. Project links: [NyxCloud](https://nyxcloud.ro/), [BillCore](https://billcore.ro/) and [Community](https://community.nyxcloud.ro/). Contact: Vlad.Cardei@NyxCloud.ro · Vlad.Cardei@Billcore.ro.
 
-## Notes
-- Let's Encrypt HTTP certificates require inbound `80/tcp` from the public internet to your server.
-- DNS challenge certificates require the matching DNS provider credentials.
-- "Protected Apps" are proxy hosts with WAF enabled.
-- You must also allow traffic 80/tcp and 443/tcp into your router
+## License
 
-## About Me
-I created **NyxGuard Manager** because I wanted a reverse proxy manager that feels like an *operator tool*, not a toy: simple to run on your own infrastructure, but serious about security, visibility, and day-2 operations.
+NyxGuard Manager is free to use in internal personal and commercial environments under the **NyxGuard Manager Proprietary License (NMPLA)**. Modification, redistribution, resale and third-party hosting are not permitted. Read the full [license](LICENSE.md).
 
-My vision for NyxGuard Manager is:
-- **Security that lives where you operate**: WAF-style controls, SQL Shield protection, bot defence, DDoS shielding, and IP/geo insights that are built into the same workflow as your proxy hosts (per-app toggles, clear status, fast rollback).
-- **Real-time observability, not guesswork**: live traffic, active hosts, and decision streams that make it obvious what is happening and why.
-- **Local-first and predictable**: your configuration, certificates, and history stay on your server in volumes; updates are designed to be in-place without wiping your data.
-- **Pragmatic by design**: focus on features that reduce operational load, make incidents easier to debug, and keep the UI fast and clean.
-
-This release is validated in production-style deployments on Ubuntu 24 and Debian 13, and tested on Ubuntu 22 and Debian 12. More improvements and features will land soon.
-
-## License / Attribution
-<p>
-  <img src="assets/free-forever.svg" alt="Commitment: Free Forever" height="48" />
-</p>
-
-NyxGuard Manager is free to use for both personal and enterprise deployments.
-
-You can support the project here: 
-https://buymeacoffee.com/nyxmael
-
-The project is distributed under the NyxGuard Manager Proprietary License (NMPLA).
-
-Use is permitted for internal personal and commercial environments.
-Modification, redistribution, resale, and third-party hosting are not permitted.
-
-See the full license in the [LICENSE](LICENSE.md) file.
-
-## Author
-
-**Vlad-Eusebiu Cardei**
-
-- https://nyxcloud.ro/
-- https://billcore.ro/
-- https://community.nyxcloud.ro/
-- https://nyxcloud.ro/nyxguard/
-
-Contact: 
-VladCardei@live.com
-Vlad.Cardei@NyxCloud.ro
-Vlad.Cardei@Billcore.ro
+[Changelog](CHANGELOG.md) · [Release source map](release-source/README.md)

@@ -42,3 +42,20 @@ the 5.0.0 source and tests remain available for maintenance and recovery.
 The `5.0.3` overlay builds with `5.0.3/build-release.sh` on the validated public
 5.0.2 image: audit intelligence, complete-window historical retrieval, shared
 application shell, and guarded update compatibility. VPN Agent remains 5.0.1.
+
+The `5.0.4` corrective runtime keeps schema 45 and VPN Agent 5.0.1. Its
+`product/` overlay contains the shared AppPage integration and effective
+expiration state for IP rules. The product build layers on the corrective runtime built from the immutable
+public base pinned in `5.0.4/Dockerfile`. Build both stages from the repository
+root, using the same full source revision:
+
+```bash
+revision=$(git rev-parse HEAD)
+docker build --build-arg NYXGUARD_SOURCE_REVISION="$revision" \
+  -f release-source/5.0.4/Dockerfile -t nyxguardmanager:5.0.4-corrective-base .
+docker build --build-arg NYXGUARD_SOURCE_REVISION="$revision" \
+  -f release-source/5.0.4/product/Dockerfile -t nyxguardmanager:5.0.4 .
+```
+
+The intermediate image is a local build prerequisite, not an end-user registry tag. Browser sessions and acceptance output stay
+outside this tree. See [5.0.4 release notes](5.0.4/RELEASE-NOTES.md).
