@@ -162,17 +162,21 @@ print_tun_warning() {
   fi
 
   echo ""
-  echo "WARNING: /dev/net/tun is unavailable. NyxGuard Manager will be installed,"
-  echo "but WireGuard VPN Client will remain disabled until the host exposes TUN."
-  if [[ "${virt}" == "lxc" ]]; then
-    echo "Detected Proxmox/LXC. Configure the Proxmox HOST with:"
-    echo "  modprobe tun"
-    echo "  lxc.cgroup2.devices.allow: c 10:200 rwm"
-    echo "  lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file"
-    echo "Restart the LXC container, then run update.sh to enable VPN Client."
+  echo "VPN Agent pending — TUN unavailable. /dev/net/tun could not be opened read/write."
+  echo "Manager installation can continue when VPN is optional; VPN is not ready."
+  if [[ "${virt}" == "lxc" && "$(uname -r)" == *-pve ]]; then
+    echo "Detected LXC on a Proxmox kernel. On the Proxmox host, verify the guest CTID"
+    echo "and back up its configuration, then expose only the TUN device:"
+    echo "  pct set <CTID> --dev0 path=/dev/net/tun,mode=0666"
+    echo "Use a free dev slot if dev0 is already assigned. Keep the guest unprivileged."
+    echo "Restart only that guest if needed, and verify TUN can be opened inside it."
   else
-    echo "Load TUN on the host (modprobe tun), verify /dev/net/tun, then run update.sh."
+    echo "Guest-side TUN preparation did not produce a usable device."
+    echo "For a restricted container, its host must expose usable TUN character device 10:200."
+    echo "For a VM or bare-metal host, check its kernel TUN support and device access."
   fi
+  echo "Once TUN is usable, repair the existing installation without reinstalling Manager:"
+  echo "  curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | sudo env INSTALL_DIR=\"${INSTALL_DIR}\" FORCE_TAG=\"${selected_tag:-${APP_TAG}}\" NYXGUARD_REPAIR_VPN=1 bash"
   echo ""
 }
 
@@ -524,6 +528,12 @@ main() {
   echo "============================================================"
   echo "  Install complete."
   echo "  NyxGuard Manager ${selected_tag} is up and running."
+  if [[ "${vpn_enabled}" == "1" ]]; then
+    echo "  VPN Agent installed; Manager-to-Agent API verified."
+  elif is_semver "${selected_tag}" && version_at_least "${selected_tag}" "4.0.14"; then
+    echo "  VPN Agent pending — TUN unavailable. VPN is not ready."
+    echo "  After TUN is usable, run update.sh with FORCE_TAG=${selected_tag} NYXGUARD_REPAIR_VPN=1."
+  fi
   echo ""
   echo "  Access the admin panel at:"
   echo "  https://${host_ip}:8443/"

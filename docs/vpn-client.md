@@ -113,31 +113,39 @@ Fresh installation:
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | sudo bash
 ```
 
-Upgrade or repair an existing standard installation:
+Upgrade a supported existing standard installation (see the release-specific upgrade guidance):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh \
-  | sudo env FORCE_TAG=5.0.0 NYXGUARD_AUTO_YES=1 bash
+  | sudo env FORCE_TAG=5.0.4 NYXGUARD_AUTO_YES=1 bash
 ```
 
-The updater preserves existing data volumes. For a supported 4.0.18 installation, it uses the verified 5.0.0 handover and restores the source topology if verification fails. A host without TUN continues as Manager-only. See the [update guidance](../README.md#update-in-place) before upgrading a customized installation.
+The updater preserves existing data volumes. Manager 5.0.1, 5.0.2 and 5.0.3 use the guarded direct path to 5.0.4. A 4.0.18 installation must first use the verified 5.0.0 major handover; do not force a direct 4.x-to-5.0.4 replacement. Guarded upgrades preserve installed VPN topology. For a Manager-only installation, enable Agent through the explicit repair below after TUN is usable. See the [update guidance](../README.md#update-in-place) before upgrading a customized installation.
 
 ### Host TUN prerequisite
 
-Check the NyxGuard host before expecting the VPN agent to start:
+The installer uses actual TUN capability, not virtualization vendor, to decide whether to install Agent. It tests read/write access, attempts existing safe guest-side preparation if needed, then tests again. A VM or container with usable TUN follows the normal Agent path. If preparation fails, optional Manager installation may continue with **VPN Agent pending — TUN unavailable**; VPN has not passed readiness.
 
 ```bash
-test -c /dev/net/tun && echo "TUN ready" || echo "TUN missing"
+test -c /dev/net/tun && (exec 9<>/dev/net/tun)
 ```
 
-On a normal VM or bare-metal Linux host, load it with `sudo modprobe tun`; the installer/updater also attempts this automatically. For Proxmox LXC, run `modprobe tun` on the **Proxmox host**, add the following to `/etc/pve/lxc/<CTID>.conf`, and restart the container:
+For a confirmed Proxmox LXC, the tested minimal host-side preparation is one device assignment. Verify the target CTID, preserve its current configuration, and use a free device slot:
 
-```text
-lxc.cgroup2.devices.allow: c 10:200 rwm
-lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
+```bash
+pct set <CTID> --dev0 path=/dev/net/tun,mode=0666
 ```
 
-An LXC guest cannot safely manufacture this device itself: both kernel support and the cgroup device permission belong to its host. After the device appears inside the guest, rerun `update.sh` for a supported standard installation.
+Keep the LXC unprivileged. Restart only the target guest if needed, then verify actual TUN access inside it and after reboot. This is infrastructure preparation by an authorized administrator; NyxGuard does not obtain hypervisor credentials or change host configuration. For other restricted containers, the host must expose usable TUN; no untested vendor-specific commands are prescribed.
+
+After installing Manager while TUN was unavailable, repair Agent at the same Manager version instead of reinstalling Manager:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh \
+  | sudo env FORCE_TAG=5.0.4 NYXGUARD_REPAIR_VPN=1 bash
+```
+
+Set `INSTALL_DIR` for a non-default location. The ordinary already-current updater leaves the installation unchanged. Explicit repair installs/recreates the compatible Agent and verifies its API from Manager. Confirm **Settings → VPN Client** availability, configuration persistence, and paired restart/reboot afterward.
 
 ## Health and troubleshooting
 
@@ -156,7 +164,7 @@ Common states:
 - **Connected**: the interface is up and the remote peer completed a handshake within the last three minutes.
 - **Ping fails with a handshake**: inspect remote forwarding, routes, NAT, NSGs/firewalls, and whether the target permits ICMP.
 - **Target outside remote networks**: use an address contained by the selected site's displayed CIDRs or correct that site's profile.
-- **Agent unavailable**: confirm `/dev/net/tun`, rerun the general updater, and inspect `nyxguard-vpn-agent` logs. On LXC, configure TUN passthrough on the hypervisor first.
+- **Agent unavailable**: confirm usable `/dev/net/tun`, run the explicit same-version repair above, and inspect `nyxguard-vpn-agent` logs. On LXC, configure TUN passthrough on the hypervisor first.
 
 Never include client private keys in screenshots, logs, support tickets, exported diagnostics, or public repositories.
 

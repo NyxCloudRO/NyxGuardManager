@@ -232,14 +232,30 @@ The host updater reconciles actual runtime state. On supported installations, re
 <details>
 <summary>Proxmox LXC: expose TUN</summary>
 
-On the **Proxmox host**, run `modprobe tun` and add to `/etc/pve/lxc/<CTID>.conf`:
+The installer first checks whether `/dev/net/tun` can be opened read/write. A usable device enables the normal Agent path regardless of virtualization vendor. If needed, the installer attempts safe guest-side module/node preparation and tests access again.
 
-```text
-lxc.cgroup2.devices.allow: c 10:200 rwm
-lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
+For a confirmed Proxmox LXC that still lacks usable TUN, an authorized administrator can expose just that device on the **Proxmox host**. Verify the correct CTID and back up its configuration first:
+
+```bash
+pct set <CTID> --dev0 path=/dev/net/tun,mode=0666
 ```
 
-Restart the guest, then verify `test -c /dev/net/tun` inside it. Rerun the guarded updater to install and persist the Agent. A guest cannot load its hypervisor's kernel module or grant its own cgroup permission. Regular VMs/bare metal are prepared automatically when their kernel exposes TUN. See the [complete VPN guide](docs/vpn-client.md) for profiles, AllowedIPs, NAT/firewalls, overlap rules, remote gateways and layered troubleshooting.
+Use a free device slot if `dev0` is already assigned. Keep the guest unprivileged; do not change unrelated devices or global policy. Restart only that guest if required. Inside it, verify both the character device and actual access:
+
+```bash
+test -c /dev/net/tun && (exec 9<>/dev/net/tun)
+```
+
+For other restricted containers, the host must expose usable TUN; the installer does not configure a hypervisor or request its credentials. Manager can be installed while VPN is optional, but the output explicitly reports **VPN Agent pending — TUN unavailable**.
+
+If Manager was installed without Agent, once TUN is usable run the existing same-version repair without reinstalling Manager:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh \
+  | sudo env FORCE_TAG=5.0.4 NYXGUARD_REPAIR_VPN=1 bash
+```
+
+Set `INSTALL_DIR` as well for a non-default installation. An ordinary already-current update is a no-op; Agent repair is explicit. Check **Settings → VPN Client** and paired Manager/Agent restart behavior after repair. See the [complete VPN guide](docs/vpn-client.md) for profiles, AllowedIPs, NAT/firewalls, overlap rules, remote gateways and layered troubleshooting.
 
 </details>
 
