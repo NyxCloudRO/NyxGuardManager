@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/nyxguard-cover.png" alt="NyxGuard Manager — reverse proxy, application security and visibility" width="1000" />
+  <img src="assets/nyxguard-cover-panoramic.webp" alt="NyxGuard Manager — reverse proxy, application security and visibility" width="1000" />
 </p>
 
 <h1 align="center">NyxGuard Manager</h1>
