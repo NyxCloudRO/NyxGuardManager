@@ -557,7 +557,7 @@ const updateManager = {
 			const candidate = await dockerRequest("GET", `/images/${encodeURIComponent(devImage)}/json`);
 			if (running.Image === candidate.Id) throw new Error("DEV rebuild image is already running.");
 		}
-		if (state.stage === STAGES.RECOVERY_REQUIRED || state.stage === STAGES.ACTIVATING)
+		if (state.manualRecoveryRequired || state.stage === STAGES.RECOVERY_REQUIRED || state.stage === STAGES.ACTIVATING)
 			throw new Error("Resolve the active handover before downloading another target.");
 		if (state.stage === STAGES.DOWNLOADED && state.downloadedVersion === target) {
 			const image = await dockerRequest("GET", `/images/${encodeURIComponent(state.downloadedImageId)}/json`);
@@ -618,6 +618,7 @@ const updateManager = {
 		await assertDockerSocketAccess();
 		const state = await this.getState();
 		const target = state.downloadedVersion;
+        if(state.manualRecoveryRequired)throw new Error("Use the host updater baseline or resume procedure before activating another target.");
 		if (state.stage !== STAGES.DOWNLOADED || !target || !state.downloadedImageId)
 			throw new Error("No downloaded update to activate.");
 		const downloadedImage = await dockerRequest("GET", `/images/${encodeURIComponent(state.downloadedImageId)}/json`);
@@ -633,6 +634,7 @@ const updateManager = {
 		this._addJobLog(job, `Activating downloaded update v${target} ...`);
 
     (async()=>{
+      let bootstrapStartAttempted=false;
       try {
         const manager=await dockerRequest('GET',`/containers/${process.env.HOSTNAME}/json`);
         const files=String(manager.Config.Labels?.['com.docker.compose.project.config_files']||'').split(',');
@@ -646,9 +648,20 @@ const updateManager = {
           HostConfig:{Binds:['/var/run/docker.sock:/var/run/docker.sock',source+':/handover-data'],NetworkMode:'none',RestartPolicy:{Name:'no'}},
         });
         this._addJobLog(job,'Starting the shared guarded updater; follow its durable transaction.');
+        bootstrapStartAttempted=true;
         await dockerRequest('POST',`/containers/${helper.Id}/start`,null,false);
+        for(let n=0;n<1800;n++){
+          const status=await dockerRequest('GET',`/containers/${helper.Id}/json`);
+          if(!status.State.Running){
+            this._finishJob(job,status.State.ExitCode===0?'success':'failed',{message:status.State.ExitCode===0?'Shared updater completed':'Shared updater failed; inspect retained helper logs and use supported resume when required'});
+            return;
+          }
+          await new Promise(resolve=>setTimeout(resolve,1000));
+        }
+        this._finishJob(job,'failed',{message:'Shared updater still active; inspect its durable transaction before retrying'});
       }catch(error){
-        await this.saveState(markFailure(await this.getState(),error)).catch(()=>undefined);
+        if(!bootstrapStartAttempted){const existing=await this.getState();await this.saveState(markFailure(existing,error,!!existing.manualRecoveryRequired)).catch(()=>undefined);}
+        // After start, only the shared durable engine owns recovery state.
         this._finishJob(job,'failed',{error:String(error)});
       }
     })();
