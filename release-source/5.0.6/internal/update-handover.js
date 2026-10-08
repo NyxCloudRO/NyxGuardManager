@@ -480,9 +480,13 @@ async function runSameMajorHandover() {
   if(active && !/^[a-f0-9]{12,64}$/.test(active.id||''))throw new Error('Invalid active handover identity');
   let needsBaseline=!!env.BASELINE_AUTHORIZATION;
   if(transaction&&active&&active.id!==transactionId){
-    const plan=await baselinePlan('/handover-data',await api('GET',`/containers/${env.OLD_MANAGER_ID}/json`));
-    if(!env.BASELINE_AUTHORIZATION||env.BASELINE_AUTHORIZATION!==plan.challenge)throw new Error('Stale helper transaction cannot act on a newer handover');
-    env.BASELINE_PLAN=JSON.stringify(plan);
+    const actual=await baselinePlan('/handover-data',await api('GET',`/containers/${env.OLD_MANAGER_ID}/json`));
+    const authorized=env.BASELINE_PLAN?JSON.parse(env.BASELINE_PLAN):null;
+    // The helper's immutable creation environment retains the reviewed plan.
+    // Its own recovery guard may change during uncertainty; original source
+    // topology and historical pointer/ledger must still match before rollback.
+    const fields=['format','managerId','image','mounts','project','configFiles','historicalId','pointerHash','ledgerHash'];
+    if(!authorized||authorized.challenge!==env.BASELINE_AUTHORIZATION||fields.some(key=>JSON.stringify(actual[key])!==JSON.stringify(authorized[key])))throw new Error('Stale helper transaction cannot act on a newer handover');
   }
   if(needsBaseline&&!env.BASELINE_PLAN&&!transaction){const plan=await baselinePlan('/handover-data',await api('GET',`/containers/${env.OLD_MANAGER_ID}/json`));if(env.BASELINE_AUTHORIZATION!==plan.challenge||!env.BASELINE_REASON?.trim())throw new Error('BASELINE_REQUIRED: request a fresh plan and authorize it with a reason');env.BASELINE_PLAN=JSON.stringify(plan);}
   if(!transaction && active) {

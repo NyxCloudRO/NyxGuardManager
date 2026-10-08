@@ -27,6 +27,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const q = encodeURIComponent;
 const releasePolicy=/^5\.(?:[1-9]\d*\.\d+|0\.(?:[6-9]|[1-9]\d+))$/.test(process.env.TARGET_VERSION||'')?(await import('/app/internal/release-policy.mjs')).default:null;
 let image;
+let approvedBaselinePlan=null;
 let vpnImage;
 let oldManager, oldVpn, newManagerId, newVpnId, helperId;
 let managerRenamed = false, vpnRenamed = false, helperStartAttempted = false;
@@ -117,7 +118,7 @@ async function setup() {
     const c=await docker('POST','/containers/create',{Image:image,Entrypoint:['node','/app/internal/baseline-plan-cli.mjs'],Env:['BASELINE_MANAGER='+JSON.stringify(identity)],Healthcheck:{Test:['NONE']},HostConfig:{Binds:[dataSource+':/handover-data:ro'],NetworkMode:'none'}});
     await docker('POST',`/containers/${c.Id}/start`);
     let planVerified=false;
-    for(let n=0;n<30;n++){const info=await docker('GET',`/containers/${c.Id}/json`);if(!info.State.Running){const raw=String(await docker('GET',`/containers/${c.Id}/logs?stdout=1&stderr=1`));const clean=raw.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,'');if(info.State.ExitCode)throw new Error('Baseline plan refused; inspect plan helper logs');const plan=JSON.parse(clean.slice(clean.indexOf('{'),clean.lastIndexOf('}')+1));planVerified=true;await docker('DELETE',`/containers/${c.Id}`);if(process.env.BASELINE_PLAN_ONLY==='1'){console.log(JSON.stringify(plan));return;}if(process.env.BASELINE_AUTHORIZATION!==plan.challenge||!process.env.BASELINE_REASON?.trim())throw new Error('BASELINE_REQUIRED: authorization differs; request a fresh plan before retrying');break;}await sleep(1000);}
+    for(let n=0;n<30;n++){const info=await docker('GET',`/containers/${c.Id}/json`);if(!info.State.Running){const raw=String(await docker('GET',`/containers/${c.Id}/logs?stdout=1&stderr=1`));const clean=raw.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,'');if(info.State.ExitCode)throw new Error('Baseline plan refused; inspect plan helper logs');const plan=JSON.parse(clean.slice(clean.indexOf('{'),clean.lastIndexOf('}')+1));planVerified=true;approvedBaselinePlan=plan;await docker('DELETE',`/containers/${c.Id}`);if(process.env.BASELINE_PLAN_ONLY==='1'){console.log(JSON.stringify(plan));return;}if(process.env.BASELINE_AUTHORIZATION!==plan.challenge||!process.env.BASELINE_REASON?.trim())throw new Error('BASELINE_REQUIRED: authorization differs; request a fresh plan before retrying');break;}await sleep(1000);}
     if(!planVerified)throw new Error('Baseline plan deadline exceeded');
   }
 	const socketGid = (await fs.stat("/var/run/docker.sock")).gid;
@@ -172,7 +173,7 @@ async function setup() {
 			`NEW_MANAGER_ID=${newManagerId}`, `TARGET_IMAGE_ID=${image}`,
 			...(oldVpn ? [`OLD_VPN_ID=${oldVpn.Id}`, `OLD_VPN_NAME=${oldVpnName}`, `NEW_VPN_ID=${newVpnId}`] : []),
 			`CURRENT_VERSION=${currentVersion}`, `TARGET_VERSION=${targetVersion}`,
-      `BASELINE_AUTHORIZATION=${process.env.BASELINE_AUTHORIZATION||''}`,`BASELINE_REASON=${process.env.BASELINE_REASON||''}`,
+      `BASELINE_PLAN=${approvedBaselinePlan?JSON.stringify(approvedBaselinePlan):""}`,`BASELINE_AUTHORIZATION=${process.env.BASELINE_AUTHORIZATION||''}`,`BASELINE_REASON=${process.env.BASELINE_REASON||''}`,
 		],
 		HostConfig: { Binds: ["/var/run/docker.sock:/var/run/docker.sock", `${dataSource}:/handover-data`], NetworkMode: "none" },
 	});

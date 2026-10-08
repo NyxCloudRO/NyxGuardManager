@@ -17,7 +17,7 @@ MANAGER_ONLY_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/m
 MANAGER_ONLY_SHA256="8a374930d5f421d5296886bc9b05141a79fafb6522d2bd8870b41d1cb476a470"
 
 SAME_MAJOR_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/v5.0.6/upgrade/same-major-bootstrap.mjs"
-SAME_MAJOR_SHA256="92a742c1b5b5792303ac62f4b72615460604ae656dfa58a7eccc5f9d4e963ae7"
+SAME_MAJOR_SHA256="f2dda9bf7b6d22b0d2d8e5b17d25750cc756ba6c990dc466142af15ec01d505f"
 
 # Published release contracts; new Manager tags require an explicit Agent decision.
 vpn_agent_tag_for_manager() {

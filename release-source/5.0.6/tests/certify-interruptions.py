@@ -20,9 +20,7 @@ while time.time()<deadline and proc.poll() is None:
   ids=run(['docker','ps','-aq','--filter','label=nyxguard.install-dir='+P,'--filter','label=nyxguard.target-version=5.0.6']).stdout.decode().splitlines()
   if ids:helper=ids[-1]
  if helper:
-  raw=run(['docker','exec',helper,'cat','/handover-data/.nyx-handover/'+helper[:12]+'.json'],check=False)
-  if raw.returncode:
-   raw=run(['docker','run','--rm','--network','none','--entrypoint','cat','-v','nyx506_'+case+'_data:/data:ro',T,'/data/.nyx-handover/'+helper[:12]+'.json'],check=False)
+  raw=run(['cat','/var/lib/docker/volumes/nyx506_'+case+'_data/_data/.nyx-handover/'+helper[:12]+'.json'],check=False)
   if raw.returncode==0:
    ledger=json.loads(raw.stdout)['transaction'];phase=ledger['phase']
    if not observations or observations[-1]!=phase:observations.append(phase);print(case,phase,flush=True)
@@ -47,7 +45,7 @@ while time.time()<deadline and proc.poll() is None:
     if mode=='health' and progress and progress['complete']:
      run(['docker','exec',target,'/command/s6-svc','-d','/run/service/nginx']);injected=True;print('Stopped nginx before health acceptance',flush=True)
  if injected and mode in ['backup','migration']:break
- time.sleep(.15)
+ time.sleep(1)
 assert injected,'Failed to reach real injection boundary'
 if mode in ['backup','migration']:
  proc.wait(timeout=120);log.close()

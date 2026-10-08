@@ -15,6 +15,6 @@
     "5.0.5"
   ],
   "compatibilityPolicy": "internal/release-policy.json",
-  "bootstrapSHA256": "92a742c1b5b5792303ac62f4b72615460604ae656dfa58a7eccc5f9d4e963ae7",
+  "bootstrapSHA256": "f2dda9bf7b6d22b0d2d8e5b17d25750cc756ba6c990dc466142af15ec01d505f",
   "bootstrapPublicationURL": "https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/v5.0.6/upgrade/same-major-bootstrap.mjs"
 }
