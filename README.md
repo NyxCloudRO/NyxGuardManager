@@ -74,8 +74,7 @@ An observed clean Ubuntu 24 deployment used about 219 MiB RAM and 3.81 GiB disk 
 
 | Operating system | Support |
 | --- | --- |
-| Ubuntu 22.x / 24.x / 25.x | Tested |
-| Ubuntu 26.04 LTS | Validated on 26.04.1 LTS: Manager/MariaDB, installer, VPN with usable TUN, systemd and reboot persistence |
+| Ubuntu 22.x / 24.x / 25.x / 26.04 LTS | Tested |
 | Debian 12 / 13 | Tested |
 | Other distributions | Not fully tested; install Docker/Compose yourself before evaluating |
 
