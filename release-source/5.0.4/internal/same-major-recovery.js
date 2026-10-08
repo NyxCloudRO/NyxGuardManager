@@ -216,7 +216,16 @@ try {
     const value=await manifest();
     const state=JSON.parse(await fs.readFile(journal,'utf8'));
     const actual=await captureIntegrity(connection,database);
-    if(state.phase==='restored') validateIntegrity(actual,value.snapshot.expected);
+    if(process.env.RECOVERY_MUTATION_POSSIBLE==='0') {
+      // Before replacement startup, authoritative backup completion consists of
+      // the existing protected journal, complete checksummed manifest and its
+      // validated staged/source database pair. No new format or phase is used.
+      if(state.phase!=='protected'||JSON.stringify(state.snapshot)!==JSON.stringify(value.snapshot))
+        throw new Error('Protected backup completion state is missing or inconsistent');
+      assertSourceSchema(value.snapshot.expected);
+      validateIntegrity(await captureIntegrity(connection,value.snapshot.stage),value.snapshot.expected);
+      validateIntegrity(actual,value.snapshot.expected);
+    } else if(state.phase==='restored') validateIntegrity(actual,value.snapshot.expected);
     else await validateUpgradePreservation(connection,database,value.snapshot.stage);
   }
   else if(mode==='metadata') await metadata();

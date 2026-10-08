@@ -16,7 +16,12 @@ export function sanitizedFailure(error, phase) {
   if (docker) message = `Docker ${docker[1]} request failed: ${docker[2]}`;
   const worker = raw.match(/^Same-major recovery (backup|restore|verify|metadata|finalize|cleanup|pair|verify-source) failed with exit (-?\d+)$/);
   if (worker) message = `Same-major recovery ${worker[1]} failed with exit ${worker[2]}`;
-  return {category, ...(code?{code}:{}), message, ...(phases.has(phase)?{phase}:{})};
+  const request=error?.dockerRequest;
+  const context=request&&['GET','POST','DELETE'].includes(request.method)&&
+    ['container-stop','docker-api'].includes(request.operation)&&Number.isSafeInteger(request.deadlineMs)&&request.deadlineMs>0 ?
+    {method:request.method,operation:request.operation,deadlineMs:request.deadlineMs,
+      ...(Number.isSafeInteger(request.graceMs)&&request.graceMs>=0?{graceMs:request.graceMs}:{})}:undefined;
+  return {category, ...(code?{code}:{}), message, ...(context?{request:context}:{}), ...(phases.has(phase)?{phase}:{})};
 }
 
 export const sourceSchemas = {'5.0.1':42,'5.0.2':43,'5.0.3':45};

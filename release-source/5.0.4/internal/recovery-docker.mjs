@@ -34,6 +34,16 @@ export async function docker(method, endpoint, body) {
     await dockerApiVersion();
   }
   return new Promise((resolve, reject) => {
+    // Stop permits Docker the full grace interval, followed by the ordinary
+    // ten-second API response budget. All other requests retain their deadline.
+    const stop = method === 'POST' && endpoint.match(/^\/containers\/[^/?]+\/stop\?t=(\d+)$/);
+    const deadlineMs = 10000 + (stop ? Number(stop[1]) * 1000 : 0);
+    const fail = error => {
+      // Keep bounded request context, never URLs/names/bodies/environments.
+      error.dockerRequest = {method,operation:stop?'container-stop':'docker-api',deadlineMs,
+        ...(stop?{graceMs:Number(stop[1])*1000}:{})};
+      reject(error);
+    };
     const request = http.request({ socketPath: '/var/run/docker.sock',
       path: endpoint === '/version' ? endpoint : `/v${version}${endpoint}`, method,
       headers: body ? { 'Content-Type': 'application/json' } : undefined }, response => {
@@ -43,19 +53,15 @@ export async function docker(method, endpoint, body) {
         raw += chunk;
         if (raw.length > 4_000_000) request.destroy(new Error('Docker response limit exceeded'));
       });
-      response.on('error', reject);
+      response.on('error', fail);
       response.on('end', () => {
-        if (response.statusCode >= 400) return reject(new Error(`Docker ${method} ${endpoint} failed: ${response.statusCode}`));
+        if (response.statusCode >= 400) return fail(new Error(`Docker ${method} ${endpoint} failed: ${response.statusCode}`));
         try { resolve(raw ? JSON.parse(raw) : {}); } catch { resolve(raw); }
       });
     });
-    // Stop permits Docker the full grace interval, followed by the ordinary
-    // ten-second API response budget. All other requests retain their deadline.
-    const stop = method === 'POST' && endpoint.match(/^\/containers\/[^/?]+\/stop\?t=(\d+)$/);
-    const deadlineMs = 10000 + (stop ? Number(stop[1]) * 1000 : 0);
     const timer = setTimeout(() => request.destroy(new Error('Docker API deadline exceeded')), deadlineMs);
     request.on('close', () => clearTimeout(timer));
-    request.on('error', reject);
+    request.on('error', fail);
     if (body) request.write(JSON.stringify(body));
     request.end();
   });

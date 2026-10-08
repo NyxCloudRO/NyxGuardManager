@@ -500,6 +500,9 @@ async function runSameMajorHandover() {
     backup:async t=>{
       if(hasVpn)await stop(t.source.vpnId);await stop(t.source.id);
       await worker('backup',t);
+      // A successful process exit is not a protected-backup acknowledgment.
+      // Reuse the existing verification worker against the source-stage ledger.
+      await worker('verify',t);
     },
     startReplacement:async t=>{
       env.NEW_MANAGER_ID=t.target.id;env.NEW_VPN_ID=t.target.vpnId||'';
@@ -563,8 +566,11 @@ async function runSameMajorHandover() {
   } catch(error) {
     // Retain journal/recovery identity; never restart old code on unverified DB.
     const final=await loadTransaction(file,identity);
-    if(final?.phase!=='ROLLBACK_COMPLETE'&&final?.phase!=='COMMITTED')
-      await updateState(false,JSON.stringify({message:'Durable recovery requires retry',originalFailure:final?.failure||sanitizedFailure(error,final?.phase),recoveryFailure:final?.recoveryFailure}),true,'durable_resume_required',final?.mutationPossible?'after_start':'before_start',true,recoveryId).catch(()=>undefined);
+    const workerUncertain=['WORKER_STATE_UNCERTAIN','WORKER_DEADLINE_EXCEEDED'].includes(error?.code);
+    // A historical terminal phase does not certify a newly timed-out worker.
+    // Existing recovery-required state blocks the normal caller/CLI retry path.
+    if(workerUncertain||(final?.phase!=='ROLLBACK_COMPLETE'&&final?.phase!=='COMMITTED'))
+      await updateState(false,JSON.stringify({message:'Durable recovery requires retry',originalFailure:final?.failure||sanitizedFailure(error,final?.phase),recoveryFailure:error.handoverRecoveryFailure||sanitizedFailure(error,final?.phase)}),true,'durable_resume_required',final?.mutationPossible?'after_start':'before_start',true,recoveryId).catch(()=>undefined);
     throw error;
   }
 }
