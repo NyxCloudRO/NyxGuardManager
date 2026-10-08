@@ -25,14 +25,19 @@ compatible VPN Agent 5.0.1; it introduces no new migration.
   VPN Agent remains 5.0.1; Manager and Agent restart as a pair so the Agent
   joins the current Manager network namespace.
 
+- Preserve verified Compose identity through Manager/Agent handover and automatic boot.
+- Preserve the Docker socket-access group with default monitored container names,
+  restoring container uptime and aggregate resource metrics.
+
 ## Ubuntu 26.04 LTS
 
 Manager/MariaDB operation, installer execution with Ubuntu's Docker/Compose
 packages, schema 45, application APIs, systemd startup, and reboot persistence
-were accepted on Ubuntu 26.04.1 LTS. The LXC certification host did not expose
-TUN, so its VPN tunnel capability was not proven; Manager-only behavior was
-accepted. Full VPN operation still requires hypervisor TUN permission and a
-reachable remote WireGuard endpoint.
+were accepted on Ubuntu 26.04.1 LTS. The LXC certification host was subsequently given usable TUN through the
+validated minimal host prerequisite. Agent installation/repair, real WireGuard
+handshakes, controlled connectivity, paired restart and cold reboot were accepted.
+VPN operation requires usable host TUN and a reachable WireGuard endpoint; the
+installer does not configure Proxmox host permissions.
 
 ## Updating
 
