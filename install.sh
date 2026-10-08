@@ -7,13 +7,18 @@ set -euo pipefail
 INSTALL_DIR="${INSTALL_DIR:-/opt/nyxguardmanager}"
 IMAGE_REPO="${IMAGE_REPO:-nyxmael/nyxguardmanager}"
 VPN_AGENT_REPO="${VPN_AGENT_REPO:-nyxmael/nyxguardmanager-vpn-agent}"
+INSTANCE="${NYXGUARD_INSTANCE:-nyxguard}"
+VAULT_DIR="${NYXGUARD_VAULT_DIR:-/var/lib/nyxguard-licensing}"
+HTTP_PORT="${NYXGUARD_HTTP_PORT:-80}"
+HTTPS_PORT="${NYXGUARD_HTTPS_PORT:-443}"
+ADMIN_PORT="${NYXGUARD_ADMIN_PORT:-8443}"
 APP_TAG="${APP_TAG:-}" # Optional override (example: 5.0.3). If empty, auto-detect latest.
 NYXGUARD_PROMETHEUS_SCRAPER_IP="${NYXGUARD_PROMETHEUS_SCRAPER_IP:-}"
 REQUIRE_VPN="${NYXGUARD_REQUIRE_VPN:-0}" # Set to 1 to abort when /dev/net/tun is unavailable.
 
 vpn_agent_tag_for_manager() {
   case "$(normalize_semver "$1")" in
-    5.0.5|5.0.4|5.0.3|5.0.2|5.0.1) echo 5.0.1 ;;
+    5.0.6|5.0.5|5.0.4|5.0.3|5.0.2|5.0.1) echo 5.0.1 ;;
     5.0.0) echo 5.0.0 ;;
     4.0.14|4.0.15|4.0.16|4.0.17|4.0.18) normalize_semver "$1" ;;
     *) echo "ERROR: No published VPN compatibility contract for Manager $1." >&2; return 1 ;;
@@ -271,7 +276,7 @@ ensure_socket_gid() {
 }
 
 ensure_vault_key() {
-  local vault_dir=/var/lib/nyxguard-licensing
+  local vault_dir="$VAULT_DIR"
   local vault_file=${vault_dir}/vault.key
   local app_uid app_gid
   app_uid="$(sed -n 's/^PUID=//p' "${INSTALL_DIR}/.env" | tail -n 1)"
@@ -303,13 +308,13 @@ write_compose_file() {
   cat >"${INSTALL_DIR}/docker-compose.yml" <<'YAML'
 services:
   nyxguard-manager:
-    container_name: nyxguard-manager
+    container_name: __INSTANCE__-manager
     image: __IMAGE_REF__
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-      - "8443:8443"
+      - "__HTTP_PORT__:80"
+      - "__HTTPS_PORT__:443"
+      - "__ADMIN_PORT__:8443"
     environment:
       TZ: "${TZ:-UTC}"
       PUID: "${PUID:-1000}"
@@ -335,12 +340,12 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /proc/1/net/arp:/host/proc/net/arp:ro
       - nyxguard_vpn_auth:/run/nyxguard-vpn-auth:ro
-      - /var/lib/nyxguard-licensing/vault.key:/run/nyxguard-licensing/vault.key:ro
+      - __VAULT_DIR__/vault.key:/run/nyxguard-licensing/vault.key:ro
     depends_on:
       - db
 
   vpn-client-agent:
-    container_name: nyxguard-vpn-agent
+    container_name: __INSTANCE__-vpn-agent
     image: __VPN_AGENT_IMAGE_REF__
     restart: unless-stopped
     network_mode: "service:nyxguard-manager"
@@ -365,7 +370,7 @@ services:
       start_period: 10s
 
   db:
-    container_name: nyxguard-db
+    container_name: __INSTANCE__-db
     image: jc21/mariadb-aria:latest
     restart: unless-stopped
     environment:
@@ -380,17 +385,18 @@ services:
 
 volumes:
   nyxguard_data:
-    name: nyxguard_data
+    name: __INSTANCE___data
   nyxguard_letsencrypt:
-    name: nyxguard_letsencrypt
+    name: __INSTANCE___letsencrypt
   nyxguard_db:
-    name: nyxguard_db
+    name: __INSTANCE___db
   nyxguard_vpn:
-    name: nyxguard_vpn
+    name: __INSTANCE___vpn
   nyxguard_vpn_auth:
-    name: nyxguard_vpn_auth
+    name: __INSTANCE___vpn_auth
 YAML
 
+  sed -i "s|__INSTANCE__|${INSTANCE}|g;s|__VAULT_DIR__|${VAULT_DIR}|g;s|__HTTP_PORT__|${HTTP_PORT}|g;s|__HTTPS_PORT__|${HTTPS_PORT}|g;s|__ADMIN_PORT__|${ADMIN_PORT}|g" "${INSTALL_DIR}/docker-compose.yml"
   sed -i "s|__IMAGE_REF__|${image_ref}|g" "${INSTALL_DIR}/docker-compose.yml"
   sed -i "s|__VPN_AGENT_IMAGE_REF__|${vpn_agent_ref}|g" "${INSTALL_DIR}/docker-compose.yml"
 }
@@ -407,7 +413,7 @@ install_systemd_unit() {
     services=" nyxguard-manager db"
   fi
 
-  cat >/etc/systemd/system/nyxguardmanager.service <<UNIT
+  cat >/etc/systemd/system/${INSTANCE}manager.service <<UNIT
 [Unit]
 Description=NyxGuard Manager (Docker Compose)
 Requires=docker.service
@@ -427,13 +433,13 @@ WantedBy=multi-user.target
 UNIT
 
   systemctl daemon-reload
-  systemctl enable --now nyxguardmanager.service
+  systemctl enable --now "${INSTANCE}manager.service"
 }
 
 wait_for_manager_vpn_agent() {
   local attempt
   for attempt in {1..20}; do
-    if docker exec nyxguard-manager node -e '
+    if docker exec "${INSTANCE}-manager" node -e '
       const fs = require("fs");
       const token = fs.readFileSync("/run/nyxguard-vpn-auth/token", "utf8").trim();
       fetch("http://127.0.0.1:3198/status", { headers: { "X-NyxGuard-VPN-Token": token } })
@@ -457,6 +463,13 @@ start_vpn_stack() {
 
 main() {
   need_root
+  [[ "$INSTANCE" =~ ^[a-z][a-z0-9_-]{0,40}$ ]] || { echo "ERROR: Invalid installation instance." >&2; return 1; }
+  [[ "$VAULT_DIR" =~ ^/[A-Za-z0-9_./-]+$ && "$VAULT_DIR" != *".."* ]] || { echo "ERROR: Invalid vault directory." >&2; return 1; }
+  for port in "$HTTP_PORT" "$HTTPS_PORT" "$ADMIN_PORT"; do [[ "$port" =~ ^[0-9]+$ && "$port" -ge 1 && "$port" -le 65535 ]] || { echo "ERROR: Invalid service port." >&2; return 1; }; done
+  if [[ -f "$INSTALL_DIR/docker-compose.yml" ]]; then
+    echo "Existing installation retained. Use update.sh for guarded upgrades or same-version checks." >&2
+    return 1
+  fi
   install_base_packages
   install_docker
   install_node_exporter
@@ -500,17 +513,23 @@ main() {
   fi
   echo "Using image: ${image_ref}"
 
+  if [[ -n "${NYXGUARD_ACCEPTED_IMAGE_ID:-}" ]]; then
+    [[ "$NYXGUARD_ACCEPTED_IMAGE_ID" =~ ^sha256:[a-f0-9]{64}$ && "$(docker image inspect -f '{{.Id}}' "$image_ref")" == "$NYXGUARD_ACCEPTED_IMAGE_ID" ]] || { echo "ERROR: Prefetched target artifact differs." >&2; return 1; }
+  else
+    docker pull "$image_ref"
+  fi
+  [[ "$(docker image inspect -f '{{index .Config.Labels "org.opencontainers.image.version"}}' "$image_ref")" == "${selected_tag#v}" ]] || { echo "ERROR: Target artifact version differs." >&2; return 1; }
+  docker run --rm --network none --no-healthcheck --entrypoint node -e ACCEPTED_VERSION="${selected_tag#v}" "$image_ref" -e 'const fs=require("fs");if(JSON.parse(fs.readFileSync("/app/package.json")).version!==process.env.ACCEPTED_VERSION||process.env.NPM_BUILD_VERSION!==process.env.ACCEPTED_VERSION)process.exit(1)' || { echo "ERROR: Target runtime version identity differs." >&2; return 1; }
+  if [[ "${selected_tag#v}" == 5.0.6 ]]; then
+    vpn_agent_ref="${VPN_AGENT_REPO}:$(docker run --rm --network none --no-healthcheck --entrypoint node "$image_ref" --input-type=module -e 'import policy from "/app/internal/release-policy.mjs";console.log(policy.agent)')"
+  fi
+  if [[ "$vpn_enabled" == 1 ]]; then docker pull "$vpn_agent_ref"; fi
   ensure_socket_gid
   ensure_vault_key
 
   write_compose_file "${image_ref}" "${vpn_agent_ref}"
   write_version_file "${selected_tag}"
 
-  echo "Pulling images..."
-  docker pull "${image_ref}"
-  if [[ "${vpn_enabled}" == "1" ]]; then
-    docker pull "${vpn_agent_ref}"
-  fi
 
   echo "Starting stack..."
   if [[ "${vpn_enabled}" == "1" ]]; then
@@ -536,7 +555,7 @@ main() {
   fi
   echo ""
   echo "  Access the admin panel at:"
-  echo "  https://${host_ip}:8443/"
+  echo "  https://${host_ip}:${ADMIN_PORT}/"
   echo ""
   echo "  Note: The admin panel uses a self-signed certificate on"
   echo "  first launch. Your browser will show a security warning"

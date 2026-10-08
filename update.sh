@@ -16,12 +16,13 @@ CLI_BOOTSTRAP_SHA256="89eb4165bfdde3664a07d4a25385cc442ff0862bb01829e0783a817a5a
 MANAGER_ONLY_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upgrade/manager-only-handover.mjs"
 MANAGER_ONLY_SHA256="8a374930d5f421d5296886bc9b05141a79fafb6522d2bd8870b41d1cb476a470"
 
-SAME_MAJOR_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/v5.0.5/upgrade/same-major-bootstrap.mjs"
-SAME_MAJOR_SHA256="fc49690cb88c1b51275cb15a24447197f87fee6fecd3a20e73a0d049095e5738"
+SAME_MAJOR_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/v5.0.6/upgrade/same-major-bootstrap.mjs"
+SAME_MAJOR_SHA256="92a742c1b5b5792303ac62f4b72615460604ae656dfa58a7eccc5f9d4e963ae7"
 
 # Published release contracts; new Manager tags require an explicit Agent decision.
 vpn_agent_tag_for_manager() {
   case "$(normalize_semver "$1")" in
+    5.0.6) echo 5.0.1 ;;
     5.0.5|5.0.4|5.0.3|5.0.2|5.0.1) echo 5.0.1 ;;
     5.0.0) echo 5.0.0 ;;
     4.0.14|4.0.15|4.0.16|4.0.17|4.0.18) normalize_semver "$1" ;;
@@ -138,7 +139,9 @@ read_current_image_ref() {
   project="$(jq -er '.name | select(length > 0)' <<<"$config")" || return 1
   configured="$(jq -er '.services["nyxguard-manager"].image' <<<"$config")" || return 1
   case "$configured" in "$IMAGE_REPO":*|"$IMAGE_REPO"@sha256:*) ;;
-    *) echo "ERROR: Compose Manager image is outside the configured repository." >&2; return 1 ;;
+    *) if [[ "$configured" != "${NYXGUARD_ACCEPTED_IMAGE_ID:-}" || ! "$configured" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+         echo "ERROR: Compose Manager image is outside the configured repository." >&2; return 1
+       fi ;;
   esac
   containers="$(docker ps -aq --filter label=com.docker.compose.service=nyxguard-manager)" || return 1
   [[ -n "$containers" ]] || { echo "ERROR: No installed Manager Compose container." >&2; return 1; }
@@ -148,7 +151,7 @@ read_current_image_ref() {
   mapfile -t ids <<<"$containers"
   matches="$(docker inspect "${ids[@]}" | jq --arg file "$INSTALL_DIR/docker-compose.yml" --arg project "$project" '
     [.[] | select((.Config.Labels["com.docker.compose.project.config_files"] // "" | split(",") | .[0]) == $file
-      or .Config.Labels["com.docker.compose.project"] == $project)]')" || return 1
+      or .Config.Labels["com.docker.compose.project"] == $project) | select(.State.Running==true)]')" || return 1
   if [[ "$(jq length <<<"$matches")" != 1 ]]; then
     echo "ERROR: Expected exactly one installed Manager Compose container; runtime identity is ambiguous." >&2
     return 1
@@ -172,12 +175,12 @@ read_current_image_ref() {
       blocked: !!(state.manualRecoveryRequired || state.recoveryCleanupPending || state.activation ||
         state.restartPending || ["activating", "restart_pending", "recovery_required"].includes(state.stage)) }));
   ')" || return 1
-  version="$(jq -ern --argjson image "$image" --argjson container "$container" --argjson app "$evidence" --arg repo "$IMAGE_REPO" --arg accepted "${NYXGUARD_ACCEPTED_IMAGE_ID:-}" '
+  version="$(jq -ern --argjson image "$image" --argjson container "$container" --argjson app "$evidence" --arg repo "$IMAGE_REPO" --arg baseline "$([[ ${NYXGUARD_BASELINE_PLAN:-0} == 1 || -n ${NYXGUARD_ACCEPT_BASELINE:-} ]] && echo 1 || echo 0)" --arg accepted "${NYXGUARD_ACCEPTED_IMAGE_ID:-}" '
     $image[0] as $i |
     [$i.Config.Labels["org.opencontainers.image.version"],
       ($i.Config.Env[]? | select(startswith("NPM_BUILD_VERSION=")) | ltrimstr("NPM_BUILD_VERSION="))] |
     map(select(. != null and . != "") | ltrimstr("v")) | unique as $versions |
-    select($i.Id == $container.Image and $app.blocked == false) |
+    select($i.Id == $container.Image and ($app.blocked == false or $baseline == "1")) |
     select(any($i.RepoTags[]?; startswith($repo + ":")) or any($i.RepoDigests[]?; startswith($repo + "@sha256:")) or
       ($accepted | test("^sha256:[a-f0-9]{64}$")) and $i.Id == $accepted) |
     select(($versions | length) == 1) | $versions[0] as $v |
@@ -416,7 +419,7 @@ confirm_update() {
   echo "IMPORTANT NOTE"
   echo "- This update preserves existing production data."
   echo "- It does NOT remove Docker volumes (DB/config/certs stay intact)."
-  echo "- Only container image/service version is updated."
+  echo "- The updater verifies backup, migrations and operational data before commit."
   echo ""
   echo "Current image: ${current_ref}"
   echo "Target image : ${target_ref}"
@@ -467,6 +470,8 @@ upgrade_route() {
   local from="$(normalize_semver "$1")" to="$(normalize_semver "$2")"
   if ! is_semver "$from" || ! is_semver "$to"; then
     echo unsupported
+  elif [[ "$to" == 5.0.6 && "${from%%.*}" == 5 ]]; then
+    echo guarded_506
   elif [[ "$from" == 4.0.18 && "$to" == 5.0.0 ]]; then
     echo major_handover_500
   elif [[ "${from%%.*}" == "${to%%.*}" ]]; then
@@ -612,7 +617,7 @@ run_same_major_handover() (
       if [[ "${files%%,*}" == "$INSTALL_DIR/docker-compose.yml" ]]; then echo 1; fi
     done)"
   if [[ -n "${NYXGUARD_ACCEPTED_IMAGE_ID:-}" ]]; then
-    [[ ( "$target_tag" == 5.0.4 || "$target_tag" == 5.0.5 ) && "$NYXGUARD_ACCEPTED_IMAGE_ID" =~ ^sha256:[a-f0-9]{64}$ ]] || return 1
+    [[ ( "$target_tag" == 5.0.4 || "$target_tag" == 5.0.5 || "$target_tag" == 5.0.6 ) && "$NYXGUARD_ACCEPTED_IMAGE_ID" =~ ^sha256:[a-f0-9]{64}$ ]] || return 1
     target_ref="${NYXGUARD_TARGET_IMAGE_REF:-$target_ref}"
     [[ "$(docker image inspect -f '{{.Id}}' "$target_ref")" == "$NYXGUARD_ACCEPTED_IMAGE_ID" ]] || {
       echo "ERROR: Prefetched artifact differs from the accepted image." >&2; return 1;
@@ -621,17 +626,31 @@ run_same_major_handover() (
     echo "Pulling $target_ref..."
     docker pull "$target_ref"
   fi
+  if [[ "$target_tag" == 5.0.6 ]]; then
+    vpn_agent_ref="${VPN_AGENT_REPO}:$(docker run --rm --network none --no-healthcheck --entrypoint node "$target_ref" --input-type=module -e 'import policy from "/app/internal/release-policy.mjs";console.log(policy.agent)')"
+  fi
   if [[ -n "$vpn_installed" ]]; then
     echo "Pulling compatible $vpn_agent_ref..."
     docker pull "$vpn_agent_ref"
   fi
-  docker run --rm --network none --user 0:0 --entrypoint node \
+  local data_source
+  data_source="$(docker inspect "$(docker compose --env-file "$INSTALL_DIR/.env" -f "$INSTALL_DIR/docker-compose.yml" ps -q nyxguard-manager)" | jq -er '.[0].Mounts[] | select(.Destination=="/data") | if .Type=="volume" then .Name else .Source end')"
+  docker run --rm --network none --no-healthcheck --user 0:0 --entrypoint flock \
     --mount "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock" \
+    -v "$data_source:/handover-data" \
     --mount "type=bind,src=$bootstrap,dst=/tmp/same-major-bootstrap.mjs,readonly" \
     -e "CURRENT_VERSION=$current_tag" -e "TARGET_VERSION=$target_tag" \
     -e "TARGET_IMAGE_REF=$target_ref" \
     -e "HOST_INSTALL_DIR=$INSTALL_DIR" \
-    "$target_ref" /tmp/same-major-bootstrap.mjs
+    -e "BASELINE_PLAN_ONLY=${NYXGUARD_BASELINE_PLAN:-0}" \
+    -e "BASELINE_AUTHORIZATION=${NYXGUARD_ACCEPT_BASELINE:-}" -e "BASELINE_REASON=${NYXGUARD_BASELINE_REASON:-}" \
+    "$target_ref" -n /handover-data/.nyx-update.lock node /tmp/same-major-bootstrap.mjs
+  if [[ "${NYXGUARD_BASELINE_PLAN:-0}" == 1 ]]; then return; fi
+  if [[ "$target_tag" == 5.0.6 ]]; then
+    docker compose --env-file "$INSTALL_DIR/.env" -f "$INSTALL_DIR/docker-compose.yml" config -q
+    echo "Upgrade committed; installed metadata is pinned to the verified artifact."
+    return
+  fi
   # The immutable helper has verified health and persistence before config changes.
   update_compose_image_ref "$target_ref"
   if [[ -n "$vpn_installed" && -f "$INSTALL_DIR/docker-compose.vpn.yml" ]]; then
@@ -647,6 +666,23 @@ main() {
   require_install_files
   local current_ref current_repo current_tag latest_tag target_tag target_ref vpn_agent_ref vpn_enabled vpn_requested
 
+  local lock_fd verified_ref
+  exec {lock_fd}>"${INSTALL_DIR}/.update.lock"
+  if ! flock -n "$lock_fd"; then
+    echo "ERROR: Another host-side update is running." >&2
+    exit 1
+  fi
+  if [[ "${NYXGUARD_RESUME:-0}" == 1 ]]; then
+    local helper image data_source
+    helper="$(docker ps -aq --filter label=nyxguard.install-dir="$INSTALL_DIR" --filter label=nyxguard.target-version=5.0.6 | head -1)"
+    [[ -n "$helper" ]] || { echo "ERROR: No retained 5.0.6 helper for this installation." >&2; return 1; }
+    image="$(docker inspect -f '{{.Image}}' "$helper")"
+    data_source="$(docker inspect "$helper" | jq -er '.[0].Mounts[] | select(.Destination=="/handover-data") | if .Type=="volume" then .Name else .Source end')"
+    docker run --rm --network none --no-healthcheck --user 0:0 --entrypoint flock \
+      -v /var/run/docker.sock:/var/run/docker.sock -v "$data_source:/handover-data" \
+      -e HOST_INSTALL_DIR="$INSTALL_DIR" "$image" -n /handover-data/.nyx-update.lock node /app/internal/resume-upgrade.mjs
+    return
+  fi
   current_ref="$(read_current_image_ref)"
   if [[ -z "${current_ref}" ]]; then
     echo "ERROR: Could not verify the installed NyxGuard Manager runtime." >&2
@@ -687,12 +723,6 @@ main() {
     echo "Keep the current installation running and wait for the corrective release. Installation was not changed." >&2
     return 1
   fi
-  local lock_fd verified_ref
-  exec {lock_fd}>"${INSTALL_DIR}/.update.lock"
-  if ! flock -n "$lock_fd"; then
-    echo "ERROR: Another host-side update is running." >&2
-    exit 1
-  fi
   verified_ref="$(read_current_image_ref)" || return 1
   if [[ "$verified_ref" != "$current_ref" ]]; then
     echo "ERROR: Manager runtime changed during discovery; rerun the updater." >&2
@@ -716,7 +746,7 @@ main() {
     run_major_handover_500
     return
   fi
-  if [[ ( "$current_tag" == 5.0.1 || "$current_tag" == 5.0.2 || "$current_tag" == 5.0.3 || "$current_tag" == 5.0.4 ) && "$target_tag" == 5.0.5 ]] ||
+  if [[ "$route" == guarded_506 ]] || [[ ( "$current_tag" == 5.0.1 || "$current_tag" == 5.0.2 || "$current_tag" == 5.0.3 || "$current_tag" == 5.0.4 ) && "$target_tag" == 5.0.5 ]] ||
      [[ ( "$current_tag" == 5.0.1 || "$current_tag" == 5.0.2 || "$current_tag" == 5.0.3 ) && "$target_tag" == 5.0.4 ]] ||
      [[ "$current_tag" == 5.0.1 && ( "$target_tag" == 5.0.2 || "$target_tag" == 5.0.3 ) ]] ||
      [[ "$current_tag" == 5.0.2 && "$target_tag" == 5.0.3 ]]; then
@@ -724,7 +754,7 @@ main() {
       echo "ERROR: Guarded handover requires the published compatible images." >&2
       exit 1
     fi
-    confirm_update "$current_ref" "$target_ref" || exit 0
+    if [[ "${NYXGUARD_BASELINE_PLAN:-0}" != 1 ]]; then confirm_update "$current_ref" "$target_ref" || exit 0; fi
     run_same_major_handover
     return
   fi

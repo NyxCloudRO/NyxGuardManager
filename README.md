@@ -7,7 +7,7 @@
 <p align="center">A self-hosted reverse proxy with application protection, traffic intelligence,<br />WireGuard access and operational diagnostics.</p>
 
 <p align="center">
-  <a href="https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.4"><img src="https://img.shields.io/badge/release-5.0.4-00c8e8?style=flat-square" alt="Release 5.0.4" /></a>
+  <a href="https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.6"><img src="https://img.shields.io/badge/release-5.0.6-00c8e8?style=flat-square" alt="Release 5.0.6" /></a>
   <a href="https://hub.docker.com/r/nyxmael/nyxguardmanager"><img src="https://img.shields.io/docker/pulls/nyxmael/nyxguardmanager?color=00c8e8&amp;style=flat-square" alt="Docker pulls" /></a>
   <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-NMPLA-5279b8?style=flat-square" alt="NMPLA license" /></a>
 </p>
@@ -23,9 +23,9 @@
 
 Manage HTTPS applications, certificates, access policies, traffic and remote VPN sites from one interface. Configuration, certificates and operational history stay on your infrastructure.
 
-**Current release · 5.0.4** brings guarded upgrades and recovery, consistent License and Support pages, truthful rule expiration, reliable Docker metrics and validated Ubuntu 26.04 LTS operation. Manager 5.0.4 uses **VPN Agent 5.0.1** and retains **schema 45**.
+**Current release · 5.0.6** simplifies installation and guarded upgrades with one compatibility policy and shared updater bootstrap. Migration readiness follows bounded, real progress before application health; interrupted upgrades restore the verified source. Explicit current-baseline acceptance preserves historical recovery evidence when old artifacts are unavailable. Manager 5.0.6 uses **VPN Agent 5.0.1** and retains **schema 45**.
 
-[Read the release notes](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.4) · [Browse the changelog](CHANGELOG.md)
+[Read the release notes](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.6) · [Browse the changelog](CHANGELOG.md)
 
 <a id="quick-install"></a>
 
@@ -89,13 +89,13 @@ HTTP-01 certificates need public inbound TCP 80. DNS challenges need the provide
 <details>
 <summary>Manual Docker Compose installation</summary>
 
-For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.4 uses VPN Agent 5.0.1. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
+For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.6 uses VPN Agent 5.0.1. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
 
 ```yaml
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:5.0.4
+    image: nyxmael/nyxguardmanager:5.0.6
     restart: unless-stopped
     ports:
       - "80:80"
@@ -227,7 +227,7 @@ Use the guarded host updater for standard installations:
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | sudo bash
 ```
 
-The 5.0.4 supported source paths are **5.0.1, 5.0.2 and 5.0.3**. The updater protects the previous installation's DB/files/configuration, verifies the replacement and application data, and restores the protected source if activation fails. It preserves Manager-only or installed VPN topology. Retain your own independent database and volume backup.
+The 5.0.6 updater supports source versions **5.0.0, 5.0.1, 5.0.2, 5.0.3, 5.0.4 and 5.0.5**. The updater protects the previous installation's DB/files/configuration, verifies the replacement and application data, and restores the protected source if activation fails. It preserves Manager-only or installed VPN topology. Retain your own independent database and volume backup.
 
 The built-in updater offers check/download/apply. Do not force an unsupported transition or replace guarded updates with a bare Compose image switch. After updating, verify login, settings, proxy hosts, traffic/history, License, diagnostics, and configured VPN sites, then verify restart persistence.
 
@@ -311,3 +311,22 @@ Created by **Vlad-Eusebiu Cardei** to bring security, observability and predicta
 NyxGuard Manager is free to use in internal personal and commercial environments under the **NyxGuard Manager Proprietary License (NMPLA)**. Modification, redistribution, resale and third-party hosting are not permitted. Read the full [license](LICENSE.md).
 
 [Changelog](CHANGELOG.md) · [Release source map](release-source/README.md)
+
+### Current baseline acceptance and interrupted upgrades
+
+5.0.6 uses one release compatibility policy, Compose service metadata, a verified restorable backup, bounded migration progress, application/data checks and a durable commit or verified rollback. Migration progress never counts as healthy application startup. Existing operational records and secrets remain protected; only reviewed traffic counter history permits normal retention and live increments. Expired security rules remain stored and inactive.
+
+A healthy installation trapped by unavailable historical recovery artifacts can explicitly accept a **fresh verified current baseline**. This preserves the old ledger and raw state with historical rollback unverified; it does not certify the missing original recovery point.
+
+```bash
+curl -fsSLo /root/nyxguard-update.sh https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/v5.0.6/update.sh
+sudo env INSTALL_DIR=/opt/nyxguardmanager FORCE_TAG=5.0.6 NYXGUARD_BASELINE_PLAN=1 bash /root/nyxguard-update.sh
+# Review the installation-bound challenge, then explicitly authorize acceptance:
+sudo env INSTALL_DIR=/opt/nyxguardmanager FORCE_TAG=5.0.6 NYXGUARD_AUTO_YES=1 \
+  NYXGUARD_ACCEPT_BASELINE='<reviewed challenge>' \
+  NYXGUARD_BASELINE_REASON='<administrator reason>' bash /root/nyxguard-update.sh
+```
+
+For an interrupted 5.0.6 transaction, use the same updater with `NYXGUARD_RESUME=1`. It resumes the original durable helper under the shared installation lock; an uncommitted migration returns to the verified source before a fresh retry. Do not clear recovery flags manually or manufacture manifests. Retain recovery volumes and baseline receipts.
+
+Fresh independent installations can use `NYXGUARD_INSTANCE`, `NYXGUARD_VAULT_DIR`, `NYXGUARD_HTTP_PORT`, `NYXGUARD_HTTPS_PORT` and `NYXGUARD_ADMIN_PORT`; defaults preserve the existing installation layout. The installer refuses to overwrite an existing installation directory.

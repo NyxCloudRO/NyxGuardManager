@@ -20,11 +20,12 @@ const legacyApi = (method, endpoint, body = null) => new Promise((resolve, rejec
 	request.end();
 });
 const api = async (...args) => {
-  if(['5.0.4','5.0.5'].includes(process.env.TARGET_VERSION)) return (await import('/app/internal/recovery-docker.mjs')).docker(...args);
+  if(/^5\.(?:[1-9]\d*\.\d+|0\.(?:[4-9]|[1-9]\d+))$/.test(process.env.TARGET_VERSION||'')) return (await import('/app/internal/recovery-docker.mjs')).docker(...args);
   return legacyApi(...args);
 };
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const q = encodeURIComponent;
+const releasePolicy=/^5\.(?:[1-9]\d*\.\d+|0\.(?:[6-9]|[1-9]\d+))$/.test(process.env.TARGET_VERSION||'')?(await import('/app/internal/release-policy.mjs')).default:null;
 let image;
 let vpnImage;
 let oldManager, oldVpn, newManagerId, newVpnId, helperId;
@@ -41,18 +42,18 @@ export function selectTopology(containers, installDir) {
 	const matching = (service) => containers.filter((item) =>
 		item.Labels?.["com.docker.compose.service"] === service &&
 		String(item.Labels?.["com.docker.compose.project.config_files"] || "").split(",")[0] === configFile);
-	const managers = matching("nyxguard-manager");
+	const managers = matching("nyxguard-manager").filter(c=>c.State==='running');
 	if (managers.length !== 1) throw new Error(`Expected exactly one installed Manager; found ${managers.length}`);
 	const manager = managers[0];
 	const project = manager.Labels?.["com.docker.compose.project"];
 	if (!project) throw new Error("Manager has no Compose project identity");
 	const withinProject = (service) => matching(service).filter((item) => item.Labels?.["com.docker.compose.project"] === project);
-	const databases = withinProject("db");
+	const databases = withinProject("db").filter(c=>c.State==='running');
 	if (databases.length !== 1) throw new Error(`Expected exactly one installed database; found ${databases.length}`);
-	const vpns = withinProject("vpn-client-agent");
+	const vpns = withinProject("vpn-client-agent").filter(c=>c.State==='running');
 	if (vpns.length > 1) throw new Error(`Ambiguous VPN agents in Compose project ${project}`);
-	if (matching("vpn-client-agent").length !== vpns.length) throw new Error("VPN service has inconsistent Compose project labels");
-	if (containers.some((item) => item.Id !== vpns[0]?.Id &&
+	if (matching("vpn-client-agent").filter(c=>c.State==='running').length !== vpns.length) throw new Error("VPN service has inconsistent Compose project labels");
+	if (!releasePolicy && containers.some((item) => item.Id !== vpns[0]?.Id &&
 		(item.Names || []).includes("/nyxguard-vpn-agent"))) {
 		throw new Error("A VPN container exists outside the installed Compose service");
 	}
@@ -68,6 +69,7 @@ async function checkedContainer(summary, expectedImage) {
 }
 
 export function supportedTransition(current, target) {
+  if(target===releasePolicy?.version)return Object.hasOwn(releasePolicy.sources,current);
 	return (["5.0.1","5.0.2","5.0.3","5.0.4"].includes(current) && target === "5.0.5") ||
 		(["5.0.1","5.0.2","5.0.3"].includes(current) && target === "5.0.4") ||
 		(current === "5.0.1" && ["5.0.2", "5.0.3"].includes(target)) ||
@@ -95,13 +97,12 @@ async function setup() {
 	oldManager = await checkedContainer(topology.manager, `nyxmael/nyxguardmanager:${currentVersion}`);
 	const database = await api("GET", `/containers/${q(topology.database.Id)}/json`);
 	if (!database.State?.Running) throw new Error("Installed database is not running");
+  if(releasePolicy)(await import("/app/internal/release-policy.mjs")).assertDatabasePair(oldManager,database);
 	const names = all.flatMap((item) => item.Names || []);
-	const activeHelpers = all.some(item=>(item.Names||[]).some(name=>/^\/nyxguard-update-handover/.test(name)) && item.State!=='exited');
-	// Stopped helpers remain evidence. A healthy canonical previous runtime and
-	// absence of rollback containers identify a completed, reconciled attempt.
-	if (activeHelpers || names.some((name) => /^\/nyxguard-(recovery-|manager-rollback-|vpn-agent-rollback-)/.test(name))) {
-		throw new Error("An existing handover or rollback container needs review before retrying");
-	}
+  for(const summary of all.filter(c=>(c.Names||[]).some(name=>/^\/nyxguard-update-handover/.test(name))&&c.State!=='exited')){
+    const helper=await api('GET',`/containers/${summary.Id}/json`);
+    if(helper.Config.Env?.includes('OLD_MANAGER_ID='+oldManager.Id)||helper.Config.Env?.includes('NEW_MANAGER_ID='+oldManager.Id)||helper.Config.Labels?.['nyxguard.install-dir']===installDir)throw new Error('An active handover owns this installation; use supported resume after it exits');
+  }
 	if (topology.vpn) {
 		oldVpn = await checkedContainer(topology.vpn, "nyxmael/nyxguardmanager-vpn-agent:5.0.1");
 		if (!vpnImage || oldVpn.Image !== vpnImage) throw new Error("Installed VPN Agent differs from the published compatible image");
@@ -110,6 +111,15 @@ async function setup() {
 	if (!data || !["volume", "bind"].includes(data.Type)) throw new Error("Persistent Manager /data mount not found");
 	const dataSource = data.Type === "volume" ? data.Name : data.Source;
 	if (!dataSource) throw new Error("Invalid Manager /data mount");
+  if(process.env.BASELINE_PLAN_ONLY==='1'||process.env.BASELINE_AUTHORIZATION) {
+    const {docker}=await import('/app/internal/recovery-docker.mjs');
+    const identity={Id:oldManager.Id,Image:oldManager.Image,Mounts:oldManager.Mounts,Config:{Labels:oldManager.Config.Labels}};
+    const c=await docker('POST','/containers/create',{Image:image,Entrypoint:['node','/app/internal/baseline-plan-cli.mjs'],Env:['BASELINE_MANAGER='+JSON.stringify(identity)],Healthcheck:{Test:['NONE']},HostConfig:{Binds:[dataSource+':/handover-data:ro'],NetworkMode:'none'}});
+    await docker('POST',`/containers/${c.Id}/start`);
+    let planVerified=false;
+    for(let n=0;n<30;n++){const info=await docker('GET',`/containers/${c.Id}/json`);if(!info.State.Running){const raw=String(await docker('GET',`/containers/${c.Id}/logs?stdout=1&stderr=1`));const clean=raw.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,'');if(info.State.ExitCode)throw new Error('Baseline plan refused; inspect plan helper logs');const plan=JSON.parse(clean.slice(clean.indexOf('{'),clean.lastIndexOf('}')+1));planVerified=true;await docker('DELETE',`/containers/${c.Id}`);if(process.env.BASELINE_PLAN_ONLY==='1'){console.log(JSON.stringify(plan));return;}if(process.env.BASELINE_AUTHORIZATION!==plan.challenge||!process.env.BASELINE_REASON?.trim())throw new Error('BASELINE_REQUIRED: authorization differs; request a fresh plan before retrying');break;}await sleep(1000);}
+    if(!planVerified)throw new Error('Baseline plan deadline exceeded');
+  }
 	const socketGid = (await fs.stat("/var/run/docker.sock")).gid;
 	const token = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 	const oldManagerName = String(oldManager.Name).replace(/^\//, "");
@@ -118,10 +128,11 @@ async function setup() {
 		!["org.opencontainers.image.version", "org.opencontainers.image.revision", "org.opencontainers.image.created", "com.docker.compose.image"].includes(key)));
 	const managerConfig = {
 		Image: image,
+    NetworkingConfig:{EndpointsConfig:Object.fromEntries(Object.entries(oldManager.NetworkSettings.Networks).map(([name,network])=>[name,{Aliases:network.Aliases,IPAMConfig:network.IPAMConfig}]))},
 		Env: (oldManager.Config.Env || []).filter((entry) => !/^NPM_BUILD_(VERSION|COMMIT|DATE)=/.test(entry)),
 		Cmd: oldManager.Config.Cmd, Entrypoint: oldManager.Config.Entrypoint,
 		WorkingDir: oldManager.Config.WorkingDir, ExposedPorts: oldManager.Config.ExposedPorts,
-		Healthcheck: ["5.0.4","5.0.5"].includes(targetVersion) ? target.Config.Healthcheck : oldManager.Config.Healthcheck, Labels: {...safeLabels(oldManager.Config.Labels),"com.docker.compose.image":image},
+		Healthcheck: ["5.0.4","5.0.5","5.0.6"].includes(targetVersion) ? target.Config.Healthcheck : oldManager.Config.Healthcheck, Labels: {...safeLabels(oldManager.Config.Labels),"com.docker.compose.image":image},
 		HostConfig: {
 			Binds: oldManager.HostConfig.Binds, PortBindings: oldManager.HostConfig.PortBindings,
 			RestartPolicy: oldManager.HostConfig.RestartPolicy, NetworkMode: oldManager.HostConfig.NetworkMode,
@@ -155,11 +166,13 @@ async function setup() {
 	}
 	const helper = await api("POST", `/containers/create?name=${q(`nyxguard-update-handover-${token}`)}`, {
 		Image: image, Entrypoint: ["node", "/app/internal/update-handover.js"], Cmd: [], Healthcheck:{Test:["NONE"]},
+    Labels:{"nyxguard.install-dir":installDir,"nyxguard.target-version":targetVersion},
 		Env: [
 			`OLD_MANAGER_ID=${oldManager.Id}`, `OLD_MANAGER_NAME=${oldManagerName}`,
 			`NEW_MANAGER_ID=${newManagerId}`, `TARGET_IMAGE_ID=${image}`,
 			...(oldVpn ? [`OLD_VPN_ID=${oldVpn.Id}`, `OLD_VPN_NAME=${oldVpnName}`, `NEW_VPN_ID=${newVpnId}`] : []),
 			`CURRENT_VERSION=${currentVersion}`, `TARGET_VERSION=${targetVersion}`,
+      `BASELINE_AUTHORIZATION=${process.env.BASELINE_AUTHORIZATION||''}`,`BASELINE_REASON=${process.env.BASELINE_REASON||''}`,
 		],
 		HostConfig: { Binds: ["/var/run/docker.sock:/var/run/docker.sock", `${dataSource}:/handover-data`], NetworkMode: "none" },
 	});

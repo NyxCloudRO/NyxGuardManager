@@ -1,0 +1,24 @@
+{
+  "format": "nyxguard-release-policy-v1",
+  "version": "5.0.6",
+  "schema": 45,
+  "agent": "5.0.1",
+  "sources": {
+    "5.0.0": 42,
+    "5.0.1": 42,
+    "5.0.2": 43,
+    "5.0.3": 45,
+    "5.0.4": 45,
+    "5.0.5": 45
+  },
+  "readiness": {
+    "startupIdleMs": 60000,
+    "migrationIdleMs": 45000,
+    "workUnitBudgetMs": 100,
+    "fixedBudgetMs": 120000,
+    "maximumBudgetMs": 1800000
+  },
+  "volatileTelemetry": [
+    "nyxguard_traffic_stat"
+  ]
+}

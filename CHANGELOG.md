@@ -1,8 +1,38 @@
 # Changelog
 
+## 5.0.6 — Corrective updater release
+
+- Shared release policy for schema/version/Agent compatibility and one paired-container bootstrap for host and application updates.
+- Compose metadata identifies database and persistent mounts; preserve override image/readiness settings coherently.
+- Bounded progress-based migration readiness, fatal migration errors and SQL deadlines; batch existing audit privacy backfill without changing its meaning.
+- Explicit auditable current-baseline acceptance after verified current backup/restore; preserve historical failures and staging evidence without claiming historical rollback.
+- Exact protection for operational tables, licensing, authentication, TLS and VPN identities; semantic checks for reviewed traffic telemetry and live monitor cursors.
+- Preserve expired security rules as inactive configuration rather than deleting them during startup.
+- Shared installation lock, supported interrupted transaction resume and isolated installer instance settings.
+
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [5.0.5] - 2026-10-08
+
+NyxGuard Manager 5.0.5 strengthens the existing updater, protected backups, and recovery workflow. The database remains at schema 45, and VPN Agent 5.0.1 remains compatible.
+
+### Update and recovery
+
+- Corrected the Docker stop-request deadline to allow the configured stop grace period to complete, and retained sanitized original errors when rollback fails.
+- Require authoritative protected-backup completion evidence before replacement startup; a successful worker exit alone cannot advance the update or permit database migration.
+- Added finite recovery-worker deadlines with explicit diagnostics and worker-state accounting. Uncertain outcomes retain durable recovery state and block unsafe concurrent retries.
+- Strengthened rollback safeguards: recovery verifies restored database and protected data, source-container health, and Compose identity before reporting completion. Unverified recovery remains `recovery_required`.
+- Extended durable transaction version compatibility to target 5.0.5 and recognize 5.0.4 with schema 45 as an upgrade source, while preserving historical recovery transactions.
+
+### Validated upgrade paths
+
+- Validated full upgrades from 5.0.1 (schema 42) to 5.0.5 (schema 45), and from 5.0.4 (schema 45) to 5.0.5 (schema 45).
+- Verified protected-data integrity, rollback and interrupted recovery, Manager/Agent and Compose health, authenticated UI and Docker metrics, real WireGuard connectivity, and cold startup.
+
+Retain an independent database and volume backup before updating. Rollback after database migration requires a verified pre-upgrade recovery set; configuration exports alone cannot restore the database.
 
 ## [5.0.4] - 2026-10-07
 
