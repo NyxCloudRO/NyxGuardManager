@@ -66,3 +66,35 @@ test('corrupt/incomplete/cross-transaction state fails closed',async()=>{
   await assert.rejects(persistTransaction(file,{...initial(),source:{...initial().source,schema:45}}));
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('first failure survives successful rollback and repeated resume without private text',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'nyx-first-failure-')),file=path.join(root,'transaction.json'),host=installation();
+ try {
+  host.effects.backup=async()=>{throw Object.assign(new TypeError('token=PRIVATE_SENTINEL https://user:password@private.invalid'),{code:'ECONNRESET'});};
+  const result=await runTransaction(initial(),host.effects,t=>persistTransaction(file,t));
+  assert.equal(result.result,'rollback');
+  assert.deepEqual(result.transaction.failure,{category:'TypeError',code:'ECONNRESET',message:'Failure details withheld',phase:'BACKUP_STARTING'});
+  assert.ok(!(await fs.readFile(file,'utf8')).includes('PRIVATE_SENTINEL'));
+  const saved=await loadTransaction(file,identity);
+  const resumed=await runTransaction(saved,host.effects,t=>persistTransaction(file,t),true);
+  assert.deepEqual(resumed.transaction.failure,saved.failure);
+ } finally {await fs.rm(root,{recursive:true,force:true});}
+});
+
+test('worker timeout blocks rollback before source start and preserves both errors',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'nyx-worker-refusal-')),file=path.join(root,'transaction.json'),host=installation();
+ try {
+  let starts=0;
+  host.effects.backup=async()=>{throw new Error('Docker API deadline exceeded');};
+  host.effects.stopReplacement=async()=>{throw Object.assign(new Error('Recovery worker deadline exceeded; worker still running'),{code:'WORKER_DEADLINE_EXCEEDED'});};
+  host.effects.startSource=async()=>{starts++;};
+  await assert.rejects(runTransaction(initial(),host.effects,t=>persistTransaction(file,t)),error=>{
+   assert.equal(error.handoverFailure.message,'Docker API deadline exceeded');
+   assert.equal(error.handoverRecoveryFailure.code,'WORKER_DEADLINE_EXCEEDED');return true;
+  });
+  const saved=await loadTransaction(file,identity);
+  assert.equal(saved.phase,'ROLLBACK_REQUIRED');assert.equal(starts,0);
+  assert.equal(saved.failure.phase,'BACKUP_STARTING');
+  assert.equal(saved.recoveryFailure.code,'WORKER_DEADLINE_EXCEEDED');
+ } finally {await fs.rm(root,{recursive:true,force:true});}
+});

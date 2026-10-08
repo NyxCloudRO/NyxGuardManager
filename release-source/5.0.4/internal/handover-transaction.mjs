@@ -3,6 +3,22 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {durableJson} from './recovery-files.mjs';
 
+// Only controlled diagnostic text is retained. Arbitrary exception messages,
+// URL contents, response bodies and environment values never enter the journal.
+export function sanitizedFailure(error, phase) {
+  const categories = new Set(['Error','TypeError','RangeError','SyntaxError','AbortError']);
+  const category = categories.has(error?.name) ? error.name : 'Error';
+  const code = /^(?:E[A-Z0-9_]{2,30}|WORKER_STATE_UNCERTAIN|WORKER_DEADLINE_EXCEEDED)$/.test(error?.code||'') ? error.code : undefined;
+  const raw = String(error?.message||'');
+  let message = 'Failure details withheld';
+  if (/^(Docker API deadline exceeded|Docker response limit exceeded|Recovery worker final state uncertain|Recovery worker deadline exceeded; worker still running|Handover interrupted before health commit)$/.test(raw)) message = raw;
+  const docker = raw.match(/^Docker (GET|POST|DELETE) \/[^\s]+ failed: (\d{3})$/);
+  if (docker) message = `Docker ${docker[1]} request failed: ${docker[2]}`;
+  const worker = raw.match(/^Same-major recovery (backup|restore|verify|metadata|finalize|cleanup|pair|verify-source) failed with exit (-?\d+)$/);
+  if (worker) message = `Same-major recovery ${worker[1]} failed with exit ${worker[2]}`;
+  return {category, ...(code?{code}:{}), message, ...(phases.has(phase)?{phase}:{})};
+}
+
 export const sourceSchemas = {'5.0.1':42,'5.0.2':43,'5.0.3':45};
 const phases = new Set(['INITIALIZED','SOURCE_VERIFIED','REPLACEMENT_PREPARED','BACKUP_STARTING','BACKUP_VERIFIED',
   'REPLACEMENT_STARTING','REPLACEMENT_READY','APPLICATION_DATA_VERIFIED','COMMITTING','COMMITTED',
@@ -76,7 +92,16 @@ export async function runTransaction(t, effects, save, resumed=false) {
     // No rollback is allowed after a durable commit. A failed acknowledgement
     // of that write is resolved only by re-reading on the next invocation.
     if(t.committed)throw error;
-    await rollback();return {transaction:t,result:'rollback',error};
+    t={...t,failure:t.failure||sanitizedFailure(error,t.phase)};
+    try { await rollback(); }
+    catch (recoveryError) {
+      t={...t,recoveryFailure:sanitizedFailure(recoveryError,t.phase),sequence:t.sequence+1};
+      await save(t);
+      recoveryError.handoverFailure=t.failure;
+      recoveryError.handoverRecoveryFailure=t.recoveryFailure;
+      throw recoveryError;
+    }
+    return {transaction:t,result:'rollback',error};
   }
   await effects.finishCommit(t);return {transaction:t,result:'committed'};
 }

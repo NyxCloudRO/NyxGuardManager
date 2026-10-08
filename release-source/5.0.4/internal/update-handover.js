@@ -5,6 +5,8 @@ import {docker as negotiatedDocker} from "./recovery-docker.mjs";
 import {dockerHealthcheck,policy} from './readiness-policy.mjs';
 import {durableJson} from './recovery-files.mjs';
 import {assertUpdateTarget} from './update-contract.mjs';
+import {recoveryWorkerWait} from './recovery-worker-wait.mjs';
+import {sanitizedFailure} from './handover-transaction.mjs';
 
 const env = process.env;
 let interrupted = false;
@@ -15,6 +17,9 @@ function assertNotInterrupted() {
 	if (interrupted) throw new Error("Handover interrupted before health commit");
 }
 const api = negotiatedDocker;
+// Reuse a worker's deadline across forward execution and rollback in this
+// invocation; an expired forward wait cannot buy a second full rollback wait.
+const waitRecoveryWorker = recoveryWorkerWait(id => api('GET', `/containers/${id}/json`));
 
 const ignore = (promise) => promise.catch(() => undefined);
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -216,7 +221,7 @@ async function runSameMajorWorker(mode, recoveryId, volumes, transaction = null)
   let previous;
   try{previous=await api('GET',`/containers/${name}/json`);}catch(error){if(!/failed: 404$/.test(error.message))throw error;}
   if(previous) {
-    while(previous.State.Running){await sleep(1000);previous=await api('GET',`/containers/${previous.Id}/json`);}
+    previous=await waitRecoveryWorker(previous.Id);
     if(mode==='backup'&&previous.State.ExitCode===0)return;
     await api('DELETE',`/containers/${previous.Id}`);
   }
@@ -233,14 +238,9 @@ async function runSameMajorWorker(mode, recoveryId, volumes, transaction = null)
 	});
 	try {
 		await api("POST", `/containers/${created.Id}/start`);
-		while (true) {
-			const status = await api("GET", `/containers/${created.Id}/json`);
-			if (!status.State?.Running) {
-				if (status.State?.ExitCode !== 0) throw new Error(`Same-major recovery ${mode} failed with exit ${status.State?.ExitCode}`);
-				return;
-			}
-			await sleep(1000);
-		}
+		const status = await waitRecoveryWorker(created.Id);
+		if (status.State.ExitCode !== 0) throw new Error(`Same-major recovery ${mode} failed with exit ${status.State.ExitCode}`);
+		return;
 	} finally {
 		const final = await api("GET", `/containers/${created.Id}/json`).catch(() => null);
 		if (final && !final.State?.Running && final.State.ExitCode === 0)
@@ -544,24 +544,27 @@ async function runSameMajorHandover() {
         let child=await inspect(summary.Id);
         if(!child?.Config.Env.includes(`RECOVERY_ID=${t.recoveryId}`))continue;
         if(child.Image!==t.target.image)throw new Error('Recovery worker image differs from transaction');
-        while(child?.State.Running){await sleep(1000);child=await inspect(summary.Id);}
+        await waitRecoveryWorker(summary.Id);
       }
     },
     restore:async t=>{if(hasVpn)await stop(t.source.vpnId);await stop(t.source.id);await worker('restore',t);},
     startSource:sourceStart,
     verifySourceData:async t=>{await worker('verify-source',t);},
-    recordRollback:async t=>{await updateState(false,'Handover rolled back',false,'source_pair_verified',t.mutationPossible?'after_start':'before_start',true,recoveryId);},
+    recordRollback:async t=>{await updateState(false,t.failure?`${t.failure.category}: ${t.failure.message}`:'Handover rolled back',false,'source_pair_verified',t.mutationPossible?'after_start':'before_start',true,recoveryId);},
     finalizeRollback:async t=>{if(t.mutationPossible)await worker('finalize',t).catch(()=>console.error('Evidence rotation deferred; verified source retained'));},
   };
   try {
     const outcome=await runTransaction(transaction,effects,t=>persistTransaction(file,t),resumed);
-    if(outcome.result!=='committed')throw new Error('Upgrade failed; verified source runtime/data restored');
+    if(outcome.result!=='committed') {
+      const failure=outcome.transaction.failure;
+      throw Object.assign(new Error('Upgrade failed; verified source runtime/data restored'),{handoverFailure:failure});
+    }
     console.log(`Same-major handover to v${env.TARGET_VERSION} completed`);
   } catch(error) {
     // Retain journal/recovery identity; never restart old code on unverified DB.
     const final=await loadTransaction(file,identity);
     if(final?.phase!=='ROLLBACK_COMPLETE'&&final?.phase!=='COMMITTED')
-      await updateState(false,'Durable recovery requires retry',true,'durable_resume_required',final?.mutationPossible?'after_start':'before_start',true,recoveryId).catch(()=>undefined);
+      await updateState(false,JSON.stringify({message:'Durable recovery requires retry',originalFailure:final?.failure||sanitizedFailure(error,final?.phase),recoveryFailure:final?.recoveryFailure}),true,'durable_resume_required',final?.mutationPossible?'after_start':'before_start',true,recoveryId).catch(()=>undefined);
     throw error;
   }
 }
@@ -571,5 +574,5 @@ if (majorHandover) {
 	catch { process.exitCode = 1; }
 } else {
 	try { await runSameMajorHandover(); }
-	catch(error) { console.error(`Same-major handover refused/failed: ${error.message}`);process.exitCode = 1; }
+	catch(error) { console.error(JSON.stringify({message:'Same-major handover refused/failed',failure:error.handoverFailure||sanitizedFailure(error),recoveryFailure:error.handoverRecoveryFailure}));process.exitCode = 1; }
 }

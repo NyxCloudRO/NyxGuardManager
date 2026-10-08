@@ -49,7 +49,11 @@ export async function docker(method, endpoint, body) {
         try { resolve(raw ? JSON.parse(raw) : {}); } catch { resolve(raw); }
       });
     });
-    const timer = setTimeout(() => request.destroy(new Error('Docker API deadline exceeded')), 10000);
+    // Stop permits Docker the full grace interval, followed by the ordinary
+    // ten-second API response budget. All other requests retain their deadline.
+    const stop = method === 'POST' && endpoint.match(/^\/containers\/[^/?]+\/stop\?t=(\d+)$/);
+    const deadlineMs = 10000 + (stop ? Number(stop[1]) * 1000 : 0);
+    const timer = setTimeout(() => request.destroy(new Error('Docker API deadline exceeded')), deadlineMs);
     request.on('close', () => clearTimeout(timer));
     request.on('error', reject);
     if (body) request.write(JSON.stringify(body));
