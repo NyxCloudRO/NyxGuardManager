@@ -45,7 +45,7 @@ while time.time()<deadline and proc.poll() is None:
      else:run(['docker','exec',target,'sh','-c','kill -STOP '+str(progress['pid'])])
      injected=True;print('Interrupted actual progressing migration '+str(progress['units']),flush=True)
     if mode=='health' and progress and progress['complete']:
-     run(['docker','exec',target,'nginx','-s','stop']);injected=True;print('Stopped nginx before health acceptance',flush=True)
+     run(['docker','exec',target,'/command/s6-svc','-d','/run/service/nginx']);injected=True;print('Stopped nginx before health acceptance',flush=True)
  if injected and mode in ['backup','migration']:break
  time.sleep(.15)
 assert injected,'Failed to reach real injection boundary'

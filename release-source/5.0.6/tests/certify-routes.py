@@ -40,11 +40,13 @@ def prepare(version,case):
  source=json.loads(run(['docker','inspect',manager]).stdout)[0]
  sourceImage=json.loads(run(['docker','image','inspect',source['Image']]).stdout)[0]
  assert sourceImage['Config']['Labels']['org.opencontainers.image.version']==version
+ # A stopped Compose orphan must be ignored and retained.
+ run(['docker','create','--name',prefix+'_orphan','--label','com.docker.compose.service=nyxguard-manager','--label','com.docker.compose.project='+source['Config']['Labels']['com.docker.compose.project'],'--label','com.docker.compose.project.config_files='+path+'/docker-compose.yml','--entrypoint','true',source['Image']])
  put(path+'/update506.sh',(R/'update.sh').read_bytes());put(path+'/bootstrap506.mjs',(R/'upgrade/same-major-bootstrap.mjs').read_bytes())
  return path,manager,agent,db,cmd,acceptance,source['Image'],before
 matrix={}
 for version in sys.argv[2:]:
- case='route'+version.replace('.','')
+ case=os.environ.get('NYXGUARD_TEST_CASE_PREFIX','route')+version.replace('.','')
  print('Preparing genuine',version,'fixture',flush=True)
  try:
   path,manager,agent,db,cmd,acceptance,source,before=prepare(version,case)
@@ -56,6 +58,7 @@ for version in sys.argv[2:]:
   after=acceptance(False,'target');wait(manager);wait(agent)
   state=json.loads(run(['docker','exec',manager,'cat','/data/update-manager/state.json']).stdout);pointer=json.loads(run(['docker','exec',manager,'cat','/data/.nyx-handover/active.json']).stdout);ledger=json.loads(run(['docker','exec',manager,'cat','/data/.nyx-handover/'+pointer['id']+'.json']).stdout)['transaction']
   assert ledger['phase']=='COMMITTED' and not state.get('manualRecoveryRequired') and state['currentVersion']=='5.0.6'
+  assert run(['docker','inspect',manager.replace('_manager','_orphan'),'--format','{{.State.Status}}']).stdout.strip()==b'created'
   run(cmd+['config','-q']);run(cmd+['up','-d']);wait(manager);wait(agent)
   run(['docker','exec','-i',manager,'sh','-c','cat > /tmp/application-acceptance.mjs'],inp=(R/'release-source/5.0.4/tests/application-acceptance.mjs').read_bytes())
   acceptance(False,'compose-restart')
@@ -66,4 +69,4 @@ for version in sys.argv[2:]:
   run(cmd+['stop'])
  except Exception as error:
   matrix[version]={'result':'FAIL','reason':str(error)};print(version,str(error),flush=True)
- (E/'private-matrix.json').write_text(json.dumps(matrix,indent=2));print(version,matrix[version]['result'],flush=True)
+ (E/(os.environ.get('NYXGUARD_TEST_CASE_PREFIX','route')+'-matrix.json')).write_text(json.dumps(matrix,indent=2));print(version,matrix[version]['result'],flush=True)
