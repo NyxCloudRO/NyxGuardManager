@@ -20,7 +20,7 @@ const legacyApi = (method, endpoint, body = null) => new Promise((resolve, rejec
 	request.end();
 });
 const api = async (...args) => {
-  if(process.env.TARGET_VERSION==='5.0.4') return (await import('/app/internal/recovery-docker.mjs')).docker(...args);
+  if(['5.0.4','5.0.5'].includes(process.env.TARGET_VERSION)) return (await import('/app/internal/recovery-docker.mjs')).docker(...args);
   return legacyApi(...args);
 };
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -68,7 +68,8 @@ async function checkedContainer(summary, expectedImage) {
 }
 
 export function supportedTransition(current, target) {
-	return (["5.0.1","5.0.2","5.0.3"].includes(current) && target === "5.0.4") ||
+	return (["5.0.1","5.0.2","5.0.3","5.0.4"].includes(current) && target === "5.0.5") ||
+		(["5.0.1","5.0.2","5.0.3"].includes(current) && target === "5.0.4") ||
 		(current === "5.0.1" && ["5.0.2", "5.0.3"].includes(target)) ||
 		(current === "5.0.2" && target === "5.0.3");
 }
@@ -120,7 +121,7 @@ async function setup() {
 		Env: (oldManager.Config.Env || []).filter((entry) => !/^NPM_BUILD_(VERSION|COMMIT|DATE)=/.test(entry)),
 		Cmd: oldManager.Config.Cmd, Entrypoint: oldManager.Config.Entrypoint,
 		WorkingDir: oldManager.Config.WorkingDir, ExposedPorts: oldManager.Config.ExposedPorts,
-		Healthcheck: targetVersion === "5.0.4" ? target.Config.Healthcheck : oldManager.Config.Healthcheck, Labels: {...safeLabels(oldManager.Config.Labels),"com.docker.compose.image":image},
+		Healthcheck: ["5.0.4","5.0.5"].includes(targetVersion) ? target.Config.Healthcheck : oldManager.Config.Healthcheck, Labels: {...safeLabels(oldManager.Config.Labels),"com.docker.compose.image":image},
 		HostConfig: {
 			Binds: oldManager.HostConfig.Binds, PortBindings: oldManager.HostConfig.PortBindings,
 			RestartPolicy: oldManager.HostConfig.RestartPolicy, NetworkMode: oldManager.HostConfig.NetworkMode,

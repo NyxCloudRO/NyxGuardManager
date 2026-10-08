@@ -13,7 +13,7 @@ REQUIRE_VPN="${NYXGUARD_REQUIRE_VPN:-0}" # Set to 1 to abort when /dev/net/tun i
 
 vpn_agent_tag_for_manager() {
   case "$(normalize_semver "$1")" in
-    5.0.4|5.0.3|5.0.2|5.0.1) echo 5.0.1 ;;
+    5.0.5|5.0.4|5.0.3|5.0.2|5.0.1) echo 5.0.1 ;;
     5.0.0) echo 5.0.0 ;;
     4.0.14|4.0.15|4.0.16|4.0.17|4.0.18) normalize_semver "$1" ;;
     *) echo "ERROR: No published VPN compatibility contract for Manager $1." >&2; return 1 ;;

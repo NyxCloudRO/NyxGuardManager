@@ -16,13 +16,13 @@ CLI_BOOTSTRAP_SHA256="89eb4165bfdde3664a07d4a25385cc442ff0862bb01829e0783a817a5a
 MANAGER_ONLY_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upgrade/manager-only-handover.mjs"
 MANAGER_ONLY_SHA256="8a374930d5f421d5296886bc9b05141a79fafb6522d2bd8870b41d1cb476a470"
 
-SAME_MAJOR_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upgrade/same-major-bootstrap.mjs"
-SAME_MAJOR_SHA256="a6d89cc182033041bcff2b0f5824c2c649b34f0f3148b4b41ab130099f63e76a"
+SAME_MAJOR_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/v5.0.5/upgrade/same-major-bootstrap.mjs"
+SAME_MAJOR_SHA256="fc49690cb88c1b51275cb15a24447197f87fee6fecd3a20e73a0d049095e5738"
 
 # Published release contracts; new Manager tags require an explicit Agent decision.
 vpn_agent_tag_for_manager() {
   case "$(normalize_semver "$1")" in
-    5.0.4|5.0.3|5.0.2|5.0.1) echo 5.0.1 ;;
+    5.0.5|5.0.4|5.0.3|5.0.2|5.0.1) echo 5.0.1 ;;
     5.0.0) echo 5.0.0 ;;
     4.0.14|4.0.15|4.0.16|4.0.17|4.0.18) normalize_semver "$1" ;;
     *) echo "ERROR: No published VPN compatibility contract for Manager $1." >&2; return 1 ;;
@@ -612,7 +612,7 @@ run_same_major_handover() (
       if [[ "${files%%,*}" == "$INSTALL_DIR/docker-compose.yml" ]]; then echo 1; fi
     done)"
   if [[ -n "${NYXGUARD_ACCEPTED_IMAGE_ID:-}" ]]; then
-    [[ "$target_tag" == 5.0.4 && "$NYXGUARD_ACCEPTED_IMAGE_ID" =~ ^sha256:[a-f0-9]{64}$ ]] || return 1
+    [[ ( "$target_tag" == 5.0.4 || "$target_tag" == 5.0.5 ) && "$NYXGUARD_ACCEPTED_IMAGE_ID" =~ ^sha256:[a-f0-9]{64}$ ]] || return 1
     target_ref="${NYXGUARD_TARGET_IMAGE_REF:-$target_ref}"
     [[ "$(docker image inspect -f '{{.Id}}' "$target_ref")" == "$NYXGUARD_ACCEPTED_IMAGE_ID" ]] || {
       echo "ERROR: Prefetched artifact differs from the accepted image." >&2; return 1;
@@ -716,7 +716,8 @@ main() {
     run_major_handover_500
     return
   fi
-  if [[ ( "$current_tag" == 5.0.1 || "$current_tag" == 5.0.2 || "$current_tag" == 5.0.3 ) && "$target_tag" == 5.0.4 ]] ||
+  if [[ ( "$current_tag" == 5.0.1 || "$current_tag" == 5.0.2 || "$current_tag" == 5.0.3 || "$current_tag" == 5.0.4 ) && "$target_tag" == 5.0.5 ]] ||
+     [[ ( "$current_tag" == 5.0.1 || "$current_tag" == 5.0.2 || "$current_tag" == 5.0.3 ) && "$target_tag" == 5.0.4 ]] ||
      [[ "$current_tag" == 5.0.1 && ( "$target_tag" == 5.0.2 || "$target_tag" == 5.0.3 ) ]] ||
      [[ "$current_tag" == 5.0.2 && "$target_tag" == 5.0.3 ]]; then
     if [[ "$IMAGE_REPO" != nyxmael/nyxguardmanager || "$VPN_AGENT_REPO" != nyxmael/nyxguardmanager-vpn-agent ]]; then

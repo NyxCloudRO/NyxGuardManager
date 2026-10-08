@@ -1,0 +1,17 @@
+{
+  "version": "5.0.5",
+  "private": true,
+  "certifiedBaseSource": "46cce42224244813e7eb642813022865e7d174dd",
+  "certifiedBaseImage": "sha256:f181c12783d290385205339b2bb9c49139a01451d6157a11bfededce6bd3b691",
+  "vpnAgentVersion": "5.0.1",
+  "schemaAfterUpgrade": 45,
+  "newDatabaseMigrations": false,
+  "guardedSources": [
+    "5.0.1",
+    "5.0.2",
+    "5.0.3",
+    "5.0.4"
+  ],
+  "bootstrapSHA256": "fc49690cb88c1b51275cb15a24447197f87fee6fecd3a20e73a0d049095e5738",
+  "bootstrapPublicationURL": "https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/v5.0.5/upgrade/same-major-bootstrap.mjs"
+}
