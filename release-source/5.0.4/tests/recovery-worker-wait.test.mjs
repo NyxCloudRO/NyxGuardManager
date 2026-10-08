@@ -5,7 +5,7 @@ import {sanitizedFailure} from '../internal/handover-transaction.mjs';
 
 function fixture({exitAt=Infinity,exitCode=0,deadlineMs=3000}={}) {
   let clock=0, polls=0;
-  const inspect=async()=>{polls++;return {State:{Running:clock<exitAt,ExitCode:exitCode}};};
+  const inspect=async()=>{polls++;return {State:{Running:clock<exitAt,Status:clock<exitAt?'running':'exited',ExitCode:exitCode}};};
   const wait=recoveryWorkerWait(inspect,{deadlineMs,now:()=>clock,sleep:async ms=>{clock+=ms;}});
   return {wait,clock:()=>clock,polls:()=>polls};
 }
@@ -45,4 +45,8 @@ test('diagnostic includes operation/status, without sensitive endpoint or arbitr
     {category:'Error',message:'Docker POST request failed: 500',phase:'BACKUP_STARTING'});
   assert.equal(sanitizedFailure(new TypeError('password=secret token=secret https://private.invalid')).category,'TypeError');
   assert.equal(sanitizedFailure(new TypeError('password=secret')).message,'Failure details withheld');
+});
+
+test('created or dead workers are not successful completion, even with exit zero',async()=>{
+ for(const Status of ['created','dead'])await assert.rejects(recoveryWorkerWait(async()=>({State:{Running:false,Status,ExitCode:0}}))('worker'),{code:'WORKER_STATE_UNCERTAIN'});
 });

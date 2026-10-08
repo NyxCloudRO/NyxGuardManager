@@ -21,7 +21,7 @@ export function recoveryWorkerWait(inspect, {
         throw Object.assign(new Error('Recovery worker final state uncertain', {cause}), {code:'WORKER_STATE_UNCERTAIN'});
       }
       if (!worker || typeof worker.State?.Running !== 'boolean' ||
-          (!worker.State.Running && !Number.isSafeInteger(worker.State.ExitCode)))
+          (!worker.State.Running && (worker.State.Status!=='exited'||!Number.isSafeInteger(worker.State.ExitCode))))
         throw Object.assign(new Error('Recovery worker final state uncertain'), {code:'WORKER_STATE_UNCERTAIN'});
       if (!worker.State.Running) return worker;
       // The expiry inspection above accounts for a worker which completed at

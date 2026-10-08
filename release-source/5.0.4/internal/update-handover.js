@@ -243,7 +243,7 @@ async function runSameMajorWorker(mode, recoveryId, volumes, transaction = null)
 		return;
 	} finally {
 		const final = await api("GET", `/containers/${created.Id}/json`).catch(() => null);
-		if (final && !final.State?.Running && final.State.ExitCode === 0)
+		if (final && final.State?.Status === 'exited' && !final.State.Running && final.State.ExitCode === 0)
 			await ignore(api("DELETE", `/containers/${created.Id}`));
 	}
 }
