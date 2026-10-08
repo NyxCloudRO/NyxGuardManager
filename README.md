@@ -259,35 +259,15 @@ Import WireGuard profiles in **Settings → VPN Client**. The separate **VPN Age
 
 Installation is capability-based: usable read/write TUN enables Agent installation; unavailable TUN leaves Manager and MariaDB operational and clearly reports **VPN Agent pending — TUN unavailable**. The installer attempts safe guest-side device preparation, but it does not configure a hypervisor.
 
-<details>
-<summary>Proxmox LXC: expose TUN</summary>
+### Proxmox LXC: TUN and VPN Agent
 
-The installer first checks whether `/dev/net/tun` can be opened read/write. A usable device enables the normal Agent path regardless of virtualization vendor. If needed, the installer attempts safe guest-side module/node preparation and tests access again.
+Manager/database can run without TUN; VPN Agent needs usable read/write `/dev/net/tun`. NyxGuard does not configure the Proxmox host automatically.
 
-For a confirmed Proxmox LXC that still lacks usable TUN, an authorized administrator can expose just that device on the **Proxmox host**. Verify the correct CTID and back up its configuration first:
+Follow the [numbered Proxmox LXC/TUN setup and same-version repair guide](docs/proxmox-lxc-vpn.md). It separates **Proxmox host** and **LXC guest** commands, verifies the target CTID/hostname/IP, backs up its configuration, selects a free `devN` slot and uses supported device passthrough. Never overwrite an occupied slot or convert the LXC to privileged. Restart only the selected LXC if required.
 
-```bash
-pct set <CTID> --dev0 path=/dev/net/tun,mode=0666
-```
+After guest TUN is usable, the guide verifies the immutable public **5.0.4 updater** and runs explicit `FORCE_TAG=5.0.4 NYXGUARD_REPAIR_VPN=1` repair against the existing installation directory. It preserves Manager/database data and installs compatible **VPN Agent 5.0.1**. Then check health and **Settings → VPN Client**, a recent handshake and actual permitted-destination connectivity. TUN presence alone does not prove a working VPN.
 
-Use a free device slot if `dev0` is already assigned. Keep the guest unprivileged; do not change unrelated devices or global policy. Restart only that guest if required. Inside it, verify both the character device and actual access:
-
-```bash
-test -c /dev/net/tun && (exec 9<>/dev/net/tun)
-```
-
-For other restricted containers, the host must expose usable TUN; the installer does not configure a hypervisor or request its credentials. Manager can be installed while VPN is optional, but the output explicitly reports **VPN Agent pending — TUN unavailable**.
-
-If Manager was installed without Agent, once TUN is usable run the existing same-version repair without reinstalling Manager:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh \
-  | sudo env FORCE_TAG=5.0.4 NYXGUARD_REPAIR_VPN=1 bash
-```
-
-Set `INSTALL_DIR` as well for a non-default installation. An ordinary already-current update is a no-op; Agent repair is explicit. Check **Settings → VPN Client** and paired Manager/Agent restart behavior after repair. See the [complete VPN guide](docs/vpn-client.md) for profiles, AllowedIPs, NAT/firewalls, overlap rules, remote gateways and layered troubleshooting.
-
-</details>
+See the [VPN Client guide](docs/vpn-client.md) for profiles, allowed networks and remote-peer troubleshooting, or the [website walkthrough](https://nyxcloud.ro/nyxguard/vpn-client.html#proxmox-lxc).
 
 <details>
 <summary>Optional GeoIP databases</summary>
