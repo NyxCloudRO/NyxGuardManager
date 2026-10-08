@@ -7,7 +7,7 @@
 <p align="center">A self-hosted reverse proxy with application protection, traffic intelligence,<br />WireGuard access and operational diagnostics.</p>
 
 <p align="center">
-  <a href="https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.4"><img src="https://img.shields.io/badge/release-5.0.4-00c8e8?style=flat-square" alt="Release 5.0.4" /></a>
+  <a href="https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.5"><img src="https://img.shields.io/badge/release-5.0.5-00c8e8?style=flat-square" alt="Release 5.0.5" /></a>
   <a href="https://hub.docker.com/r/nyxmael/nyxguardmanager"><img src="https://img.shields.io/docker/pulls/nyxmael/nyxguardmanager?color=00c8e8&amp;style=flat-square" alt="Docker pulls" /></a>
   <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-NMPLA-5279b8?style=flat-square" alt="NMPLA license" /></a>
 </p>
@@ -23,9 +23,9 @@
 
 Manage HTTPS applications, certificates, access policies, traffic and remote VPN sites from one interface. Configuration, certificates and operational history stay on your infrastructure.
 
-**Current release · 5.0.4** brings guarded upgrades and recovery, consistent License and Support pages, truthful rule expiration, reliable Docker metrics and validated Ubuntu 26.04 LTS operation. Manager 5.0.4 uses **VPN Agent 5.0.1** and retains **schema 45**.
+**Current release · 5.0.5** strengthens guarded upgrades with verified protected-backup completion, Docker stop handling, bounded recovery waits and sanitized failure diagnostics. Rollback safeguards verify restored data and runtime health; uncertain recovery remains blocked. Upgrades from **5.0.1 (schema 42)** and **5.0.4 (schema 45)** to 5.0.5 were validated with protected data, real WireGuard and restart persistence. Manager 5.0.5 uses **VPN Agent 5.0.1** and retains **schema 45**.
 
-[Read the release notes](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.4) · [Browse the changelog](CHANGELOG.md)
+[Read the release notes](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.5) · [Browse the changelog](CHANGELOG.md)
 
 <a id="quick-install"></a>
 
@@ -89,13 +89,13 @@ HTTP-01 certificates need public inbound TCP 80. DNS challenges need the provide
 <details>
 <summary>Manual Docker Compose installation</summary>
 
-For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.4 uses VPN Agent 5.0.1. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
+For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.5 uses VPN Agent 5.0.1. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
 
 ```yaml
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:5.0.4
+    image: nyxmael/nyxguardmanager:5.0.5
     restart: unless-stopped
     ports:
       - "80:80"
@@ -227,7 +227,7 @@ Use the guarded host updater for standard installations:
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | sudo bash
 ```
 
-The 5.0.4 supported source paths are **5.0.1, 5.0.2 and 5.0.3**. The updater protects the previous installation's DB/files/configuration, verifies the replacement and application data, and restores the protected source if activation fails. It preserves Manager-only or installed VPN topology. Retain your own independent database and volume backup.
+The 5.0.5 updater supports source versions **5.0.1, 5.0.2, 5.0.3 and 5.0.4**. The updater protects the previous installation's DB/files/configuration, verifies the replacement and application data, and restores the protected source if activation fails. It preserves Manager-only or installed VPN topology. Retain your own independent database and volume backup.
 
 The built-in updater offers check/download/apply. Do not force an unsupported transition or replace guarded updates with a bare Compose image switch. After updating, verify login, settings, proxy hosts, traffic/history, License, diagnostics, and configured VPN sites, then verify restart persistence.
 
