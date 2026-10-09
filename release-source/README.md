@@ -1,6 +1,6 @@
 # Release source map
 
-Current Manager release: **5.0.8**, compatible VPN Agent **5.0.1**, schema **45**. The [5.0.8 overlay](5.0.8/README.md) uses immutable published 5.0.7, correcting historical transaction validation and policy. SQL recovery modules are inherited from 5.0.7 and shared safety/migration modules from earlier overlays. Versioned directories remain required build, compatibility or regression inputs.
+Current Manager release: **5.0.9**, compatible VPN Agent **5.0.1**, schema **45**. The [5.0.9 overlay](5.0.9/README.md) uses immutable published 5.0.8, correcting licensing, migration progress, legacy history ownership and guarded retention timing. SQL recovery modules are inherited from the immutable base; required shared safety/migration modules remain in earlier overlays. Versioned directories remain required build, compatibility or regression inputs.
 
 `release-source/` contains the versioned build inputs, asserted compiled
 frontend patches, and tests for supported releases. Disposable test output

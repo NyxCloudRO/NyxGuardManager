@@ -7,7 +7,7 @@
 <p align="center">A self-hosted reverse proxy with application protection, traffic intelligence,<br />WireGuard access and operational diagnostics.</p>
 
 <p align="center">
-  <a href="https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.8"><img src="https://img.shields.io/badge/release-5.0.8-00c8e8?style=flat-square" alt="Release 5.0.8" /></a>
+  <a href="https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.9"><img src="https://img.shields.io/badge/release-5.0.9-00c8e8?style=flat-square" alt="Release 5.0.9" /></a>
   <a href="https://hub.docker.com/r/nyxmael/nyxguardmanager"><img src="https://img.shields.io/docker/pulls/nyxmael/nyxguardmanager?color=00c8e8&amp;style=flat-square" alt="Docker pulls" /></a>
   <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-NMPLA-5279b8?style=flat-square" alt="NMPLA license" /></a>
 </p>
@@ -23,35 +23,29 @@
 
 Manage HTTPS applications, certificates, access policies, traffic and remote VPN sites from one interface. Configuration, certificates and operational history stay on your infrastructure.
 
-**Current release · 5.0.8** fixes historical handover-ledger compatibility while retaining verified SQL backups, same-version VPN repair, and persistent VPN startup. Verified-backup and recovery gates remain mandatory. Manager 5.0.8 uses **VPN Agent 5.0.1** and retains **schema 45**.
+**Current release · 5.0.9** preserves duplicate Threat History associations, unactivated licensing identity and legitimate integration usage during guarded upgrades. Completed schema work improves bounded migration progress; verified SQL backups, same-version VPN repair and persistent VPN startup remain required. Verified-backup and recovery gates remain mandatory. Manager 5.0.9 uses **VPN Agent 5.0.1** and retains **schema 45**.
 
-[Read the release notes](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.8) · [Browse the changelog](CHANGELOG.md)
+[Read the release notes](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.9) · [Browse the changelog](CHANGELOG.md)
 
 <a id="quick-install"></a>
 
 ## Installation
 
-On a fresh supported Ubuntu or Debian host with systemd, run the matching command.
+On a fresh supported Ubuntu or Debian host with systemd and `curl` available:
 
 As **root**, including minimal Debian without sudo:
 
 ```bash
-apt-get update
-apt-get install -y ca-certificates curl
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh -o /tmp/nyxguard-install.sh
-bash /tmp/nyxguard-install.sh
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | bash
 ```
 
 As an ordinary user with **sudo privileges**:
 
 ```bash
-sudo apt-get update
-sudo apt-get install -y ca-certificates curl
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh -o /tmp/nyxguard-install.sh
-sudo bash /tmp/nyxguard-install.sh
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | sudo bash
 ```
 
-The script checks effective privileges before changing the host. A missing `sudo` in a pipeline fails before the installer starts; use the root command when sudo is absent. Docker Compose v2 is required. Existing installations and volumes are retained; use the updater for an existing installation.
+The installer checks privileges and prepares Docker/Compose dependencies, persistent storage and automatic startup. If `curl` or certificate trust is missing, follow the [prerequisites and manual installation guide](docs/installation.md#prerequisites-and-manual-installation). Existing installations use the updater.
 
 Open **`https://<your-host>:8443`** and complete the setup wizard. The initial self-signed certificate requires browser confirmation. The installer prepares Docker/Compose, persistent storage and automatic startup. Review the requirements below, especially TUN access if you need VPN.
 
@@ -86,7 +80,7 @@ Capacity depends on traffic, protected applications and retention. Allow additio
 
 ## Supported operating systems
 
-| Operating system | Official support | Historical validation | 5.0.8 OS retesting |
+| Operating system | Official support | Historical validation | 5.0.9 OS retesting |
 | --- | --- | --- | --- |
 | Ubuntu 22.x | Supported | Working installs recorded in 3.0.0 | No new OS-specific validation claimed |
 | Ubuntu 24.x | Supported | Working installs recorded in 3.0.0; 5.0.7 runtime install with existing packages | No new OS-specific validation claimed |
@@ -95,7 +89,7 @@ Capacity depends on traffic, protected applications and retention. Allow additio
 | Debian 12 | Supported | Working installs recorded in 3.0.0; 5.0.7 privilege/package checks | No new OS-specific validation claimed |
 | Debian 13 | Supported | Working installs recorded in 3.0.0 | No new OS-specific validation claimed |
 
-Support carries forward independently of hotfix retesting. The [installation and compatibility guide](docs/installation.md) records the evidence and configuration limits; [5.0.8 validation coverage](docs/validation-5.0.8.md) describes the focused release tests. Historical family labels do not certify every point release or a fresh-host installation in 5.0.8.
+Support carries forward independently of hotfix retesting. The [installation and compatibility guide](docs/installation.md) records the evidence and configuration limits; [5.0.9 validation coverage](docs/validation-5.0.9.md) describes the focused release tests. Historical family labels do not certify every point release or a fresh-host installation in 5.0.9.
 
 The installer requires Ubuntu or Debian, apt-get and a running systemd host; it prepares Docker/Compose dependencies. VPN also requires usable host TUN and a reachable WireGuard endpoint. Restricted guests without TUN can run Manager and MariaDB without VPN. Other distributions and versions outside this matrix have no established official support; manual Docker deployment is an evaluation path, not a support guarantee.
 
@@ -108,13 +102,13 @@ HTTP-01 certificates need public inbound TCP 80. DNS challenges need the provide
 <details>
 <summary>Manual Docker Compose installation</summary>
 
-For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.8 uses VPN Agent 5.0.1. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
+For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.9 uses VPN Agent 5.0.1. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
 
 ```yaml
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:5.0.8
+    image: nyxmael/nyxguardmanager:5.0.9
     restart: unless-stopped
     ports:
       - "80:80"
@@ -247,11 +241,11 @@ curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upd
 bash /tmp/nyxguard-update.sh # root; sudo users run: sudo bash /tmp/nyxguard-update.sh
 ```
 
-The 5.0.8 updater supports source versions **5.0.0 through 5.0.7**. The updater protects the previous installation's DB/files/configuration, verifies the replacement and application data, and restores the protected source if activation fails. It preserves Manager-only or installed VPN topology. Retain your own independent database and volume backup.
+The 5.0.9 updater supports source versions **5.0.0 through 5.0.8**. The updater protects the previous installation's DB/files/configuration, verifies the replacement and application data, and restores the protected source if activation fails. It preserves Manager-only or installed VPN topology. Retain your own independent database and volume backup.
 
 For advanced recovery or independent installation options, see the [advanced recovery guide](docs/advanced-recovery.md).
 
-For production upgrades, review the [official upgrade and recovery guide](docs/upgrade-5.0.8.md) before running the updater. The corrected validator accepts completed historical ledgers without weakening checksum, identity or recovery checks. If a previous failed attempt left renamed services or never-started replacements, reconcile that topology under a reviewed recovery plan before retrying.
+For production upgrades, review the [official upgrade and recovery guide](docs/upgrade-5.0.9.md) before running the updater. The corrected validator accepts completed historical ledgers without weakening checksum, identity or recovery checks. If a previous failed attempt left renamed services or never-started replacements, reconcile that topology under a reviewed recovery plan before retrying.
 
 After TUN becomes usable, activate only VPN at the current Manager version:
 
@@ -296,7 +290,7 @@ Manager/database can run without TUN; VPN Agent needs usable read/write `/dev/ne
 
 Follow the [numbered Proxmox LXC/TUN setup and same-version repair guide](docs/proxmox-lxc-vpn.md). It separates **Proxmox host** and **LXC guest** commands, verifies the target CTID/hostname/IP, backs up its configuration, selects a free `devN` slot and uses supported device passthrough. Never overwrite an occupied slot or convert the LXC to privileged. Restart only the selected LXC if required.
 
-After guest TUN is usable, the guide verifies the immutable public **5.0.8 updater** and runs explicit `FORCE_TAG=5.0.8 NYXGUARD_REPAIR_VPN=1` repair against the existing installation directory. It preserves Manager/database data and installs compatible **VPN Agent 5.0.1**. Then check health and **Settings → VPN Client**, a recent handshake and actual permitted-destination connectivity. TUN presence alone does not prove a working VPN.
+After guest TUN is usable, the guide verifies the immutable public **5.0.9 updater** and runs explicit `FORCE_TAG=5.0.9 NYXGUARD_REPAIR_VPN=1` repair against the existing installation directory. It preserves Manager/database data and installs compatible **VPN Agent 5.0.1**. Then check health and **Settings → VPN Client**, a recent handshake and actual permitted-destination connectivity. TUN presence alone does not prove a working VPN.
 
 See the [VPN Client guide](docs/vpn-client.md) for profiles, allowed networks and remote-peer troubleshooting, or the [website walkthrough](https://nyxcloud.ro/nyxguard/vpn-client.html#proxmox-lxc).
 

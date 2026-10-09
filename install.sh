@@ -19,7 +19,7 @@ REQUIRE_VPN="${NYXGUARD_REQUIRE_VPN:-0}" # Set to 1 to abort when /dev/net/tun i
 
 vpn_agent_tag_for_manager() {
   case "$(normalize_semver "$1")" in
-    5.0.8|5.0.7|5.0.6|5.0.5|5.0.4|5.0.3|5.0.2|5.0.1) echo 5.0.1 ;;
+    5.0.9|5.0.8|5.0.7|5.0.6|5.0.5|5.0.4|5.0.3|5.0.2|5.0.1) echo 5.0.1 ;;
     5.0.0) echo 5.0.0 ;;
     4.0.14|4.0.15|4.0.16|4.0.17|4.0.18) normalize_semver "$1" ;;
     *) echo "ERROR: No published VPN compatibility contract for Manager $1." >&2; return 1 ;;
@@ -533,7 +533,7 @@ main() {
   fi
   [[ "$(docker image inspect -f '{{index .Config.Labels "org.opencontainers.image.version"}}' "$image_ref")" == "${selected_tag#v}" ]] || { echo "ERROR: Target artifact version differs." >&2; return 1; }
   docker run --rm --network none --no-healthcheck --entrypoint node -e ACCEPTED_VERSION="${selected_tag#v}" "$image_ref" -e 'const fs=require("fs");if(JSON.parse(fs.readFileSync("/app/package.json")).version!==process.env.ACCEPTED_VERSION||process.env.NPM_BUILD_VERSION!==process.env.ACCEPTED_VERSION)process.exit(1)' || { echo "ERROR: Target runtime version identity differs." >&2; return 1; }
-  if [[ "${selected_tag#v}" == 5.0.6 || "${selected_tag#v}" == 5.0.7 || "${selected_tag#v}" == 5.0.8 ]]; then
+  if [[ "${selected_tag#v}" == 5.0.6 || "${selected_tag#v}" == 5.0.7 || "${selected_tag#v}" == 5.0.8 || "${selected_tag#v}" == 5.0.9 ]]; then
     vpn_agent_ref="${VPN_AGENT_REPO}:$(docker run --rm --network none --no-healthcheck --entrypoint node "$image_ref" --input-type=module -e 'import policy from "/app/internal/release-policy.mjs";console.log(policy.agent)')"
   fi
   if [[ "$vpn_enabled" == 1 ]]; then
