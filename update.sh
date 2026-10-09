@@ -17,13 +17,13 @@ CLI_BOOTSTRAP_SHA256="89eb4165bfdde3664a07d4a25385cc442ff0862bb01829e0783a817a5a
 MANAGER_ONLY_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upgrade/manager-only-handover.mjs"
 MANAGER_ONLY_SHA256="8a374930d5f421d5296886bc9b05141a79fafb6522d2bd8870b41d1cb476a470"
 
-SAME_MAJOR_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/v5.0.7/upgrade/same-major-bootstrap.mjs"
-SAME_MAJOR_SHA256="f2dda9bf7b6d22b0d2d8e5b17d25750cc756ba6c990dc466142af15ec01d505f"
+SAME_MAJOR_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/v5.0.8/upgrade/same-major-bootstrap.mjs"
+SAME_MAJOR_SHA256="6ac228cd9447bc357d27d5418b416878c4a2c607514de64b567d97de45cdf549"
 
 # Published release contracts; new Manager tags require an explicit Agent decision.
 vpn_agent_tag_for_manager() {
   case "$(normalize_semver "$1")" in
-    5.0.7|5.0.6) echo 5.0.1 ;;
+    5.0.8|5.0.7|5.0.6) echo 5.0.1 ;;
     5.0.5|5.0.4|5.0.3|5.0.2|5.0.1) echo 5.0.1 ;;
     5.0.0) echo 5.0.0 ;;
     4.0.14|4.0.15|4.0.16|4.0.17|4.0.18) normalize_semver "$1" ;;
@@ -524,7 +524,7 @@ upgrade_route() {
   local from="$(normalize_semver "$1")" to="$(normalize_semver "$2")"
   if ! is_semver "$from" || ! is_semver "$to"; then
     echo unsupported
-  elif [[ ( "$to" == 5.0.6 || "$to" == 5.0.7 ) && "${from%%.*}" == 5 ]]; then
+  elif [[ ( "$to" == 5.0.6 || "$to" == 5.0.7 || "$to" == 5.0.8 ) && "${from%%.*}" == 5 ]]; then
     echo guarded_release
   elif [[ "$from" == 4.0.18 && "$to" == 5.0.0 ]]; then
     echo major_handover_500
@@ -671,7 +671,7 @@ run_same_major_handover() (
       if [[ "${files%%,*}" == "$INSTALL_DIR/docker-compose.yml" ]]; then echo 1; fi
     done)"
   if [[ -n "${NYXGUARD_ACCEPTED_IMAGE_ID:-}" ]]; then
-    [[ ( "$target_tag" == 5.0.4 || "$target_tag" == 5.0.5 || "$target_tag" == 5.0.6 || "$target_tag" == 5.0.7 ) && "$NYXGUARD_ACCEPTED_IMAGE_ID" =~ ^sha256:[a-f0-9]{64}$ ]] || return 1
+    [[ ( "$target_tag" == 5.0.4 || "$target_tag" == 5.0.5 || "$target_tag" == 5.0.6 || "$target_tag" == 5.0.7 || "$target_tag" == 5.0.8 ) && "$NYXGUARD_ACCEPTED_IMAGE_ID" =~ ^sha256:[a-f0-9]{64}$ ]] || return 1
     target_ref="${NYXGUARD_TARGET_IMAGE_REF:-$target_ref}"
     [[ "$(docker image inspect -f '{{.Id}}' "$target_ref")" == "$NYXGUARD_ACCEPTED_IMAGE_ID" ]] || {
       echo "ERROR: Prefetched artifact differs from the accepted image." >&2; return 1;
@@ -680,7 +680,7 @@ run_same_major_handover() (
     echo "Pulling $target_ref..."
     docker pull "$target_ref"
   fi
-  if [[ "$target_tag" == 5.0.6 || "$target_tag" == 5.0.7 ]]; then
+  if [[ "$target_tag" == 5.0.6 || "$target_tag" == 5.0.7 || "$target_tag" == 5.0.8 ]]; then
     vpn_agent_ref="${VPN_AGENT_REPO}:$(docker run --rm --network none --no-healthcheck --entrypoint node "$target_ref" --input-type=module -e 'import policy from "/app/internal/release-policy.mjs";console.log(policy.agent)')"
   fi
   if [[ -n "$vpn_installed" ]]; then
@@ -700,7 +700,7 @@ run_same_major_handover() (
     -e "BASELINE_AUTHORIZATION=${NYXGUARD_ACCEPT_BASELINE:-}" -e "BASELINE_REASON=${NYXGUARD_BASELINE_REASON:-}" \
     "$target_ref" -n /handover-data/.nyx-update.lock node /tmp/same-major-bootstrap.mjs
   if [[ "${NYXGUARD_BASELINE_PLAN:-0}" == 1 ]]; then return; fi
-  if [[ "$target_tag" == 5.0.6 || "$target_tag" == 5.0.7 ]]; then
+  if [[ "$target_tag" == 5.0.6 || "$target_tag" == 5.0.7 || "$target_tag" == 5.0.8 ]]; then
     docker compose --env-file "$INSTALL_DIR/.env" -f "$INSTALL_DIR/docker-compose.yml" config -q
     echo "Upgrade committed; installed metadata is pinned to the verified artifact."
     return
@@ -728,7 +728,7 @@ main() {
   fi
   if [[ "${NYXGUARD_RESUME:-0}" == 1 ]]; then
     local helper image data_source
-    helper="$(docker ps -aq --filter label=nyxguard.install-dir="$INSTALL_DIR" --filter label=nyxguard.target-version="${FORCE_TAG:-5.0.7}" | head -1)"
+    helper="$(docker ps -aq --filter label=nyxguard.install-dir="$INSTALL_DIR" --filter label=nyxguard.target-version="${FORCE_TAG:-5.0.8}" | head -1)"
     [[ -n "$helper" ]] || { echo "ERROR: No retained target-version helper for this installation." >&2; return 1; }
     image="$(docker inspect -f '{{.Image}}' "$helper")"
     data_source="$(docker inspect "$helper" | jq -er '.[0].Mounts[] | select(.Destination=="/handover-data") | if .Type=="volume" then .Name else .Source end')"

@@ -121,6 +121,20 @@ async function setup() {
     for(let n=0;n<30;n++){const info=await docker('GET',`/containers/${c.Id}/json`);if(!info.State.Running){const raw=String(await docker('GET',`/containers/${c.Id}/logs?stdout=1&stderr=1`));const clean=raw.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,'');if(info.State.ExitCode)throw new Error('Baseline plan refused; inspect plan helper logs');const plan=JSON.parse(clean.slice(clean.indexOf('{'),clean.lastIndexOf('}')+1));planVerified=true;approvedBaselinePlan=plan;await docker('DELETE',`/containers/${c.Id}`);if(process.env.BASELINE_PLAN_ONLY==='1'){console.log(JSON.stringify(plan));return;}if(process.env.BASELINE_AUTHORIZATION!==plan.challenge||!process.env.BASELINE_REASON?.trim())throw new Error('BASELINE_REQUIRED: authorization differs; request a fresh plan before retrying');break;}await sleep(1000);}
     if(!planVerified)throw new Error('Baseline plan deadline exceeded');
   }
+  // Reject incompatible or corrupt retained evidence before renaming services.
+  // Explicit baseline acceptance retains its separately verified authorization.
+  if(releasePolicy && !approvedBaselinePlan) {
+    let pointer;
+    try {pointer=JSON.parse(await fs.readFile('/handover-data/.nyx-handover/active.json','utf8'));}
+    catch(error) {if(error.code!=='ENOENT')throw new Error('Invalid historical handover pointer; review recovery evidence');}
+    if(pointer) {
+      if(!/^[a-f0-9]{12,64}$/.test(pointer.id||''))throw new Error('Invalid historical handover identity');
+      const {loadTransaction}=await import('/app/internal/handover-transaction.mjs');
+      const previous=await loadTransaction(`/handover-data/.nyx-handover/${pointer.id}.json`);
+      if(!previous||!['ROLLBACK_COMPLETE','COMMITTED'].includes(previous.phase))
+        throw new Error('BASELINE_REQUIRED: review unfinished historical recovery before authorizing a new baseline');
+    }
+  }
 	const socketGid = (await fs.stat("/var/run/docker.sock")).gid;
 	const token = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 	const oldManagerName = String(oldManager.Name).replace(/^\//, "");
