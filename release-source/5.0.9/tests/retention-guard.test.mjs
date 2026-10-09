@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import {spawnSync} from 'node:child_process';
 import {retentionAllowed} from '/app/internal/retention-guard.mjs';
 import {persistTransaction} from '/app/internal/handover-transaction.mjs';
 const id='a'.repeat(12);
@@ -29,4 +30,12 @@ test('missing or corrupt status defers deletion; ledgers remain private',()=>fix
  assert.equal((await fs.stat(status)).mode&0o777,0o644);
  const state=JSON.parse(await fs.readFile(status));assert.deepEqual(Object.keys(state).sort(),['format','phase']);
  await fs.unlink(status);assert.equal(await retentionAllowed(root),false);
+}));
+test('application user reads completion without gaining access to the ledger',()=>fixture(async root=>{
+ await fs.chmod(root,0o755);
+ const ledger=path.join(root,'.nyx-handover',id+'.json');
+ await persistTransaction(ledger,transaction('COMMITTED'));
+ const script=`import assert from 'node:assert/strict';import fs from 'node:fs/promises';import {retentionAllowed} from '/app/internal/retention-guard.mjs';assert.equal(await retentionAllowed(${JSON.stringify(root)}),true);await assert.rejects(fs.readFile(${JSON.stringify(ledger)}),{code:'EACCES'});`;
+ const result=spawnSync(process.execPath,['--input-type=module','-e',script],{uid:1000,gid:1000,encoding:'utf8'});
+ assert.equal(result.status,0,result.stderr);
 }));

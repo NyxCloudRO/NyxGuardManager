@@ -87,7 +87,7 @@ Capacity depends on traffic, protected applications and retention. Allow additio
 | Ubuntu 25.x | Supported | Advertised as tested in the historical README; detailed acceptance not recovered | No new OS-specific validation claimed |
 | Ubuntu 26.04 LTS | Supported | 26.04.1 runtime, startup/reboot and VPN accepted in 5.0.4 | No new OS-specific validation claimed |
 | Debian 12 | Supported | Working installs recorded in 3.0.0; 5.0.7 privilege/package checks | No new OS-specific validation claimed |
-| Debian 13 | Supported | Working installs recorded in 3.0.0 | No new OS-specific validation claimed |
+| Debian 13 | Supported | Working installs recorded in 3.0.0 | Isolated upgrade, rollback and retry; no fresh-host claim |
 
 Support carries forward independently of hotfix retesting. The [installation and compatibility guide](docs/installation.md) records the evidence and configuration limits; [5.0.9 validation coverage](docs/validation-5.0.9.md) describes the focused release tests. Historical family labels do not certify every point release or a fresh-host installation in 5.0.9.
 

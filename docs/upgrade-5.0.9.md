@@ -5,7 +5,7 @@ Run as root inside the installed Manager guest. Verify the published v5.0.9 rele
 
 ## Recovery topology prerequisite
 
-5.0.9 corrects rejection of valid completed historical handover ledgers. It does not silently undo setup left by an earlier failed helper. Before upgrading, verify that canonical Manager and Agent names identify the running original services, with the Agent sharing the Manager network namespace. If names instead identify never-started replacements while originals have rollback names, stop and obtain an installation-specific recovery plan. Preserve all containers and recovery evidence. A previous transaction's completed rollback does not certify a later failed setup attempt. Do not edit ledgers or use baseline acceptance to bypass this condition.
+5.0.9 retains completed historical-ledger compatibility and corrects licensing, duplicate-history preservation, migration progress and retention timing. It does not silently undo setup left by an earlier failed helper. Before upgrading, verify that canonical Manager and Agent names identify the running original services, with the Agent sharing the Manager network namespace. If names instead identify never-started replacements while originals have rollback names, stop and obtain an installation-specific recovery plan. Preserve all containers and recovery evidence. A previous transaction's completed rollback does not certify a later failed setup attempt. Do not edit ledgers or use baseline acceptance to bypass this condition.
 
 ## 1. Read-only preflight
 

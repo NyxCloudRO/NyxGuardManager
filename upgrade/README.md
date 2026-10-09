@@ -1,6 +1,6 @@
 # Public host updater
 
-Current Manager release: **5.0.9**, compatible VPN Agent **5.0.1**, schema **45**. Guarded sources are 5.0.0–5.0.7. Current updates use the checksum-pinned same-major bootstrap and durable backup/restore, historical-ledger and application-data gates. VPN-only repair uses its separate current-version path. See the [current upgrade guide](../docs/upgrade-5.0.9.md).
+Current Manager release: **5.0.9**, compatible VPN Agent **5.0.1**, schema **45**. Guarded sources are 5.0.0–5.0.8. Current updates use the checksum-pinned same-major bootstrap and durable backup/restore, historical-ledger and application-data gates. VPN-only repair uses its separate current-version path. See the [current upgrade guide](../docs/upgrade-5.0.9.md).
 
 ## Historical adapter and runtime provenance
 
