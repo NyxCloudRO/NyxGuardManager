@@ -1,5 +1,7 @@
 # NyxGuard VPN Client networking guide
 
+All network addresses and identities in this guide are illustrative placeholders. Replace them with your own configuration.
+
 NyxGuard Manager 5.0.0 can connect to multiple remote sites as a WireGuard client. Each site has its own interface, routes, status, lifecycle controls, and connectivity test. Remote applications remain private and can be used as NyxGuard Proxy Host upstreams after the tunnel is working.
 
 ## Architecture and security boundary

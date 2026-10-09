@@ -35,3 +35,7 @@ browser-profiles/
 # Local release build overlays
 overlay/
 Dockerfile.dev-fix
+
+# Python validation caches
+__pycache__/
+*.pyc

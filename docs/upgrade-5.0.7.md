@@ -1,6 +1,11 @@
-# Owner-operated upgrade to 5.0.7
+# Upgrade and recovery guide: 5.0.7
 
-Run as root inside the installed Manager guest. This procedure is for a verified published v5.0.7 release; release work does not deploy production. Ordinary sudo users prefix privileged commands with `sudo`. Do not run `install.sh` on the existing installation.
+Run as root inside the installed Manager guest. Verify the published v5.0.7 release before upgrading. Ordinary sudo users prefix privileged commands with `sudo`. Do not run `install.sh` on the existing installation.
+
+
+## Known historical-ledger limitation
+
+The 5.0.7 image can reject a valid completed 5.0.6 handover ledger before creating a new transaction. The failure may leave never-started replacements and renamed original services because setup evidence is retained after helper start. An old `ROLLBACK_COMPLETE` pointer does not certify this new setup attempt. Stop, preserve all artifacts and obtain a reviewed correction and topology recovery plan before retrying. Do not edit the ledger, clear flags, delete containers or use baseline acceptance to bypass this compatibility defect. A corrective candidate is not a published release.
 
 ## 1. Read-only preflight
 
@@ -53,7 +58,7 @@ docker ps --format '{{.Names}}' | grep -E '^nyxguard-(update-handover|same-major
 docker volume ls --format '{{.Name}}' | grep -E 'nyxguard.*(data|db|letsencrypt|vpn|recovery)'
 ```
 
-For the known failed attempt, the checksummed active ledger must say `ROLLBACK_COMPLETE`. No recovery/helper container may still be running. Preserve stopped evidence containers and all historical recovery artifacts. A previously failed staged schema may remain from an old release; do not delete it to make the upgrade proceed. New attempts use unique restricted staging credentials/schema names.
+After a failed attempt, require a checksummed `ROLLBACK_COMPLETE` ledger before retrying. No recovery/helper container may still be running. Preserve stopped evidence containers and all historical recovery artifacts. A previously failed staged schema may remain from an old release; do not delete it to make the upgrade proceed. New attempts use unique restricted staging credentials/schema names.
 
 Retain an independent off-host backup of DB, persistent volumes and licensing vault. Verify it is readable and restorable using your established backup procedure. Stop if independent recovery readiness is uncertain. The updater separately enforces free-space checks, SQL dump, restricted staged restore, full row/schema fingerprints, and protected file/key checks **before migration**. There is no flag to bypass that mandatory gate. If it fails, stop at rollback and collect evidence.
 
@@ -79,7 +84,7 @@ Expect `SOURCE_VERIFIED`, `REPLACEMENT_PREPARED`, `BACKUP_STARTING`, `BACKUP_VER
 
 Repeat preflight DB/health/version checks. Manager must be **5.0.7**, schema **45**, and Agent healthy on the published compatible digest. Repeat the ledger command: the new active transaction must be **COMMITTED**, with no manual recovery or pending cleanup flags.
 
-Log in and verify Settings, the recorded Proxy Hosts and certificates, HTTPS traffic through representative existing hosts, certificate validity, License status/entitlement, traffic/history, and the configured VPN profile, interface, recent peer handshake and traffic. Healthy Agent HTTP alone does not prove a remote tunnel works. Confirm `systemctl cat nyxguardmanager.service` starts the Agent when enabled. Plan a later owner-approved reboot; do not reboot a live installation merely to finish an upgrade.
+Log in and verify Settings, the recorded Proxy Hosts and certificates, HTTPS traffic through representative existing hosts, certificate validity, License status/entitlement, traffic/history, and the configured VPN profile, interface, recent peer handshake and traffic. Healthy Agent HTTP alone does not prove a remote tunnel works. Confirm `systemctl cat nyxguardmanager.service` starts the Agent when enabled. Schedule any reboot in a maintenance window; do not reboot a live installation merely to finish an upgrade.
 
 ## 5. Failure: stop and collect evidence
 
@@ -95,6 +100,6 @@ free -m
 df -h / /var/lib/docker
 ```
 
-Also collect `docker logs --timestamps <retained-handover-name>`, `<retained-backup-worker-name>` and `<retained-nyx-sql-helper-name>` from the inventory, the owner command's `update.log`, active ledger/checksum and sanitized updater state. Share logs privately and redact credentials, domains/IPs or SQL record values where present. Do not share `.env`, SQL dumps, vault keys, certificates' private keys, or VPN keys.
+Also collect `docker logs --timestamps <retained-handover-name>`, `<retained-backup-worker-name>` and `<retained-nyx-sql-helper-name>` from the inventory, the updater's `update.log`, active ledger/checksum and sanitized updater state. Share logs privately and redact credentials, domains/IPs or SQL record values where present. Do not share `.env`, SQL dumps, vault keys, certificates' private keys, or VPN keys.
 
 **Do not retry blindly, delete recovery artifacts, bypass backup verification, or manually force a migration.** Supported resume of an unfinished new-release helper is `env INSTALL_DIR=/opt/nyxguardmanager FORCE_TAG=5.0.7 NYXGUARD_RESUME=1 bash "$RELEASE_DIR/update.sh"`, only after review confirms exactly that helper/transaction owns the recovery. Completed rollback is retried through the normal command, preserving its historical ledger.

@@ -10,3 +10,7 @@ security-reports
 node_modules
 **/node_modules
 *.log
+
+__pycache__
+**/__pycache__
+*.pyc

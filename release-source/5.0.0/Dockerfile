@@ -1,5 +1,5 @@
-# Exact 4.0.18 DEV image identity captured before this task. Never resolve the
-# drifting 4.0.18 Compose tag while building this development candidate.
+# Historical build requires the frozen local 4.0.18 base image.
+# Verify its identity before building; do not resolve a drifting tag.
 FROM nyxguardmanager:4.0.18-clean-rc
 
 ARG NYXGUARD_SOURCE_REVISION=uncommitted

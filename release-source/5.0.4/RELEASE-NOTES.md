@@ -41,6 +41,6 @@ installer does not configure Proxmox host permissions.
 
 ## Updating
 
-Follow the [main update guide](../../../README.md#update-in-place). Keep an independent backup. Do not substitute
+Follow the [main update guide](../../README.md#update-in-place). Keep an independent backup. Do not substitute
 a bare Docker image change for a supported guarded upgrade, and do not start
 an older image against a newer database schema.

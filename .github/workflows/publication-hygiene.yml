@@ -1,0 +1,31 @@
+name: Publication hygiene
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Review source, dependency and version contracts
+        env:
+          PRIVATE_PATTERNS: ${{ secrets.PUBLICATION_PRIVATE_PATTERNS }}
+        run: |
+          if [ -n "$PRIVATE_PATTERNS" ]; then
+            umask 077
+            printf '%s\n' "$PRIVATE_PATTERNS" > "$RUNNER_TEMP/private-patterns"
+            export NYXGUARD_PUBLICATION_DENYLIST="$RUNNER_TEMP/private-patterns"
+          fi
+          python3 tools/publication-check.py --context
+          git archive --format=tar HEAD > "$RUNNER_TEMP/public-source.tar"
+          python3 tools/publication-hygiene.py --package "$RUNNER_TEMP/public-source.tar"
+      - name: Host regression contracts
+        run: |
+          python3 tools/publication-hygiene.test.py
+          python3 tests/installer-vpn-capability.test.py
+          python3 tests/updater-containment.test.py
+          python3 tests/vpn-repair-routing.test.py

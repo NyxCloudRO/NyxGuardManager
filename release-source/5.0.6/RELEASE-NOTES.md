@@ -14,4 +14,4 @@ Recovery workers inherit the installation's timezone environment and read-only c
 
 Installer defaults remain compatible. Independent instances can select container/volume names, ports and vault directory through documented instance variables. Existing installations are directed to the guarded updater rather than overwritten by installation.
 
-5.0.5 remains immutable. Publication requires the actual upgrade, installation, failure/recovery and public-artifact certification evidence. CT106 cutover requires separate owner authorization after release review.
+5.0.5 remains immutable. Publication requires the actual upgrade, installation, failure/recovery and public-artifact certification evidence. Schedule installation upgrades under your own maintenance and recovery policy.
