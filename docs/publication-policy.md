@@ -2,6 +2,8 @@
 
 Every push and release requires both an automated gate and human review. Public documentation describes supported product behavior, examples and recovery requirements. Installation identities, infrastructure inventories, customer statistics, raw logs, dumps, keys and operator incident reports stay in private evidence storage.
 
+Enable the maintained local push gate with `git config core.hooksPath .githooks` after reviewing any existing custom hooks. It scans the exact commit trees being pushed and refuses unreviewed ref deletion. CI checks the checked-out push/PR tree. Repository administrators should require the CI check before merging; direct pushes can otherwise bypass a local hook.
+
 Run from the repository root before committing:
 
 ```bash
