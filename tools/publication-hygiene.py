@@ -65,7 +65,7 @@ def check(name,data):
    key=(name,rule,hashlib.sha256(line.encode()).hexdigest())
    # Archive paths use the same narrowly reviewed source exceptions.
    source_name=name.split('!',1)[-1]
-   source_name=re.sub(r'^NyxGuardManager-[^/]+/','',source_name)
+   source_name=re.sub(r'(?i)^nyxguardmanager-[^/]+/','',source_name)
    if key in exceptions or (source_name,rule,key[2]) in exceptions:continue
    report(name,rule,number)
   if any(p.search(line) for p in private_patterns):report(name,'private-denylist',number)

@@ -23,6 +23,13 @@ class Gate(unittest.TestCase):
   with tarfile.open(fileobj=out,mode='w') as archive:
    data=('Host '+'VM'+'345').encode();member=tarfile.TarInfo('README.md');member.size=len(data);archive.addfile(member,io.BytesIO(data))
   h.findings.clear();h.check('source.tar',out.getvalue());self.assertIn('infrastructure-id',{f['rule'] for f in h.findings})
+ def test_source_archive_prefix_preserves_exact_exceptions(self):
+  entry=next(x for x in h.allow if x['rule']=='embedded-secret')
+  lines=(h.ROOT/entry['path']).read_text().splitlines()
+  line=next(x for x in lines if h.hashlib.sha256(x.encode()).hexdigest()==entry['lineSHA256'])
+  name='source.tar.gz!nyxguardmanager-5.0.8/'+entry['path']
+  self.assertEqual(self.scan(line,name),set())
+  self.assertIn('embedded-secret',self.scan(line+' changed',name))
  def test_operator_reports_are_rejected(self):
   self.assertIn('operator-report',self.scan('# Internal incident findings'))
   self.assertIn('operator-artifact',self.scan('details','operator-notes.md'))
