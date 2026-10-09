@@ -241,6 +241,7 @@ async function sameMajorVolumes(manager, vpn) {
 
 let sameMajorInstallDir;
 async function runSameMajorWorker(mode, recoveryId, volumes, transaction = null) {
+	const runtime = await api('GET', `/containers/${transaction?.phase==='COMMITTED'?transaction.target.id:env.OLD_MANAGER_ID}/json`);
 	if(!sameMajorInstallDir) {
 		const previous = await api("GET", `/containers/${env.OLD_MANAGER_ID}/json`);
 		const composeFile=String(previous.Config.Labels?.["com.docker.compose.project.config_files"]||"").split(",")[0];
@@ -250,6 +251,7 @@ async function runSameMajorWorker(mode, recoveryId, volumes, transaction = null)
 	await api('POST','/volumes/create',{Name:recoveryVolume,Labels:{'nyxguard.purpose':'same-major-update-recovery'}});
   const binds = 
 		["/var/run/docker.sock:/var/run/docker.sock:ro", `${recoveryVolume}:/recovery:rw`,
+		...runtime.Mounts.filter(m=>['/etc/localtime','/etc/timezone'].includes(m.Destination)).map(m=>`${persistentSource(m)}:${m.Destination}:ro`),
 		`${persistentSource(installedDatabase.Mounts.find(m=>m.Destination==='/var/lib/mysql'))}:/source/db:ro`, `${vaultDirectory}:/host-vault:rw`,
 		`${sameMajorInstallDir}:/host-install:rw`,
 		...volumes.map((v) => `${v.name}:/source/${v.key}:${["restore","finalize","baseline"].includes(mode) ? "rw" : "ro"}`)];
@@ -265,8 +267,9 @@ async function runSameMajorWorker(mode, recoveryId, volumes, transaction = null)
 		Image: env.TARGET_IMAGE_ID || `nyxmael/nyxguardmanager:${env.TARGET_VERSION}`,
 		Entrypoint: ["node", "/app/internal/same-major-recovery.js"], Cmd: [],
 		Env: [`RECOVERY_ID=${recoveryId}`,
+      ...runtime.Config.Env.filter(value=>value.startsWith('TZ=')),
       `RECOVERY_DATABASE_ID=${installedDatabase.Id}`,
-      `RECOVERY_COMPOSE_FILES=${JSON.stringify(String((await api('GET',`/containers/${transaction?.phase==='COMMITTED'?transaction.target.id:env.OLD_MANAGER_ID}/json`)).Config.Labels['com.docker.compose.project.config_files']).split(',').map(file=>{if(path.dirname(file)!==sameMajorInstallDir)throw new Error('Compose overrides outside installation directory require a protected install layout');return path.basename(file);} ))}`,`RECOVERY_VOLUME=${recoveryVolume}`,
+      `RECOVERY_COMPOSE_FILES=${JSON.stringify(String(runtime.Config.Labels['com.docker.compose.project.config_files']).split(',').map(file=>{if(path.dirname(file)!==sameMajorInstallDir)throw new Error('Compose overrides outside installation directory require a protected install layout');return path.basename(file);} ))}`,`RECOVERY_VOLUME=${recoveryVolume}`,
       `BASELINE_AUTHORIZATION=${env.BASELINE_AUTHORIZATION||''}`,`BASELINE_REASON=${env.BASELINE_REASON||''}`,
       `BASELINE_PLAN=${env.BASELINE_PLAN||''}`, `RECOVERY_MODE=${mode}`,
 			`RECOVERY_TARGET_IMAGE=${env.TARGET_IMAGE_ID}`,

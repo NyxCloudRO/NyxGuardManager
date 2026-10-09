@@ -10,6 +10,8 @@ The updater supports explicit administrator acceptance of a current baseline whe
 
 Only reviewed five-minute traffic counters permit historical retention or monotonic live increments. Cold backups/restores still compare all tables exactly. All operational tables, users/authentication, settings, proxy hosts, certificates, security rules and integrations remain protected. Monitor cursor identity is preserved while normal inode/offset/timestamp advances remain legitimate runtime work. Licensing identity/entitlement, vault, TLS/custom proxy files and VPN profiles/tokens are verified. Expired security rules remain stored and inactive rather than being deleted on startup.
 
+Recovery workers inherit the installation's timezone environment and read-only clock mounts. Traffic-retention cutoffs therefore use the application's actual date formatting, including installations with a mounted host clock.
+
 Installer defaults remain compatible. Independent instances can select container/volume names, ports and vault directory through documented instance variables. Existing installations are directed to the guarded updater rather than overwritten by installation.
 
 5.0.5 remains immutable. Publication requires the actual upgrade, installation, failure/recovery and public-artifact certification evidence. CT106 cutover requires separate owner authorization after release review.
