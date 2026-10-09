@@ -12,7 +12,7 @@ The Manager's licensing vault key is mounted read-only; the host Compose and
 environment files are not rewritten by this same-major path. Docker socket
 access is reserved for the update engine; it is not a general host snapshot.
 
-The observed installation uses MariaDB, not PostgreSQL. Its application
+The supported installation uses MariaDB, not PostgreSQL. Its application
 tables are Aria, so a transactional dump alone is insufficient. The helper
 stops the old VPN Agent (if present) and old Manager before backup. It keeps
 MariaDB running, dumps the database with `mariadb-dump --lock-all-tables`, and

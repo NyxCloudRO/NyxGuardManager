@@ -1,17 +1,13 @@
-# NyxGuard Manager v3.0.2
+# Automatic startup
 
-This folder contains an optional `systemd` unit to start the Docker Compose stack on boot.
+The optional [systemd unit](nyxguardmanager.service) starts the Docker Compose stack on boot. See the [project overview](../README.md). The installer manages startup automatically.
 
-For the full project overview, see `../README.md`.
-
-## Install
+For a manual deployment in `/opt/nyxguardmanager`, run as root:
 
 ```bash
-sudo install -m 0644 systemd/nyxguardmanager.service /etc/systemd/system/nyxguardmanager.service
-sudo systemctl daemon-reload
-sudo systemctl enable --now nyxguardmanager.service
+install -m 0644 systemd/nyxguardmanager.service /etc/systemd/system/nyxguardmanager.service
+systemctl daemon-reload
+systemctl enable --now nyxguardmanager.service
 ```
 
-By default, the service expects the stack in `/opt/nyxguardmanager` (as installed by `install.sh`).
-
-<!-- stamp 2026-02-10T22:03:52Z -->
+Ordinary users with sudo privileges prefix each command with `sudo`. Review the unit before installing: enable the Agent only when TUN is usable and the VPN Compose service is configured. Manager-only deployments must start just Manager and database.

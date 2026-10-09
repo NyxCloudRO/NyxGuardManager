@@ -11,11 +11,11 @@ if(inspected.Config.Labels?.['nyxguard.task']!=='507')throw new Error('Explicit 
 const database=process.env.NYXGUARD_TEST_DATABASE; const expected=await captureIntegrity(c,database);const results=[];
 async function test(name,fn){const started=Date.now();await fn();results.push({name,result:'PASS',ms:Date.now()-started});console.log(JSON.stringify(results.at(-1)));await fs.writeFile('/proof/sql-results.json',JSON.stringify(results,null,2));}
 async function importer(creds,suffix='',options={}) {
- const script=suffix==='full'?'exec mariadb -h127.0.0.1 -u"$STAGE_USER" "$STAGE_DATABASE" < /proof/prod-failed-database.sql':`exec mariadb -h127.0.0.1 -u"$STAGE_USER" "$STAGE_DATABASE" -e '${suffix}'`;
+ const script=suffix==='full'?'exec mariadb -h127.0.0.1 -u"$STAGE_USER" "$STAGE_DATABASE" < /proof/fixture.sql':`exec mariadb -h127.0.0.1 -u"$STAGE_USER" "$STAGE_DATABASE" -e '${suffix}'`;
  return runSqlHelper({image:inspected.Image,dbId:inspected.Id,recoveryId:'nyx507-fixed-proof',env:[`MYSQL_PWD=${creds.password}`,`STAGE_USER=${creds.user}`,`STAGE_DATABASE=${creds.database}`],script,binds:[process.env.NYXGUARD_TEST_EVIDENCE+':/proof:ro'],progress:sqlProgress(c,creds.database,creds.user),...options});
 }
 try {
-await test('production dump verified restore, complete row/schema fingerprints, 512 MB / one CPU',async()=>{const s=await prepareDatabaseSnapshot(c,database,expected,x=>importer(x,'full'));validateIntegrity(await captureIntegrity(c,s.stage),expected);validateIntegrity(await captureIntegrity(c,database),expected);await q(`DROP DATABASE \`${s.stage}\``);});
+await test('fixture dump verified restore, complete row/schema fingerprints, 512 MB / one CPU',async()=>{const s=await prepareDatabaseSnapshot(c,database,expected,x=>importer(x,'full'));validateIntegrity(await captureIntegrity(c,s.stage),expected);validateIntegrity(await captureIntegrity(c,database),expected);await q(`DROP DATABASE \`${s.stage}\``);});
 await test('SQL error rejects backup, protects live DB, removes stage and credentials',async()=>{await assert.rejects(prepareDatabaseSnapshot(c,database,expected,x=>importer(x,'INVALID SQL;')), /Staged restore rejected/);validateIntegrity(await captureIntegrity(c,database),expected);});
 await test('idle timeout terminates importer and cleans failed stage',async()=>{await assert.rejects(prepareDatabaseSnapshot(c,database,expected,x=>importer(x,'DO SLEEP(30);',{idleMs:2000})), /Staged restore rejected/);});
 await test('total deadline terminates importer and cleans failed stage',async()=>{await assert.rejects(prepareDatabaseSnapshot(c,database,expected,x=>importer(x,'DO SLEEP(30);',{totalMs:2000})), /Staged restore rejected/);});

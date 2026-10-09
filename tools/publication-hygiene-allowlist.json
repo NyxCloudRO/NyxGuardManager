@@ -1,0 +1,38 @@
+[
+  {
+    "path": "release-source/5.0.0/professional-support/professional-support.test.mjs",
+    "rule": "embedded-secret",
+    "lineSHA256": "5e2713624329897d617429b1949ea953aa1d9539a3e8ea51aa59d3b0fbd2413c",
+    "reason": "Synthetic redaction sentinel in an isolated regression test; no deployment credentials."
+  },
+  {
+    "path": "release-source/5.0.0/professional-support/professional-support.test.mjs",
+    "rule": "embedded-secret",
+    "lineSHA256": "32bc44e70adbde620ee4adeb3749dfbb65998822a28b0f4e1574f0bf2da90c4d",
+    "reason": "Synthetic redaction sentinel in an isolated regression test; no deployment credentials."
+  },
+  {
+    "path": "release-source/5.0.1/frontend/vpn-client.test.mjs",
+    "rule": "private-address",
+    "lineSHA256": "e603e7eb8b161388394b54c79c3c3cd5fd70aad2c2f5b01c8c399109a2aa885e",
+    "reason": "Synthetic VPN view fixture using illustrative RFC1918 network addresses."
+  },
+  {
+    "path": "release-source/5.0.2/tests/integrity.test.mjs",
+    "rule": "embedded-secret",
+    "lineSHA256": "cfa27df140c3b719d2340f8fa37f79ea692f8afc7e8d690f6c187efe18b5b0bd",
+    "reason": "Synthetic redaction sentinel in an isolated regression test; no deployment credentials."
+  },
+  {
+    "path": "release-source/5.0.2/tests/integrity.test.mjs",
+    "rule": "embedded-secret",
+    "lineSHA256": "bf889647fcc32ab20918cb9cd580373da4163c1c41e383eb4fda5afe4fbfb284",
+    "reason": "Synthetic redaction sentinel in an isolated regression test; no deployment credentials."
+  },
+  {
+    "path": "tools/publication-hygiene.py",
+    "rule": "private-home",
+    "lineSHA256": "bc1abe87ba6919af9a1a5c1f04697446e49978868d7ee3ed38be93bd5ec7eefb",
+    "reason": "Generic detection regex syntax; no operator path is embedded."
+  }
+]

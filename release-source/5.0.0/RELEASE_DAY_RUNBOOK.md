@@ -1,81 +1,11 @@
-# NyxGuard 5.0.0 PROD release day
+# Historical upgrade guidance: 4.0.18 to 5.0.0
 
-This procedure is for the authorized controlled change on the production host.
-The observed starting point is image `sha256:d5ec6137e6b48731a0c971e9fe76f744cee3a82f257bd7b078680474a4d7edf2`,
-NyxGuard 4.0.18, 41 migrations, and five named volumes. Recheck every identity
-before proceeding. Preserve the database and vault key as one recovery set.
+This document describes the historical version boundary. Use the official guarded updater and review the destination release compatibility before changing an installation. Do not replace the Manager image manually to bypass backup verification.
 
-1. Put the customer system in a maintenance window. On PROD, create a restricted
-   backup directory and save the exact configuration and rollback image:
+Before upgrading, record the installed application version, image digest and migration level. Version 4.0.18 uses migration 41; 5.0.0 uses migration 42. Preserve an independent, verified recovery set containing the SQL dump, persistent volumes, Compose configuration, rollback image and licensing vault key. Stop writes for filesystem snapshots; a hot database volume archive does not replace a consistent SQL backup. Verify a restore before proceeding.
 
-   ```sh
-   set -eu
-   cd /opt/nyxguardmanager
-   export BACKUP_DIR=/root/nyxguard-5-release-backup
-   install -d -m 0700 "$BACKUP_DIR"
-   cp -a docker-compose.yml docker-compose.vpn.yml .env "$BACKUP_DIR/"
-   docker inspect nyxguard-manager > "$BACKUP_DIR/app-inspect.json"
-   docker image inspect sha256:d5ec6137e6b48731a0c971e9fe76f744cee3a82f257bd7b078680474a4d7edf2 > "$BACKUP_DIR/rollback-image-inspect.json"
-   docker image save sha256:d5ec6137e6b48731a0c971e9fe76f744cee3a82f257bd7b078680474a4d7edf2 -o "$BACKUP_DIR/rollback-4.0.18.tar"
-   docker exec nyxguard-db sh -lc 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mariadb-dump -uroot --single-transaction --routines --events "$MYSQL_DATABASE"' > "$BACKUP_DIR/database.sql"
-   for volume in nyxguard_data nyxguard_db nyxguard_letsencrypt nyxguard_vpn nyxguard_vpn_auth; do
-     source_dir="$(docker volume inspect "$volume" --format '{{.Mountpoint}}')"
-     tar -C "$source_dir" -cf "$BACKUP_DIR/$volume.tar" .
-   done
-   sha256sum "$BACKUP_DIR"/*.tar "$BACKUP_DIR/database.sql" > "$BACKUP_DIR/SHA256SUMS"
-   (cd "$BACKUP_DIR" && sha256sum -c SHA256SUMS)
-   test -s "$BACKUP_DIR/database.sql"
-   test -s "$BACKUP_DIR/rollback-4.0.18.tar"
-   ```
+The vault key must remain protected and persistent, mounted read-only at `/run/nyxguard-licensing/vault.key`. Never regenerate an existing key. Follow [vault operations](VAULT_OPERATIONS.md) for backup and restore, and [license recovery](CUSTOMER_LICENSE_RECOVERY.md) for supported activation. Claims and installation identities belong to one installation and must not be reused.
 
-   Stop writes while taking volume archives and verify an isolated restore of
-   the SQL dump, all volume archives, Compose files and rollback image before
-   changing the application. Do not treat a hot `nyxguard_db` archive as the
-   consistent DB backup; use the SQL dump for database rollback.
+Use the [official updater](https://github.com/NyxCloudRO/NyxGuardManager/blob/main/update.sh) for supported version transitions. A 5.0.0 installation can then follow the [5.0.7 upgrade and recovery guide](../../docs/upgrade-5.0.7.md). Keep the Manager and Agent versions paired according to the destination manifest.
 
-2. Provision the persistent protected vault key before first 5.0.0 start.
-   Mount `/var/lib/nyxguard-licensing/vault.key` read-only at
-   `/run/nyxguard-licensing/vault.key`. Set the app's
-   `NYXCLOUD_LICENSE_VAULT_KEY_PATH` to that container path. Follow
-   [VAULT_OPERATIONS.md](VAULT_OPERATIONS.md) for ownership, backup and restore.
-   Never regenerate an existing key. Save the key with restricted backup access.
-
-3. Configure `NYXCLOUD_AUTHORITY_URL=https://licensing.nyxcloud.ro` and the
-   validated public SupportStorage origin in the protected PROD Compose config.
-   Install the validated 5.0.0 image by immutable digest, retaining the saved
-   4.0.18 image. Set `DOCKER_SOCK_GID` from the numeric GID of the host Docker
-   socket and add that supplemental group to the Manager. Review
-   `docker compose --env-file .env -f docker-compose.yml -f docker-compose.vpn.yml
-   config` without printing secrets into the change record. Stop the old VPN
-   agent before replacing the Manager; start the new Manager and wait for health
-   and migration 42 before recreating the VPN agent against its new namespace.
-   Verify the VPN agent is healthy. Do not recreate MariaDB or named volumes.
-
-4. Confirm migration 42, application and DB health, zero unexpected restart
-   loop, existing customer functions, and public licensing connectivity. Read
-   the new installation UUID from the local licensing state through the
-   approved operator method. Do not guess or reuse a DEV UUID.
-
-5. If the installation has Professional Support, obtain its claim through the
-   approved purchase or support process. Enter the claim in the License page,
-   activate, and refresh through the public authority. Do not reuse a claim
-   or installation identity from another environment.
-
-6. Confirm `Active`, the correct product/capability/expiry, Authority Available,
-   and Diagnostics & Support unlocked. Recreate only the app under the
-   established Compose procedure, then refresh again. Generate a redacted
-   support bundle, upload it, read it back through SupportStorage, record the
-   Support ID, and repeat final health/customer-function checks.
-
-## Rollback
-
-If the 5.0.0 gate fails, stop the 5.0.0 app and prevent new customer writes.
-Preserve the failed state for investigation. Restore the verified pre-upgrade
-SQL database and all five named volumes from the restricted backup, restore
-the saved Compose/configuration, and load the exact saved 4.0.18 image with
-   `docker image load -i "$BACKUP_DIR/rollback-4.0.18.tar"`. Pin the restored
-Compose image to the saved immutable image ID, then start the previous stack.
-Verify 4.0.18, migration 41, health, customer functions and VPN. A 4.0.18 app
-must not run against the migration-42 database. Preserve the 5.0.0 vault key
-and incident evidence; do not revoke or reuse an issued claim without an
-explicit authority reconciliation step.
+Verify migrations, database/application health, existing hosts and certificates, licensing entitlement and VPN behavior. If an upgrade fails, retain evidence and follow its supported recovery workflow. Do not run a 4.0.18 application against migration 42, or treat healthy containers alone as proof of data preservation.

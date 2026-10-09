@@ -4,6 +4,8 @@ Fixes the backup verification monitor and official VPN activation workflow. A tr
 
 Current-version VPN repair reuses the existing Compose Agent, verifies TUN interface creation, and updates systemd startup without restarting Manager or DB. Root users do not need sudo. Debian/Ubuntu require systemd and Compose v2.
 
-Manager 5.0.7 remains on schema 45 and pairs with VPN Agent 5.0.1. Supported guarded sources: 5.0.0–5.0.6. No production upgrade was performed during this release work. Published 5.0.6 artifacts remain unchanged.
+Manager 5.0.7 remains on schema 45 and pairs with VPN Agent 5.0.1. Supported guarded sources: 5.0.0–5.0.6. Published 5.0.6 artifacts remain unchanged.
 
-See docs/upgrade-5.0.7.md for the owner-operated production procedure and docs/validation-5.0.7.md for coverage and limitations.
+See the [upgrade and recovery guide](../../docs/upgrade-5.0.7.md) and [validation coverage](../../docs/validation-5.0.7.md).
+
+Known limitation: a retained completed 5.0.6-target ledger may be rejected before a new transaction is initialized. Stop and retain evidence pending a reviewed correction; do not bypass ledger validation.

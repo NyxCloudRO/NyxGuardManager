@@ -1,4 +1,4 @@
-# Private release overlay on the exact certified candidate; no rebuild of product dependencies.
+# Release overlay on the exact certified candidate; no rebuild of product dependencies.
 # Local-only base: build preflight and layer comparison bind this frozen tag to
 # sha256:f181c12783d290385205339b2bb9c49139a01451d6157a11bfededce6bd3b691.
 FROM nyxguardmanager:504-corrective-private-4

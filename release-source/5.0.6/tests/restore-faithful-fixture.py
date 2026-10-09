@@ -18,4 +18,4 @@ for file in ['docker-compose.yml','docker-compose.vpn.yml']:
  run(['sh','-c','cat > '+P+'/'+file],inp=yaml.safe_dump(c,sort_keys=False).encode())
 root=pathlib.Path(__file__).resolve().parents[3]
 for file,source in [('update506.sh','update.sh'),('bootstrap506.mjs','upgrade/same-major-bootstrap.mjs')]:run(['sh','-c','cat > '+P+'/'+file],inp=(root/source).read_bytes())
-cmd=['docker','compose','--env-file',P+'/.env','-f',P+'/docker-compose.yml','-f',P+'/docker-compose.vpn.yml'];run(cmd+['up','-d']);print(json.dumps({'case':case,'installDir':P,'manager':prefix+'_manager','agent':prefix+'_agent','database':prefix+'_db','dataVolume':prefix+'_data','faithfulSource':'5.0.1','schema':42,'originalHistoricalTransaction':'1ea96072477e','volumesRetained':True}))
+cmd=['docker','compose','--env-file',P+'/.env','-f',P+'/docker-compose.yml','-f',P+'/docker-compose.vpn.yml'];run(cmd+['up','-d']);print(json.dumps({'case':case,'installDir':P,'manager':prefix+'_manager','agent':prefix+'_agent','database':prefix+'_db','dataVolume':prefix+'_data','faithfulSource':'5.0.1','schema':42,'volumesRetained':True}))

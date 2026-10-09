@@ -82,14 +82,16 @@ Professional Support is optional. Signed entitlements are verified locally and s
 | Storage | 40 GB | 60 GB SSD; more for high traffic or 60–180 day retention |
 | Network | Host access to Docker registries and certificate services | Inbound TCP 80/443 for public applications; administration on HTTPS 8443 |
 
-An observed clean Ubuntu 24 deployment used about 219 MiB RAM and 3.81 GiB disk while idle (Manager + DB); this is an observation, not a capacity guarantee. Usage depends on traffic, protected applications and retention.
+Capacity depends on traffic, protected applications and retention. Allow additional disk space for independent backups and staged database verification during upgrades.
 
 ## Supported operating systems
 
 | Operating system | Support |
 | --- | --- |
-| Ubuntu 22.x / 24.x / 25.x / 26.04 LTS | Tested |
-| Debian 12 / 13 | Tested |
+| Ubuntu 24.04 | Runtime installation tested with existing Docker/packages |
+| Ubuntu 26.04 | Applicable prior release runtime validation; focused 5.0.7 coverage is documented separately |
+| Debian 12 | Privilege entry points and package resolution tested |
+| Other Debian/Ubuntu releases | Check Docker/Compose availability; clean-host validation is required |
 | Other distributions | Not fully tested; install Docker/Compose yourself before evaluating |
 
 VPN needs host TUN access and a reachable WireGuard endpoint. A restricted LXC guest needs device permission from its hypervisor. Manager and MariaDB can operate without VPN.
@@ -103,13 +105,13 @@ HTTP-01 certificates need public inbound TCP 80. DNS challenges need the provide
 <details>
 <summary>Manual Docker Compose installation</summary>
 
-For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.6 uses VPN Agent 5.0.1. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
+For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.7 uses VPN Agent 5.0.1. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
 
 ```yaml
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:5.0.6
+    image: nyxmael/nyxguardmanager:5.0.7
     restart: unless-stopped
     ports:
       - "80:80"
@@ -244,7 +246,7 @@ bash /tmp/nyxguard-update.sh # root; sudo users run: sudo bash /tmp/nyxguard-upd
 
 The 5.0.7 updater supports source versions **5.0.0 through 5.0.6**. The updater protects the previous installation's DB/files/configuration, verifies the replacement and application data, and restores the protected source if activation fails. It preserves Manager-only or installed VPN topology. Retain your own independent database and volume backup.
 
-For the CT106 production upgrade, use the [verified release runbook](docs/upgrade-5.0.7.md).
+For production upgrades, review the [official upgrade and recovery guide](docs/upgrade-5.0.7.md) before running the updater. **Known 5.0.7 limitation:** a valid retained 5.0.6 handover ledger can be rejected before a new transaction starts. Stop and retain evidence; wait for a reviewed correction rather than bypassing validation or retrying blindly.
 
 After TUN becomes usable, activate only VPN at the current Manager version:
 
@@ -289,7 +291,7 @@ Manager/database can run without TUN; VPN Agent needs usable read/write `/dev/ne
 
 Follow the [numbered Proxmox LXC/TUN setup and same-version repair guide](docs/proxmox-lxc-vpn.md). It separates **Proxmox host** and **LXC guest** commands, verifies the target CTID/hostname/IP, backs up its configuration, selects a free `devN` slot and uses supported device passthrough. Never overwrite an occupied slot or convert the LXC to privileged. Restart only the selected LXC if required.
 
-After guest TUN is usable, the guide verifies the immutable public **5.0.4 updater** and runs explicit `FORCE_TAG=5.0.4 NYXGUARD_REPAIR_VPN=1` repair against the existing installation directory. It preserves Manager/database data and installs compatible **VPN Agent 5.0.1**. Then check health and **Settings → VPN Client**, a recent handshake and actual permitted-destination connectivity. TUN presence alone does not prove a working VPN.
+After guest TUN is usable, the guide verifies the immutable public **5.0.7 updater** and runs explicit `FORCE_TAG=5.0.7 NYXGUARD_REPAIR_VPN=1` repair against the existing installation directory. It preserves Manager/database data and installs compatible **VPN Agent 5.0.1**. Then check health and **Settings → VPN Client**, a recent handshake and actual permitted-destination connectivity. TUN presence alone does not prove a working VPN.
 
 See the [VPN Client guide](docs/vpn-client.md) for profiles, allowed networks and remote-peer troubleshooting, or the [website walkthrough](https://nyxcloud.ro/nyxguard/vpn-client.html#proxmox-lxc).
 
@@ -339,19 +341,27 @@ NyxGuard Manager is free to use in internal personal and commercial environments
 
 ### Current baseline acceptance and interrupted upgrades
 
-5.0.6 uses one release compatibility policy, Compose service metadata, a verified restorable backup, bounded migration progress, application/data checks and a durable commit or verified rollback. Migration progress never counts as healthy application startup. Existing operational records and secrets remain protected; only reviewed traffic counter history permits normal retention and live increments. Expired security rules remain stored and inactive.
+5.0.7 uses one release compatibility policy, Compose service metadata, a verified restorable backup, bounded migration progress, application/data checks and a durable commit or verified rollback. Migration progress never counts as healthy application startup. Existing operational records and secrets remain protected; only reviewed traffic counter history permits normal retention and live increments. Expired security rules remain stored and inactive.
 
 A healthy installation trapped by unavailable historical recovery artifacts can explicitly accept a **fresh verified current baseline**. This preserves the old ledger and raw state with historical rollback unverified; it does not certify the missing original recovery point.
 
 ```bash
-curl -fsSLo /root/nyxguard-update.sh https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/v5.0.7/update.sh
-sudo env INSTALL_DIR=/opt/nyxguardmanager FORCE_TAG=5.0.7 NYXGUARD_BASELINE_PLAN=1 bash /root/nyxguard-update.sh
+UPDATE_DIR="$(mktemp -d)"
+chmod 700 "$UPDATE_DIR"
+curl -fsSLo "$UPDATE_DIR/update.sh" https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/v5.0.7/update.sh
+env INSTALL_DIR=/opt/nyxguardmanager FORCE_TAG=5.0.7 NYXGUARD_BASELINE_PLAN=1 bash "$UPDATE_DIR/update.sh"
 # Review the installation-bound challenge, then explicitly authorize acceptance:
-sudo env INSTALL_DIR=/opt/nyxguardmanager FORCE_TAG=5.0.7 NYXGUARD_AUTO_YES=1 \
+env INSTALL_DIR=/opt/nyxguardmanager FORCE_TAG=5.0.7 NYXGUARD_AUTO_YES=1 \
   NYXGUARD_ACCEPT_BASELINE='<reviewed challenge>' \
-  NYXGUARD_BASELINE_REASON='<administrator reason>' bash /root/nyxguard-update.sh
+  NYXGUARD_BASELINE_REASON='<administrator reason>' bash "$UPDATE_DIR/update.sh"
 ```
 
-For an interrupted 5.0.6 transaction, use the same updater with `NYXGUARD_RESUME=1`. It resumes the original durable helper under the shared installation lock; an uncommitted migration returns to the verified source before a fresh retry. Do not clear recovery flags manually or manufacture manifests. Retain recovery volumes and baseline receipts.
+The commands above are shown for root; ordinary users with sudo privileges prefix `env` with `sudo`.
+
+For an interrupted 5.0.6 transaction, use the same updater with `FORCE_TAG=5.0.6 NYXGUARD_RESUME=1`. It resumes the original durable helper under the shared installation lock; an uncommitted migration returns to the verified source before a fresh retry. Do not clear recovery flags manually or manufacture manifests. Retain recovery volumes and baseline receipts.
 
 Fresh independent installations can use `NYXGUARD_INSTANCE`, `NYXGUARD_VAULT_DIR`, `NYXGUARD_HTTP_PORT`, `NYXGUARD_HTTPS_PORT` and `NYXGUARD_ADMIN_PORT`; defaults preserve the existing installation layout. The installer refuses to overwrite an existing installation directory.
+
+## Publication review
+
+Source and release publication follow the [public-source review policy](docs/publication-policy.md), including dependency, version, artifact and privacy checks.

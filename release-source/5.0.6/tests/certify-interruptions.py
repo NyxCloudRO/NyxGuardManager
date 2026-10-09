@@ -1,6 +1,10 @@
 import os
 assert os.environ.get("NYXGUARD_DISPOSABLE_CERTIFICATION") == "1", "Explicit disposable-fixture authorization required"
-import subprocess,pathlib,json,time,sys
+import subprocess,pathlib,json,time,sys,re
+historical_id=os.environ["NYXGUARD_TEST_HISTORICAL_TRANSACTION"]
+historical_sha=os.environ["NYXGUARD_TEST_HISTORICAL_LEDGER_SHA256"]
+assert re.fullmatch(r"[a-f0-9]{12,64}", historical_id), "Invalid fixture transaction"
+assert re.fullmatch(r"[a-f0-9]{64}", historical_sha), "Invalid fixture checksum"
 H=os.environ['NYXGUARD_TEST_ENGINE'];R=pathlib.Path(__file__).resolve().parents[3];E=pathlib.Path(os.environ['NYXGUARD_TEST_EVIDENCE']);case=sys.argv[1];mode=sys.argv[2];T=sys.argv[3];P='/opt/nyx506-'+case;M='nyx506_'+case+'_manager'
 def run(a,inp=None,check=True):
  p=subprocess.run(['docker','exec',*(['-i'] if inp is not None else []),H,*a],input=inp,capture_output=True)
@@ -55,7 +59,7 @@ raw=run(['docker','exec',M,'cat','/data/.nyx-handover/'+helper[:12]+'.json']);le
 state=json.loads(run(['docker','exec',M,'cat','/data/update-manager/state.json']).stdout)
 assert run(['docker','inspect',M,'--format','{{.State.Health.Status}}']).stdout.strip()==b'healthy'
 assert run(['docker','exec',M,'node','-p',"require('/app/package.json').version"]).stdout.strip()==b'5.0.1'
-history=run(['docker','exec',M,'sha256sum','/data/.nyx-handover/1ea96072477e.json']).stdout.decode().split()[0];assert history=='7d9d43d9a712e27db661162e7e08ca84221ab94a31339665ddde7bc339ea9988'
+history=run(['docker','exec',M,'sha256sum','/data/.nyx-handover/'+historical_id+'.json']).stdout.decode().split()[0];assert history==historical_sha
 if mode in ['backup','reconcile']:assert state.get('manualRecoveryRequired') is True,'Historical guard lost before acceptance'
 receipt={'case':case,'mode':mode,'faultInjected':True,'transaction':helper[:12],'phase':ledger['phase'],'backupVerified':ledger['backupVerified'],'mutationPossible':ledger['mutationPossible'],'restoreVerified':ledger.get('restoreVerified',False),'sourceHealthy':True,'sourceVersion':'5.0.1','historicalLedgerSHA256':history,'historicalGuardRetained':state.get('manualRecoveryRequired',False),'failure':ledger.get('failure'),'observedPhases':observations}
 (E/(case+'-fault-receipt.json')).write_text(json.dumps(receipt,indent=2));print(json.dumps(receipt),flush=True)
