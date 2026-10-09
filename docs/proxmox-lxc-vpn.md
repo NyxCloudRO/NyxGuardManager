@@ -134,21 +134,21 @@ cat "$INSTALL_DIR/.version"
 test -f "$INSTALL_DIR/docker-compose.yml" && test -f "$INSTALL_DIR/.env"
 ```
 
-Expected version: `5.0.4`. For a custom installation, set `INSTALL_DIR` to its actual directory. Stop if the version is different or those files are missing; this is a same-version repair guide, not a fresh install or downgrade.
+Read the actual application version using `docker exec nyxguard-manager node -p "require('/app/package.json').version"`; `.version` may be historical. For a custom installation, set `INSTALL_DIR` to its actual directory. Stop if the installation files are missing; this is a same-version repair guide, not a fresh install or downgrade.
 
 Download the updater and checksums from the immutable published release, verify it, then run the explicit repair:
 
 ```bash
 REPAIR_DIR="$(mktemp -d)"
-curl -fLsS https://github.com/NyxCloudRO/NyxGuardManager/releases/download/v5.0.4/update.sh -o "$REPAIR_DIR/update.sh" &&
-curl -fLsS https://github.com/NyxCloudRO/NyxGuardManager/releases/download/v5.0.4/SHA256SUMS -o "$REPAIR_DIR/SHA256SUMS" &&
+curl -fLsS https://github.com/NyxCloudRO/NyxGuardManager/releases/download/v5.0.7/update.sh -o "$REPAIR_DIR/update.sh" &&
+curl -fLsS https://github.com/NyxCloudRO/NyxGuardManager/releases/download/v5.0.7/SHA256SUMS -o "$REPAIR_DIR/SHA256SUMS" &&
 (cd "$REPAIR_DIR" && grep -E '^[0-9a-f]{64}  update\.sh$' SHA256SUMS | sha256sum -c -) &&
-env INSTALL_DIR="$INSTALL_DIR" FORCE_TAG=5.0.4 NYXGUARD_REPAIR_VPN=1 bash "$REPAIR_DIR/update.sh"
+env INSTALL_DIR="$INSTALL_DIR" NYXGUARD_REPAIR_VPN=1 bash "$REPAIR_DIR/update.sh"
 ```
 
 Expected: checksum `update.sh: OK`, then `VPN agent stack is installed and running.` A checksum/download failure prevents repair. Keep the command output for diagnosis; do not post credentials, `.env` files or private WireGuard profiles publicly.
 
-The official same-version path refreshes the public image and reconciles the VPN Compose/systemd stack. It does not invoke the fresh installer, erase the database or change the Manager version. Containers may restart, so plan brief downtime. An ordinary already-current update without `NYXGUARD_REPAIR_VPN=1` does not perform this repair. Manager 5.0.4 uses compatible VPN Agent **5.0.1**; the Agent version need not match Manager.
+The official repair path reuses the existing Compose service, starts only the Agent with `--no-deps`, and persists all enabled services in systemd. Manager/DB containers and VPN keys remain intact; a healthy repeated repair retains the Agent too. An ordinary already-current update without `NYXGUARD_REPAIR_VPN=1` does not perform repair. Manager 5.0.7 uses compatible VPN Agent **5.0.1**; the Agent version need not match Manager. Run the command as root, or prefix `env` with `sudo` as an ordinary sudo user.
 
 ### 10. Check health and test an actual VPN
 

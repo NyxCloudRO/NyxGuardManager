@@ -19,7 +19,10 @@ chmod() { echo 'PREP chmod'; }
 systemd-detect-virt() { echo VIRT_PROBE >&2; echo "$TEST_VIRT"; }
 uname() { echo "$TEST_KERNEL"; }
 hostname() { echo 192.0.2.1; }
-docker() { echo "DOCKER $*"; }
+docker() {
+  if [[ "$1 $2" == "image inspect" ]]; then echo 5.0.4;
+  else echo "DOCKER $*"; fi
+}
 start_vpn_stack() { echo VPN_STACK; }
 install_systemd_unit() { echo "SYSTEMD_VPN=$1"; }
 main

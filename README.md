@@ -7,7 +7,7 @@
 <p align="center">A self-hosted reverse proxy with application protection, traffic intelligence,<br />WireGuard access and operational diagnostics.</p>
 
 <p align="center">
-  <a href="https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.6"><img src="https://img.shields.io/badge/release-5.0.6-00c8e8?style=flat-square" alt="Release 5.0.6" /></a>
+  <a href="https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.7"><img src="https://img.shields.io/badge/release-5.0.7-00c8e8?style=flat-square" alt="Release 5.0.7" /></a>
   <a href="https://hub.docker.com/r/nyxmael/nyxguardmanager"><img src="https://img.shields.io/docker/pulls/nyxmael/nyxguardmanager?color=00c8e8&amp;style=flat-square" alt="Docker pulls" /></a>
   <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-NMPLA-5279b8?style=flat-square" alt="NMPLA license" /></a>
 </p>
@@ -23,21 +23,35 @@
 
 Manage HTTPS applications, certificates, access policies, traffic and remote VPN sites from one interface. Configuration, certificates and operational history stay on your infrastructure.
 
-**Current release · 5.0.6** simplifies installation and guarded upgrades with one compatibility policy and shared updater bootstrap. Migration readiness follows bounded, real progress before application health; interrupted upgrades restore the verified source. Explicit current-baseline acceptance preserves historical recovery evidence when old artifacts are unavailable. Manager 5.0.6 uses **VPN Agent 5.0.1** and retains **schema 45**.
+**Current release · 5.0.7** fixes SQL backup verification monitoring, same-version VPN repair, and persistent VPN startup. Verified-backup and recovery gates remain mandatory. Manager 5.0.7 uses **VPN Agent 5.0.1** and retains **schema 45**.
 
-[Read the release notes](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.6) · [Browse the changelog](CHANGELOG.md)
+[Read the release notes](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.7) · [Browse the changelog](CHANGELOG.md)
 
 <a id="quick-install"></a>
 
 ## Installation
 
-On a fresh supported Ubuntu or Debian host:
+On a fresh supported Ubuntu or Debian host with systemd, run the matching command.
+
+As **root**, including minimal Debian without sudo:
 
 ```bash
-sudo apt update
-sudo apt install -y curl
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | sudo bash
+apt-get update
+apt-get install -y ca-certificates curl
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh -o /tmp/nyxguard-install.sh
+bash /tmp/nyxguard-install.sh
 ```
+
+As an ordinary user with **sudo privileges**:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh -o /tmp/nyxguard-install.sh
+sudo bash /tmp/nyxguard-install.sh
+```
+
+The script checks effective privileges before changing the host. A missing `sudo` in a pipeline fails before the installer starts; use the root command when sudo is absent. Docker Compose v2 is required. Existing installations and volumes are retained; use the updater for an existing installation.
 
 Open **`https://<your-host>:8443`** and complete the setup wizard. The initial self-signed certificate requires browser confirmation. The installer prepares Docker/Compose, persistent storage and automatic startup. Review the requirements below, especially TUN access if you need VPN.
 
@@ -224,12 +238,23 @@ Do not change volume names for an existing installation. Preserve any `NYXGUARD_
 Use the guarded host updater for standard installations:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh -o /tmp/nyxguard-update.sh
+bash /tmp/nyxguard-update.sh # root; sudo users run: sudo bash /tmp/nyxguard-update.sh
 ```
 
-The 5.0.6 updater supports source versions **5.0.0, 5.0.1, 5.0.2, 5.0.3, 5.0.4 and 5.0.5**. The updater protects the previous installation's DB/files/configuration, verifies the replacement and application data, and restores the protected source if activation fails. It preserves Manager-only or installed VPN topology. Retain your own independent database and volume backup.
+The 5.0.7 updater supports source versions **5.0.0 through 5.0.6**. The updater protects the previous installation's DB/files/configuration, verifies the replacement and application data, and restores the protected source if activation fails. It preserves Manager-only or installed VPN topology. Retain your own independent database and volume backup.
 
-The built-in updater offers check/download/apply. Do not force an unsupported transition or replace guarded updates with a bare Compose image switch. After updating, verify login, settings, proxy hosts, traffic/history, License, diagnostics, and configured VPN sites, then verify restart persistence.
+For the CT106 production upgrade, use the [verified release runbook](docs/upgrade-5.0.7.md).
+
+After TUN becomes usable, activate only VPN at the current Manager version:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh -o /tmp/nyxguard-update.sh
+env NYXGUARD_REPAIR_VPN=1 bash /tmp/nyxguard-update.sh
+# sudo users: sudo env NYXGUARD_REPAIR_VPN=1 bash /tmp/nyxguard-update.sh
+```
+
+Repair reuses the installed Compose service, verifies TUN interface creation, starts only the Agent, and persists startup in systemd. It preserves Manager/DB and VPN volumes. The built-in updater offers check/download/apply. Do not force an unsupported transition or replace guarded updates with a bare Compose image switch. After updating, verify login, settings, proxy hosts, traffic/history, License, diagnostics, and configured VPN sites, then verify restart persistence.
 
 <details>
 <summary>Update options, legacy paths and recovery</summary>
@@ -319,10 +344,10 @@ NyxGuard Manager is free to use in internal personal and commercial environments
 A healthy installation trapped by unavailable historical recovery artifacts can explicitly accept a **fresh verified current baseline**. This preserves the old ledger and raw state with historical rollback unverified; it does not certify the missing original recovery point.
 
 ```bash
-curl -fsSLo /root/nyxguard-update.sh https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/v5.0.6/update.sh
-sudo env INSTALL_DIR=/opt/nyxguardmanager FORCE_TAG=5.0.6 NYXGUARD_BASELINE_PLAN=1 bash /root/nyxguard-update.sh
+curl -fsSLo /root/nyxguard-update.sh https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/v5.0.7/update.sh
+sudo env INSTALL_DIR=/opt/nyxguardmanager FORCE_TAG=5.0.7 NYXGUARD_BASELINE_PLAN=1 bash /root/nyxguard-update.sh
 # Review the installation-bound challenge, then explicitly authorize acceptance:
-sudo env INSTALL_DIR=/opt/nyxguardmanager FORCE_TAG=5.0.6 NYXGUARD_AUTO_YES=1 \
+sudo env INSTALL_DIR=/opt/nyxguardmanager FORCE_TAG=5.0.7 NYXGUARD_AUTO_YES=1 \
   NYXGUARD_ACCEPT_BASELINE='<reviewed challenge>' \
   NYXGUARD_BASELINE_REASON='<administrator reason>' bash /root/nyxguard-update.sh
 ```

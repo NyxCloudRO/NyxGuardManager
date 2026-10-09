@@ -1,3 +1,11 @@
+## 5.0.7 — 2026-10-09
+
+- Keep staged SQL restore monitoring on a separate connection; tolerate transient observation failures within bounded idle and total deadlines. Verify complete restored rows/schema before backup acceptance.
+- Stop failed SQL helpers and remove only their newly allocated failed staging schemas/import users; preserve diagnostic containers and protected recovery sets.
+- Route current-version VPN repair before application handover, reuse existing Compose configuration, test TUN interface creation, and persist Agent startup without restarting Manager/DB.
+- Document root and sudo entry points, require Compose v2, and validate Debian/Ubuntu systemd prerequisites.
+- Retain schema 45 and VPN Agent 5.0.1; 5.0.6 remains immutable.
+
 # Changelog
 
 ## 5.0.6 — Corrective updater release

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # NyxGuard Manager installer (Docker-only, auto-latest)
 # Intended usage:
-#   curl -fsSL <install.sh-url> | sudo bash
+#   Root: curl -fsSL <install.sh-url> | bash
+#   Sudo user: curl -fsSL <install.sh-url> | sudo bash
 set -euo pipefail
 
 INSTALL_DIR="${INSTALL_DIR:-/opt/nyxguardmanager}"
@@ -18,7 +19,7 @@ REQUIRE_VPN="${NYXGUARD_REQUIRE_VPN:-0}" # Set to 1 to abort when /dev/net/tun i
 
 vpn_agent_tag_for_manager() {
   case "$(normalize_semver "$1")" in
-    5.0.6|5.0.5|5.0.4|5.0.3|5.0.2|5.0.1) echo 5.0.1 ;;
+    5.0.7|5.0.6|5.0.5|5.0.4|5.0.3|5.0.2|5.0.1) echo 5.0.1 ;;
     5.0.0) echo 5.0.0 ;;
     4.0.14|4.0.15|4.0.16|4.0.17|4.0.18) normalize_semver "$1" ;;
     *) echo "ERROR: No published VPN compatibility contract for Manager $1." >&2; return 1 ;;
@@ -27,7 +28,11 @@ vpn_agent_tag_for_manager() {
 
 need_root() {
   if [[ "${EUID}" -ne 0 ]]; then
-    echo "ERROR: Run as root (or with sudo)." >&2
+    if command -v sudo >/dev/null 2>&1; then
+      echo "ERROR: Administrator privileges required. Download this script, then run: sudo bash /path/to/install.sh" >&2
+    else
+      echo "ERROR: Administrator privileges required and sudo is not installed. Log in as root (su -), then run: bash /path/to/install.sh" >&2
+    fi
     exit 1
   fi
 }
@@ -49,11 +54,11 @@ install_base_packages() {
   require_apt
   export DEBIAN_FRONTEND=noninteractive
   apt-get update -y
-  apt-get install -y ca-certificates curl jq gnupg
+  apt-get install -y ca-certificates curl jq gnupg util-linux
 }
 
 install_docker() {
-  if have_cmd docker && (docker compose version >/dev/null 2>&1 || have_cmd docker-compose); then
+  if have_cmd docker && (docker compose version >/dev/null 2>&1); then
     return
   fi
 
@@ -69,7 +74,7 @@ install_docker() {
 
     if [[ -n "${os_id}" && -n "${codename}" ]]; then
       mkdir -p /etc/apt/keyrings
-      if curl -fsSL "https://download.docker.com/linux/${os_id}/gpg" | gpg --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null; then
+      if curl -fsSL "https://download.docker.com/linux/${os_id}/gpg" | gpg --batch --yes --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null; then
         chmod a+r /etc/apt/keyrings/docker.gpg || true
         cat >/etc/apt/sources.list.d/docker.list <<SRC
 
@@ -90,9 +95,6 @@ SRC
     apt-get install -y docker-compose-plugin || true
   fi
 
-  if ! (docker compose version >/dev/null 2>&1) && ! have_cmd docker-compose; then
-    apt-get install -y docker-compose || true
-  fi
 
   systemctl enable --now docker >/dev/null 2>&1 || true
 
@@ -100,8 +102,8 @@ SRC
     echo "ERROR: Docker install failed." >&2
     exit 1
   fi
-  if ! (docker compose version >/dev/null 2>&1 || have_cmd docker-compose); then
-    echo "ERROR: Docker Compose is not available." >&2
+  if ! (docker compose version >/dev/null 2>&1); then
+    echo "ERROR: Docker Compose v2 plugin is required (docker-compose-plugin)." >&2
     exit 1
   fi
 }
@@ -140,6 +142,11 @@ version_at_least() {
 
 tun_is_usable() {
   [[ -c /dev/net/tun ]] && (exec 9<>/dev/net/tun) 2>/dev/null
+}
+
+verify_tun_interface() {
+  docker run --rm --network none --cap-add NET_ADMIN --device /dev/net/tun \
+    --entrypoint sh "$1" -c 'ip tuntap add dev nyxprobe mode tun && ip tuntap del dev nyxprobe mode tun'
 }
 
 prepare_tun_device() {
@@ -181,7 +188,9 @@ print_tun_warning() {
     echo "For a VM or bare-metal host, check its kernel TUN support and device access."
   fi
   echo "Once TUN is usable, repair the existing installation without reinstalling Manager:"
-  echo "  curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | sudo env INSTALL_DIR=\"${INSTALL_DIR}\" FORCE_TAG=\"${selected_tag:-${APP_TAG}}\" NYXGUARD_REPAIR_VPN=1 bash"
+  echo "  curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh -o /tmp/nyxguard-update.sh"
+  echo "  # As root (sudo users prefix the next command with sudo):"
+  echo "  env INSTALL_DIR=\"${INSTALL_DIR}\" FORCE_TAG=\"${selected_tag:-${APP_TAG}}\" NYXGUARD_REPAIR_VPN=1 bash /tmp/nyxguard-update.sh"
   echo ""
 }
 
@@ -408,7 +417,7 @@ write_version_file() {
 
 install_systemd_unit() {
   local vpn_enabled="$1"
-  local services=""
+  local services=" nyxguard-manager db vpn-client-agent"
   if [[ "${vpn_enabled}" != "1" ]]; then
     services=" nyxguard-manager db"
   fi
@@ -470,6 +479,10 @@ main() {
     echo "Existing installation retained. Use update.sh for guarded upgrades or same-version checks." >&2
     return 1
   fi
+  # Fail before changing packages on unsupported hosts.
+  . /etc/os-release
+  [[ "${ID:-}" == debian || "${ID:-}" == ubuntu ]] || { echo "ERROR: Supported distributions are Debian and Ubuntu." >&2; return 1; }
+  [[ -d /run/systemd/system ]] && have_cmd systemctl || { echo "ERROR: A running systemd host is required." >&2; return 1; }
   install_base_packages
   install_docker
   install_node_exporter
@@ -520,10 +533,17 @@ main() {
   fi
   [[ "$(docker image inspect -f '{{index .Config.Labels "org.opencontainers.image.version"}}' "$image_ref")" == "${selected_tag#v}" ]] || { echo "ERROR: Target artifact version differs." >&2; return 1; }
   docker run --rm --network none --no-healthcheck --entrypoint node -e ACCEPTED_VERSION="${selected_tag#v}" "$image_ref" -e 'const fs=require("fs");if(JSON.parse(fs.readFileSync("/app/package.json")).version!==process.env.ACCEPTED_VERSION||process.env.NPM_BUILD_VERSION!==process.env.ACCEPTED_VERSION)process.exit(1)' || { echo "ERROR: Target runtime version identity differs." >&2; return 1; }
-  if [[ "${selected_tag#v}" == 5.0.6 ]]; then
+  if [[ "${selected_tag#v}" == 5.0.6 || "${selected_tag#v}" == 5.0.7 ]]; then
     vpn_agent_ref="${VPN_AGENT_REPO}:$(docker run --rm --network none --no-healthcheck --entrypoint node "$image_ref" --input-type=module -e 'import policy from "/app/internal/release-policy.mjs";console.log(policy.agent)')"
   fi
-  if [[ "$vpn_enabled" == 1 ]]; then docker pull "$vpn_agent_ref"; fi
+  if [[ "$vpn_enabled" == 1 ]]; then
+    docker pull "$vpn_agent_ref"
+    if ! verify_tun_interface "$vpn_agent_ref"; then
+      print_tun_warning
+      [[ "$REQUIRE_VPN" != 1 ]] || { echo "ERROR: TUN interface creation failed." >&2; return 1; }
+      vpn_enabled=0
+    fi
+  fi
   ensure_socket_gid
   ensure_vault_key
 

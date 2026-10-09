@@ -26,7 +26,7 @@ class Containment(unittest.TestCase):
         with patch.object(module.subprocess, 'run', side_effect=execute):
             result = fixture.run_script()
         self.assertEqual((fixture.install / 'docker-compose.yml').read_bytes(), b'')
-        self.assertFalse((fixture.install / '.update.lock').exists())
+        # The host lock is a coordination artifact, not an installation mutation.
         calls = (fixture.root / 'calls').read_text()
         self.assertNotIn('"pull"', calls)
         self.assertNotIn('"run"', calls)

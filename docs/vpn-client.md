@@ -110,14 +110,16 @@ The VPN agent shares NyxGuard Manager's network namespace, so nginx uses the ins
 Fresh installation:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | sudo bash
+# Root (sudo users replace bash with sudo bash):
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh -o /tmp/nyxguard-install.sh
+bash /tmp/nyxguard-install.sh
 ```
 
 Upgrade a supported existing standard installation (see the release-specific upgrade guidance):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh \
-  | sudo env FORCE_TAG=5.0.4 NYXGUARD_AUTO_YES=1 bash
+  | sudo env FORCE_TAG=5.0.7 NYXGUARD_AUTO_YES=1 bash
 ```
 
 The updater preserves existing data volumes. Manager 5.0.1, 5.0.2 and 5.0.3 use the guarded direct path to 5.0.4. A 4.0.18 installation must first use the verified 5.0.0 major handover; do not force a direct 4.x-to-5.0.4 replacement. Guarded upgrades preserve installed VPN topology. For a Manager-only installation, enable Agent through the explicit repair below after TUN is usable. See the [update guidance](../README.md#update-in-place) before upgrading a customized installation.
@@ -141,11 +143,12 @@ Keep the LXC unprivileged. Restart only the target guest if needed, then verify 
 After installing Manager while TUN was unavailable, repair Agent at the same Manager version instead of reinstalling Manager:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh \
-  | sudo env FORCE_TAG=5.0.4 NYXGUARD_REPAIR_VPN=1 bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh -o /tmp/nyxguard-update.sh
+# Root; sudo users prefix env with sudo:
+env NYXGUARD_REPAIR_VPN=1 bash /tmp/nyxguard-update.sh
 ```
 
-Set `INSTALL_DIR` for a non-default location. The ordinary already-current updater leaves the installation unchanged. Explicit repair installs/recreates the compatible Agent and verifies its API from Manager. Confirm **Settings → VPN Client** availability, configuration persistence, and paired restart/reboot afterward.
+Set `INSTALL_DIR` for a non-default location. The ordinary already-current updater leaves the installation unchanged. Explicit repair starts the compatible Agent with Compose, retains existing Manager/DB containers and VPN volumes, updates systemd startup, and tests actual TUN interface creation and verifies its API from Manager. Confirm **Settings → VPN Client** availability, configuration persistence, and paired restart/reboot afterward.
 
 ## Health and troubleshooting
 
