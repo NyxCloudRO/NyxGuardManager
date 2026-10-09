@@ -121,10 +121,10 @@ Upgrade a supported existing standard installation (see the release-specific upg
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh \
-  | sudo env FORCE_TAG=5.0.7 NYXGUARD_AUTO_YES=1 bash
+  | sudo env FORCE_TAG=5.0.8 NYXGUARD_AUTO_YES=1 bash
 ```
 
-The updater preserves existing data volumes. Manager 5.0.1, 5.0.2 and 5.0.3 use the guarded direct path to 5.0.4. A 4.0.18 installation must first use the verified 5.0.0 major handover; do not force a direct 4.x-to-5.0.4 replacement. Guarded upgrades preserve installed VPN topology. For a Manager-only installation, enable Agent through the explicit repair below after TUN is usable. See the [update guidance](../README.md#update-in-place) before upgrading a customized installation.
+The updater preserves existing data volumes. Manager 5.0.0–5.0.7 use the guarded direct path to 5.0.8. A 4.0.18 installation must first use the verified historical 5.0.0 major handover; do not force a direct 4.x-to-5.0.8 replacement. Guarded upgrades preserve installed VPN topology. For a Manager-only installation, enable Agent through the explicit repair below after TUN is usable. See the [update guidance](../README.md#update-in-place) before upgrading a customized installation.
 
 ### Host TUN prerequisite
 
