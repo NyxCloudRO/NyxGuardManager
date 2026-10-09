@@ -14,6 +14,12 @@ require(f'image: nyxmael/nyxguardmanager-vpn-agent:{agent}' in compose,'Compose 
 manual=readme.split('```yaml',1)[1].split('```',1)[0]
 require(f'image: nyxmael/nyxguardmanager:{version}' in manual,'README manual Compose Manager version is stale')
 require(f'image: nyxmael/nyxguardmanager-vpn-agent:{agent}' in manual,'README Agent version differs from release policy')
+for name in ['README.md','docs/vpn-client.md','docs/proxmox-lxc-vpn.md','docs/advanced-recovery.md']:
+ text=(ROOT/name).read_text()
+ for pinned in re.findall(r'(?:FORCE_TAG|APP_TAG)=(5\.0\.\d+)',text):
+  require(pinned==version,f'{name}: stale current instruction pin {pinned}')
+for name in ['upgrade/README.md','release-source/README.md']:
+ require(f'Current Manager release: **{version}**' in (ROOT/name).read_text(),f'{name}: current release overview is stale')
 for name in ['install.sh','update.sh']:
  require(subprocess.run(['bash','-n',str(ROOT/name)]).returncode==0,f'{name} syntax failed')
  require(f'{version}' in (ROOT/name).read_text(),f'{name} lacks current release selector')

@@ -1,5 +1,7 @@
 # Release source map
 
+Current Manager release: **5.0.8**, compatible VPN Agent **5.0.1**, schema **45**. The [5.0.8 overlay](5.0.8/README.md) uses immutable published 5.0.7, correcting historical transaction validation and policy. SQL recovery modules are inherited from 5.0.7 and shared safety/migration modules from earlier overlays. Versioned directories remain required build, compatibility or regression inputs.
+
 `release-source/` contains the versioned build inputs, asserted compiled
 frontend patches, and tests for supported releases. Disposable test output
 belongs outside the repository.
@@ -10,8 +12,9 @@ build uses the validated compiled base and checks the resulting image.
 
 The published Manager and VPN images are the customer runtime. `install.sh`
 pulls those images; `update.sh` downloads the SHA-256-pinned
-`upgrade/cli-bootstrap.mjs`, selects a release route, and uses the handover
-worker already inside the 5.0.0 Manager image. Neither customer script reads
+host adapter for the selected release route, then uses the handover and recovery
+worker packaged in the accepted target Manager image. The historical major transition
+uses `upgrade/cli-bootstrap.mjs`; same-major updates use `upgrade/same-major-bootstrap.mjs`. Neither customer script reads
 this directory from GitHub at runtime.
 
 | Source | Build input | Image/runtime result |
