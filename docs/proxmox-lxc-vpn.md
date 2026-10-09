@@ -1,4 +1,4 @@
-# Proxmox LXC: enable TUN and repair VPN Agent on NyxGuard 5.0.4
+# Proxmox LXC: enable TUN and repair VPN Agent on NyxGuard 5.0.8
 
 NyxGuard Manager and its database can run without `/dev/net/tun`. The separate VPN Agent needs usable read/write access to this kernel device to provide VPN support. A missing Agent after a Manager-only installation does not mean your database needs reinstalling.
 
@@ -124,13 +124,13 @@ test -c /dev/net/tun && (exec 9<>/dev/net/tun) && echo 'Guest TUN opens read/wri
 
 Check identity again. This proves the device is present and can be opened; it does **not** prove that VPN Agent is healthy or that a WireGuard peer can carry traffic.
 
-### 9. Repair the missing Agent with the public 5.0.4 updater
+### 9. Repair the missing Agent with the public 5.0.8 updater
 
-First retain your normal database, volumes, Compose configuration, `.env` and licensing-vault backup. **LXC guest, as root:** for an existing 5.0.4 installation at the default path:
+First retain your normal database, volumes, Compose configuration, `.env` and licensing-vault backup. **LXC guest, as root:** for an existing 5.0.8 installation at the default path:
 
 ```bash
 INSTALL_DIR=/opt/nyxguardmanager
-cat "$INSTALL_DIR/.version"
+[ "$(docker exec nyxguard-manager node -p "require('/app/package.json').version")" = 5.0.8 ]
 test -f "$INSTALL_DIR/docker-compose.yml" && test -f "$INSTALL_DIR/.env"
 ```
 
@@ -139,16 +139,18 @@ Read the actual application version using `docker exec nyxguard-manager node -p 
 Download the updater and checksums from the immutable published release, verify it, then run the explicit repair:
 
 ```bash
+set -euo pipefail
 REPAIR_DIR="$(mktemp -d)"
-curl -fLsS https://github.com/NyxCloudRO/NyxGuardManager/releases/download/v5.0.7/update.sh -o "$REPAIR_DIR/update.sh" &&
-curl -fLsS https://github.com/NyxCloudRO/NyxGuardManager/releases/download/v5.0.7/SHA256SUMS -o "$REPAIR_DIR/SHA256SUMS" &&
+chmod 700 "$REPAIR_DIR"
+curl -fLsS https://github.com/NyxCloudRO/NyxGuardManager/releases/download/v5.0.8/update.sh -o "$REPAIR_DIR/update.sh" &&
+curl -fLsS https://github.com/NyxCloudRO/NyxGuardManager/releases/download/v5.0.8/SHA256SUMS -o "$REPAIR_DIR/SHA256SUMS" &&
 (cd "$REPAIR_DIR" && grep -E '^[0-9a-f]{64}  update\.sh$' SHA256SUMS | sha256sum -c -) &&
-env INSTALL_DIR="$INSTALL_DIR" NYXGUARD_REPAIR_VPN=1 bash "$REPAIR_DIR/update.sh"
+env INSTALL_DIR="$INSTALL_DIR" FORCE_TAG=5.0.8 NYXGUARD_REPAIR_VPN=1 bash "$REPAIR_DIR/update.sh"
 ```
 
 Expected: checksum `update.sh: OK`, then `VPN agent stack is installed and running.` A checksum/download failure prevents repair. Keep the command output for diagnosis; do not post credentials, `.env` files or private WireGuard profiles publicly.
 
-The official repair path reuses the existing Compose service, starts only the Agent with `--no-deps`, and persists all enabled services in systemd. Manager/DB containers and VPN keys remain intact; a healthy repeated repair retains the Agent too. An ordinary already-current update without `NYXGUARD_REPAIR_VPN=1` does not perform repair. Manager 5.0.7 uses compatible VPN Agent **5.0.1**; the Agent version need not match Manager. Run the command as root, or prefix `env` with `sudo` as an ordinary sudo user.
+The official repair path reuses the existing Compose service, starts only the Agent with `--no-deps`, and persists all enabled services in systemd. Manager/DB containers and VPN keys remain intact; a healthy repeated repair retains the Agent too. An ordinary already-current update without `NYXGUARD_REPAIR_VPN=1` does not perform repair. Manager 5.0.8 uses compatible VPN Agent **5.0.1**; the Agent version need not match Manager. Run the command as root, or prefix `env` with `sudo` as an ordinary sudo user.
 
 ### 10. Check health and test an actual VPN
 
@@ -173,4 +175,4 @@ Sign in normally and open **Settings → VPN Client**. Agent should be available
 - **Agent exists but is unhealthy:** inspect `docker logs --tail 100 nyxguard-vpn-agent` locally and the updater output. Ask support with a redacted error, version and relevant device entry. Never share private keys or credentials.
 - **Agent healthy but VPN traffic fails:** use the [VPN Client guide](vpn-client.md) to check the profile, allowed networks and remote peer with the VPN administrator. Do not treat a prerequisite check as a working-VPN result.
 
-References: [Official Proxmox command/device reference](https://github.com/proxmox/pve-docs/blob/master/generated/pct.1-synopsis.adoc), [NyxGuard 5.0.4 release](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.4), [website VPN Client guide](https://nyxcloud.ro/nyxguard/vpn-client.html#proxmox-lxc).
+References: [Official Proxmox command/device reference](https://github.com/proxmox/pve-docs/blob/master/generated/pct.1-synopsis.adoc), [NyxGuard 5.0.8 release](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.8), [website VPN Client guide](https://nyxcloud.ro/nyxguard/vpn-client.html#proxmox-lxc).
