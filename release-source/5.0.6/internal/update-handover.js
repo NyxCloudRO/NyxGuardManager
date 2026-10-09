@@ -251,7 +251,8 @@ async function runSameMajorWorker(mode, recoveryId, volumes, transaction = null)
 	await api('POST','/volumes/create',{Name:recoveryVolume,Labels:{'nyxguard.purpose':'same-major-update-recovery'}});
   const binds = 
 		["/var/run/docker.sock:/var/run/docker.sock:ro", `${recoveryVolume}:/recovery:rw`,
-		...runtime.Mounts.filter(m=>['/etc/localtime','/etc/timezone'].includes(m.Destination)).map(m=>`${persistentSource(m)}:${m.Destination}:ro`),
+		// Clock mounts are configuration, so accept an already read-only source.
+		...runtime.Mounts.filter(m=>['/etc/localtime','/etc/timezone'].includes(m.Destination)).map(m=>`${persistentSource({...m,RW:true})}:${m.Destination}:ro`),
 		`${persistentSource(installedDatabase.Mounts.find(m=>m.Destination==='/var/lib/mysql'))}:/source/db:ro`, `${vaultDirectory}:/host-vault:rw`,
 		`${sameMajorInstallDir}:/host-install:rw`,
 		...volumes.map((v) => `${v.name}:/source/${v.key}:${["restore","finalize","baseline"].includes(mode) ? "rw" : "ro"}`)];
