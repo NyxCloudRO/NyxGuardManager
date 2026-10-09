@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="$(git rev-parse --show-toplevel)"
+python3 "$root/tools/publication-check.py" --context
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [[ "$local_sha" =~ ^0+$ ]]; then
+    echo 'Publication gate refuses ref deletion; use a separately reviewed remediation procedure.' >&2
+    exit 1
+  fi
+  python3 "$root/tools/publication-hygiene.py" --ref "$local_sha"
+done

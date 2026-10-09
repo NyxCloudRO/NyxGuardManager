@@ -71,14 +71,15 @@ def check(name,data):
   if any(p.search(line) for p in private_patterns):report(name,'private-denylist',number)
 def git(*args):return subprocess.check_output(['git','-C',str(ROOT),*args])
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('--staged',action='store_true');p.add_argument('--assets',type=pathlib.Path);p.add_argument('--package',type=pathlib.Path);p.add_argument('--context',action='store_true',help='Audit the tracked Docker context and untracked files not excluded by .dockerignore');p.add_argument('--json',action='store_true');a=p.parse_args()
- names=git('diff','--cached','--name-only','--diff-filter=ACMR','-z') if a.staged else git('ls-files','-z')
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('--staged',action='store_true');p.add_argument('--ref',help='Scan the exact Git tree proposed for publication');p.add_argument('--assets',type=pathlib.Path);p.add_argument('--package',type=pathlib.Path);p.add_argument('--context',action='store_true',help='Audit the tracked Docker context and untracked files not excluded by .dockerignore');p.add_argument('--json',action='store_true');a=p.parse_args()
+ if a.staged and a.ref:p.error('--staged and --ref are mutually exclusive')
+ names=git('ls-tree','-r','--name-only','-z',a.ref) if a.ref else git('diff','--cached','--name-only','--diff-filter=ACMR','-z') if a.staged else git('ls-files','-z')
  count=0
  for b in names.split(b'\0'):
   if not b:continue
   name=b.decode();path=ROOT/name
-  if not a.staged and (not path.is_file() or path.is_symlink()):continue
-  data=git('show',':'+name) if a.staged else path.read_bytes();count+=1
+  if not a.staged and not a.ref and (not path.is_file() or path.is_symlink()):continue
+  data=git('show',a.ref+':'+name) if a.ref else git('show',':'+name) if a.staged else path.read_bytes();count+=1
   if len(data)>MAX_FILE:report(name,'large-file-review-required')
   else:check(name,data)
  if a.context:
