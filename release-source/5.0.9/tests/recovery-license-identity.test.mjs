@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import {recoveryLicenseIdentity} from '/app/internal/recovery-license-identity.mjs';
+import {seal,unseal} from '/app/internal/nyxcloud-licensing/store.mjs';
+const key=Buffer.alloc(32,7);
+const row={installation_id:'synthetic-installation',revision_floor:0,sealed_state:null};
+const active={activationId:'synthetic-activation',refreshCredential:'synthetic-refresh',envelope:{revision:7},revoked:false,invalid:false};
+test('SQL NULL unactivated installation is fingerprinted deterministically',()=>assert.equal(recoveryLicenseIdentity([row],key),recoveryLicenseIdentity([{...row}],key)));
+test('activated state preserves historical recovery fingerprint bytes',()=>{
+ const record={...row,revision_floor:7,sealed_state:seal(active,key)};const s=unseal(record.sealed_state,key);
+ const historical=crypto.createHash('sha256').update(JSON.stringify([{installation:record.installation_id,revision:record.revision_floor,activation:s.activationId,refresh:s.refreshCredential,entitlement:s.envelope,revoked:s.revoked,invalid:s.invalid}])).digest('hex');
+ assert.equal(recoveryLicenseIdentity([record],key),historical);
+});
+test('corrupt ciphertext remains rejected',()=>{const value=seal(active,key);assert.throws(()=>recoveryLicenseIdentity([{...row,sealed_state:value.slice(0,-2)+'AA'}],key));});
+test('wrong vault key remains rejected for sealed state',()=>assert.throws(()=>recoveryLicenseIdentity([{...row,sealed_state:seal(active,key)}],Buffer.alloc(32,8))));
+test('missing, empty and non-string sealed payloads remain rejected',()=>{for(const sealed_state of [undefined,'',0,{},Buffer.from('invalid')])assert.throws(()=>recoveryLicenseIdentity([{...row,sealed_state}],key));});
+test('unactivated state still requires a valid vault key',()=>{for(const k of [null,Buffer.alloc(31),Buffer.alloc(33)])assert.throws(()=>recoveryLicenseIdentity([row],k));});
+test('installation identity and revision remain protected',()=>{for(const change of [{installation_id:'changed-installation'},{revision_floor:1}])assert.notEqual(recoveryLicenseIdentity([row],key),recoveryLicenseIdentity([{...row,...change}],key));});
+test('activation and entitlement changes alter fingerprints',()=>{const original={...row,sealed_state:seal(active,key)};assert.notEqual(recoveryLicenseIdentity([row],key),recoveryLicenseIdentity([original],key));assert.notEqual(recoveryLicenseIdentity([original],key),recoveryLicenseIdentity([{...row,sealed_state:seal({...active,envelope:{revision:8}},key)}],key));});
+test('empty state inventory differs from an unactivated installation',()=>assert.notEqual(recoveryLicenseIdentity([],key),recoveryLicenseIdentity([row],key)));

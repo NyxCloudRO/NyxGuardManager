@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {captureIntegrationUsage,validateIntegrationUsage} from '../internal/integration-usage-integrity.mjs';
+const proof=(lastUsedAt=1000)=>({tables:{integration:{count:1,stableRows:'a'.repeat(64)}},integrationUsage:[{id:1,lastUsedAt}]});
+test('authenticated scrape timestamp advance preserves credentials',()=>validateIntegrationUsage(proof(2000),proof()));
+test('first authenticated scrape preserves an unused integration',()=>validateIntegrationUsage(proof(),proof(null)));
+test('unchanged timestamp and unused integrations pass',()=>{validateIntegrationUsage(proof(),proof());validateIntegrationUsage(proof(null),proof(null));});
+test('credential or configuration fingerprint changes fail',()=>assert.throws(()=>validateIntegrationUsage({...proof(),tables:{integration:{count:1,stableRows:'b'.repeat(64)}}},proof())));
+test('deletion, replacement and duplicate identities fail',()=>{for(const actual of [{...proof(),tables:{integration:{count:0,stableRows:'a'.repeat(64)}}},{...proof(),integrationUsage:[{id:2,lastUsedAt:2000}]},{...proof(),integrationUsage:[]}])assert.throws(()=>validateIntegrationUsage(actual,proof()));});
+test('timestamp reset and regression fail',()=>{for(const after of [null,999])assert.throws(()=>validateIntegrationUsage(proof(after),proof()));});
+test('old proof without stable credentials remains refused',()=>assert.throws(()=>validateIntegrationUsage(proof(),{tables:{integration:{count:1,rows:'a'.repeat(64)}}})));
+test('only canonical timestamps from the application are accepted',()=>{assert.deepEqual(captureIntegrationUsage({id:1,last_used_at:'2026-10-09T00:00:00.000Z'}),{id:1,lastUsedAt:1791504000000});assert.deepEqual(captureIntegrationUsage({id:1,last_used_at:null}),{id:1,lastUsedAt:null});for(const value of ['junk','2026-02-31T00:00:00.000Z','2026-10-09',0,undefined])assert.throws(()=>captureIntegrationUsage({id:1,last_used_at:value}));});

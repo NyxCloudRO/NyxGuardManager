@@ -5,6 +5,16 @@
 - Preserve verified SQL backup/restore, schema 45, VPN Agent 5.0.1 and guarded source versions 5.0.0–5.0.7.
 - Sanitize public documentation, correct current version examples, and add dependency and publication hygiene gates.
 
+## [5.0.9] - 2026-10-09
+
+- Preserve distinct legacy Threat History associations across duplicate events, interrupted migrations and retry.
+- Accept legitimate unactivated licensing SQL NULL states while retaining strict sealed-state authentication and identity checks.
+- Report completed migration schema/index work within unchanged startup budgets.
+- Preserve integration credentials/configuration while allowing authenticated last-use timestamps to advance.
+- Defer audit/threat retention until guarded upgrade commit or verified rollback; retain strict data-preservation gates.
+- Keep schema 45, VPN Agent 5.0.1, mandatory verified SQL backups and staged restore. Guarded sources are 5.0.0–5.0.8.
+- Synchronize root/sudo one-line installation instructions and preserve historical Ubuntu/Debian support independently of hotfix testing.
+
 ## 5.0.7 — 2026-10-09
 
 - Keep staged SQL restore monitoring on a separate connection; tolerate transient observation failures within bounded idle and total deadlines. Verify complete restored rows/schema before backup acceptance.
