@@ -7,7 +7,7 @@
 <p align="center">A self-hosted reverse proxy with application protection, traffic intelligence,<br />WireGuard access and operational diagnostics.</p>
 
 <p align="center">
-  <a href="https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.7"><img src="https://img.shields.io/badge/release-5.0.7-00c8e8?style=flat-square" alt="Release 5.0.7" /></a>
+  <a href="https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.8"><img src="https://img.shields.io/badge/release-5.0.8-00c8e8?style=flat-square" alt="Release 5.0.8" /></a>
   <a href="https://hub.docker.com/r/nyxmael/nyxguardmanager"><img src="https://img.shields.io/docker/pulls/nyxmael/nyxguardmanager?color=00c8e8&amp;style=flat-square" alt="Docker pulls" /></a>
   <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-NMPLA-5279b8?style=flat-square" alt="NMPLA license" /></a>
 </p>
@@ -23,9 +23,9 @@
 
 Manage HTTPS applications, certificates, access policies, traffic and remote VPN sites from one interface. Configuration, certificates and operational history stay on your infrastructure.
 
-**Current release · 5.0.7** fixes SQL backup verification monitoring, same-version VPN repair, and persistent VPN startup. Verified-backup and recovery gates remain mandatory. Manager 5.0.7 uses **VPN Agent 5.0.1** and retains **schema 45**.
+**Current release · 5.0.8** fixes historical handover-ledger compatibility while retaining verified SQL backups, same-version VPN repair, and persistent VPN startup. Verified-backup and recovery gates remain mandatory. Manager 5.0.8 uses **VPN Agent 5.0.1** and retains **schema 45**.
 
-[Read the release notes](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.7) · [Browse the changelog](CHANGELOG.md)
+[Read the release notes](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.8) · [Browse the changelog](CHANGELOG.md)
 
 <a id="quick-install"></a>
 
@@ -89,7 +89,7 @@ Capacity depends on traffic, protected applications and retention. Allow additio
 | Operating system | Support |
 | --- | --- |
 | Ubuntu 24.04 | Runtime installation tested with existing Docker/packages |
-| Ubuntu 26.04 | Applicable prior release runtime validation; focused 5.0.7 coverage is documented separately |
+| Ubuntu 26.04 | Applicable prior release runtime validation; focused 5.0.8 coverage is documented separately |
 | Debian 12 | Privilege entry points and package resolution tested |
 | Other Debian/Ubuntu releases | Check Docker/Compose availability; clean-host validation is required |
 | Other distributions | Not fully tested; install Docker/Compose yourself before evaluating |
@@ -105,13 +105,13 @@ HTTP-01 certificates need public inbound TCP 80. DNS challenges need the provide
 <details>
 <summary>Manual Docker Compose installation</summary>
 
-For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.7 uses VPN Agent 5.0.1. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
+For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.8 uses VPN Agent 5.0.1. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
 
 ```yaml
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:5.0.7
+    image: nyxmael/nyxguardmanager:5.0.8
     restart: unless-stopped
     ports:
       - "80:80"
@@ -244,9 +244,9 @@ curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upd
 bash /tmp/nyxguard-update.sh # root; sudo users run: sudo bash /tmp/nyxguard-update.sh
 ```
 
-The 5.0.7 updater supports source versions **5.0.0 through 5.0.6**. The updater protects the previous installation's DB/files/configuration, verifies the replacement and application data, and restores the protected source if activation fails. It preserves Manager-only or installed VPN topology. Retain your own independent database and volume backup.
+The 5.0.8 updater supports source versions **5.0.0 through 5.0.7**. The updater protects the previous installation's DB/files/configuration, verifies the replacement and application data, and restores the protected source if activation fails. It preserves Manager-only or installed VPN topology. Retain your own independent database and volume backup.
 
-For production upgrades, review the [official upgrade and recovery guide](docs/upgrade-5.0.7.md) before running the updater. **Known 5.0.7 limitation:** a valid retained 5.0.6 handover ledger can be rejected before a new transaction starts. Stop and retain evidence; wait for a reviewed correction rather than bypassing validation or retrying blindly.
+For production upgrades, review the [official upgrade and recovery guide](docs/upgrade-5.0.8.md) before running the updater. The corrected validator accepts completed historical ledgers without weakening checksum, identity or recovery checks. If a previous failed attempt left renamed services or never-started replacements, reconcile that topology under a reviewed recovery plan before retrying.
 
 After TUN becomes usable, activate only VPN at the current Manager version:
 
@@ -291,7 +291,7 @@ Manager/database can run without TUN; VPN Agent needs usable read/write `/dev/ne
 
 Follow the [numbered Proxmox LXC/TUN setup and same-version repair guide](docs/proxmox-lxc-vpn.md). It separates **Proxmox host** and **LXC guest** commands, verifies the target CTID/hostname/IP, backs up its configuration, selects a free `devN` slot and uses supported device passthrough. Never overwrite an occupied slot or convert the LXC to privileged. Restart only the selected LXC if required.
 
-After guest TUN is usable, the guide verifies the immutable public **5.0.7 updater** and runs explicit `FORCE_TAG=5.0.7 NYXGUARD_REPAIR_VPN=1` repair against the existing installation directory. It preserves Manager/database data and installs compatible **VPN Agent 5.0.1**. Then check health and **Settings → VPN Client**, a recent handshake and actual permitted-destination connectivity. TUN presence alone does not prove a working VPN.
+After guest TUN is usable, the guide verifies the immutable public **5.0.8 updater** and runs explicit `FORCE_TAG=5.0.8 NYXGUARD_REPAIR_VPN=1` repair against the existing installation directory. It preserves Manager/database data and installs compatible **VPN Agent 5.0.1**. Then check health and **Settings → VPN Client**, a recent handshake and actual permitted-destination connectivity. TUN presence alone does not prove a working VPN.
 
 See the [VPN Client guide](docs/vpn-client.md) for profiles, allowed networks and remote-peer troubleshooting, or the [website walkthrough](https://nyxcloud.ro/nyxguard/vpn-client.html#proxmox-lxc).
 
@@ -341,17 +341,17 @@ NyxGuard Manager is free to use in internal personal and commercial environments
 
 ### Current baseline acceptance and interrupted upgrades
 
-5.0.7 uses one release compatibility policy, Compose service metadata, a verified restorable backup, bounded migration progress, application/data checks and a durable commit or verified rollback. Migration progress never counts as healthy application startup. Existing operational records and secrets remain protected; only reviewed traffic counter history permits normal retention and live increments. Expired security rules remain stored and inactive.
+5.0.8 uses one release compatibility policy, Compose service metadata, a verified restorable backup, bounded migration progress, application/data checks and a durable commit or verified rollback. Migration progress never counts as healthy application startup. Existing operational records and secrets remain protected; only reviewed traffic counter history permits normal retention and live increments. Expired security rules remain stored and inactive.
 
 A healthy installation trapped by unavailable historical recovery artifacts can explicitly accept a **fresh verified current baseline**. This preserves the old ledger and raw state with historical rollback unverified; it does not certify the missing original recovery point.
 
 ```bash
 UPDATE_DIR="$(mktemp -d)"
 chmod 700 "$UPDATE_DIR"
-curl -fsSLo "$UPDATE_DIR/update.sh" https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/v5.0.7/update.sh
-env INSTALL_DIR=/opt/nyxguardmanager FORCE_TAG=5.0.7 NYXGUARD_BASELINE_PLAN=1 bash "$UPDATE_DIR/update.sh"
+curl -fsSLo "$UPDATE_DIR/update.sh" https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/v5.0.8/update.sh
+env INSTALL_DIR=/opt/nyxguardmanager FORCE_TAG=5.0.8 NYXGUARD_BASELINE_PLAN=1 bash "$UPDATE_DIR/update.sh"
 # Review the installation-bound challenge, then explicitly authorize acceptance:
-env INSTALL_DIR=/opt/nyxguardmanager FORCE_TAG=5.0.7 NYXGUARD_AUTO_YES=1 \
+env INSTALL_DIR=/opt/nyxguardmanager FORCE_TAG=5.0.8 NYXGUARD_AUTO_YES=1 \
   NYXGUARD_ACCEPT_BASELINE='<reviewed challenge>' \
   NYXGUARD_BASELINE_REASON='<administrator reason>' bash "$UPDATE_DIR/update.sh"
 ```

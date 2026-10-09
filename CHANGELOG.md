@@ -1,3 +1,10 @@
+## 5.0.8 — 2026-10-09
+
+- Accept valid completed historical handover target ledgers without weakening checksum, identity, schema or recovery validation.
+- Check retained transaction compatibility before preparing replacement service names.
+- Preserve verified SQL backup/restore, schema 45, VPN Agent 5.0.1 and guarded source versions 5.0.0–5.0.7.
+- Sanitize public documentation, correct current version examples, and add dependency and publication hygiene gates.
+
 ## 5.0.7 — 2026-10-09
 
 - Keep staged SQL restore monitoring on a separate connection; tolerate transient observation failures within bounded idle and total deadlines. Verify complete restored rows/schema before backup acceptance.
