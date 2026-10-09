@@ -86,15 +86,18 @@ Capacity depends on traffic, protected applications and retention. Allow additio
 
 ## Supported operating systems
 
-| Operating system | Support |
-| --- | --- |
-| Ubuntu 24.04 | Runtime installation tested with existing Docker/packages |
-| Ubuntu 26.04 | Applicable prior release runtime validation; focused 5.0.8 coverage is documented separately |
-| Debian 12 | Privilege entry points and package resolution tested |
-| Other Debian/Ubuntu releases | Check Docker/Compose availability; clean-host validation is required |
-| Other distributions | Not fully tested; install Docker/Compose yourself before evaluating |
+| Operating system | Official support | Historical validation | 5.0.8 OS retesting |
+| --- | --- | --- | --- |
+| Ubuntu 22.x | Supported | Working installs recorded in 3.0.0 | No new OS-specific validation claimed |
+| Ubuntu 24.x | Supported | Working installs recorded in 3.0.0; 5.0.7 runtime install with existing packages | No new OS-specific validation claimed |
+| Ubuntu 25.x | Supported | Advertised as tested in the historical README; detailed acceptance not recovered | No new OS-specific validation claimed |
+| Ubuntu 26.04 LTS | Supported | 26.04.1 runtime, startup/reboot and VPN accepted in 5.0.4 | No new OS-specific validation claimed |
+| Debian 12 | Supported | Working installs recorded in 3.0.0; 5.0.7 privilege/package checks | No new OS-specific validation claimed |
+| Debian 13 | Supported | Working installs recorded in 3.0.0 | No new OS-specific validation claimed |
 
-VPN needs host TUN access and a reachable WireGuard endpoint. A restricted LXC guest needs device permission from its hypervisor. Manager and MariaDB can operate without VPN.
+Support carries forward independently of hotfix retesting. The [installation and compatibility guide](docs/installation.md) records the evidence and configuration limits; [5.0.8 validation coverage](docs/validation-5.0.8.md) describes the focused release tests. Historical family labels do not certify every point release or a fresh-host installation in 5.0.8.
+
+The installer requires Ubuntu or Debian, apt-get and a running systemd host; it prepares Docker/Compose dependencies. VPN also requires usable host TUN and a reachable WireGuard endpoint. Restricted guests without TUN can run Manager and MariaDB without VPN. Other distributions and versions outside this matrix have no established official support; manual Docker deployment is an evaluation path, not a support guarantee.
 
 ## Docker deployment
 

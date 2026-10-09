@@ -16,4 +16,6 @@ The patch corrects historical-ledger compatibility using the immutable 5.0.7 ima
 
 Unchanged SQL latency/deadline/cleanup and TUN activation behavior reuse the [5.0.7 focused coverage](validation-5.0.7.md). Full fresh Debian systemd host installation, every source-version end-to-end upgrade, real remote VPN peer traffic, and customer-specific licensed application checks were not newly exercised. Source-version policy checks cover 5.0.0–5.0.7; they are not a claim that every environment was tested. No production upgrade was performed.
 
+The complete [supported OS matrix](installation.md#supported-operating-systems) carries forward historical support independently of this focused retest scope.
+
 See the [upgrade and recovery guide](upgrade-5.0.8.md). Completed historical transactions remain evidence; incomplete recovery and invalid ledgers still block upgrades.
