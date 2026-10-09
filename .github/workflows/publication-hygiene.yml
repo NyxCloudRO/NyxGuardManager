@@ -26,6 +26,6 @@ jobs:
       - name: Host regression contracts
         run: |
           python3 tools/publication-hygiene.test.py
-          python3 tests/installer-vpn-capability.test.py
-          python3 tests/updater-containment.test.py
-          python3 tests/vpn-repair-routing.test.py
+          sudo python3 tests/installer-vpn-capability.test.py
+          sudo python3 tests/updater-containment.test.py
+          sudo python3 tests/vpn-repair-routing.test.py
