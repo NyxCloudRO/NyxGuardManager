@@ -1,8 +1,10 @@
 # Public host updater
 
-Current Manager release: **5.0.10**, compatible VPN Agent **5.0.1**, schema **45**. Guarded sources are 5.0.0–5.0.8. Current updates use the checksum-pinned same-major bootstrap and durable backup/restore, historical-ledger and application-data gates. VPN-only repair uses its separate current-version path. See the [current upgrade guide](../docs/upgrade-5.0.9.md).
+Current Manager release: **5.0.10**, compatible VPN Agent **5.0.1**, schema **45**. The self-contained `update.sh` supports the published 5.0.0–5.0.9 source/schema policy, verifies a cold backup, and replaces application code using existing Compose services and storage. It does not download handover helpers. See [application lifecycle](../docs/application-lifecycle.md).
 
-## Historical adapter and runtime provenance
+## Historical adapter and runtime provenance through 5.0.9
+
+The remainder describes historical scripts and images only. It is not the current normal updater.
 
 Manager and VPN Agent versions are separate release contracts. `update.sh`
 explicitly maps Manager 5.0.2 to VPN Agent 5.0.1; an unknown Manager version

@@ -38,8 +38,8 @@ env INSTALL_DIR=/opt/nyxguardmanager FORCE_TAG=5.0.9 NYXGUARD_AUTO_YES=1 \
 
 The commands above are shown for root; ordinary users with sudo privileges prefix `env` with `sudo`.
 
-For an interrupted transaction, use the official updater with `FORCE_TAG` matching that transaction’s original target and `NYXGUARD_RESUME=1`. For a 5.0.9 transaction, use `FORCE_TAG=5.0.9 NYXGUARD_RESUME=1`. It resumes the original durable helper under the shared installation lock; an uncommitted migration returns to the verified source before a fresh retry. Do not clear recovery flags manually or manufacture manifests. Retain recovery volumes and baseline receipts.
+For an interrupted historical transaction, use the release-pinned historical updater with `FORCE_TAG` matching that transaction’s original target and `NYXGUARD_RESUME=1`. For a 5.0.9 transaction, use `FORCE_TAG=5.0.9 NYXGUARD_RESUME=1`. It resumes the original durable helper under the shared installation lock; an uncommitted migration returns to the verified source before a fresh retry. Do not clear recovery flags manually or manufacture manifests. Retain recovery volumes and baseline receipts.
 
 Fresh independent installations can use `NYXGUARD_INSTANCE`, `NYXGUARD_VAULT_DIR`, `NYXGUARD_HTTP_PORT`, `NYXGUARD_HTTPS_PORT` and `NYXGUARD_ADMIN_PORT`; defaults preserve the existing installation layout. The installer refuses to overwrite an existing installation directory.
 
-Never resume a helper that failed before acquiring its own durable ledger. A completed rollback uses a new normal guarded upgrade, after reviewing service topology. Do not use baseline acceptance to bypass a valid historical-ledger compatibility defect. See the [current upgrade and recovery guide](upgrade-5.0.9.md).
+Never resume a helper that failed before acquiring its own durable ledger. A completed rollback uses a new normal guarded upgrade, after reviewing service topology. Do not use baseline acceptance to bypass a valid historical-ledger compatibility defect. See the [historical 5.0.9 upgrade and recovery guide](upgrade-5.0.9.md).

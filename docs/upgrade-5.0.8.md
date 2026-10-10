@@ -1,5 +1,7 @@
 # Upgrade and recovery guide: 5.0.8
 
+Historical release-specific procedure. For the current normal host updater, use [application lifecycle](application-lifecycle.md). These legacy helpers and ledger checks apply only to their pinned historical artifacts.
+
 Run as root inside the installed Manager guest. Verify the published v5.0.8 release before upgrading. Ordinary sudo users prefix privileged commands with `sudo`. Do not run `install.sh` on the existing installation.
 
 

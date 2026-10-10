@@ -1,6 +1,6 @@
 # Release source map
 
-Current Manager release: **5.0.10**, compatible VPN Agent **5.0.1**, schema **45**. The [5.0.9 overlay](5.0.9/README.md) uses immutable published 5.0.8, correcting licensing, migration progress, legacy history ownership and guarded retention timing. SQL recovery modules are inherited from the immutable base; required shared safety/migration modules remain in earlier overlays. Versioned directories remain required build, compatibility or regression inputs.
+Current Manager release: **5.0.10**, compatible VPN Agent **5.0.1**, schema **45**. The [5.0.10 build](5.0.10/README.md) sanitizes the pinned public filesystem and creates fresh layers without inherited runtime credentials. The host updater is self-contained; normal upgrades use existing MariaDB and storage. Versioned directories below retain historical build, compatibility and regression inputs.
 
 `release-source/` contains the versioned build inputs, asserted compiled
 frontend patches, and tests for supported releases. Disposable test output
@@ -10,12 +10,11 @@ The 5.0.1 frontend source includes asserted patches for inherited form controls,
 certificate list ordering, version display, and responsive layout. Its release
 build uses the validated compiled base and checks the resulting image.
 
-The published Manager and VPN images are the customer runtime. `install.sh`
-pulls those images; `update.sh` downloads the SHA-256-pinned
-host adapter for the selected release route, then uses the handover and recovery
-worker packaged in the accepted target Manager image. The historical major transition
-uses `upgrade/cli-bootstrap.mjs`; same-major updates use `upgrade/same-major-bootstrap.mjs`. Neither customer script reads
-this directory from GitHub at runtime.
+The published Manager and VPN images are the customer runtime. `install.sh` selects the latest stable GitHub release and pulls the official Docker images. Current `update.sh` embeds its host implementation; it does not fetch this source directory, bootstrap modules or container handover workers. See [application lifecycle](../docs/application-lifecycle.md).
+
+## Historical build and recovery inputs through 5.0.9
+
+The former major transition used `upgrade/cli-bootstrap.mjs`; former same-major releases used `upgrade/same-major-bootstrap.mjs` and packaged handover workers. These remain release-specific historical inputs, not the normal 5.0.10 workflow.
 
 | Source | Build input | Image/runtime result |
 | --- | --- | --- |

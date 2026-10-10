@@ -294,7 +294,7 @@ Expect healthy Manager and DB, plus the VPN Agent on TUN-capable hosts. HTTP 200
 
 Use strong credentials, limit access to the administration interface and keep independent database and volume backups. Store DNS-provider and other integration secrets securely. The licensing vault key is persistent: preserve it through updates and recovery.
 
-The supported deployment uses a non-privileged Manager with the Docker socket group needed for metrics and guarded updates. Socket access is powerful even with a read-only bind; expose the administration interface only to trusted users. VPN Agent needs its documented NET_ADMIN capability and TUN device. Review [VPN routing and firewall guidance](docs/vpn-client.md) before connecting a profile.
+The supported deployment runs application services under the configured PUID/PGID; Manager has Docker socket group access for metrics and diagnostics. Normal upgrades run on the host. Socket access is powerful even with a read-only bind; expose the administration interface only to trusted users. VPN Agent needs its documented NET_ADMIN capability and TUN device. Review [VPN routing and firewall guidance](docs/vpn-client.md) before connecting a profile.
 
 Professional Support is optional and does not disable core proxy or security features when licensing is unavailable. Generated support bundles use structured redaction; review an exported bundle before sharing it.
 

@@ -1,9 +1,4 @@
-## 5.0.8 — 2026-10-09
-
-- Accept valid completed historical handover target ledgers without weakening checksum, identity, schema or recovery validation.
-- Check retained transaction compatibility before preparing replacement service names.
-- Preserve verified SQL backup/restore, schema 45, VPN Agent 5.0.1 and guarded source versions 5.0.0–5.0.7.
-- Sanitize public documentation, correct current version examples, and add dependency and publication hygiene gates.
+# Changelog
 
 ## 5.0.10 — 2026-10-10
 
@@ -13,6 +8,13 @@
 - Separate fresh provisioning, ordinary upgrades and advanced recovery; direct in-app updates to the canonical root/sudo command.
 - Build Manager with a sanitized filesystem and fresh layer history, excluding inherited runtime credentials and user-data paths.
 
+
+## 5.0.8 — 2026-10-09
+
+- Accept valid completed historical handover target ledgers without weakening checksum, identity, schema or recovery validation.
+- Check retained transaction compatibility before preparing replacement service names.
+- Preserve verified SQL backup/restore, schema 45, VPN Agent 5.0.1 and guarded source versions 5.0.0–5.0.7.
+- Sanitize public documentation, correct current version examples, and add dependency and publication hygiene gates.
 
 ## [5.0.9] - 2026-10-09
 
@@ -32,7 +34,6 @@
 - Document root and sudo entry points, require Compose v2, and validate Debian/Ubuntu systemd prerequisites.
 - Retain schema 45 and VPN Agent 5.0.1; 5.0.6 remains immutable.
 
-# Changelog
 
 ## 5.0.6 — Corrective updater release
 
