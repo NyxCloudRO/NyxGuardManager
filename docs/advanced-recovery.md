@@ -13,7 +13,7 @@ curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upd
 bash /tmp/nyxguard-update.sh --restore-backup /opt/nyxguardmanager/.upgrade/backup-<timestamp>
 ```
 
-The restore asks for confirmation. Later writes will be lost. Never switch an old Manager image onto an incompatible newer schema. A checksum or restore verification failure preserves the pending record and returns an error; retain the backup for investigation. For a custom installation set `INSTALL_DIR` to its existing directory.
+Use the current `main` updater shown above; the original immutable 5.0.10 asset/tag snapshot predates the terminal-confirmation correction. The restore asks for confirmation. Later writes will be lost. Never switch an old Manager image onto an incompatible newer schema. A checksum or restore verification failure preserves the pending record and returns an error; retain the backup for investigation. For a custom installation set `INSTALL_DIR` to its existing directory.
 
 ## Historical recovery through 5.0.9
 

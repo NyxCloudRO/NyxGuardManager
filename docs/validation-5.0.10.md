@@ -26,7 +26,16 @@ The same host design was also exercised with Manager-only installations, a real 
 
 ## Published command verification
 
-Exact public-script and registry-artifact fresh installation and older-version upgrade will be recorded here after release publication. Prepublication qualification uses the reviewed local artifact through an explicit test-only image selector; ordinary users require no such selector.
+The exact root installation pipeline from `main` installed published Manager 5.0.10 and compatible Agent 5.0.1, followed by setup/login, representative data and dormant VPN validation. A fresh public pinned 5.0.0 Manager-only installation then ran the exact root normal update pipeline without upgrade overrides, with actual terminal confirmation. Schema 42 → 45, published Manager digest, login, durable data, keys, volumes and the same database container passed. A second public invocation reports already current.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | bash
+```
+
+The first interactive public invocation revealed that opening a terminal in Python `r+` mode required seeking; it failed before service changes. Separate read/write terminal streams corrected it. Real terminal cancellation and accepted public upgrade were then tested. Original release assets are immutable snapshots and retain the earlier confirmation defect; use the canonical current `main` updater. The release notes clearly distinguish that snapshot. No release tag or Manager digest was rewritten and no additional corrective release was published.
+
+Prepublication image qualification used an explicit reviewed local selector; ordinary users require no selector. The Manager artifact is unchanged between local qualification and published tests.
 
 ## Scope and limits
 

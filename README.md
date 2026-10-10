@@ -250,6 +250,8 @@ The updater identifies the installed and latest stable published versions, asks 
 
 Database migrations run through the application's normal startup. Health, migration completion, durable configuration records and storage identities must pass before success is committed. A failed download simply restarts the unchanged installation. A failure after application replacement restores the verified pre-migration data and previous application. A repeated invocation on the current version makes no changes.
 
+Use the current `main` command above. The immutable original 5.0.10 updater asset/tag snapshot predates the terminal-confirmation correction; it is not the current normal updater. [Release notes](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.10) record this distinction.
+
 See [installation and update architecture](docs/application-lifecycle.md) for the persistent storage map, maintenance downtime, version pinning, supported topology and backup requirements. Independent backups remain recommended. Advanced restoration and historical 4.x transitions are documented separately in [advanced recovery](docs/advanced-recovery.md). The in-app update action directs administrators to the host command.
 
 ## VPN Client and VPN Agent
