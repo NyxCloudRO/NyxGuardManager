@@ -175,9 +175,9 @@ def main():
   m=json.loads((backup/'manifest.json').read_text())
   if pathlib.Path(m['backup']).resolve()!=backup:raise RuntimeError('Backup identity differs')
   if os.environ.get('NYXGUARD_AUTO_YES')!='1':
-   with open('/dev/tty','r+') as tty:
+   with open('/dev/tty','r') as tty_input, open('/dev/tty','w') as tty:
     tty.write('Restore this pre-upgrade backup? Later application writes will be lost. [y/N] ');tty.flush()
-    if tty.readline().strip().lower() not in ('y','yes'):log('Recovery cancelled.');return
+    if tty_input.readline().strip().lower() not in ('y','yes'):log('Recovery cancelled.');return
   m['phase']='applying';save(m);restore(m);return
  if pending.exists():
   m=json.loads(pending.read_text())
@@ -229,9 +229,9 @@ def main():
  if shutil.disk_usage(STATE).free < total*3+2*1024**3:raise RuntimeError('Insufficient disk space for verified backup and image download; no services changed')
  if os.environ.get('NYXGUARD_AUTO_YES')!='1':
   try:
-   with open('/dev/tty','r+') as tty:
+   with open('/dev/tty','r') as tty_input, open('/dev/tty','w') as tty:
     tty.write('Upgrade '+current+' to '+target+'? Services will pause for backup and migrations. [y/N] ');tty.flush()
-    if tty.readline().strip().lower() not in ('y','yes'):log('Upgrade cancelled.');return
+    if tty_input.readline().strip().lower() not in ('y','yes'):log('Upgrade cancelled.');return
   except OSError:raise RuntimeError('Confirmation requires a terminal; use NYXGUARD_AUTO_YES=1 only for unattended operation')
  backup=STATE/('backup-'+time.strftime('%Y%m%dT%H%M%SZ',time.gmtime()))
  backup.mkdir(mode=0o700);(backup/'files').mkdir(mode=0o700)
@@ -339,6 +339,5 @@ if __name__=='__main__':
  try:main()
  except BaseException as e:
   log('ERROR: '+str(e) if isinstance(e,RuntimeError) else 'ERROR: Upgrade failed ('+type(e).__name__+'). Review the root-only recovery record.');sys.exit(1)
-
 NYXGUARD_HOST_UPGRADE_PY
 python3 "$runner" "$@"
