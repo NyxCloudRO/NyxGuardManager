@@ -1,3 +1,24 @@
+# Advanced recovery
+
+Ordinary updates use the [canonical root/sudo commands](../README.md#updates-and-recovery). Do not use recovery commands for a healthy ordinary upgrade.
+
+## Restore a retained host backup
+
+The 5.0.10 host updater retains verified cold backups under the installation's `.upgrade/backup-*` directories. Review the root-only `manifest.json` and `result.json` to select the correct pre-upgrade point. Restore uses the exact installation storage paths, previous application identities and matching database files; it does not create a parallel database or application stack.
+
+As root, download the current updater, then select a backup from this installation:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh -o /tmp/nyxguard-update.sh
+bash /tmp/nyxguard-update.sh --restore-backup /opt/nyxguardmanager/.upgrade/backup-<timestamp>
+```
+
+The restore asks for confirmation. Later writes will be lost. Never switch an old Manager image onto an incompatible newer schema. A checksum or restore verification failure preserves the pending record and returns an error; retain the backup for investigation. For a custom installation set `INSTALL_DIR` to its existing directory.
+
+## Historical recovery through 5.0.9
+
+The material below describes the previous recovery implementation and historical major transitions. It does not describe the normal 5.0.10 upgrade workflow.
+
 # Advanced recovery and independent installations
 
 5.0.9 uses one release compatibility policy, Compose service metadata, a verified restorable backup, bounded migration progress, application/data checks and a durable commit or verified rollback. Migration progress never counts as healthy application startup. Existing operational records and secrets remain protected; only reviewed traffic counter history permits normal retention and live increments. Expired security rules remain stored and inactive.

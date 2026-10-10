@@ -4,14 +4,14 @@ Use the [README installation commands](../README.md#installation) for a root she
 
 ## Supported operating systems
 
-| Operating system | Official support | Historical validation | 5.0.9 OS retesting |
+| Operating system | Official support | Historical validation | 5.0.10 OS retesting |
 | --- | --- | --- | --- |
 | Ubuntu 22.x | Supported | Working installs recorded in 3.0.0 | No new OS-specific validation claimed |
 | Ubuntu 24.x | Supported | Working installs recorded in 3.0.0; 5.0.7 runtime install with existing packages | No new OS-specific validation claimed |
 | Ubuntu 25.x | Supported | Advertised as tested in the historical README; detailed acceptance not recovered | No new OS-specific validation claimed |
 | Ubuntu 26.04 LTS | Supported | 26.04.1 runtime, startup/reboot and VPN accepted in 5.0.4 | No new OS-specific validation claimed |
 | Debian 12 | Supported | Working installs recorded in 3.0.0; 5.0.7 privilege/package checks | No new OS-specific validation claimed |
-| Debian 13 | Supported | Working installs recorded in 3.0.0 | Isolated upgrade, rollback and retry; no fresh-host claim |
+| Debian 13 | Supported | Working installs recorded in 3.0.0 | See the 5.0.10 live-host qualification record |
 
 Support carries forward independently of hotfix retesting. The [compatibility evidence below](#compatibility-evidence) records the evidence and configuration limits; [5.0.9 validation coverage](validation-5.0.9.md) describes the focused release tests. Historical family labels do not certify every point release or a fresh-host installation in 5.0.9.
 
@@ -26,7 +26,7 @@ The matrix restores the established support contract; the focused hotfix test li
 - **Ubuntu 26.04 LTS:** the [5.0.4 release notes](../release-source/5.0.4/RELEASE-NOTES.md#ubuntu-2604-lts) record accepted Manager/MariaDB operation, installer execution with distribution Docker/Compose packages, schema 45, application APIs, systemd startup and reboot persistence on 26.04.1. VPN acceptance required usable TUN and included handshakes, connectivity and restart/reboot checks.
 - **Later focused coverage:** [5.0.7](validation-5.0.7.md) records Ubuntu 24.04 runtime installation with existing packages and Debian 12 privilege/package resolution. These checks are narrower than full fresh-host validation. [5.0.8](validation-5.0.8.md) records upgrade, recovery and host-contract tests and explicitly states their limits; it does not establish new fresh-host acceptance for every OS in the matrix.
 
-The [installer](../install.sh) checks distribution identity (Ubuntu/Debian), apt-get availability and a running systemd host; it does not filter OS version numbers. That broad check is an installation prerequisite, not evidence that every release or derivative is officially supported. No installer, updater, recovery or Docker behavior changed in this documentation correction.
+The [installer](../install.sh) checks distribution identity (Ubuntu/Debian), apt-get availability and a running systemd host; it does not filter OS version numbers. That broad check is an installation prerequisite, not evidence that every release or derivative is officially supported. The 5.0.10 host workflow is documented in [application lifecycle](application-lifecycle.md); historical compatibility evidence remains unchanged.
 
 The [5.0.9 validation guide](validation-5.0.9.md) records the isolated Debian 13 existing-data upgrade, verified rollback/retry and focused contracts. It does not claim fresh-host installation across the matrix.
 
@@ -40,3 +40,5 @@ apt-get install -y ca-certificates curl
 ```
 
 Ordinary sudo users prefix both commands with `sudo`. Then use the [root or sudo one-line command](../README.md#installation). To review the script before executing it, download it with `curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh -o /tmp/nyxguard-install.sh`, inspect it, then run `bash /tmp/nyxguard-install.sh` as root (or `sudo bash /tmp/nyxguard-install.sh`). Manual Docker Compose installation remains in the [README](../README.md#docker-deployment).
+
+Current installation and update commands, storage identities and version pinning are documented in [application lifecycle](application-lifecycle.md).

@@ -1,875 +1,344 @@
 #!/usr/bin/env bash
-# NyxGuard Manager updater (Docker-only, auto-latest)
-# Intended usage:
-#   Root: curl -fsSL <update.sh-url> | bash
-#   Sudo user: curl -fsSL <update.sh-url> | sudo bash
+# Root: curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | bash
+# Sudo: curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | sudo bash
 set -euo pipefail
+[[ $EUID -eq 0 ]] || { echo 'ERROR: Run as root or pipe to sudo bash.' >&2; exit 1; }
+command -v python3 >/dev/null || { echo 'ERROR: python3 is required. Install it with apt-get install python3.' >&2; exit 1; }
+runner=$(mktemp)
+trap 'rm -f "$runner"' EXIT
+chmod 700 "$runner"
+cat >"$runner" <<'NYXGUARD_HOST_UPGRADE_PY'
+#!/usr/bin/env python3
+"""A single host process: verified cold backup, Compose app replacement, recovery."""
+import contextlib,fcntl,hashlib,json,os,pathlib,re,shutil,signal,subprocess,sys,tempfile,time,urllib.request
+_saved=pathlib.Path(__file__).resolve().parent
+ROOT=pathlib.Path(os.environ.get('INSTALL_DIR',str(_saved.parent) if _saved.name=='.upgrade' else '/opt/nyxguardmanager'))
+STATE=ROOT/'.upgrade'
 
-INSTALL_DIR="${INSTALL_DIR:-/opt/nyxguardmanager}"
-IMAGE_REPO="${IMAGE_REPO:-nyxmael/nyxguardmanager}"
-VPN_AGENT_REPO="${VPN_AGENT_REPO:-nyxmael/nyxguardmanager-vpn-agent}"
-FORCE_TAG="${FORCE_TAG:-}"        # Optional explicit target tag override.
-AUTO_YES="${NYXGUARD_AUTO_YES:-0}" # Set to 1 for non-interactive mode.
-REMOVE_OLD_IMAGE="${NYXGUARD_REMOVE_OLD_IMAGE:-1}" # Set to 0 to keep the previous image for rollback.
-REQUIRE_VPN="${NYXGUARD_REQUIRE_VPN:-0}" # Set to 1 to abort when /dev/net/tun is unavailable.
-CLI_BOOTSTRAP_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upgrade/cli-bootstrap.mjs"
-CLI_BOOTSTRAP_SHA256="89eb4165bfdde3664a07d4a25385cc442ff0862bb01829e0783a817a5a2f38c3"
-MANAGER_ONLY_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/upgrade/manager-only-handover.mjs"
-MANAGER_ONLY_SHA256="8a374930d5f421d5296886bc9b05141a79fafb6522d2bd8870b41d1cb476a470"
+def log(s): print(s,flush=True)
+def run(args,*,capture=False,input=None,timeout=900):
+ r=subprocess.run(args,input=input,text=True,stdout=subprocess.PIPE if capture else None,stderr=subprocess.PIPE if capture else None,timeout=timeout)
+ if r.returncode: raise RuntimeError('Command failed: '+args[0]+' '+args[1]+' (exit '+str(r.returncode)+')')
+ return r.stdout if capture else ''
+def docker(*args,**kw): return run(['docker',*args],**kw)
+def inspect(cid): return json.loads(docker('inspect',cid,capture=True))[0]
+def atom(path,value):
+ path=pathlib.Path(path);tmp=path.with_name(path.name+'.tmp')
+ with open(tmp,'w') as f:
+  os.chmod(tmp,0o600);f.write(value);f.flush();os.fsync(f.fileno())
+ os.replace(tmp,path)
+ fd=os.open(path.parent,os.O_DIRECTORY);os.fsync(fd);os.close(fd)
+def save(m): atom(STATE/'pending.json',json.dumps(m))
+def semver(v):
+ if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+',v): raise RuntimeError('Release version is invalid')
+ return tuple(map(int,v.split('.')))
+def sha(p):
+ h=hashlib.sha256()
+ with open(p,'rb') as f:
+  for b in iter(lambda:f.read(1024*1024),b''): h.update(b)
+ return h.hexdigest()
+def compose(*args,capture=False):
+ files=['-f',str(ROOT/'docker-compose.yml')]
+ if (ROOT/'docker-compose.vpn.yml').exists():files+=['-f',str(ROOT/'docker-compose.vpn.yml')]
+ return docker('compose','--project-directory',str(ROOT),'--env-file',str(ROOT/'.env'),*files,*args,capture=capture)
+def config(): return json.loads(compose('config','--format','json',capture=True))
+def cid(service):
+ s=compose('ps','-aq',service,capture=True).strip().splitlines()
+ if len(s)!=1:raise RuntimeError('Exactly one installed '+service+' container is required')
+ return s[0]
+def version(c):
+ v=docker('exec',c,'node','-e','console.log(require("/app/package.json").version)',capture=True).strip();semver(v);return v
 
-SAME_MAJOR_URL="https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/v5.0.9/upgrade/same-major-bootstrap.mjs"
-SAME_MAJOR_SHA256="6ac228cd9447bc357d27d5418b416878c4a2c607514de64b567d97de45cdf549"
+def health(m):
+ deadline=time.monotonic()+300
+ while time.monotonic()<deadline:
+  good=True
+  for svc in m['services']:
+   c=inspect(cid(svc));status=c['State'].get('Health',{}).get('Status')
+   if c['State']['Status']=='restarting' and c.get('RestartCount',0)>=3:raise RuntimeError('Service repeatedly exited during readiness: '+svc)
+   if c['State']['Status'] in ('exited','dead'):raise RuntimeError('Service exited during readiness: '+svc)
+   if not c['State']['Running'] or (svc!='db' and status!='healthy'):good=False
+  if good:
+   docker('exec',cid('db'),'sh','-c','MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqladmin ping -uroot --silent',capture=True)
+   docker('exec',cid('nyxguard-manager'),'nginx','-t',capture=True)
+   return
+  time.sleep(2)
+ raise RuntimeError('Services did not become healthy within five minutes')
 
-# Published release contracts; new Manager tags require an explicit Agent decision.
-vpn_agent_tag_for_manager() {
-  case "$(normalize_semver "$1")" in
-    5.0.9|5.0.8|5.0.7|5.0.6) echo 5.0.1 ;;
-    5.0.5|5.0.4|5.0.3|5.0.2|5.0.1) echo 5.0.1 ;;
-    5.0.0) echo 5.0.0 ;;
-    4.0.14|4.0.15|4.0.16|4.0.17|4.0.18) normalize_semver "$1" ;;
-    *) echo "ERROR: No published VPN compatibility contract for Manager $1." >&2; return 1 ;;
-  esac
+# Restrict comparison to durable user configuration and history. Runtime counters,
+# migration bookkeeping, retention and notification dispatch are not corruption.
+SNAPSHOT=r'''
+const mysql=require('/app/node_modules/mysql2/promise');const crypto=require('crypto');
+(async()=>{let c=await mysql.createConnection({host:process.env.DB_MYSQL_HOST,port:process.env.DB_MYSQL_PORT||3306,user:process.env.DB_MYSQL_USER,password:process.env.DB_MYSQL_PASSWORD,database:process.env.DB_MYSQL_NAME});
+let [tables]=await c.query('SHOW TABLES');let names=tables.map(t=>Object.values(t)[0]);let result={};
+const important=['user','auth','user_permission','setting','proxy_host','certificate','access_list','access_list_auth','access_list_client','nyxguard_settings','nyxguard_country_rule','nyxguard_ip_rule','nyxguard_waf_rule','dead_host','redirection_host','stream','nyxcloud_license_state','audit_log'];
+const history={nyxcloud_license_state:['id','installation_id'],audit_log:['id','created_on','action','object_type','object_id']};
+let previous=process.env.NYX_BASELINE?JSON.parse(process.env.NYX_BASELINE):null;
+for(let t of important.filter(t=>names.includes(t))){
+ let [cols]=await c.query('SHOW COLUMNS FROM `'+t+'`');let keys=previous?.[t]?.columns || history[t] || cols.map(x=>x.Field).filter(x=>!['modified_on','last_used_at','last_login','last_login_at'].includes(x));
+ if(!keys.every(k=>/^[A-Za-z0-9_]+$/.test(k)))throw Error('Invalid column');
+ let clause='';
+ if(t==='audit_log'){
+  const [settings]=await c.query('SELECT value FROM setting WHERE id=?',['audit-log-retention-days']);
+  let days=Number(settings[0]?.value??180);if(!Number.isSafeInteger(days)||days<0||days>36500)days=180;
+  // Skip records near the legitimate retention boundary; retention is not corruption.
+  if(days>0)clause=' WHERE created_on >= DATE_SUB(NOW(), INTERVAL '+Math.max(0,days-1)+' DAY)';
+ }
+ let [rows]=await c.query('SELECT '+keys.map(k=>'`'+k+'`').join(',')+' FROM `'+t+'`'+clause);
+ result[t]={columns:keys,rows:rows.map(r=>crypto.createHash('sha256').update(JSON.stringify(keys.map(k=>r[k]))).digest('hex')).sort()};
 }
-
-need_root() {
-  if [[ "${EUID}" -ne 0 ]]; then
-    if command -v sudo >/dev/null 2>&1; then
-      echo "ERROR: Administrator privileges required. Download this script, then run: sudo bash /path/to/update.sh" >&2
-    else
-      echo "ERROR: Administrator privileges required and sudo is not installed. Log in as root (su -), then run: bash /path/to/update.sh" >&2
-    fi
-    exit 1
-  fi
-}
-
-have_cmd() { command -v "$1" >/dev/null 2>&1; }
-
-is_semver() {
-  [[ "$1" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]
-}
-
-normalize_semver() {
-  local t="$1"
-  echo "${t#v}"
-}
-
-dockerhub_latest_tag() {
-  local repo="$1"
-  local current="${2:-}"
-
-  if [[ "${repo}" != */* ]]; then
-    echo "ERROR: IMAGE_REPO must be in '<namespace>/<name>' format." >&2
-    return 1
-  fi
-
-  local ns name url json next
-  ns="${repo%%/*}"
-  name="${repo##*/}"
-  url="https://hub.docker.com/v2/repositories/${ns}/${name}/tags?page_size=100"
-
-  local semver_tags=""
-
-  while [[ -n "${url}" && "${url}" != "null" ]]; do
-    json="$(curl -fsSL "${url}")"
-
-    while IFS= read -r tag; do
-      if is_semver "${tag}" && [[ "$(upgrade_route "$current" "$tag")" != unsupported ]]; then
-        semver_tags+="${tag}"$'\n'
-      fi
-    done < <(echo "${json}" | jq -r '.results[].name')
-
-    next="$(echo "${json}" | jq -r '.next')"
-    url="${next}"
-  done
-
-  if [[ -z "${semver_tags}" ]]; then
-    if is_semver "$current"; then
-      echo "$current"
-      return 0
-    fi
-    echo "ERROR: No supported published release found for current version ${current}." >&2
-    return 1
-  fi
-
-  local best_norm best_tag
-  best_norm="$(printf '%s' "${semver_tags}" | sed '/^$/d;s/^v//' | sort -V | tail -n 1)"
-
-  if printf '%s' "${semver_tags}" | grep -qx "${best_norm}"; then
-    best_tag="${best_norm}"
-  else
-    best_tag="v${best_norm}"
-  fi
-
-  echo "${best_tag}"
-}
-
-require_commands() {
-  local missing=0
-  for c in curl jq docker flock sha256sum; do
-    if ! have_cmd "$c"; then
-      echo "ERROR: Missing required command: $c" >&2
-      missing=1
-    fi
-  done
-
-  if [[ "$missing" -ne 0 ]]; then
-    exit 1
-  fi
-
-  if ! (docker compose version >/dev/null 2>&1); then
-    echo "ERROR: Docker Compose is not available." >&2
-    exit 1
-  fi
-}
-
-require_install_files() {
-  if [[ ! -f "${INSTALL_DIR}/docker-compose.yml" ]]; then
-    echo "ERROR: ${INSTALL_DIR}/docker-compose.yml not found." >&2
-    echo "Run install.sh first." >&2
-    exit 1
-  fi
-
-  if [[ ! -f "${INSTALL_DIR}/.env" ]]; then
-    echo "ERROR: ${INSTALL_DIR}/.env not found." >&2
-    echo "Run install.sh first." >&2
-    exit 1
-  fi
-}
-
-read_current_image_ref() {
-  # Built-in handovers replace containers by immutable image ID; host Compose
-  # and .version can legitimately retain the old tag. Neither is runtime truth.
-  local config containers matches container image evidence project id version configured
-  config="$(docker compose --env-file "$INSTALL_DIR/.env" -f "$INSTALL_DIR/docker-compose.yml" config --format json)" || return 1
-  project="$(jq -er '.name | select(length > 0)' <<<"$config")" || return 1
-  configured="$(jq -er '.services["nyxguard-manager"].image' <<<"$config")" || return 1
-  case "$configured" in "$IMAGE_REPO":*|"$IMAGE_REPO"@sha256:*) ;;
-    *) if [[ "$configured" != "${NYXGUARD_ACCEPTED_IMAGE_ID:-}" || ! "$configured" =~ ^sha256:[a-f0-9]{64}$ ]]; then
-         echo "ERROR: Compose Manager image is outside the configured repository." >&2; return 1
-       fi ;;
-  esac
-  containers="$(docker ps -aq --filter label=com.docker.compose.service=nyxguard-manager)" || return 1
-  [[ -n "$containers" ]] || { echo "ERROR: No installed Manager Compose container." >&2; return 1; }
-  # Docker emits hexadecimal IDs only. Include stopped containers so an
-  # interrupted handover/rollback cannot masquerade as an unambiguous runtime.
-  local -a ids
-  mapfile -t ids <<<"$containers"
-  matches="$(docker inspect "${ids[@]}" | jq --arg file "$INSTALL_DIR/docker-compose.yml" --arg project "$project" '
-    [.[] | select((.Config.Labels["com.docker.compose.project.config_files"] // "" | split(",") | .[0]) == $file
-      or .Config.Labels["com.docker.compose.project"] == $project) | select(.State.Running==true)]')" || return 1
-  if [[ "$(jq length <<<"$matches")" != 1 ]]; then
-    echo "ERROR: Expected exactly one installed Manager Compose container; runtime identity is ambiguous." >&2
-    return 1
-  fi
-  container="$(jq -e --arg project "$project" --arg file "$INSTALL_DIR/docker-compose.yml" '.[0] |
-    select(.Config.Labels["com.docker.compose.project"] == $project and
-      (.Config.Labels["com.docker.compose.project.config_files"] | split(",") | .[0]) == $file and
-      .State.Running == true and .State.Health.Status == "healthy")' <<<"$matches")" || {
-    echo "ERROR: Installed Manager identity/health does not match Compose." >&2; return 1;
-  }
-  id="$(jq -r .Id <<<"$container")"
-  image="$(docker image inspect "$(jq -r .Image <<<"$container")")" || return 1
-  # Read only the application version and handover guards. Never print state,
-  # environment, or configuration that might include private installation data.
-  evidence="$(docker exec "$id" node -e '
-    const fs = require("fs");
-    const file = "/data/update-manager/state.json";
-    const state = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : {};
-    console.log(JSON.stringify({ version: require("/app/package.json").version,
-      runtimeVersion: process.env.NPM_BUILD_VERSION || null,
-      blocked: !!(state.manualRecoveryRequired || state.recoveryCleanupPending || state.activation ||
-        state.restartPending || ["activating", "restart_pending", "recovery_required"].includes(state.stage)) }));
-  ')" || return 1
-  version="$(jq -ern --argjson image "$image" --argjson container "$container" --argjson app "$evidence" --arg repo "$IMAGE_REPO" --arg baseline "$([[ ${NYXGUARD_BASELINE_PLAN:-0} == 1 || -n ${NYXGUARD_ACCEPT_BASELINE:-} ]] && echo 1 || echo 0)" --arg accepted "${NYXGUARD_ACCEPTED_IMAGE_ID:-}" '
-    $image[0] as $i |
-    [$i.Config.Labels["org.opencontainers.image.version"],
-      ($i.Config.Env[]? | select(startswith("NPM_BUILD_VERSION=")) | ltrimstr("NPM_BUILD_VERSION="))] |
-    map(select(. != null and . != "") | ltrimstr("v")) | unique as $versions |
-    select($i.Id == $container.Image and ($app.blocked == false or $baseline == "1")) |
-    select(any($i.RepoTags[]?; startswith($repo + ":")) or any($i.RepoDigests[]?; startswith($repo + "@sha256:")) or
-      ($accepted | test("^sha256:[a-f0-9]{64}$")) and $i.Id == $accepted) |
-    select(($versions | length) == 1) | $versions[0] as $v |
-    select($v | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) |
-    select(($app.version | ltrimstr("v")) == $v and ($app.runtimeVersion == null or ($app.runtimeVersion | ltrimstr("v")) == $v)) |
-    # A tag supplied when creating the container must agree with its image.
-    select(($container.Config.Image == $i.Id) or
-      ($container.Config.Image == ($repo + ":" + $v)) or
-      ($container.Config.Image == ($repo + ":v" + $v)) or
-      any($i.RepoDigests[]?; . == $container.Config.Image)) | $v
-  ')" || {
-    echo "ERROR: Manager image/application versions disagree or handover requires review; installation was not changed." >&2
-    return 1
-  }
-  if [[ "$configured" != "$IMAGE_REPO:$version" ]]; then
-    echo "Verified Manager runtime is $version; Compose image reference is $configured (configuration retained)." >&2
-  fi
-  echo "$IMAGE_REPO:$version"
-}
-
-update_compose_image_ref() {
-  local new_ref="$1"
-  local tmp
-  tmp="$(mktemp)"
-
-  awk -v img="${new_ref}" '
-    {
-      if (!done && $1 == "image:" && $2 ~ /nyxguardmanager:/) {
-        match($0, /^[[:space:]]*/)
-        indent = substr($0, RSTART, RLENGTH)
-        print indent "image: " img
-        done = 1
-      } else if ($1 == "NPM_BUILD_VERSION:" || $1 == "NPM_BUILD_COMMIT:" || $1 == "NPM_BUILD_DATE:") {
-        # Image metadata is authoritative after an update. Repository Compose
-        # examples may contain release-specific overrides from the old image.
-        next
-      } else {
-        print
-      }
-    }
-  ' "${INSTALL_DIR}/docker-compose.yml" >"${tmp}"
-
-  mv -f "${tmp}" "${INSTALL_DIR}/docker-compose.yml"
-}
-
-version_is_newer() {
-  local current="$1"
-  local target="$2"
-
-  if [[ "${current}" == "${target}" ]]; then
-    return 1
-  fi
-
-  if is_semver "${current}" && is_semver "${target}"; then
-    local c t
-    c="$(normalize_semver "${current}")"
-    t="$(normalize_semver "${target}")"
-    [[ "$(printf '%s\n%s\n' "${c}" "${t}" | sort -V | tail -n1)" == "${t}" ]] && [[ "${c}" != "${t}" ]]
-    return
-  fi
-
-  # Fallback for non-semver tags: treat changed tag as newer.
-  return 0
-}
-
-version_at_least() {
-  local version minimum
-  version="$(normalize_semver "$1")"
-  minimum="$(normalize_semver "$2")"
-  [[ "$(printf '%s\n%s\n' "${version}" "${minimum}" | sort -V | tail -n1)" == "${version}" ]]
-}
-
-tun_is_usable() {
-  [[ -c /dev/net/tun ]] && (exec 9<>/dev/net/tun) 2>/dev/null
-}
-
-verify_tun_interface() {
-  docker run --rm --network none --cap-add NET_ADMIN --device /dev/net/tun \
-    --entrypoint sh "$1" -c 'ip tuntap add dev nyxprobe mode tun && ip tuntap del dev nyxprobe mode tun'
-}
-
-prepare_tun_device() {
-  if tun_is_usable; then
-    return 0
-  fi
-
-  # Normal VMs and bare-metal hosts can usually load TUN themselves. In an
-  # LXC container the Proxmox host must pass the device through instead.
-  if have_cmd modprobe; then
-    modprobe tun >/dev/null 2>&1 || true
-  fi
-
-  if [[ ! -c /dev/net/tun && -e /sys/class/misc/tun/dev ]]; then
-    mkdir -p /dev/net
-    mknod /dev/net/tun c 10 200 >/dev/null 2>&1 || true
-    chmod 666 /dev/net/tun >/dev/null 2>&1 || true
-  fi
-
-  tun_is_usable
-}
-
-print_tun_warning() {
-  local virt="unknown"
-  if have_cmd systemd-detect-virt; then
-    virt="$(systemd-detect-virt 2>/dev/null || true)"
-  fi
-
-  echo ""
-  echo "WARNING: WireGuard VPN Client was not started because /dev/net/tun is unavailable."
-  echo "NyxGuard Manager will continue running normally; only VPN Client is disabled."
-  if [[ "${virt}" == "lxc" ]]; then
-    echo "Detected Proxmox/LXC. On the Proxmox HOST, load TUN and add these lines to the CT config:"
-    echo "  modprobe tun"
-    echo "  lxc.cgroup2.devices.allow: c 10:200 rwm"
-    echo "  lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file"
-    echo "Then restart the LXC container and run update.sh again."
-  else
-    echo "Load the host TUN module (modprobe tun), confirm /dev/net/tun exists, then run update.sh again."
-  fi
-  echo "Set NYXGUARD_REQUIRE_VPN=1 if a missing TUN device should abort instead of degrading safely."
-  echo ""
-}
-
-disable_vpn_systemd_override() {
-  local override="/etc/systemd/system/nyxguardmanager.service.d/vpn-stack.conf"
-  if [[ -f "${override}" ]]; then
-    rm -f "${override}"
-    systemctl daemon-reload
-  fi
-}
-
-start_manager_without_vpn() {
-  disable_vpn_systemd_override
-  rm -f "${INSTALL_DIR}/docker-compose.vpn.yml"
-  docker compose --env-file "${INSTALL_DIR}/.env" -f "${INSTALL_DIR}/docker-compose.yml" up -d --remove-orphans nyxguard-manager db
-}
-
-write_vpn_compose_overlay() {
-  local vpn_agent_ref="$1"
-
-  cat >"${INSTALL_DIR}/docker-compose.vpn.yml" <<'YAML'
-services:
-  nyxguard-manager:
-    environment:
-      NYXGUARD_VPN_AGENT_URL: "http://127.0.0.1:3198"
-      NYXGUARD_VPN_AGENT_TOKEN_PATH: "/run/nyxguard-vpn-auth/token"
-    volumes:
-      - nyxguard_vpn_auth:/run/nyxguard-vpn-auth:ro
-
-  vpn-client-agent:
-    container_name: nyxguard-vpn-agent
-    image: __VPN_AGENT_IMAGE_REF__
-    restart: unless-stopped
-    network_mode: "service:nyxguard-manager"
-    cap_add:
-      - NET_ADMIN
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    environment:
-      NYXGUARD_BACKEND_UID: "${PUID:-1000}"
-    volumes:
-      - nyxguard_vpn:/var/lib/nyxguard-vpn
-      - nyxguard_vpn_auth:/run/nyxguard-vpn-auth
-      - /etc/localtime:/etc/localtime:ro
-    depends_on:
-      nyxguard-manager:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "node", "-e", "const fs=require('fs');fetch('http://127.0.0.1:3198/status',{headers:{'X-NyxGuard-VPN-Token':fs.readFileSync('/run/nyxguard-vpn-auth/token','utf8').trim()}}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
-volumes:
-  nyxguard_vpn:
-    name: nyxguard_vpn
-  nyxguard_vpn_auth:
-    name: nyxguard_vpn_auth
-YAML
-
-  sed -i "s|__VPN_AGENT_IMAGE_REF__|${vpn_agent_ref}|g" "${INSTALL_DIR}/docker-compose.vpn.yml"
-}
-
-install_vpn_systemd_override() {
-  if [[ ! -f /etc/systemd/system/nyxguardmanager.service ]]; then
-    return
-  fi
-
-  mkdir -p /etc/systemd/system/nyxguardmanager.service.d
-  cat >/etc/systemd/system/nyxguardmanager.service.d/vpn-stack.conf <<UNIT
-[Service]
-ExecStart=
-ExecStart=/usr/bin/docker compose --env-file ${INSTALL_DIR}/.env -f ${INSTALL_DIR}/docker-compose.yml -f ${INSTALL_DIR}/docker-compose.vpn.yml up -d --remove-orphans
-ExecStop=
-ExecStop=/usr/bin/docker compose --env-file ${INSTALL_DIR}/.env -f ${INSTALL_DIR}/docker-compose.yml -f ${INSTALL_DIR}/docker-compose.vpn.yml down
-UNIT
-  systemctl daemon-reload
-}
-
-repair_vpn_only() {
-  local current="$1" agent_ref config
-  local unit="${NYXGUARD_INSTANCE:-nyxguard}manager.service"
-  [[ "$unit" =~ ^[a-z][a-z0-9_-]{0,40}manager.service$ ]] || return 1
-  local -a args=(--env-file "$INSTALL_DIR/.env" -f "$INSTALL_DIR/docker-compose.yml")
-  [[ ! -f "$INSTALL_DIR/docker-compose.vpn.yml" ]] || args+=(-f "$INSTALL_DIR/docker-compose.vpn.yml")
-  prepare_tun_device || { print_tun_warning; echo "ERROR: VPN repair stopped; Manager and DB retained." >&2; return 1; }
-  agent_ref="$VPN_AGENT_REPO:$(vpn_agent_tag_for_manager "$current")"
-  config="$(docker compose "${args[@]}" config --format json)"
-  if ! jq -e '.services["vpn-client-agent"] and
-      (.services["nyxguard-manager"].volumes | any(.target == "/run/nyxguard-vpn-auth"))' <<<"$config" >/dev/null; then
-    echo "ERROR: Existing Compose lacks VPN service/authentication mount; reviewed configuration repair is required." >&2; return 1
-  fi
-  # Validate the retained image contract without replacing user configuration.
-  [[ "$(jq -r '.services["vpn-client-agent"].image' <<<"$config")" == "$agent_ref" ]] || {
-    echo "ERROR: Existing VPN image differs from the published compatibility contract; installation retained." >&2; return 1;
-  }
-  docker pull "$agent_ref"
-  # TUNSETIFF in an isolated network namespace tests actual device permission
-  # and NET_ADMIN. The probe has no persistent mounts or host network access.
-  if ! verify_tun_interface "$agent_ref"; then
-    print_tun_warning; echo "ERROR: TUN interface creation failed; VPN repair stopped." >&2; return 1
-  fi
-  [[ -f "/etc/systemd/system/$unit" ]] || {
-    echo "ERROR: Installed systemd unit is missing; cannot persist VPN activation." >&2; return 1;
-  }
-  mkdir -p "/etc/systemd/system/$unit.d"
-  local extra=""
-  [[ ! -f "$INSTALL_DIR/docker-compose.vpn.yml" ]] || extra=" -f ${INSTALL_DIR}/docker-compose.vpn.yml"
-  cat >"/etc/systemd/system/$unit.d/vpn-stack.conf" <<UNIT
-[Service]
-ExecStart=
-ExecStart=/usr/bin/docker compose --env-file ${INSTALL_DIR}/.env -f ${INSTALL_DIR}/docker-compose.yml${extra} up -d --remove-orphans nyxguard-manager db vpn-client-agent
-ExecStop=
-ExecStop=/usr/bin/docker compose --env-file ${INSTALL_DIR}/.env -f ${INSTALL_DIR}/docker-compose.yml${extra} down
-UNIT
-  systemctl daemon-reload
-  systemctl enable "$unit"
-  REPAIR_MANAGER_ID="$(docker compose "${args[@]}" ps -q nyxguard-manager)"
-  docker compose "${args[@]}" up -d --no-deps vpn-client-agent
-  wait_for_manager_vpn_agent
-  echo "VPN agent stack is installed and running. Manager and DB were retained."
-}
-
-wait_for_manager_vpn_agent() {
-  local attempt
-  for attempt in {1..20}; do
-    if docker exec "${REPAIR_MANAGER_ID:-nyxguard-manager}" node -e '
-      const fs = require("fs");
-      const token = fs.readFileSync("/run/nyxguard-vpn-auth/token", "utf8").trim();
-      fetch("http://127.0.0.1:3198/status", { headers: { "X-NyxGuard-VPN-Token": token } })
-        .then((response) => process.exit(response.ok ? 0 : 1))
-        .catch(() => process.exit(1));
-    ' >/dev/null 2>&1; then
-      return 0
-    fi
-    sleep 1
-  done
-
-  echo "ERROR: VPN agent is not reachable from the NyxGuard Manager network namespace." >&2
-  return 1
-}
-
-start_vpn_stack() {
-  local compose_args=(
-    --env-file "${INSTALL_DIR}/.env"
-    -f "${INSTALL_DIR}/docker-compose.yml"
-    -f "${INSTALL_DIR}/docker-compose.vpn.yml"
-  )
-
-  docker compose "${compose_args[@]}" up -d --remove-orphans
-
-  # network_mode: service:nyxguard-manager binds the agent to the manager's
-  # concrete network namespace. Compose does not automatically recreate the
-  # dependent agent when only the manager image/container changes.
-  docker compose "${compose_args[@]}" up -d --no-deps --force-recreate vpn-client-agent
-  wait_for_manager_vpn_agent
-}
-
-confirm_update() {
-  local current_ref="$1"
-  local target_ref="$2"
-
-  echo ""
-  echo "IMPORTANT NOTE"
-  echo "- This update preserves existing production data."
-  echo "- It does NOT remove Docker volumes (DB/config/certs stay intact)."
-  echo "- The updater verifies backup, migrations and operational data before commit."
-  echo ""
-  echo "Current image: ${current_ref}"
-  echo "Target image : ${target_ref}"
-
-  if [[ "${AUTO_YES}" == "1" ]]; then
-    return 0
-  fi
-
-  local answer
-  if [[ -r /dev/tty ]]; then
-    read -r -p "Proceed with update? [y/N]: " answer </dev/tty
-  else
-    echo "ERROR: No interactive terminal available for confirmation." >&2
-    echo "Run with NYXGUARD_AUTO_YES=1 for non-interactive updates." >&2
-    return 1
-  fi
-  case "${answer}" in
-    y|Y|yes|YES) return 0 ;;
-    *)
-      echo "Update cancelled by user."
-      return 1
-      ;;
-  esac
-}
-
-cleanup_previous_image() {
-  local current_ref="$1"
-  local target_ref="$2"
-
-  if [[ "${REMOVE_OLD_IMAGE}" != "1" ]]; then
-    echo "Keeping previous image: ${current_ref}"
-    return 0
-  fi
-
-  if [[ "${current_ref}" == "${target_ref}" ]]; then
-    return 0
-  fi
-
-  echo "Removing previous image: ${current_ref}"
-  if ! docker image rm "${current_ref}"; then
-    echo "Previous image was kept because Docker still considers it in use." >&2
-  fi
-}
-
-# Register supported transitions here. A new major version must never inherit
-# the compatible image-swap path merely because it is the newest Docker tag.
-upgrade_route() {
-  local from="$(normalize_semver "$1")" to="$(normalize_semver "$2")"
-  if ! is_semver "$from" || ! is_semver "$to"; then
-    echo unsupported
-  elif [[ ( "$to" == 5.0.6 || "$to" == 5.0.7 || "$to" == 5.0.8 || "$to" == 5.0.9 ) && "${from%%.*}" == 5 ]]; then
-    echo guarded_release
-  elif [[ "$from" == 4.0.18 && "$to" == 5.0.0 ]]; then
-    echo major_handover_500
-  elif [[ "${from%%.*}" == "${to%%.*}" ]]; then
-    echo compatible
-  else
-    echo unsupported
-  fi
-}
-
-# The immutable 4.0.18 web updater can mark a pulled major image as ready to
-# restart. A failed host attempt must not leave that claim in place when the
-# original 4.0.18 runtime and migration 41 are demonstrably intact.
-reconcile_failed_major_state() {
-  local manager_id db_id manager_state migration
-  manager_id="$(docker compose --env-file "$INSTALL_DIR/.env" -f "$INSTALL_DIR/docker-compose.yml" ps -q nyxguard-manager 2>/dev/null || true)"
-  db_id="$(docker compose --env-file "$INSTALL_DIR/.env" -f "$INSTALL_DIR/docker-compose.yml" ps -q db 2>/dev/null || true)"
-  [[ -n "$manager_id" && -n "$db_id" ]] || return 0
-  manager_state="$(docker inspect "$manager_id" --format '{{.Config.Image}}|{{.State.Health.Status}}' 2>/dev/null || true)"
-  [[ "$manager_state" == "nyxmael/nyxguardmanager:4.0.18|healthy" ]] || return 0
-  migration="$(docker exec "$db_id" sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mariadb -N -uroot "$MYSQL_DATABASE" -e "SELECT count(*) FROM migrations"' 2>/dev/null || true)"
-  [[ "$migration" == 41 ]] || return 0
-  docker exec "$manager_id" node -e '
-    const fs = require("fs");
-    const file = "/data/update-manager/state.json";
-    if (!fs.existsSync(file)) process.exit(0);
-    const state = JSON.parse(fs.readFileSync(file, "utf8"));
-    if (state.pendingVersion !== "5.0.0" || state.restartPending !== true) process.exit(0);
-    state.pendingVersion = null;
-    state.restartPending = false;
-    const prior = state.lastApplyFailure || {};
-    state.lastApplyFailure = { ...prior, at: prior.at || new Date().toISOString(),
-      error: prior.error || "Host major upgrade did not complete; inspect update.sh output and retry after resolving the cause",
-      recoveryStatus: prior.recoveryStatus || "old_runtime_verified" };
-    const temp = `${file}.host-updater-${process.pid}`;
-    fs.writeFileSync(temp, JSON.stringify(state, null, 2), { mode: 0o600 });
-    fs.renameSync(temp, file);
-  ' >/dev/null 2>&1 || echo "WARNING: Unable to reconcile the old web update state; inspect it before using Restart now." >&2
-}
-
-run_major_handover_500() (
-  local bootstrap manager_only tmp generated_overlay=0 manager_only_declared=0
-  tmp="$(mktemp -d)"
-  chmod 700 "$tmp"
-  trap 'rm -rf "$tmp"' EXIT
-  local vpn_overlay="$INSTALL_DIR/docker-compose.vpn.yml"
-  bootstrap="$tmp/cli-bootstrap.mjs"
-  if [[ -n "${NYXGUARD_CLI_BOOTSTRAP_FILE:-}" ]]; then
-    cp -- "$NYXGUARD_CLI_BOOTSTRAP_FILE" "$bootstrap"
-  else
-    curl -fsSL "$CLI_BOOTSTRAP_URL" -o "$bootstrap"
-  fi
-  if [[ "$(sha256sum "$bootstrap" | cut -d' ' -f1)" != "$CLI_BOOTSTRAP_SHA256" ]]; then
-    echo "ERROR: Upgrade bootstrap checksum mismatch; installation was not changed." >&2
-    reconcile_failed_major_state
-    return 1
-  fi
-  chmod 600 "$bootstrap"
-  manager_only="$tmp/manager-only-handover.mjs"
-  if [[ -n "${NYXGUARD_MANAGER_ONLY_FILE:-}" ]]; then
-    cp -- "$NYXGUARD_MANAGER_ONLY_FILE" "$manager_only"
-  else
-    curl -fsSL "$MANAGER_ONLY_URL" -o "$manager_only"
-  fi
-  if [[ "$(sha256sum "$manager_only" | cut -d' ' -f1)" != "$MANAGER_ONLY_SHA256" ]]; then
-    echo "ERROR: Manager-only recovery helper checksum mismatch; installation was not changed." >&2
-    reconcile_failed_major_state
-    return 1
-  fi
-  chmod 600 "$manager_only"
-  local service_unit="/etc/systemd/system/nyxguardmanager.service"
-  local vpn_override="/etc/systemd/system/nyxguardmanager.service.d/vpn-stack.conf"
-  local manager_only_start="ExecStart=/usr/bin/docker compose --env-file ${INSTALL_DIR}/.env -f ${INSTALL_DIR}/docker-compose.yml up -d --remove-orphans nyxguard-manager db"
-  if [[ -f "$service_unit" && ! -e "$vpn_override" ]] && grep -Fxq "$manager_only_start" "$service_unit"; then
-    manager_only_declared=1
-  fi
-  if [[ ! -e "$vpn_overlay" ]]; then
-    # The public 4.0.18 installer places VPN in the main Compose file. The
-    # immutable 5.0.0 recovery worker expects a separate VPN override file.
-    local vpn_image vpn_network
-    vpn_image="$(docker compose --env-file "$INSTALL_DIR/.env" -f "$INSTALL_DIR/docker-compose.yml" config --format json | jq -r '.services["vpn-client-agent"].image // empty')"
-    vpn_network="$(docker compose --env-file "$INSTALL_DIR/.env" -f "$INSTALL_DIR/docker-compose.yml" config --format json | jq -r '.services["vpn-client-agent"].network_mode // empty')"
-    if [[ "$vpn_image" != "nyxmael/nyxguardmanager-vpn-agent:4.0.18" || "$vpn_network" != "service:nyxguard-manager" ]]; then
-      echo "ERROR: Unsupported 4.0.18 VPN Compose layout; installation was not changed." >&2
-      return 1
-    fi
-    printf 'services:\n  vpn-client-agent:\n    image: nyxmael/nyxguardmanager-vpn-agent:4.0.18\n' > "$tmp/docker-compose.vpn.yml"
-    chmod 600 "$tmp/docker-compose.vpn.yml"
-    mv -- "$tmp/docker-compose.vpn.yml" "$vpn_overlay"
-    generated_overlay=1
-  fi
-  echo "Starting the verified 4.0.18 to 5.0.0 recovery and handover engine..."
-  if ! docker run --rm --network none --user 0:0 --entrypoint node \
-    --mount "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock" \
-    --mount "type=bind,src=$bootstrap,dst=/tmp/cli-bootstrap.mjs,readonly" \
-    -e CURRENT_VERSION=4.0.18 -e TARGET_VERSION=5.0.0 \
-    -e "HOST_INSTALL_DIR=$INSTALL_DIR" -e "NYXGUARD_MANAGER_ONLY_DECLARED=$manager_only_declared" \
-    -e "NYXGUARD_MANAGER_ONLY_HOST_FILE=$manager_only" \
-    "$IMAGE_REPO:5.0.0" /tmp/cli-bootstrap.mjs; then
-    if [[ "$generated_overlay" == 1 ]] && \
-       [[ "$(docker inspect nyxguard-manager --format '{{.Config.Image}}|{{.State.Health.Status}}' 2>/dev/null)" == "nyxmael/nyxguardmanager:4.0.18|healthy" ]] && \
-       [[ "$(docker inspect nyxguard-vpn-agent --format '{{.Config.Image}}|{{.State.Health.Status}}' 2>/dev/null)" == "nyxmael/nyxguardmanager-vpn-agent:4.0.18|healthy" ]] && \
-       [[ "$(docker exec nyxguard-db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mariadb -N -uroot "$MYSQL_DATABASE" -e "SELECT count(*) FROM migrations"' 2>/dev/null)" == 41 ]]; then
-      rm -f -- "$vpn_overlay"
-    fi
-    echo "ERROR: Major handover failed; inspect the recovery state before retrying." >&2
-    reconcile_failed_major_state
-    return 1
-  fi
-  # Keep the original installer and systemd path correct even when it reads
-  # only docker-compose.yml rather than the handover worker's VPN override.
-  if grep -q 'nyxmael/nyxguardmanager-vpn-agent:4.0.18' "$INSTALL_DIR/docker-compose.yml"; then
-    sed 's|nyxmael/nyxguardmanager-vpn-agent:4.0.18|nyxmael/nyxguardmanager-vpn-agent:5.0.0|' \
-      "$INSTALL_DIR/docker-compose.yml" > "$tmp/docker-compose.yml"
-    chmod 600 "$tmp/docker-compose.yml"
-    mv -- "$tmp/docker-compose.yml" "$INSTALL_DIR/docker-compose.yml"
-  fi
-  if [[ "$generated_overlay" == 1 ]]; then
-    docker compose --env-file "$INSTALL_DIR/.env" -f "$INSTALL_DIR/docker-compose.yml" config -q
-    rm -f -- "$vpn_overlay"
-  fi
-)
-
-run_same_major_handover() (
-  local tmp bootstrap vpn_installed
-  tmp="$(mktemp -d)"
-  chmod 700 "$tmp"
-  trap 'rm -rf "$tmp"' EXIT
-  bootstrap="$tmp/same-major-bootstrap.mjs"
-  if [[ -n "${NYXGUARD_SAME_MAJOR_BOOTSTRAP_FILE:-}" ]]; then
-    cp -- "$NYXGUARD_SAME_MAJOR_BOOTSTRAP_FILE" "$bootstrap"
-  else
-    curl -fsSL "$SAME_MAJOR_URL" -o "$bootstrap"
-  fi
-  if [[ "$(sha256sum "$bootstrap" | cut -d' ' -f1)" != "$SAME_MAJOR_SHA256" ]]; then
-    echo "ERROR: Same-major bootstrap checksum mismatch; installation was not changed." >&2
-    return 1
-  fi
-  chmod 600 "$bootstrap"
-  # Runtime Compose labels, rather than host TUN availability, identify installed VPN.
-  vpn_installed="$(docker ps -a --filter label=com.docker.compose.service=vpn-client-agent \
-    --format '{{.Label "com.docker.compose.project.config_files"}}' | \
-    while IFS= read -r files; do
-      if [[ "${files%%,*}" == "$INSTALL_DIR/docker-compose.yml" ]]; then echo 1; fi
-    done)"
-  if [[ -n "${NYXGUARD_ACCEPTED_IMAGE_ID:-}" ]]; then
-    [[ ( "$target_tag" == 5.0.4 || "$target_tag" == 5.0.5 || "$target_tag" == 5.0.6 || "$target_tag" == 5.0.7 || "$target_tag" == 5.0.8 || "$target_tag" == 5.0.9 ) && "$NYXGUARD_ACCEPTED_IMAGE_ID" =~ ^sha256:[a-f0-9]{64}$ ]] || return 1
-    target_ref="${NYXGUARD_TARGET_IMAGE_REF:-$target_ref}"
-    [[ "$(docker image inspect -f '{{.Id}}' "$target_ref")" == "$NYXGUARD_ACCEPTED_IMAGE_ID" ]] || {
-      echo "ERROR: Prefetched artifact differs from the accepted image." >&2; return 1;
-    }
-  else
-    echo "Pulling $target_ref..."
-    docker pull "$target_ref"
-  fi
-  if [[ "$target_tag" == 5.0.6 || "$target_tag" == 5.0.7 || "$target_tag" == 5.0.8 || "$target_tag" == 5.0.9 ]]; then
-    vpn_agent_ref="${VPN_AGENT_REPO}:$(docker run --rm --network none --no-healthcheck --entrypoint node "$target_ref" --input-type=module -e 'import policy from "/app/internal/release-policy.mjs";console.log(policy.agent)')"
-  fi
-  if [[ -n "$vpn_installed" ]]; then
-    echo "Pulling compatible $vpn_agent_ref..."
-    docker pull "$vpn_agent_ref"
-  fi
-  local data_source
-  data_source="$(docker inspect "$(docker compose --env-file "$INSTALL_DIR/.env" -f "$INSTALL_DIR/docker-compose.yml" ps -q nyxguard-manager)" | jq -er '.[0].Mounts[] | select(.Destination=="/data") | if .Type=="volume" then .Name else .Source end')"
-  docker run --rm --network none --no-healthcheck --user 0:0 --entrypoint flock \
-    --mount "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock" \
-    -v "$data_source:/handover-data" \
-    --mount "type=bind,src=$bootstrap,dst=/tmp/same-major-bootstrap.mjs,readonly" \
-    -e "CURRENT_VERSION=$current_tag" -e "TARGET_VERSION=$target_tag" \
-    -e "TARGET_IMAGE_REF=$target_ref" \
-    -e "HOST_INSTALL_DIR=$INSTALL_DIR" \
-    -e "BASELINE_PLAN_ONLY=${NYXGUARD_BASELINE_PLAN:-0}" \
-    -e "BASELINE_AUTHORIZATION=${NYXGUARD_ACCEPT_BASELINE:-}" -e "BASELINE_REASON=${NYXGUARD_BASELINE_REASON:-}" \
-    "$target_ref" -n /handover-data/.nyx-update.lock node /tmp/same-major-bootstrap.mjs
-  if [[ "${NYXGUARD_BASELINE_PLAN:-0}" == 1 ]]; then return; fi
-  if [[ "$target_tag" == 5.0.6 || "$target_tag" == 5.0.7 || "$target_tag" == 5.0.8 || "$target_tag" == 5.0.9 ]]; then
-    docker compose --env-file "$INSTALL_DIR/.env" -f "$INSTALL_DIR/docker-compose.yml" config -q
-    echo "Upgrade committed; installed metadata is pinned to the verified artifact."
-    return
-  fi
-  # The immutable helper has verified health and persistence before config changes.
-  update_compose_image_ref "$target_ref"
-  if [[ -n "$vpn_installed" && -f "$INSTALL_DIR/docker-compose.vpn.yml" ]]; then
-    write_vpn_compose_overlay "$vpn_agent_ref"
-  fi
-  echo "$target_tag" > "$INSTALL_DIR/.version"
-  echo "Update complete. Now running: $target_ref"
-)
-
-main() {
-  need_root
-  require_commands
-  require_install_files
-  local current_ref current_repo current_tag latest_tag target_tag target_ref vpn_agent_ref vpn_enabled vpn_requested
-
-  local lock_fd verified_ref
-  exec {lock_fd}>"${INSTALL_DIR}/.update.lock"
-  if ! flock -n "$lock_fd"; then
-    echo "ERROR: Another host-side update is running." >&2
-    exit 1
-  fi
-  if [[ "${NYXGUARD_RESUME:-0}" == 1 ]]; then
-    local helper image data_source
-    helper="$(docker ps -aq --filter label=nyxguard.install-dir="$INSTALL_DIR" --filter label=nyxguard.target-version="${FORCE_TAG:-5.0.9}" | head -1)"
-    [[ -n "$helper" ]] || { echo "ERROR: No retained target-version helper for this installation." >&2; return 1; }
-    image="$(docker inspect -f '{{.Image}}' "$helper")"
-    data_source="$(docker inspect "$helper" | jq -er '.[0].Mounts[] | select(.Destination=="/handover-data") | if .Type=="volume" then .Name else .Source end')"
-    docker run --rm --network none --no-healthcheck --user 0:0 --entrypoint flock \
-      -v /var/run/docker.sock:/var/run/docker.sock -v "$data_source:/handover-data" \
-      -e HOST_INSTALL_DIR="$INSTALL_DIR" "$image" -n /handover-data/.nyx-update.lock node /app/internal/resume-upgrade.mjs
-    return
-  fi
-  current_ref="$(read_current_image_ref)"
-  if [[ -z "${current_ref}" ]]; then
-    echo "ERROR: Could not verify the installed NyxGuard Manager runtime." >&2
-    exit 1
-  fi
-
-  current_repo="${current_ref%:*}"
-  current_tag="${current_ref##*:}"
-  if [[ "${current_repo}" == "${current_ref}" ]]; then
-    current_repo="${IMAGE_REPO}"
-    current_tag="latest"
-  fi
-
-  if [[ "${NYXGUARD_REPAIR_VPN:-0}" == 1 ]]; then
-    if [[ -n "$FORCE_TAG" && "$(normalize_semver "$FORCE_TAG")" != "$(normalize_semver "$current_tag")" ]]; then
-      echo "ERROR: VPN-only repair requires the current Manager version; run an upgrade separately." >&2; return 1
-    fi
-    repair_vpn_only "$current_tag"
-    return
-  fi
-  if [[ -n "${FORCE_TAG}" ]]; then
-    target_tag="${FORCE_TAG}"
-  else
-    echo "Checking Docker Hub for latest published NyxGuard Manager version..."
-    latest_tag="$(dockerhub_latest_tag "${IMAGE_REPO}" "${current_tag}")"
-    target_tag="${latest_tag}"
-  fi
-
-  target_ref="${IMAGE_REPO}:${target_tag}"
-  # A current-version check must precede pulls, TUN setup and all handover work.
-  if ! version_is_newer "$current_tag" "$target_tag" && [[ "${NYXGUARD_REPAIR_VPN:-0}" != 1 ]]; then
-    echo "Current Manager: $(normalize_semver "$current_tag")"
-    echo "Latest Manager : $(normalize_semver "$target_tag")"
-    if [[ "$(normalize_semver "$current_tag")" == "$(normalize_semver "$target_tag")" ]]; then
-      echo "NyxGuard Manager is already up to date."
-    else
-      echo "No newer release found."
-    fi
-    echo "No changes required."
-    return
-  fi
-  # Preserve published artifacts while unsafe upgrade readiness/recovery is corrected.
-  if [[ "$(normalize_semver "$target_tag")" == 5.0.3 && "$(normalize_semver "$current_tag")" != 5.0.3 ]]; then
-    echo "ERROR: Upgrades to Manager 5.0.3 are temporarily paused for upgrade/recovery safety." >&2
-    echo "Keep the current installation running and wait for the corrective release. Installation was not changed." >&2
-    return 1
-  fi
-  verified_ref="$(read_current_image_ref)" || return 1
-  if [[ "$verified_ref" != "$current_ref" ]]; then
-    echo "ERROR: Manager runtime changed during discovery; rerun the updater." >&2
-    return 1
-  fi
-  local route
-  route="$(upgrade_route "$current_tag" "$target_tag")"
-  if [[ "$route" == unsupported ]]; then
-    echo "ERROR: No supported upgrade path from ${current_tag} to ${target_tag}. Installation was not changed." >&2
-    exit 1
-  fi
-  vpn_agent_ref="${VPN_AGENT_REPO}:$(vpn_agent_tag_for_manager "$target_tag")"
-  if [[ "$route" == major_handover_500 ]]; then
-    if [[ "$IMAGE_REPO" != nyxmael/nyxguardmanager || "$VPN_AGENT_REPO" != nyxmael/nyxguardmanager-vpn-agent ]]; then
-      echo "ERROR: The verified 4.0.18 to 5.0.0 handover requires the published paired images." >&2
-      exit 1
-    fi
-    confirm_update "$current_ref" "$target_ref" || exit 0
-    docker pull "$target_ref"
-    docker pull "$vpn_agent_ref"
-    run_major_handover_500
-    return
-  fi
-  if [[ "$route" == guarded_release ]] || [[ ( "$current_tag" == 5.0.1 || "$current_tag" == 5.0.2 || "$current_tag" == 5.0.3 || "$current_tag" == 5.0.4 ) && "$target_tag" == 5.0.5 ]] ||
-     [[ ( "$current_tag" == 5.0.1 || "$current_tag" == 5.0.2 || "$current_tag" == 5.0.3 ) && "$target_tag" == 5.0.4 ]] ||
-     [[ "$current_tag" == 5.0.1 && ( "$target_tag" == 5.0.2 || "$target_tag" == 5.0.3 ) ]] ||
-     [[ "$current_tag" == 5.0.2 && "$target_tag" == 5.0.3 ]]; then
-    if [[ "$IMAGE_REPO" != nyxmael/nyxguardmanager || "$VPN_AGENT_REPO" != nyxmael/nyxguardmanager-vpn-agent ]]; then
-      echo "ERROR: Guarded handover requires the published compatible images." >&2
-      exit 1
-    fi
-    if [[ "${NYXGUARD_BASELINE_PLAN:-0}" != 1 ]]; then confirm_update "$current_ref" "$target_ref" || exit 0; fi
-    run_same_major_handover
-    return
-  fi
-  vpn_enabled=0
-  vpn_requested=0
-  if is_semver "${target_tag}" && version_at_least "${target_tag}" "4.0.14"; then
-    vpn_requested=1
-    if prepare_tun_device; then
-      vpn_enabled=1
-    elif [[ "${REQUIRE_VPN}" == "1" ]]; then
-      print_tun_warning
-      echo "ERROR: VPN Client is required but this host cannot provide /dev/net/tun." >&2
-      exit 1
-    else
-      print_tun_warning
-    fi
-  fi
-
-  if ! version_is_newer "${current_tag}" "${target_tag}"; then
-    echo "No newer release found."
-    echo "Current: ${current_ref}"
-    echo "Latest : ${target_ref}"
-    exit 0
-  fi
-
-  confirm_update "${current_ref}" "${target_ref}" || exit 0
-
-  echo "Pulling ${target_ref}..."
-  docker pull "${target_ref}"
-  if [[ "${vpn_enabled}" == "1" ]]; then
-    echo "Pulling ${vpn_agent_ref}..."
-    docker pull "${vpn_agent_ref}"
-  fi
-
-  echo "Updating compose image reference..."
-  update_compose_image_ref "${target_ref}"
-  if [[ "${vpn_enabled}" == "1" ]]; then
-    echo "Enabling the isolated WireGuard VPN agent..."
-    write_vpn_compose_overlay "${vpn_agent_ref}"
-    install_vpn_systemd_override
-  fi
-  echo "${target_tag}" >"${INSTALL_DIR}/.version"
-
-  echo "Applying update (in-place, data preserved)..."
-  if [[ "${vpn_enabled}" == "1" ]]; then
-    start_vpn_stack
-  else
-    start_manager_without_vpn
-  fi
-  cleanup_previous_image "${current_ref}" "${target_ref}"
-
-  echo ""
-  echo "Update complete."
-  echo "Now running: ${target_ref}"
-}
-
-main "$@"
+let [migrations]=await c.query('SELECT name FROM migrations ORDER BY id');let [lock]=await c.query('SELECT is_locked FROM migrations_lock');
+if(lock.some(x=>x.is_locked))throw Error('Database migration is locked');
+console.log(JSON.stringify({tables:result,migrations:migrations.map(x=>x.name)}));await c.end();
+})().catch(()=>{console.error('Database/configuration acceptance failed');process.exit(1)});
+'''
+def snapshot(manager,baseline=None):
+ args=['exec','-i']
+ if baseline:args+=['-e','NYX_BASELINE='+json.dumps(baseline['tables'])]
+ return json.loads(docker(*args,manager,'node',input=SNAPSHOT,capture=True))
+def preservation(before,after):
+ for name,b in before['tables'].items():
+  if name not in after['tables']:raise RuntimeError('Persistent table missing: '+name)
+  a=list(after['tables'][name]['rows'])
+  for row in b['rows']:
+   if row not in a:raise RuntimeError('Persistent application record changed: '+name)
+   a.remove(row)
+ if not set(before['migrations']).issubset(after['migrations']):raise RuntimeError('Migration history regressed')
+
+def restore(m):
+ log('Restoring the verified previous installation.')
+ backup=pathlib.Path(m['backup'])
+ if m['phase']!='applying':
+  compose('start','db');compose('start','nyxguard-manager')
+  if 'vpn-client-agent' in m['services']:compose('start','vpn-client-agent')
+  health(m)
+  (STATE/'pending.json').unlink();log('Previous services restarted; no data restoration was needed.');return
+ for name,digest in m['hashes'].items():
+  if sha(backup/name)!=digest:raise RuntimeError('Recovery backup checksum failed; services remain stopped')
+ compose('stop','-t','120',*m['services'])
+ for i,p in enumerate(m['storage']):
+  dest=pathlib.Path(p)
+  if not dest.is_dir() or dest.is_symlink():raise RuntimeError('Recovery storage path is invalid')
+  for child in dest.iterdir():
+   if child.is_dir() and not child.is_symlink():shutil.rmtree(child)
+   else:child.unlink()
+  run(['tar','--xattrs','--acls','--numeric-owner','-xpf',str(backup/(str(i)+'.tar')),'-C',p])
+ for path in m['files']:
+  saved=backup/'files'/str(m['files'].index(path))
+  shutil.copy2(saved,path)
+ # Pin the previous Manager/Agent to the saved local image identities. DB is
+ # restarted in place, never recreated by the updater.
+ old=json.loads((backup/'rollback-compose.json').read_text())
+ atom(ROOT/'docker-compose.yml',json.dumps(old))
+ overlay=ROOT/'docker-compose.vpn.yml'
+ if overlay.exists():overlay.unlink()
+ compose('start','db')
+ compose('up','-d','--no-deps','nyxguard-manager')
+ if 'vpn-client-agent' in m['services']:compose('up','-d','--no-deps','--force-recreate','vpn-client-agent')
+ health(m)
+ if version(cid('nyxguard-manager'))!=m['current']:raise RuntimeError('Restored application version mismatch')
+ restored=snapshot(cid('nyxguard-manager'),m['baseline'])
+ if restored['migrations']!=m['baseline']['migrations']:raise RuntimeError('Restored migration history differs from the recovery point')
+ preservation(m['baseline'],restored)
+ if cid('db')!=m['database_id']:raise RuntimeError('Database container identity changed')
+ atom(ROOT/'.version',m['current']+'\n')
+ atom(backup/'result.json',json.dumps({'result':'rolled_back','version':m['current']}))
+ (STATE/'pending.json').unlink();log('Rollback verified. Previous application and persistent data are healthy.')
+
+def latest():
+ req=urllib.request.Request('https://api.github.com/repos/NyxCloudRO/NyxGuardManager/releases/latest',headers={'User-Agent':'NyxGuard-Host-Updater'})
+ with urllib.request.urlopen(req,timeout=30) as r:d=json.load(r)
+ if d.get('draft') or d.get('prerelease'):raise RuntimeError('No eligible stable release')
+ v=d['tag_name'].removeprefix('v');semver(v);return v
+
+def main():
+ global ROOT, STATE
+ if os.geteuid()!=0:raise RuntimeError('Run as root, or use: curl -fsSL <update.sh-url> | sudo bash')
+ if not (ROOT/'.env').is_file() or not (ROOT/'docker-compose.yml').is_file():
+  # Discover installations from live Compose labels, without guessing paths.
+  ids=docker('ps','-q',capture=True).split();found=set()
+  for i in ids:
+   l=inspect(i)['Config'].get('Labels') or {}
+   if l.get('com.docker.compose.service')=='nyxguard-manager':found.add(l.get('com.docker.compose.project.working_dir'))
+  if len(found)!=1:raise RuntimeError('Cannot identify one supported installed Manager; use INSTALL_DIR for a custom installation')
+  ROOT=pathlib.Path(next(iter(found)));STATE=ROOT/'.upgrade'
+ if not re.fullmatch(r'/[A-Za-z0-9_./-]+',str(ROOT)) or '..' in ROOT.parts:raise RuntimeError('Supported installation directory must be an absolute simple host path')
+ STATE.mkdir(mode=0o700,exist_ok=True)
+ lock=open(STATE/'lock','a')
+ try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+ except BlockingIOError:raise RuntimeError('Another host updater or recovery process is already running')
+ pending=STATE/'pending.json'
+ if '--restore-backup' in sys.argv:
+  if pending.exists():raise RuntimeError('An interrupted upgrade must be recovered first')
+  at=sys.argv.index('--restore-backup');backup=pathlib.Path(sys.argv[at+1]).resolve()
+  if backup.parent!=STATE.resolve():raise RuntimeError('Select a backup belonging to this installation')
+  m=json.loads((backup/'manifest.json').read_text())
+  if pathlib.Path(m['backup']).resolve()!=backup:raise RuntimeError('Backup identity differs')
+  if os.environ.get('NYXGUARD_AUTO_YES')!='1':
+   with open('/dev/tty','r+') as tty:
+    tty.write('Restore this pre-upgrade backup? Later application writes will be lost. [y/N] ');tty.flush()
+    if tty.readline().strip().lower() not in ('y','yes'):log('Recovery cancelled.');return
+  m['phase']='applying';save(m);restore(m);return
+ if pending.exists():
+  m=json.loads(pending.read_text())
+  restore(m)
+  if '--recover-only' in sys.argv:return
+ if '--recover-only' in sys.argv:return
+ cfg=config();manager=cid('nyxguard-manager');current=version(manager)
+ target=os.environ.get('FORCE_TAG') or latest();target=target.removeprefix('v')
+ log('Installed Manager: '+current+'; target release: '+target)
+ if semver(current)==semver(target):log('Already current. No application or storage changes required.');return
+ if semver(target)<=semver(current) or semver(current)[0]!=semver(target)[0]:raise RuntimeError('Only forward upgrades within the supported major version are supported')
+ services=['db','nyxguard-manager']
+ agent=compose('ps','-aq','vpn-client-agent',capture=True).strip() if 'vpn-client-agent' in cfg['services'] else ''
+ if agent:
+  if not pathlib.Path('/dev/net/tun').exists():raise RuntimeError('Installed VPN Agent requires a usable TUN device')
+  services.append('vpn-client-agent')
+ m={'services':services,'current':current,'target':target,'database_id':cid('db')}
+ health(m)
+ cs=[inspect(cid(s)) for s in services]
+ # Existing image identities and all persistent mount paths are recorded once.
+ volume_names=set();storage=[];files=[str(ROOT/'docker-compose.yml'),str(ROOT/'.env')]
+ if (ROOT/'.version').exists():files.append(str(ROOT/'.version'))
+ if (ROOT/'docker-compose.vpn.yml').exists():files.append(str(ROOT/'docker-compose.vpn.yml'))
+ skip={'/var/run/docker.sock','/etc/localtime','/host/proc/net/arp'}
+ vault=None
+ for c in cs:
+  for mt in c['Mounts']:
+   if mt['Destination'] in skip:continue
+   if mt['Type']=='volume':
+    volume_names.add(mt['Name'])
+    if mt['Source'] not in storage:storage.append(mt['Source'])
+   elif mt['Type']=='bind':
+    p=pathlib.Path(mt['Source'])
+    if p.is_file():
+     if str(p) not in files:files.append(str(p))
+     if mt['Destination']=='/run/nyxguard-licensing/vault.key':vault=str(p)
+    elif p.is_dir():
+     if str(p) not in storage:storage.append(str(p))
+    else:raise RuntimeError('Persistent bind mount is unavailable')
+ if not vault or not volume_names:raise RuntimeError('Persistent licensing key and named application volumes are required')
+ allcs=docker('ps','-aq',capture=True).split()
+ owned={c['Id'] for c in cs}
+ for c in allcs:
+  other=inspect(c)
+  if other['Id'] not in owned and any(x.get('Name') in volume_names or x['Source'] in storage for x in other['Mounts']):raise RuntimeError('Persistent storage is shared by another container; stop and review ownership')
+ total=0
+ for p in storage:total+=int(run(['du','-sb',p],capture=True).split()[0])
+ # Backup + verification extraction + recovery headroom + target image download.
+ if shutil.disk_usage(STATE).free < total*3+2*1024**3:raise RuntimeError('Insufficient disk space for verified backup and image download; no services changed')
+ if os.environ.get('NYXGUARD_AUTO_YES')!='1':
+  try:
+   with open('/dev/tty','r+') as tty:
+    tty.write('Upgrade '+current+' to '+target+'? Services will pause for backup and migrations. [y/N] ');tty.flush()
+    if tty.readline().strip().lower() not in ('y','yes'):log('Upgrade cancelled.');return
+  except OSError:raise RuntimeError('Confirmation requires a terminal; use NYXGUARD_AUTO_YES=1 only for unattended operation')
+ backup=STATE/('backup-'+time.strftime('%Y%m%dT%H%M%SZ',time.gmtime()))
+ backup.mkdir(mode=0o700);(backup/'files').mkdir(mode=0o700)
+ m.update(backup=str(backup),storage=storage,files=files,volume_names=sorted(volume_names),phase='stopping',hashes={})
+ save(m)
+ # Save the single recovery runner and guard systemd startup. A reboot after a
+ # hard interruption restores the pre-migration backup before ordinary startup.
+ shutil.copy2(__file__,STATE/'runner.py');os.chmod(STATE/'runner.py',0o700)
+ unit=next((p for p in pathlib.Path('/etc/systemd/system').glob('*manager.service') if ('WorkingDirectory='+str(ROOT)) in p.read_text()),None)
+ if unit:
+  override=pathlib.Path(str(unit)+'.d')/'upgrade-recovery.conf';override.parent.mkdir(exist_ok=True)
+  base='/usr/bin/docker compose --project-directory '+str(ROOT)+' --env-file '+str(ROOT/'.env')+' -f '+str(ROOT/'docker-compose.yml')
+  atom(override,'[Service]\nExecStartPre=/usr/bin/python3 '+str(STATE/'runner.py')+' --recover-only\nExecStart=\nExecStart='+base+' up -d --no-recreate '+' '.join(services)+'\nExecStop=\nExecStop='+base+' stop\n')
+  run(['systemctl','daemon-reload'])
+ # Baseline after stopping write-producing Manager and Agent, before stopping DB.
+ compose('stop','-t','60',*[s for s in services if s!='db'])
+ db=inspect(m['database_id']);env={x.split('=',1)[0]:x.split('=',1)[1] for x in db['Config']['Env'] if '=' in x}
+ # Capture SQL through an ephemeral read-only process in the old image, sharing
+ # only the existing DB network; no replacement stack or cloned database.
+ net=next(iter(db['NetworkSettings']['Networks']))
+ args=['run','--rm','--network',net,'--entrypoint','node','-i']
+ managerenv={x.split('=',1)[0]:x.split('=',1)[1] for x in inspect(manager)['Config']['Env'] if '=' in x}
+ for k in ['DB_MYSQL_HOST','DB_MYSQL_PORT','DB_MYSQL_USER','DB_MYSQL_PASSWORD','DB_MYSQL_NAME']:args+=['-e',k+'='+managerenv[k]]
+ args+=[inspect(manager)['Image']]
+ try:
+  m['baseline']=json.loads(docker(*args,input=SNAPSHOT,capture=True))
+  compose('stop','-t','120','db')
+  if inspect(m['database_id'])['State']['ExitCode']!=0:raise RuntimeError('Database did not shut down cleanly; cold backup refused')
+  for c in cs:
+   if inspect(c['Id'])['State']['Running']:raise RuntimeError('Services are still writing; backup refused')
+  old=json.loads(json.dumps(cfg))
+  for svc in services:
+   if svc!='db':old['services'][svc]['image']=inspect(cid(svc))['Image']
+  atom(backup/'rollback-compose.json',json.dumps(old))
+  for i,p in enumerate(files):shutil.copy2(p,backup/'files'/str(i))
+  for i,p in enumerate(storage):
+   archive=backup/(str(i)+'.tar')
+   run(['tar','--xattrs','--acls','--numeric-owner','-cpf',str(archive),'-C',p,'.'])
+   # Verify readability, extraction and archive/source agreement while quiescent.
+   with tempfile.TemporaryDirectory(dir=STATE) as dest:
+    run(['tar','--xattrs','--acls','--numeric-owner','-xpf',str(archive),'-C',dest])
+    run(['tar','--compare','--numeric-owner','-f',str(archive),'-C',dest],capture=True)
+   run(['tar','--compare','--numeric-owner','-f',str(archive),'-C',p],capture=True)
+  for p in backup.rglob('*'):
+   if p.is_file():m['hashes'][str(p.relative_to(backup))]=sha(p)
+  m['phase']='backed_up';atom(backup/'manifest.json',json.dumps(m));save(m)
+ except BaseException:
+  compose('start','db');compose('start','nyxguard-manager')
+  if agent:compose('start','vpn-client-agent')
+  if pending.exists():pending.unlink()
+  raise
+ try:
+  ref=os.environ.get('NYXGUARD_CANDIDATE_IMAGE') or 'nyxmael/nyxguardmanager:'+target
+  if not os.environ.get('NYXGUARD_CANDIDATE_IMAGE'):docker('pull',ref)
+  image=json.loads(docker('image','inspect',ref,capture=True))[0]
+  if image['Config'].get('Labels',{}).get('org.opencontainers.image.version')!=target:raise RuntimeError('Target image version label differs')
+  docker('run','--rm','--network','none','--entrypoint','node',image['Id'],'-e','if(require("/app/package.json").version!=='+json.dumps(target)+'||process.env.NPM_BUILD_VERSION!=='+json.dumps(target)+')process.exit(1)',capture=True)
+  policy=json.loads(docker('run','--rm','--network','none','--entrypoint','node',image['Id'],'-e','console.log(JSON.stringify(require("/app/internal/release-policy.json")))',capture=True))
+  if policy.get('version')!=target or policy.get('sources',{}).get(current)!=len(m['baseline']['migrations']):raise RuntimeError('Target does not support the installed application/schema')
+  agent_ref=None
+  if agent:
+   agent_ref='nyxmael/nyxguardmanager-vpn-agent:'+policy['agent']
+   docker('pull',agent_ref)
+   ai=json.loads(docker('image','inspect',agent_ref,capture=True))[0]
+   # Published Agent tags can alias an unchanged build (5.0.1 labels 4.0.18).
+   # Verify the registry digest; the Manager policy selects the compatible tag.
+   agent_ref=next((r for r in ai.get('RepoDigests',[]) if r.startswith('nyxmael/nyxguardmanager-vpn-agent@sha256:')),None)
+   if not agent_ref:raise RuntimeError('Agent artifact has no official registry digest')
+  # Registry digest is authoritative; qualification may use reviewed local image IDs.
+  refs=image.get('RepoDigests') or []
+  accepted=next((r for r in refs if r.startswith('nyxmael/nyxguardmanager@sha256:')),None)
+  if not accepted and not os.environ.get('NYXGUARD_CANDIDATE_IMAGE'):raise RuntimeError('Official image has no verified registry digest')
+  accepted=accepted or image['Id']
+  new=json.loads(json.dumps(cfg));new['services']['nyxguard-manager']['image']=accepted
+  if 'vpn-client-agent' in new['services']:new['services']['vpn-client-agent']['image']=agent_ref or 'nyxmael/nyxguardmanager-vpn-agent:'+policy['agent']
+  for k in ('NPM_BUILD_VERSION','NPM_BUILD_COMMIT','NPM_BUILD_DATE'):new['services']['nyxguard-manager'].get('environment',{}).pop(k,None)
+  m['phase']='applying';save(m)
+  atom(ROOT/'docker-compose.yml',json.dumps(new))
+  if (ROOT/'docker-compose.vpn.yml').exists():(ROOT/'docker-compose.vpn.yml').unlink()
+  compose('start','db')
+  compose('up','-d','--no-deps','nyxguard-manager')
+  # The Agent shares Manager's network namespace, so only that attachment is
+  # recreated with the SAME Agent image, keys and persistent storage.
+  if agent:compose('up','-d','--no-deps','--force-recreate','vpn-client-agent')
+  health(m)
+  if cid('db')!=m['database_id']:raise RuntimeError('Database container was unnecessarily recreated')
+  if version(cid('nyxguard-manager'))!=target:raise RuntimeError('Running application version differs from target')
+  if inspect(cid('nyxguard-manager'))['Image']!=image['Id']:raise RuntimeError('Running Manager differs from accepted image')
+  after=snapshot(cid('nyxguard-manager'),m['baseline'])
+  if len(after['migrations'])!=policy['schema']:raise RuntimeError('Required database migrations are incomplete')
+  preservation(m['baseline'],after)
+  attached={x['Name'] for svc in services for x in inspect(cid(svc))['Mounts'] if x['Type']=='volume'}
+  if attached!=volume_names:raise RuntimeError('Persistent Docker volume identities changed')
+  if sha(pathlib.Path(vault))!=m['hashes']['files/'+str(files.index(vault))]:raise RuntimeError('Licensing vault key changed')
+  atom(ROOT/'.version',target+'\n')
+  atom(backup/'result.json',json.dumps({'result':'success','from':current,'to':target,'image':accepted,'database_container_preserved':True,'volumes_preserved':True}))
+  pending.unlink();log('Upgrade successful: '+current+' -> '+target+'. Persistent storage and database container preserved.')
+  log('Verified Manager image: '+accepted)
+ except BaseException:
+  restore(m);raise
+
+if __name__=='__main__':
+ def interrupted(sig,frame):raise RuntimeError('Upgrade interrupted')
+ signal.signal(signal.SIGTERM,interrupted);signal.signal(signal.SIGINT,interrupted)
+ try:main()
+ except BaseException as e:
+  log('ERROR: '+str(e) if isinstance(e,RuntimeError) else 'ERROR: Upgrade failed ('+type(e).__name__+'). Review the root-only recovery record.');sys.exit(1)
+
+NYXGUARD_HOST_UPGRADE_PY
+python3 "$runner" "$@"

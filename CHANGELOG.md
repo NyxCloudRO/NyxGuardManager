@@ -5,6 +5,15 @@
 - Preserve verified SQL backup/restore, schema 45, VPN Agent 5.0.1 and guarded source versions 5.0.0–5.0.7.
 - Sanitize public documentation, correct current version examples, and add dependency and publication hygiene gates.
 
+## 5.0.10 — 2026-10-10
+
+- Replace normal upgrade handovers with one self-contained host updater using Compose, the existing MariaDB service and persistent storage.
+- Verify a cold pre-migration backup, official artifact identities, supported source schema, migrations, service health and durable data; restore only on genuine failure.
+- Handle interrupted upgrades with the same saved host implementation, and preserve container identities through systemd restart/reboot.
+- Separate fresh provisioning, ordinary upgrades and advanced recovery; direct in-app updates to the canonical root/sudo command.
+- Build Manager with a sanitized filesystem and fresh layer history, excluding inherited runtime credentials and user-data paths.
+
+
 ## [5.0.9] - 2026-10-09
 
 - Preserve distinct legacy Threat History associations across duplicate events, interrupted migrations and retry.

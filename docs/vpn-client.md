@@ -107,24 +107,16 @@ Do not add an application path such as `/web` unless that application specifical
 
 The VPN agent shares NyxGuard Manager's network namespace, so nginx uses the installed WireGuard route automatically. No special Proxy Host mode, Docker network, public exposure, or static route inside nginx is required. Scheme, private address, and application port are configured exactly like a local LAN upstream.
 
-## Production installation and update
+## Installation and update
 
-Fresh installation:
-
-```bash
-# Root (sudo users replace bash with sudo bash):
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh -o /tmp/nyxguard-install.sh
-bash /tmp/nyxguard-install.sh
-```
-
-Upgrade a supported existing standard installation (see the release-specific upgrade guidance):
+As root, install once or update an existing supported installation:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh \
-  | sudo env FORCE_TAG=5.0.9 NYXGUARD_AUTO_YES=1 bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | bash
 ```
 
-The updater preserves existing data volumes. Manager 5.0.0–5.0.7 use the guarded direct path to 5.0.9. A 4.0.18 installation must first use the verified historical 5.0.0 major handover; do not force a direct 4.x-to-5.0.9 replacement. Guarded upgrades preserve installed VPN topology. For a Manager-only installation, enable Agent through the explicit repair below after TUN is usable. See the [update guidance](../README.md#update-in-place) before upgrading a customized installation.
+Ordinary sudo users replace `bash` with `sudo bash`. Manager 5.0.10 supports the published source/schema policy for 5.0.0–5.0.9, reuses persistent storage, and preserves installed VPN topology. Historical 4.x major transitions remain in their release runbooks. See [application lifecycle](application-lifecycle.md) for normal upgrades and backups.
 
 ### Host TUN prerequisite
 
@@ -142,15 +134,20 @@ pct set <CTID> --dev0 path=/dev/net/tun,mode=0666
 
 Keep the LXC unprivileged. Restart only the target guest if needed, then verify actual TUN access inside it and after reboot. This is infrastructure preparation by an authorized administrator; NyxGuard does not obtain hypervisor credentials or change host configuration. For other restricted containers, the host must expose usable TUN; no untested vendor-specific commands are prescribed.
 
-After installing Manager while TUN was unavailable, repair Agent at the same Manager version instead of reinstalling Manager:
+After a Manager-only installation, Agent activation is a separate optional provisioning operation once TUN is usable. Do not reinstall Manager or regenerate its vault/authentication keys. On a standard installation whose supported Compose file already defines `vpn-client-agent`, as root:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh -o /tmp/nyxguard-update.sh
-# Root; sudo users prefix env with sudo:
-env NYXGUARD_REPAIR_VPN=1 bash /tmp/nyxguard-update.sh
+cd /opt/nyxguardmanager
+docker compose up -d --no-deps vpn-client-agent
+mkdir -p /etc/systemd/system/nyxguardmanager.service.d
+cat > /etc/systemd/system/nyxguardmanager.service.d/vpn-agent.conf <<'UNIT'
+[Service]
+ExecStartPost=/usr/bin/docker compose --project-directory /opt/nyxguardmanager --env-file /opt/nyxguardmanager/.env -f /opt/nyxguardmanager/docker-compose.yml up -d --no-deps --no-recreate vpn-client-agent
+UNIT
+systemctl daemon-reload
 ```
 
-Set `INSTALL_DIR` for a non-default location. The ordinary already-current updater leaves the installation unchanged. Explicit repair starts the compatible Agent with Compose, retains existing Manager/DB containers and VPN volumes, updates systemd startup, and tests actual TUN interface creation and verifies its API from Manager. Confirm **Settings → VPN Client** availability, configuration persistence, and paired restart/reboot afterward.
+This activates the compatible Agent defined by the installation and persists startup without changing Manager or MariaDB. Confirm its health, Manager-to-Agent API availability, configuration persistence and reboot behavior. Customized installations must use their actual Compose directory/unit. The ordinary already-current updater intentionally makes no topology changes; legacy `NYXGUARD_REPAIR_VPN` is not part of the 5.0.10 normal updater.
 
 ## Health and troubleshooting
 
@@ -169,7 +166,7 @@ Common states:
 - **Connected**: the interface is up and the remote peer completed a handshake within the last three minutes.
 - **Ping fails with a handshake**: inspect remote forwarding, routes, NAT, NSGs/firewalls, and whether the target permits ICMP.
 - **Target outside remote networks**: use an address contained by the selected site's displayed CIDRs or correct that site's profile.
-- **Agent unavailable**: confirm usable `/dev/net/tun`, run the explicit same-version repair above, and inspect `nyxguard-vpn-agent` logs. On LXC, configure TUN passthrough on the hypervisor first.
+- **Agent unavailable**: confirm usable `/dev/net/tun`, follow the separate Agent activation procedure above, and inspect `nyxguard-vpn-agent` logs. On LXC, configure TUN passthrough on the hypervisor first.
 
 Never include client private keys in screenshots, logs, support tickets, exported diagnostics, or public repositories.
 

@@ -14,20 +14,20 @@ require(f'image: nyxmael/nyxguardmanager-vpn-agent:{agent}' in compose,'Compose 
 manual=readme.split('```yaml',1)[1].split('```',1)[0]
 require(f'image: nyxmael/nyxguardmanager:{version}' in manual,'README manual Compose Manager version is stale')
 require(f'image: nyxmael/nyxguardmanager-vpn-agent:{agent}' in manual,'README Agent version differs from release policy')
-for name in ['README.md','docs/vpn-client.md','docs/proxmox-lxc-vpn.md','docs/advanced-recovery.md']:
- text=(ROOT/name).read_text()
- for pinned in re.findall(r'(?:FORCE_TAG|APP_TAG)=(5\.0\.\d+)',text):
-  require(pinned==version,f'{name}: stale current instruction pin {pinned}')
 for name in ['upgrade/README.md','release-source/README.md']:
  require(f'Current Manager release: **{version}**' in (ROOT/name).read_text(),f'{name}: current release overview is stale')
 for name in ['install.sh','update.sh']:
  require(subprocess.run(['bash','-n',str(ROOT/name)]).returncode==0,f'{name} syntax failed')
- require(f'{version}' in (ROOT/name).read_text(),f'{name} lacks current release selector')
 updater=(ROOT/'update.sh').read_text()
-for variable,file in [('CLI_BOOTSTRAP','upgrade/cli-bootstrap.mjs'),('MANAGER_ONLY','upgrade/manager-only-handover.mjs'),('SAME_MAJOR','upgrade/same-major-bootstrap.mjs')]:
- value=re.search(variable+r'_SHA256="([a-f0-9]{64})"',updater)
- require(value is not None,f'{variable} checksum missing')
- if value:require(hashlib.sha256((ROOT/file).read_bytes()).hexdigest()==value[1],f'{file} differs from pinned updater checksum')
+# The current updater is self-contained. Historical bootstrap files remain only
+# for historical runbooks; their checksums are not current updater dependencies.
+start=updater.index('#!/usr/bin/env python3',updater.index('NYXGUARD_HOST_UPGRADE_PY'))
+end=updater.index('\nNYXGUARD_HOST_UPGRADE_PY\n',start)
+try:compile(updater[start:end],'host-upgrade','exec')
+except SyntaxError:require(False,'Embedded host updater Python syntax failed')
+for command in ['install.sh','update.sh']:
+ require('https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/'+command+' | bash' in readme,f'Canonical root {command} instruction missing')
+ require('https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/'+command+' | sudo bash' in readme,f'Canonical sudo {command} instruction missing')
 files=git('ls-files').splitlines()
 for name in files:
  if pathlib.PurePosixPath(name).name=='Dockerfile':
@@ -38,6 +38,7 @@ for name in files:
    args=shlex.split(line)[1:];args=[x for x in args if not x.startswith('--')]
    for source in args[:-1]:
     if '$' in source or source.startswith(('http:','https:')):continue
+    if source=='sanitized-rootfs.tar' and (p.parent/'build-release.py').exists():continue
     candidates=[ROOT/source,p.parent/source]
     require(any(x.exists() or list(x.parent.glob(x.name)) for x in candidates),f'{name}: missing build input {source}')
  if name.endswith('.md') and (ROOT/name).exists():

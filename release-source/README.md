@@ -1,6 +1,6 @@
 # Release source map
 
-Current Manager release: **5.0.9**, compatible VPN Agent **5.0.1**, schema **45**. The [5.0.9 overlay](5.0.9/README.md) uses immutable published 5.0.8, correcting licensing, migration progress, legacy history ownership and guarded retention timing. SQL recovery modules are inherited from the immutable base; required shared safety/migration modules remain in earlier overlays. Versioned directories remain required build, compatibility or regression inputs.
+Current Manager release: **5.0.10**, compatible VPN Agent **5.0.1**, schema **45**. The [5.0.9 overlay](5.0.9/README.md) uses immutable published 5.0.8, correcting licensing, migration progress, legacy history ownership and guarded retention timing. SQL recovery modules are inherited from the immutable base; required shared safety/migration modules remain in earlier overlays. Versioned directories remain required build, compatibility or regression inputs.
 
 `release-source/` contains the versioned build inputs, asserted compiled
 frontend patches, and tests for supported releases. Disposable test output
@@ -62,3 +62,5 @@ docker build --build-arg NYXGUARD_SOURCE_REVISION="$revision" \
 
 The intermediate image is a local build prerequisite, not an end-user registry tag. Browser sessions and acceptance output stay
 outside this tree. See [5.0.4 release notes](5.0.4/RELEASE-NOTES.md).
+
+Manager 5.0.10 uses the self-contained host updater and sanitized release build described in [application lifecycle](../docs/application-lifecycle.md). Historical handover sources remain for historical recovery only.
