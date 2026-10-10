@@ -20,7 +20,7 @@ python3 tools/publication-hygiene.py --package /path/to/public-source.tar.gz
 
 Use a build context assembled from tracked, reviewed files. `.dockerignore` must exclude private evidence, credentials, runtime data and generated caches. Review image config/environment/build history and packaged first-party files from an image export, including inherited layers; a source scan alone does not certify an image. Do not export a running application's filesystem as a public artifact.
 
-The CI workflow checks source, packaged Git archive, host regression contracts, installer/bootstrap checksum dependencies, Docker COPY inputs, relative documentation links and the current Manager/independent Agent versions. Historical overlays retain their version contracts; local base-image requirements are reported for review, not silently replaced.
+The CI workflow checks source, packaged Git archive, publication scanner regression checks, embedded host-updater syntax, Docker COPY inputs, relative documentation links and the current Manager/independent Agent versions. Historical overlays retain their version contracts; local base-image requirements are reported for review, not silently replaced.
 
 The scanner reports locations and categories without values. Narrow exceptions bind a reviewed synthetic fixture to its exact line hash and a written reason. New or changed content needs review. RFC1918 examples must be explicitly illustrative; standard product paths, service names and immutable public digests are legitimate. Binary visual assets and image metadata require manual inspection. Automated secret patterns are useful but cannot prove the absence of every secret or identify every private hostname.
 

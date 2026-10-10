@@ -7,7 +7,7 @@
 <p align="center">A self-hosted reverse proxy with application protection, traffic intelligence,<br />WireGuard access and operational diagnostics.</p>
 
 <p align="center">
-  <a href="https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.9"><img src="https://img.shields.io/badge/release-5.0.9-00c8e8?style=flat-square" alt="Release 5.0.9" /></a>
+  <a href="https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.10"><img src="https://img.shields.io/badge/release-5.0.10-00c8e8?style=flat-square" alt="Release 5.0.10" /></a>
   <a href="https://hub.docker.com/r/nyxmael/nyxguardmanager"><img src="https://img.shields.io/docker/pulls/nyxmael/nyxguardmanager?color=00c8e8&amp;style=flat-square" alt="Docker pulls" /></a>
   <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-NMPLA-5279b8?style=flat-square" alt="NMPLA license" /></a>
 </p>
@@ -23,9 +23,9 @@
 
 Manage HTTPS applications, certificates, access policies, traffic and remote VPN sites from one interface. Configuration, certificates and operational history stay on your infrastructure.
 
-**Current release · 5.0.9** preserves duplicate Threat History associations, unactivated licensing identity and legitimate integration usage during guarded upgrades. Completed schema work improves bounded migration progress; verified SQL backups, same-version VPN repair and persistent VPN startup remain required. Verified-backup and recovery gates remain mandatory. Manager 5.0.9 uses **VPN Agent 5.0.1** and retains **schema 45**.
+**Current release · 5.0.10** uses a conventional host-managed Docker update: replace application code, reuse persistent storage, run versioned migrations, and verify readiness. MariaDB and its volume remain intact on successful upgrades. Manager uses **VPN Agent 5.0.1** and **schema 45**.
 
-[Read the release notes](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.9) · [Browse the changelog](CHANGELOG.md)
+[Read the release notes](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.10) · [Browse the changelog](CHANGELOG.md)
 
 <a id="quick-install"></a>
 
@@ -62,7 +62,7 @@ For existing installations, use the [supported update procedure](#updates-and-re
 | Visibility | Live traffic and RX/TX, complete-window historical analytics, Threat Activity, IPs & Locations, GeoIP, administrative audit history and Event Center |
 | Traffic policies | IP/CIDR and country allow/deny rules with expiration; verified crawler allowances require fresh verification after expiry |
 | Remote access | Multi-site WireGuard profiles, independent interfaces/routes, handshakes, counters, ping checks, automatic reconnect and overlap protection |
-| Operations | Setup wizard, notifications (webhook/Slack/email), token-protected Prometheus metrics, SSO/OIDC mapping, LAN access with ARP discovery, backups and built-in updates |
+| Operations | Setup wizard, notifications (webhook/Slack/email), token-protected Prometheus metrics, SSO/OIDC mapping, LAN access with ARP discovery, backups and host-managed updates |
 | Professional Support | License status, installation health, bounded host checks, guided troubleshooting and redacted support bundles with Support ID upload/readback |
 
 Professional Support is optional. Signed entitlements are verified locally and stored in an encrypted persistent vault. Licensing failure does not disable core proxy management or security controls. Support bundles select structured fields and redact sensitive values; they are not raw configuration/log archives.
@@ -76,20 +76,20 @@ Professional Support is optional. Signed entitlements are verified locally and s
 | Storage | 40 GB | 60 GB SSD; more for high traffic or 60–180 day retention |
 | Network | Host access to Docker registries and certificate services | Inbound TCP 80/443 for public applications; administration on HTTPS 8443 |
 
-Capacity depends on traffic, protected applications and retention. Allow additional disk space for independent backups and staged database verification during upgrades.
+Capacity depends on traffic, protected applications and retention. Allow additional disk space for independent backups and verified cold backups during upgrades.
 
 ## Supported operating systems
 
-| Operating system | Official support | Historical validation | 5.0.9 OS retesting |
+| Operating system | Official support | Historical validation | 5.0.10 OS retesting |
 | --- | --- | --- | --- |
 | Ubuntu 22.x | Supported | Working installs recorded in 3.0.0 | No new OS-specific validation claimed |
 | Ubuntu 24.x | Supported | Working installs recorded in 3.0.0; 5.0.7 runtime install with existing packages | No new OS-specific validation claimed |
 | Ubuntu 25.x | Supported | Advertised as tested in the historical README; detailed acceptance not recovered | No new OS-specific validation claimed |
 | Ubuntu 26.04 LTS | Supported | 26.04.1 runtime, startup/reboot and VPN accepted in 5.0.4 | No new OS-specific validation claimed |
 | Debian 12 | Supported | Working installs recorded in 3.0.0; 5.0.7 privilege/package checks | No new OS-specific validation claimed |
-| Debian 13 | Supported | Working installs recorded in 3.0.0 | Isolated upgrade, rollback and retry; no fresh-host claim |
+| Debian 13 | Supported | Working installs recorded in 3.0.0 | See the live Debian qualification record |
 
-Support carries forward independently of hotfix retesting. The [installation and compatibility guide](docs/installation.md) records the evidence and configuration limits; [5.0.9 validation coverage](docs/validation-5.0.9.md) describes the focused release tests. Historical family labels do not certify every point release or a fresh-host installation in 5.0.9.
+Support carries forward independently of hotfix retesting. The [installation and compatibility guide](docs/installation.md) records the evidence and configuration limits; [5.0.10 validation coverage](docs/validation-5.0.10.md) describes the focused release tests. Historical family labels do not certify every point release or a fresh-host installation in 5.0.10.
 
 The installer requires Ubuntu or Debian, apt-get and a running systemd host; it prepares Docker/Compose dependencies. VPN also requires usable host TUN and a reachable WireGuard endpoint. Restricted guests without TUN can run Manager and MariaDB without VPN. Other distributions and versions outside this matrix have no established official support; manual Docker deployment is an evaluation path, not a support guarantee.
 
@@ -102,13 +102,13 @@ HTTP-01 certificates need public inbound TCP 80. DNS challenges need the provide
 <details>
 <summary>Manual Docker Compose installation</summary>
 
-For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.9 uses VPN Agent 5.0.1. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
+For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.10 uses VPN Agent 5.0.1. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
 
 ```yaml
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:5.0.9
+    image: nyxmael/nyxguardmanager:5.0.10
     restart: unless-stopped
     ports:
       - "80:80"
@@ -209,24 +209,24 @@ DB_MYSQL_PASSWORD=CHANGE_ME_STRONG_PASSWORD
 MYSQL_ROOT_PASSWORD=CHANGE_ME_STRONG_ROOT_PASSWORD
 ```
 
-Prepare socket access and a persistent licensing vault key. Preserve an existing key; never generate a replacement during an update.
+As root, prepare socket access and a persistent licensing vault key. Preserve an existing key; never generate a replacement during an update.
 
 ```bash
 chmod 600 .env
 nyx_socket_gid="$(stat -c %g /var/run/docker.sock)"
 sed -i "s/^PGID=.*/PGID=${nyx_socket_gid}/" .env
 printf 'DOCKER_SOCK_GID=%s\n' "$nyx_socket_gid" >> .env
-sudo install -d -m 0700 /var/lib/nyxguard-licensing
-sudo sh -c 'test ! -e /var/lib/nyxguard-licensing/vault.key && test ! -L /var/lib/nyxguard-licensing/vault.key && umask 077 && set -C && head -c 32 /dev/urandom > /var/lib/nyxguard-licensing/vault.key'
-sudo chown "1000:${nyx_socket_gid}" /var/lib/nyxguard-licensing /var/lib/nyxguard-licensing/vault.key
-sudo chmod 0600 /var/lib/nyxguard-licensing/vault.key
+install -d -m 0700 /var/lib/nyxguard-licensing
+sh -c 'test ! -e /var/lib/nyxguard-licensing/vault.key && test ! -L /var/lib/nyxguard-licensing/vault.key && umask 077 && set -C && head -c 32 /dev/urandom > /var/lib/nyxguard-licensing/vault.key'
+chown "1000:${nyx_socket_gid}" /var/lib/nyxguard-licensing /var/lib/nyxguard-licensing/vault.key
+chmod 0600 /var/lib/nyxguard-licensing/vault.key
 
 docker compose --env-file .env up -d
 ```
 
 Without TUN, start only `nyxguard-manager db`. Keep both services persistent; the installer configures Manager-only boot startup automatically. For a manual VPN-capable deployment, the included [systemd unit](systemd/nyxguardmanager.service) can be installed with `systemctl daemon-reload` and `systemctl enable --now nyxguardmanager.service`. A Manager-only unit must start only its two services.
 
-Do not change volume names for an existing installation. Preserve any `NYXGUARD_*_VOLUME` overrides. Keep the VPN Agent in the current Manager network namespace; recreating Manager alone can strand it in the old namespace. Restart Manager and then Agent as a pair; restarting Manager also replaces its network namespace. Verify Agent availability from the VPN Client page, because individual container health flags do not prove their communication.
+Do not change volume names for an existing installation. Preserve any `NYXGUARD_*_VOLUME` overrides. Keep the VPN Agent in the current Manager network namespace; recreating Manager alone can strand it in the old namespace. Use the updater for application replacement. After removing/recreating Manager manually, recreate Agent to attach it to the new namespace; a simple container restart does not recreate that attachment. Verify Agent availability from the VPN Client page, because individual container health flags do not prove their communication.
 
 </details>
 
@@ -234,49 +234,23 @@ Do not change volume names for an existing installation. Preserve any `NYXGUARD_
 
 ## Updates and recovery
 
-Use the guarded host updater for standard installations:
+As root:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh -o /tmp/nyxguard-update.sh
-bash /tmp/nyxguard-update.sh # root; sudo users run: sudo bash /tmp/nyxguard-update.sh
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | bash
 ```
 
-The 5.0.9 updater supports source versions **5.0.0 through 5.0.8**. The updater protects the previous installation's DB/files/configuration, verifies the replacement and application data, and restores the protected source if activation fails. It preserves Manager-only or installed VPN topology. Retain your own independent database and volume backup.
-
-For advanced recovery or independent installation options, see the [advanced recovery guide](docs/advanced-recovery.md).
-
-For production upgrades, review the [official upgrade and recovery guide](docs/upgrade-5.0.9.md) before running the updater. The corrected validator accepts completed historical ledgers without weakening checksum, identity or recovery checks. If a previous failed attempt left renamed services or never-started replacements, reconcile that topology under a reviewed recovery plan before retrying.
-
-After TUN becomes usable, activate only VPN at the current Manager version:
+As an ordinary sudo-enabled user:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh -o /tmp/nyxguard-update.sh
-env NYXGUARD_REPAIR_VPN=1 bash /tmp/nyxguard-update.sh
-# sudo users: sudo env NYXGUARD_REPAIR_VPN=1 bash /tmp/nyxguard-update.sh
+curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | sudo bash
 ```
 
-Repair reuses the installed Compose service, verifies TUN interface creation, starts only the Agent, and persists startup in systemd. It preserves Manager/DB and VPN volumes. The built-in updater offers check/download/apply. Do not force an unsupported transition or replace guarded updates with a bare Compose image switch. After updating, verify login, settings, proxy hosts, traffic/history, License, diagnostics, and configured VPN sites, then verify restart persistence.
+The updater identifies the installed and latest stable published versions, asks for confirmation, pauses services to verify a complete recovery backup, downloads official images, and replaces Manager using the existing Compose configuration. It restarts the same MariaDB container and reuses the same named volumes, database credentials, licensing key, certificates and VPN state. An installed Agent is recreated only to attach it to Manager's new network namespace, using the release's compatible official Agent image. No temporary database or replacement application stack is created.
 
-<details>
-<summary>Update options, legacy paths and recovery</summary>
+Database migrations run through the application's normal startup. Health, migration completion, durable configuration records and storage identities must pass before success is committed. A failed download simply restarts the unchanged installation. A failure after application replacement restores the verified pre-migration data and previous application. A repeated invocation on the current version makes no changes.
 
-| Variable | Use |
-| --- | --- |
-| `INSTALL_DIR` | Existing directory containing Compose and `.env` |
-| `FORCE_TAG` | Select a supported, published version |
-| `IMAGE_REPO` / `VPN_AGENT_REPO` | Alternative Manager/Agent repositories |
-| `NYXGUARD_AUTO_YES=1` | Noninteractive confirmation |
-| `NYXGUARD_REQUIRE_VPN=1` | Require TUN/VPN rather than accepting Manager-only topology |
-
-For a manual installation, pass its actual `INSTALL_DIR` to the host updater. For a specific version, use `FORCE_TAG` only after checking its public release guidance. The installer uses `APP_TAG` to select a fresh-install image.
-
-The historical 4.0.18 → 5.0.0 transition uses the verified host handover; see the [major-transition runbook](release-source/5.0.0/RELEASE_DAY_RUNBOOK.md) and documented intermediate release paths. The old 4.0.18 browser updater can report “Restart required” prematurely and assumes a VPN container; use the host workflow for that transition. Customized 4.x layouts require a verified recovery set.
-
-Schema migrations are forward-only. Manual rollback requires the **pre-upgrade SQL database and matching source files/volumes**, Compose configuration, previous image and vault key. Never start an old image against a newer schema. Rollback loses writes after the recovery point. Retain the protected recovery artifacts if activation fails; inspect the reported transaction state before retrying.
-
-The host updater reconciles actual runtime state. On supported installations, explicit same-version repair can install and persist a missing VPN Agent once TUN is available. Without TUN, Manager/DB continue without creating VPN state, and the updater supplies host-specific remediation.
-
-</details>
+See [installation and update architecture](docs/application-lifecycle.md) for the persistent storage map, maintenance downtime, version pinning, supported topology and backup requirements. Independent backups remain recommended. Advanced restoration and historical 4.x transitions are documented separately in [advanced recovery](docs/advanced-recovery.md). The in-app update action directs administrators to the host command.
 
 ## VPN Client and VPN Agent
 
@@ -290,7 +264,7 @@ Manager/database can run without TUN; VPN Agent needs usable read/write `/dev/ne
 
 Follow the [numbered Proxmox LXC/TUN setup and same-version repair guide](docs/proxmox-lxc-vpn.md). It separates **Proxmox host** and **LXC guest** commands, verifies the target CTID/hostname/IP, backs up its configuration, selects a free `devN` slot and uses supported device passthrough. Never overwrite an occupied slot or convert the LXC to privileged. Restart only the selected LXC if required.
 
-After guest TUN is usable, the guide verifies the immutable public **5.0.9 updater** and runs explicit `FORCE_TAG=5.0.9 NYXGUARD_REPAIR_VPN=1` repair against the existing installation directory. It preserves Manager/database data and installs compatible **VPN Agent 5.0.1**. Then check health and **Settings → VPN Client**, a recent handshake and actual permitted-destination connectivity. TUN presence alone does not prove a working VPN.
+After guest TUN is usable, follow [Agent activation](docs/vpn-client.md#host-tun-prerequisite) using the existing Compose service. It preserves Manager/database data and uses compatible **VPN Agent 5.0.1**. The old release-pinned repair helper is historical guidance only. Then check health and **Settings → VPN Client**, a recent handshake and actual permitted-destination connectivity. TUN presence alone does not prove a working VPN.
 
 See the [VPN Client guide](docs/vpn-client.md) for profiles, allowed networks and remote-peer troubleshooting, or the [website walkthrough](https://nyxcloud.ro/nyxguard/vpn-client.html#proxmox-lxc).
 
@@ -320,7 +294,7 @@ Expect healthy Manager and DB, plus the VPN Agent on TUN-capable hosts. HTTP 200
 
 Use strong credentials, limit access to the administration interface and keep independent database and volume backups. Store DNS-provider and other integration secrets securely. The licensing vault key is persistent: preserve it through updates and recovery.
 
-The supported deployment uses a non-privileged Manager with the Docker socket group needed for metrics and guarded updates. Socket access is powerful even with a read-only bind; expose the administration interface only to trusted users. VPN Agent needs its documented NET_ADMIN capability and TUN device. Review [VPN routing and firewall guidance](docs/vpn-client.md) before connecting a profile.
+The supported deployment runs application services under the configured PUID/PGID; Manager has Docker socket group access for metrics and diagnostics. Normal upgrades run on the host. Socket access is powerful even with a read-only bind; expose the administration interface only to trusted users. VPN Agent needs its documented NET_ADMIN capability and TUN device. Review [VPN routing and firewall guidance](docs/vpn-client.md) before connecting a profile.
 
 Professional Support is optional and does not disable core proxy or security features when licensing is unavailable. Generated support bundles use structured redaction; review an exported bundle before sharing it.
 

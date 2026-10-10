@@ -1,4 +1,6 @@
-# Proxmox LXC: enable TUN and repair VPN Agent on NyxGuard 5.0.9
+# Proxmox LXC: TUN prerequisites and historical 5.0.9 repair
+
+The TUN prerequisite instructions below remain applicable. The release-pinned repair in section 9 is historical 5.0.9 guidance. Current 5.0.10 Agent activation is documented in [the VPN guide](vpn-client.md#host-tun-prerequisite); ordinary updates use the canonical command in the README.
 
 NyxGuard Manager and its database can run without `/dev/net/tun`. The separate VPN Agent needs usable read/write access to this kernel device to provide VPN support. A missing Agent after a Manager-only installation does not mean your database needs reinstalling.
 

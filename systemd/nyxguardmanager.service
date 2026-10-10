@@ -8,8 +8,8 @@ Wants=network-online.target
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=/opt/nyxguardmanager
-ExecStart=/usr/bin/docker compose --env-file /opt/nyxguardmanager/.env -f /opt/nyxguardmanager/docker-compose.yml up -d --remove-orphans
-ExecStop=/usr/bin/docker compose --env-file /opt/nyxguardmanager/.env -f /opt/nyxguardmanager/docker-compose.yml down
+ExecStart=/usr/bin/docker compose --env-file /opt/nyxguardmanager/.env -f /opt/nyxguardmanager/docker-compose.yml up -d --no-recreate --remove-orphans
+ExecStop=/usr/bin/docker compose --env-file /opt/nyxguardmanager/.env -f /opt/nyxguardmanager/docker-compose.yml stop
 TimeoutStartSec=0
 
 [Install]

@@ -14,7 +14,7 @@ HTTP_PORT="${NYXGUARD_HTTP_PORT:-80}"
 HTTPS_PORT="${NYXGUARD_HTTPS_PORT:-443}"
 ADMIN_PORT="${NYXGUARD_ADMIN_PORT:-8443}"
 APP_TAG="${APP_TAG:-}" # Optional override (example: 5.0.3). If empty, auto-detect latest.
-NYXGUARD_PROMETHEUS_SCRAPER_IP="${NYXGUARD_PROMETHEUS_SCRAPER_IP:-}"
+VPN_MODE="${NYXGUARD_VPN:-auto}" # auto, off, or required for fresh provisioning.
 REQUIRE_VPN="${NYXGUARD_REQUIRE_VPN:-0}" # Set to 1 to abort when /dev/net/tun is unavailable.
 
 vpn_agent_tag_for_manager() {
@@ -52,9 +52,18 @@ require_apt() {
 
 install_base_packages() {
   require_apt
-  export DEBIAN_FRONTEND=noninteractive
-  apt-get update -y
-  apt-get install -y ca-certificates curl jq gnupg util-linux
+  local missing=() c
+  for c in curl jq python3 flock tar; do
+    if ! have_cmd "$c"; then
+      case "$c" in flock) missing+=(util-linux) ;; *) missing+=("$c") ;; esac
+    fi
+  done
+  if ! dpkg -s ca-certificates >/dev/null 2>&1; then missing+=(ca-certificates); fi
+  if (( ${#missing[@]} )); then
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update -y
+    apt-get install -y "${missing[@]}"
+  fi
 }
 
 install_docker() {
@@ -62,7 +71,9 @@ install_docker() {
     return
   fi
 
-  echo "Installing Docker..."
+  echo "Installing Docker prerequisites..."
+  apt-get update -y
+  apt-get install -y gnupg ca-certificates
 
   if [[ -r /etc/os-release ]] && have_cmd dpkg; then
     # shellcheck source=/etc/os-release
@@ -105,22 +116,6 @@ SRC
   if ! (docker compose version >/dev/null 2>&1); then
     echo "ERROR: Docker Compose v2 plugin is required (docker-compose-plugin)." >&2
     exit 1
-  fi
-}
-
-install_node_exporter() {
-  require_apt
-
-  if ! dpkg -s prometheus-node-exporter >/dev/null 2>&1; then
-    echo "Installing Prometheus node exporter for Grafana system metrics..."
-    apt-get install -y prometheus-node-exporter
-  fi
-
-  systemctl enable --now prometheus-node-exporter >/dev/null 2>&1 || true
-  systemctl enable --now node_exporter >/dev/null 2>&1 || true
-
-  if [[ -n "${NYXGUARD_PROMETHEUS_SCRAPER_IP}" ]] && have_cmd ufw && ufw status | grep -q "Status: active"; then
-    ufw allow from "${NYXGUARD_PROMETHEUS_SCRAPER_IP}" to any port 9100 proto tcp comment "Prometheus node_exporter scrape" >/dev/null || true
   fi
 }
 
@@ -187,56 +182,17 @@ print_tun_warning() {
     echo "For a restricted container, its host must expose usable TUN character device 10:200."
     echo "For a VM or bare-metal host, check its kernel TUN support and device access."
   fi
-  echo "Once TUN is usable, repair the existing installation without reinstalling Manager:"
-  echo "  curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh -o /tmp/nyxguard-update.sh"
-  echo "  # As root (sudo users prefix the next command with sudo):"
-  echo "  env INSTALL_DIR=\"${INSTALL_DIR}\" FORCE_TAG=\"${selected_tag:-${APP_TAG}}\" NYXGUARD_REPAIR_VPN=1 bash /tmp/nyxguard-update.sh"
+  echo "Once TUN is usable, follow the VPN Agent activation section in docs/vpn-client.md."
   echo ""
 }
 
 dockerhub_latest_tag() {
-  local repo="$1"
-
-  if [[ "${repo}" != */* ]]; then
-    echo "ERROR: IMAGE_REPO must be in '<namespace>/<name>' format." >&2
-    return 1
-  fi
-
-  local ns name url json next
-  ns="${repo%%/*}"
-  name="${repo##*/}"
-  url="https://hub.docker.com/v2/repositories/${ns}/${name}/tags?page_size=100"
-
-  local semver_tags=""
-
-  while [[ -n "${url}" && "${url}" != "null" ]]; do
-    json="$(curl -fsSL "${url}")"
-
-    while IFS= read -r tag; do
-      if is_semver "${tag}"; then
-        semver_tags+="${tag}"$'\n'
-      fi
-    done < <(echo "${json}" | jq -r '.results[].name')
-
-    next="$(echo "${json}" | jq -r '.next')"
-    url="${next}"
-  done
-
-  if [[ -z "${semver_tags}" ]]; then
-    echo "latest"
-    return 0
-  fi
-
-  local best_norm best_tag
-  best_norm="$(printf '%s' "${semver_tags}" | sed '/^$/d;s/^v//' | sort -V | tail -n 1)"
-
-  if printf '%s' "${semver_tags}" | grep -qx "${best_norm}"; then
-    best_tag="${best_norm}"
-  else
-    best_tag="v${best_norm}"
-  fi
-
-  echo "${best_tag}"
+  local release version
+  release="$(curl -fsSL --retry 2 --max-time 30 https://api.github.com/repos/NyxCloudRO/NyxGuardManager/releases/latest)"
+  [[ "$(jq -r '.draft or .prerelease' <<<"$release")" == false ]] || { echo 'ERROR: No eligible stable release.' >&2; return 1; }
+  version="$(jq -r '.tag_name' <<<"$release")"
+  is_semver "$version" || { echo 'ERROR: Published version is invalid.' >&2; return 1; }
+  normalize_semver "$version"
 }
 
 ensure_install_dir() {
@@ -433,8 +389,8 @@ Wants=network-online.target
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=${INSTALL_DIR}
-ExecStart=/usr/bin/docker compose --env-file ${INSTALL_DIR}/.env -f ${INSTALL_DIR}/docker-compose.yml up -d --remove-orphans${services}
-ExecStop=/usr/bin/docker compose --env-file ${INSTALL_DIR}/.env -f ${INSTALL_DIR}/docker-compose.yml down
+ExecStart=/usr/bin/docker compose --env-file ${INSTALL_DIR}/.env -f ${INSTALL_DIR}/docker-compose.yml up -d --no-recreate --remove-orphans${services}
+ExecStop=/usr/bin/docker compose --env-file ${INSTALL_DIR}/.env -f ${INSTALL_DIR}/docker-compose.yml stop
 TimeoutStartSec=0
 
 [Install]
@@ -472,6 +428,8 @@ start_vpn_stack() {
 
 main() {
   need_root
+  [[ "$VPN_MODE" == auto || "$VPN_MODE" == off || "$VPN_MODE" == required ]] || { echo "ERROR: NYXGUARD_VPN must be auto, off, or required." >&2; return 1; }
+  [[ "$VPN_MODE" != required ]] || REQUIRE_VPN=1
   [[ "$INSTANCE" =~ ^[a-z][a-z0-9_-]{0,40}$ ]] || { echo "ERROR: Invalid installation instance." >&2; return 1; }
   [[ "$VAULT_DIR" =~ ^/[A-Za-z0-9_./-]+$ && "$VAULT_DIR" != *".."* ]] || { echo "ERROR: Invalid vault directory." >&2; return 1; }
   for port in "$HTTP_PORT" "$HTTPS_PORT" "$ADMIN_PORT"; do [[ "$port" =~ ^[0-9]+$ && "$port" -ge 1 && "$port" -le 65535 ]] || { echo "ERROR: Invalid service port." >&2; return 1; }; done
@@ -485,7 +443,10 @@ main() {
   [[ -d /run/systemd/system ]] && have_cmd systemctl || { echo "ERROR: A running systemd host is required." >&2; return 1; }
   install_base_packages
   install_docker
-  install_node_exporter
+  if [[ -e "$VAULT_DIR/vault.key" ]] || docker volume ls --format '{{.Name}}' | grep -qx "${INSTANCE}_data"; then
+    echo 'ERROR: Existing persistent NyxGuard storage found. Use update.sh; fresh installation cannot replace its identity.' >&2
+    return 1
+  fi
   ensure_install_dir
   ensure_env
 
@@ -493,27 +454,14 @@ main() {
   if [[ -n "${APP_TAG}" ]]; then
     selected_tag="${APP_TAG}"
   else
-    echo "Detecting latest published NyxGuard Manager image tag from Docker Hub..."
+    echo "Detecting latest stable NyxGuard Manager release from GitHub..."
     selected_tag="$(dockerhub_latest_tag "${IMAGE_REPO}")"
   fi
 
-  if [[ -f "${INSTALL_DIR}/docker-compose.yml" ]]; then
-    local current_tag current_major target_major
-    current_tag="$(awk '$1 == "image:" && $2 ~ /nyxguardmanager:/ { sub(/^.*:/, "", $2); print $2; exit }' "${INSTALL_DIR}/docker-compose.yml")"
-    if is_semver "${current_tag}" && is_semver "${selected_tag}"; then
-      current_major="${current_tag#v}"; current_major="${current_major%%.*}"
-      target_major="${selected_tag#v}"; target_major="${target_major%%.*}"
-      if (( target_major > current_major )); then
-        echo "ERROR: Existing ${current_tag} installation requires the verified in-app major upgrade or release runbook; install.sh cannot replace it with ${selected_tag}." >&2
-        exit 1
-      fi
-    fi
-  fi
-
   image_ref="${IMAGE_REPO}:${selected_tag}"
-  vpn_agent_ref="${VPN_AGENT_REPO}:$(vpn_agent_tag_for_manager "$selected_tag")"
+  vpn_agent_ref=""
   vpn_enabled=0
-  if is_semver "${selected_tag}" && version_at_least "${selected_tag}" "4.0.14"; then
+  if [[ "$VPN_MODE" != off ]] && is_semver "${selected_tag}" && version_at_least "${selected_tag}" "4.0.14"; then
     if prepare_tun_device; then
       vpn_enabled=1
     elif [[ "${REQUIRE_VPN}" == "1" ]]; then
@@ -533,9 +481,10 @@ main() {
   fi
   [[ "$(docker image inspect -f '{{index .Config.Labels "org.opencontainers.image.version"}}' "$image_ref")" == "${selected_tag#v}" ]] || { echo "ERROR: Target artifact version differs." >&2; return 1; }
   docker run --rm --network none --no-healthcheck --entrypoint node -e ACCEPTED_VERSION="${selected_tag#v}" "$image_ref" -e 'const fs=require("fs");if(JSON.parse(fs.readFileSync("/app/package.json")).version!==process.env.ACCEPTED_VERSION||process.env.NPM_BUILD_VERSION!==process.env.ACCEPTED_VERSION)process.exit(1)' || { echo "ERROR: Target runtime version identity differs." >&2; return 1; }
-  if [[ "${selected_tag#v}" == 5.0.6 || "${selected_tag#v}" == 5.0.7 || "${selected_tag#v}" == 5.0.8 || "${selected_tag#v}" == 5.0.9 ]]; then
-    vpn_agent_ref="${VPN_AGENT_REPO}:$(docker run --rm --network none --no-healthcheck --entrypoint node "$image_ref" --input-type=module -e 'import policy from "/app/internal/release-policy.mjs";console.log(policy.agent)')"
-  fi
+  local policy_agent
+  policy_agent="$(docker run --rm --network none --no-healthcheck --entrypoint node "$image_ref" -e 'try {const p=require("/app/internal/release-policy.json");if(p.version!==process.env.NPM_BUILD_VERSION)process.exit(1);console.log(p.agent)}catch(e){process.exit(2)}')" || policy_agent="$(vpn_agent_tag_for_manager "$selected_tag")"
+  is_semver "$policy_agent" || { echo 'ERROR: No valid Agent compatibility contract.' >&2; return 1; }
+  vpn_agent_ref="${VPN_AGENT_REPO}:${policy_agent}"
   if [[ "$vpn_enabled" == 1 ]]; then
     docker pull "$vpn_agent_ref"
     if ! verify_tun_interface "$vpn_agent_ref"; then
@@ -558,6 +507,16 @@ main() {
     docker compose --env-file "${INSTALL_DIR}/.env" -f "${INSTALL_DIR}/docker-compose.yml" up -d --remove-orphans nyxguard-manager db
   fi
 
+  local ready=0 attempt
+  for attempt in {1..150}; do
+    if [[ "$(docker inspect -f '{{.State.Health.Status}}' "${INSTANCE}-manager")" == healthy ]] &&
+       docker exec "${INSTANCE}-db" sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqladmin ping -uroot --silent' >/dev/null 2>&1; then
+      ready=1; break
+    fi
+    sleep 2
+  done
+  [[ "$ready" == 1 ]] || { echo 'ERROR: Manager/database readiness failed.' >&2; return 1; }
+  docker exec "${INSTANCE}-manager" nginx -t >/dev/null 2>&1
   install_systemd_unit "${vpn_enabled}"
 
   local host_ip
@@ -569,9 +528,11 @@ main() {
   echo "  NyxGuard Manager ${selected_tag} is up and running."
   if [[ "${vpn_enabled}" == "1" ]]; then
     echo "  VPN Agent installed; Manager-to-Agent API verified."
+  elif [[ "$VPN_MODE" == off ]]; then
+    echo "  Manager-only installation selected; VPN Agent is not installed."
   elif is_semver "${selected_tag}" && version_at_least "${selected_tag}" "4.0.14"; then
     echo "  VPN Agent pending — TUN unavailable. VPN is not ready."
-    echo "  After TUN is usable, run update.sh with FORCE_TAG=${selected_tag} NYXGUARD_REPAIR_VPN=1."
+    echo "  After TUN is usable, follow the documented VPN Agent activation procedure."
   fi
   echo ""
   echo "  Access the admin panel at:"
