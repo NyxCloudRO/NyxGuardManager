@@ -69,11 +69,36 @@ Professional Support is optional. Signed entitlements are verified locally and s
 
 ## Requirements
 
-| Resource | Minimum | Recommended | High Traffic |
-| --- | --- | --- | --- |
-| CPU | 1 vCPU | 2 vCPU | 4+ vCPU |
-| RAM | 2 GB | 4 GB | 8+ GB |
-| Storage | 10 GB SSD | 20 GB SSD | 40+ GB SSD |
+<table>
+  <thead>
+    <tr>
+      <th width="25%" align="center">Resource</th>
+      <th width="25%" align="center">Minimum</th>
+      <th width="25%" align="center">Recommended</th>
+      <th width="25%" align="center">High Traffic</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td width="240" align="center">CPU</td>
+      <td width="240" align="center">1 vCPU</td>
+      <td width="240" align="center">2 vCPU</td>
+      <td width="240" align="center">4+ vCPU</td>
+    </tr>
+    <tr>
+      <td width="240" align="center">RAM</td>
+      <td width="240" align="center">2 GB</td>
+      <td width="240" align="center">4 GB</td>
+      <td width="240" align="center">8+ GB</td>
+    </tr>
+    <tr>
+      <td width="240" align="center">Storage</td>
+      <td width="240" align="center">10 GB SSD</td>
+      <td width="240" align="center">20 GB SSD</td>
+      <td width="240" align="center">40+ GB SSD</td>
+    </tr>
+  </tbody>
+</table>
 
 Actual resource requirements depend on the number of protected applications (Proxy Hosts), traffic volume, enabled WAF and VPN features, and the configured log retention period (in months). Longer retention periods and higher traffic volumes may require additional CPU, RAM, and disk space.
 
