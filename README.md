@@ -87,9 +87,9 @@ Professional Support is optional. Signed entitlements are verified locally and s
     </tr>
     <tr>
       <td width="240" align="center">RAM</td>
+      <td width="240" align="center">1 GB</td>
       <td width="240" align="center">2 GB</td>
       <td width="240" align="center">4 GB</td>
-      <td width="240" align="center">8+ GB</td>
     </tr>
     <tr>
       <td width="240" align="center">Storage</td>
