@@ -43,7 +43,7 @@ As root:
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | bash
 ```
 
-Sudo-enabled users replace `bash` with `sudo bash`. No transaction ID, recovery command or manual Docker operation is required.
+Sudo-enabled users replace `bash` with `sudo bash`. No transaction ID, recovery command or manual Docker operation is required. Use the current `main` updater: the immutable original 5.0.10 asset/tag snapshot predates its terminal-confirmation correction. Release notes label that snapshot separately.
 
 The updater discovers a supported installation, determines the latest stable GitHub release, prints the current and target versions, and asks for confirmation through the terminal. It validates service readiness, exclusive storage ownership and available space. Manager and Agent stop first; their durable configuration baseline is captured, then the same MariaDB container stops for a consistent cold backup. Every application volume and persistent bind mount is archived and extracted/compared before the recovery point is accepted. Storage needs backup, verification-extraction and recovery headroom plus image download capacity. This process intentionally includes maintenance downtime.
 
