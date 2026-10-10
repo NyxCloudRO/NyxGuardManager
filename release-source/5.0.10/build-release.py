@@ -5,7 +5,7 @@ SOURCE=pathlib.Path(__file__).resolve().parent
 BASE='nyxmael/nyxguardmanager@sha256:28bdcb25e59c5b90119a975aa448a7f865872d387549bcc37fe3e930ac0d5985'
 # Retain empty mount/runtime directories, never their inherited operational content.
 EMPTY={'run','tmp','var/tmp','data','etc/letsencrypt','var/lib/mysql','var/lib/nyxguard-licensing','var/lib/nyxguard-vpn','var/log','root'}
-REMOVE={'etc/hostname','etc/hosts','etc/resolv.conf','etc/machine-id','var/lib/dbus/machine-id','app/dev-tests'}
+REMOVE={'etc/hostname','etc/hosts','etc/resolv.conf','etc/machine-id','var/lib/dbus/machine-id','app/dev-tests','app/node_modules/node-gyp/test','opt/certbot-site-packages-seed/acme/_internal/tests','opt/certbot-site-packages-seed/certbot/tests','usr/local/lib/luarocks/rocks-5.1/lua-resty-openidc/1.8.0-1/doc/README.md'}
 def call(*args):subprocess.run(args,check=True)
 def main():
  p=argparse.ArgumentParser();p.add_argument('--tag',default='nyxguardmanager:5.0.10-candidate');p.add_argument('--revision',required=True);a=p.parse_args()

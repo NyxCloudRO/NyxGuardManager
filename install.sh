@@ -14,7 +14,6 @@ HTTP_PORT="${NYXGUARD_HTTP_PORT:-80}"
 HTTPS_PORT="${NYXGUARD_HTTPS_PORT:-443}"
 ADMIN_PORT="${NYXGUARD_ADMIN_PORT:-8443}"
 APP_TAG="${APP_TAG:-}" # Optional override (example: 5.0.3). If empty, auto-detect latest.
-NYXGUARD_PROMETHEUS_SCRAPER_IP="${NYXGUARD_PROMETHEUS_SCRAPER_IP:-}"
 VPN_MODE="${NYXGUARD_VPN:-auto}" # auto, off, or required for fresh provisioning.
 REQUIRE_VPN="${NYXGUARD_REQUIRE_VPN:-0}" # Set to 1 to abort when /dev/net/tun is unavailable.
 
@@ -117,22 +116,6 @@ SRC
   if ! (docker compose version >/dev/null 2>&1); then
     echo "ERROR: Docker Compose v2 plugin is required (docker-compose-plugin)." >&2
     exit 1
-  fi
-}
-
-install_node_exporter() {
-  require_apt
-
-  if ! dpkg -s prometheus-node-exporter >/dev/null 2>&1; then
-    echo "Installing Prometheus node exporter for Grafana system metrics..."
-    apt-get install -y prometheus-node-exporter
-  fi
-
-  systemctl enable --now prometheus-node-exporter >/dev/null 2>&1 || true
-  systemctl enable --now node_exporter >/dev/null 2>&1 || true
-
-  if [[ -n "${NYXGUARD_PROMETHEUS_SCRAPER_IP}" ]] && have_cmd ufw && ufw status | grep -q "Status: active"; then
-    ufw allow from "${NYXGUARD_PROMETHEUS_SCRAPER_IP}" to any port 9100 proto tcp comment "Prometheus node_exporter scrape" >/dev/null || true
   fi
 }
 
@@ -471,21 +454,8 @@ main() {
   if [[ -n "${APP_TAG}" ]]; then
     selected_tag="${APP_TAG}"
   else
-    echo "Detecting latest published NyxGuard Manager image tag from Docker Hub..."
+    echo "Detecting latest stable NyxGuard Manager release from GitHub..."
     selected_tag="$(dockerhub_latest_tag "${IMAGE_REPO}")"
-  fi
-
-  if [[ -f "${INSTALL_DIR}/docker-compose.yml" ]]; then
-    local current_tag current_major target_major
-    current_tag="$(awk '$1 == "image:" && $2 ~ /nyxguardmanager:/ { sub(/^.*:/, "", $2); print $2; exit }' "${INSTALL_DIR}/docker-compose.yml")"
-    if is_semver "${current_tag}" && is_semver "${selected_tag}"; then
-      current_major="${current_tag#v}"; current_major="${current_major%%.*}"
-      target_major="${selected_tag#v}"; target_major="${target_major%%.*}"
-      if (( target_major > current_major )); then
-        echo "ERROR: Existing ${current_tag} installation requires the verified in-app major upgrade or release runbook; install.sh cannot replace it with ${selected_tag}." >&2
-        exit 1
-      fi
-    fi
   fi
 
   image_ref="${IMAGE_REPO}:${selected_tag}"

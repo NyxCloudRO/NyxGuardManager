@@ -2,14 +2,14 @@
 
 All network addresses and identities in this guide are illustrative placeholders. Replace them with your own configuration.
 
-NyxGuard Manager 5.0.0 can connect to multiple remote sites as a WireGuard client. Each site has its own interface, routes, status, lifecycle controls, and connectivity test. Remote applications remain private and can be used as NyxGuard Proxy Host upstreams after the tunnel is working.
+NyxGuard Manager 5.0.10 can connect to multiple remote sites as a WireGuard client. Each site has its own interface, routes, status, lifecycle controls, and connectivity test. Remote applications remain private and can be used as NyxGuard Proxy Host upstreams after the tunnel is working.
 
 ## Architecture and security boundary
 
-The production stack uses two matching images:
+The supported stack uses two compatible images:
 
-- `nyxmael/nyxguardmanager:5.0.0` runs the web application without network-administration privileges.
-- `nyxmael/nyxguardmanager-vpn-agent:5.0.0` owns WireGuard operations and receives only `NET_ADMIN` plus `/dev/net/tun`.
+- `nyxmael/nyxguardmanager:5.0.10` runs the web application without network-administration privileges.
+- `nyxmael/nyxguardmanager-vpn-agent:5.0.1` owns WireGuard operations and receives only `NET_ADMIN` plus `/dev/net/tun`.
 
 The agent shares the manager network namespace but listens only on loopback. Calls are authenticated with a random token stored in a dedicated shared volume. Client private keys stay in the restricted VPN volume and are never returned by the API.
 

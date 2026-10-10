@@ -13,7 +13,7 @@ Use the [README installation commands](../README.md#installation) for a root she
 | Debian 12 | Supported | Working installs recorded in 3.0.0; 5.0.7 privilege/package checks | No new OS-specific validation claimed |
 | Debian 13 | Supported | Working installs recorded in 3.0.0 | See the 5.0.10 live-host qualification record |
 
-Support carries forward independently of hotfix retesting. The [compatibility evidence below](#compatibility-evidence) records the evidence and configuration limits; [5.0.9 validation coverage](validation-5.0.9.md) describes the focused release tests. Historical family labels do not certify every point release or a fresh-host installation in 5.0.9.
+Support carries forward independently of hotfix retesting. The [compatibility evidence below](#compatibility-evidence) records the evidence and configuration limits; [5.0.10 validation coverage](validation-5.0.10.md) describes the focused release tests. Historical family labels do not certify every point release or a fresh-host installation in 5.0.10.
 
 The installer requires Ubuntu or Debian, apt-get and a running systemd host; it prepares Docker/Compose dependencies. VPN also requires usable host TUN and a reachable WireGuard endpoint. Restricted guests without TUN can run Manager and MariaDB without VPN. Other distributions and versions outside this matrix have no established official support; manual Docker deployment is an evaluation path, not a support guarantee.
 
