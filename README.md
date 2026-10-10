@@ -69,14 +69,17 @@ Professional Support is optional. Signed entitlements are verified locally and s
 
 ## Requirements
 
-| Resource | Small installation | Recommended |
-| --- | --- | --- |
-| CPU | 2 vCPU | 4 vCPU |
-| Memory | 2 GB | 8 GB |
-| Storage | 40 GB | 60 GB SSD; more for high traffic or 60–180 day retention |
-| Network | Host access to Docker registries and certificate services | Inbound TCP 80/443 for public applications; administration on HTTPS 8443 |
+| Resource | Minimum | Recommended | High Traffic |
+| --- | --- | --- | --- |
+| CPU | 1 vCPU | 2 vCPU | 4+ vCPU |
+| RAM | 2 GB | 4 GB | 8+ GB |
+| Storage | 10 GB SSD | 20 GB SSD | 40+ GB SSD |
 
-Capacity depends on traffic, protected applications and retention. Allow additional disk space for independent backups and verified cold backups during upgrades.
+Actual resource requirements depend on the number of protected applications (Proxy Hosts), traffic volume, enabled WAF and VPN features, and the configured log retention period (in months). Longer retention periods and higher traffic volumes may require additional CPU, RAM, and disk space.
+
+These tiers are sizing targets, not validated capacity guarantees. Storage covers normal operation; allow additional free space for backups, database growth and upgrades, as well as space for the host OS and Docker image cache. Before an upgrade, the updater requires free space on the backup filesystem of at least three times the current persistent-data size plus 2 GiB. Retained backups and larger image downloads may require more.
+
+Network: host access to Docker registries and certificate services; inbound TCP 80/443 for public applications; administration on HTTPS 8443.
 
 ## Supported operating systems
 
