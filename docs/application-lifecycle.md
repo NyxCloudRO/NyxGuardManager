@@ -43,7 +43,7 @@ As root:
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | bash
 ```
 
-Sudo-enabled users replace `bash` with `sudo bash`. No transaction ID, recovery command or manual Docker operation is required. Use the current `main` updater: the immutable original 5.0.10 asset/tag snapshot predates its terminal-confirmation correction. Release notes label that snapshot separately.
+Sudo-enabled users replace `bash` with `sudo bash`. No transaction ID, recovery command or manual Docker operation is required. Use the current `main` updater or the qualified 5.0.11 release asset. Historical 5.0.10 snapshots retain their original limitations.
 
 The updater discovers a supported installation, determines the latest stable GitHub release, prints the current and target versions, and asks for confirmation through the terminal. It validates service readiness, exclusive storage ownership and available space. Manager and Agent stop first; their durable configuration baseline is captured, then the same MariaDB container stops for a consistent cold backup. Every application volume and persistent bind mount is archived and extracted/compared before the recovery point is accepted. Storage needs backup, verification-extraction and recovery headroom plus image download capacity. This process intentionally includes maintenance downtime.
 
@@ -51,7 +51,7 @@ Official Manager and compatible Agent images are pulled and pinned by registry d
 
 The updater restarts the existing MariaDB container without recreating it, replaces only Manager through `docker compose up --no-deps`, and reconnects an installed Agent to Manager's new network namespace. Application startup runs versioned forward migrations. Success requires service health, Nginx configuration validation, required migrations, retained durable configuration/eligible audit records, the same database container, the same named volumes and the same licensing vault key. Runtime counters, notification bookkeeping and legitimate retention are not treated as immutable records.
 
-Backups remain root-only under `.upgrade/backup-*`; successful upgrades do not restore or clone MariaDB, duplicate application stacks or create replacement data volumes. Keep independent backups and monitor retained backup disk usage. Published supported source policy currently covers Manager 5.0.0–5.0.9. Historical major transitions remain separate.
+Backups remain root-only under `.upgrade/backup-*`; successful upgrades do not restore or clone MariaDB, duplicate application stacks or create replacement data volumes. Keep independent backups and monitor retained backup disk usage. Published supported source policy currently covers Manager 5.0.0–5.0.10. Historical major transitions remain separate.
 
 ## Failure and interruption
 
@@ -60,3 +60,5 @@ Before replacement, failure restarts unchanged services without restoring data. 
 One root-only pending record distinguishes an unmodified installation from a potentially migrated one. Ordinary reruns recover it automatically. A systemd `ExecStartPre` invokes the same saved recovery implementation after host interruption before normal stack startup. There are no separate recovery workers or container-renaming handovers.
 
 See [advanced recovery](advanced-recovery.md) for an explicit pre-upgrade restore. Restoring loses writes made after that recovery point.
+
+Manager 5.0.11 requires schema 46 and Agent 5.0.1. It adds bounded updater heartbeats, large-history verification and persistent sanitized operational diagnostics. Host reboot/power-loss and live activated licensing recovery remain unvalidated in this release.

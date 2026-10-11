@@ -7,7 +7,7 @@
 <p align="center">A self-hosted reverse proxy with application protection, traffic intelligence,<br />WireGuard access and operational diagnostics.</p>
 
 <p align="center">
-  <a href="https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.10"><img src="https://img.shields.io/badge/release-5.0.10-00c8e8?style=flat-square" alt="Release 5.0.10" /></a>
+  <a href="https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.11"><img src="https://img.shields.io/badge/release-5.0.11-00c8e8?style=flat-square" alt="Release 5.0.11" /></a>
   <a href="https://hub.docker.com/r/nyxmael/nyxguardmanager"><img src="https://img.shields.io/docker/pulls/nyxmael/nyxguardmanager?color=00c8e8&amp;style=flat-square" alt="Docker pulls" /></a>
   <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-NMPLA-5279b8?style=flat-square" alt="NMPLA license" /></a>
 </p>
@@ -23,9 +23,9 @@
 
 Manage HTTPS applications, certificates, access policies, traffic and remote VPN sites from one interface. Configuration, certificates and operational history stay on your infrastructure.
 
-**Current release · 5.0.10** uses a conventional host-managed Docker update: replace application code, reuse persistent storage, run versioned migrations, and verify readiness. MariaDB and its volume remain intact on successful upgrades. Manager uses **VPN Agent 5.0.1** and **schema 45**.
+**Current release · 5.0.11** uses a conventional host-managed Docker update: replace application code, reuse persistent storage, run versioned migrations, and verify readiness. MariaDB and its volume remain intact on successful upgrades. Manager uses **VPN Agent 5.0.1** and **schema 46**.
 
-[Read the release notes](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.10) · [Browse the changelog](CHANGELOG.md)
+[Read the release notes](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.11) · [Browse the changelog](CHANGELOG.md)
 
 <a id="quick-install"></a>
 
@@ -65,7 +65,7 @@ For existing installations, use the [supported update procedure](#updates-and-re
 | Operations | Setup wizard, notifications (webhook/Slack/email), token-protected Prometheus metrics, SSO/OIDC mapping, LAN access with ARP discovery, backups and host-managed updates |
 | Professional Support | License status, installation health, bounded host checks, guided troubleshooting and redacted support bundles with Support ID upload/readback |
 
-Professional Support is optional. Signed entitlements are verified locally and stored in an encrypted persistent vault. Licensing failure does not disable core proxy management or security controls. Support bundles select structured fields and redact sensitive values; they are not raw configuration/log archives.
+Professional Support is optional. Signed entitlements are verified locally and stored in an encrypted persistent vault. Licensing failure does not disable core proxy management or security controls. Version 5.0.11 adds persistent operational error diagnostics, bounded Recent problems and safe runtime error codes. Database-down failures use a safe log fallback. Support bundles select structured fields and redact sensitive values; they are not raw configuration/log archives.
 
 ## Requirements
 
@@ -108,16 +108,16 @@ Network: host access to Docker registries and certificate services; inbound TCP 
 
 ## Supported operating systems
 
-| Operating system | Official support | Historical validation | 5.0.10 OS retesting |
+| Operating system | Official support | Historical validation | 5.0.11 OS retesting |
 | --- | --- | --- | --- |
 | Ubuntu 22.x | Supported | Working installs recorded in 3.0.0 | No new OS-specific validation claimed |
 | Ubuntu 24.x | Supported | Working installs recorded in 3.0.0; 5.0.7 runtime install with existing packages | No new OS-specific validation claimed |
 | Ubuntu 25.x | Supported | Advertised as tested in the historical README; detailed acceptance not recovered | No new OS-specific validation claimed |
 | Ubuntu 26.04 LTS | Supported | 26.04.1 runtime, startup/reboot and VPN accepted in 5.0.4 | No new OS-specific validation claimed |
 | Debian 12 | Supported | Working installs recorded in 3.0.0; 5.0.7 privilege/package checks | No new OS-specific validation claimed |
-| Debian 13 | Supported | Working installs recorded in 3.0.0 | See the live Debian qualification record |
+| Debian 13 | Supported | Working installs recorded in 3.0.0 | Controlled runtime/upgrade checks; fresh-host OS retesting not claimed |
 
-Support carries forward independently of hotfix retesting. The [installation and compatibility guide](docs/installation.md) records the evidence and configuration limits; [5.0.10 validation coverage](docs/validation-5.0.10.md) describes the focused release tests. Historical family labels do not certify every point release or a fresh-host installation in 5.0.10.
+Support carries forward independently of hotfix retesting. The [installation and compatibility guide](docs/installation.md) records the evidence and configuration limits; [5.0.11 validation coverage](docs/validation-5.0.11.md) describes the focused release tests. Historical family labels do not certify every point release or a fresh-host installation in 5.0.11.
 
 The installer requires Ubuntu or Debian, apt-get and a running systemd host; it prepares Docker/Compose dependencies. VPN also requires usable host TUN and a reachable WireGuard endpoint. Restricted guests without TUN can run Manager and MariaDB without VPN. Other distributions and versions outside this matrix have no established official support; manual Docker deployment is an evaluation path, not a support guarantee.
 
@@ -125,18 +125,18 @@ The installer requires Ubuntu or Debian, apt-get and a running systemd host; it 
 
 The normal installer deploys Manager and MariaDB, adding the compatible VPN Agent when TUN is usable. Data uses persistent Docker volumes; systemd provides automatic startup. The administration port is HTTPS **8443**, and proxied applications use TCP **80/443**.
 
-HTTP-01 certificates need public inbound TCP 80. DNS challenges need the provider's credentials. Protected Apps are Proxy Hosts with WAF enabled.
+HTTP-01 certificates need public inbound TCP 80. DNS challenges need the provider's credentials. Version 5.0.11 repairs Certbot initialization and Cloudflare plugin discovery; live HTTP-01 and Cloudflare DNS-01 issuance remain unvalidated. Protected Apps are Proxy Hosts with WAF enabled.
 
 <details>
 <summary>Manual Docker Compose installation</summary>
 
-For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.10 uses VPN Agent 5.0.1. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
+For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.11 uses VPN Agent 5.0.1. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
 
 ```yaml
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:5.0.10
+    image: nyxmael/nyxguardmanager:5.0.11
     restart: unless-stopped
     ports:
       - "80:80"
@@ -152,6 +152,7 @@ services:
       DB_MYSQL_PASSWORD: "${DB_MYSQL_PASSWORD}"
       DB_MYSQL_NAME: "${DB_MYSQL_NAME:-nyxguard}"
       SKIP_CERTBOT_OWNERSHIP: "true"
+      DISABLE_IPV6: "${DISABLE_IPV6:-false}"
       NYXCLOUD_LICENSE_VAULT_KEY_PATH: "/run/nyxguard-licensing/vault.key"
       NYXCLOUD_AUTHORITY_URL: "https://licensing.nyxcloud.ro"
       NYXCLOUD_SUPPORT_URL: "https://support-storage.nyxcloud.ro"
@@ -278,7 +279,7 @@ The updater identifies the installed and latest stable published versions, asks 
 
 Database migrations run through the application's normal startup. Health, migration completion, durable configuration records and storage identities must pass before success is committed. A failed download simply restarts the unchanged installation. A failure after application replacement restores the verified pre-migration data and previous application. A repeated invocation on the current version makes no changes.
 
-Use the current `main` command above. The immutable original 5.0.10 updater asset/tag snapshot predates the terminal-confirmation correction; it is not the current normal updater. [Release notes](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.10) record this distinction.
+Use the current `main` command above. The 5.0.11 release asset contains the qualified self-contained updater. Historical 5.0.10 assets retain their original limitations.
 
 See [installation and update architecture](docs/application-lifecycle.md) for the persistent storage map, maintenance downtime, version pinning, supported topology and backup requirements. Independent backups remain recommended. Advanced restoration and historical 4.x transitions are documented separately in [advanced recovery](docs/advanced-recovery.md). The in-app update action directs administrators to the host command.
 

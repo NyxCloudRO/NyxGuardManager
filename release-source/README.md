@@ -1,6 +1,6 @@
 # Release source map
 
-Current Manager release: **5.0.10**, compatible VPN Agent **5.0.1**, schema **45**. The [5.0.10 build](5.0.10/README.md) sanitizes the pinned public filesystem and creates fresh layers without inherited runtime credentials. The host updater is self-contained; normal upgrades use existing MariaDB and storage. Versioned directories below retain historical build, compatibility and regression inputs.
+Current Manager release: **5.0.11**, compatible VPN Agent **5.0.1**, schema **46**. The [5.0.11 build](5.0.11/README.md) sanitizes the pinned public filesystem and creates fresh layers without inherited runtime credentials. The host updater is self-contained; normal upgrades use existing MariaDB and storage. Versioned directories below retain historical build, compatibility and regression inputs.
 
 `release-source/` contains the versioned build inputs, asserted compiled
 frontend patches, and tests for supported releases. Disposable test output
@@ -14,7 +14,7 @@ The published Manager and VPN images are the customer runtime. `install.sh` sele
 
 ## Historical build and recovery inputs through 5.0.9
 
-The former major transition used `upgrade/cli-bootstrap.mjs`; former same-major releases used `upgrade/same-major-bootstrap.mjs` and packaged handover workers. These remain release-specific historical inputs, not the normal 5.0.10 workflow.
+The former major transition used `upgrade/cli-bootstrap.mjs`; former same-major releases used `upgrade/same-major-bootstrap.mjs` and packaged handover workers. These remain release-specific historical inputs, not the normal 5.0.11 workflow.
 
 | Source | Build input | Image/runtime result |
 | --- | --- | --- |
@@ -62,4 +62,4 @@ docker build --build-arg NYXGUARD_SOURCE_REVISION="$revision" \
 The intermediate image is a local build prerequisite, not an end-user registry tag. Browser sessions and acceptance output stay
 outside this tree. See [5.0.4 release notes](5.0.4/RELEASE-NOTES.md).
 
-Manager 5.0.10 uses the self-contained host updater and sanitized release build described in [application lifecycle](../docs/application-lifecycle.md). Historical handover sources remain for historical recovery only.
+Manager 5.0.11 uses the self-contained host updater and sanitized release build described in [application lifecycle](../docs/application-lifecycle.md). Historical handover sources remain for historical recovery only.
