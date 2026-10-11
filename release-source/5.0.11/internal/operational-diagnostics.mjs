@@ -30,18 +30,20 @@ const codes={
  OPERATION_FAILED:['Operation failed; the technical cause has not been established.','Run diagnostics and contact support with this reference.']};
 export function failureRecord(error,context={}) {
  const raw=String(error?.message||'').slice(0,65536);let code=Object.hasOwn(codes,error?.code)?error.code:'OPERATION_FAILED';
+ const allowedRuntimeCodes=new Set(['ECONNREFUSED','ENOTFOUND','EHOSTUNREACH','ETIMEDOUT','EACCES','ENOSPC','ER_ACCESS_DENIED_ERROR','ER_NO_SUCH_TABLE','ER_LOCK_WAIT_TIMEOUT','SQLITE_BUSY','SQLITE_ERROR']);
+ const reportedCode=[error?.code,error?.nativeError?.code].find(value=>allowedRuntimeCodes.has(value));
  if(code==='OPERATION_FAILED') {
   if(/No module named ['"]certbot|ModuleNotFoundError.*certbot/i.test(raw))code='CERTIFICATE_RUNTIME_UNAVAILABLE';
-  else if(/ER_|SQLITE_|database|migration|knex/i.test(raw))code='DATABASE_OPERATION_FAILED';
+  else if(/^(?:ER_|SQLITE_)/.test(reportedCode||'')||/ER_|SQLITE_|database|migration|knex/i.test(raw))code='DATABASE_OPERATION_FAILED';
   else if(/nginx.*(?:test|reload|configuration)|configuration.*test failed/i.test(raw))code='NGINX_CONFIGURATION_FAILED';
-  else if(/timed? ?out|ETIMEDOUT/i.test(raw))code='OPERATION_TIMEOUT';
-  else if(/ECONNREFUSED|ENOTFOUND|EHOSTUNREACH|authority_unavailable|endpoint_unavailable|VPN agent is unavailable/i.test(raw))code='INTEGRATION_UNAVAILABLE';
+  else if(reportedCode==='ETIMEDOUT'||/timed? ?out|ETIMEDOUT/i.test(raw))code='OPERATION_TIMEOUT';
+  else if(['ECONNREFUSED','ENOTFOUND','EHOSTUNREACH'].includes(reportedCode)||/ECONNREFUSED|ENOTFOUND|EHOSTUNREACH|authority_unavailable|endpoint_unavailable|VPN agent is unavailable/i.test(raw))code='INTEGRATION_UNAVAILABLE';
   else if(error?.status===400)code='INVALID_CONFIGURATION';
  }
  const details={};
  if(/No module named ['"]certbot['"]/.test(raw)){details.missing_module='certbot';details.failure_type='python_import_error';}
  else if(/ModuleNotFoundError|No module named/.test(raw)){details.failure_type='python_import_error';}
- const errno=raw.match(/\b(ECONNREFUSED|ENOTFOUND|EHOSTUNREACH|ETIMEDOUT|EACCES|ENOSPC|ER_ACCESS_DENIED_ERROR|ER_NO_SUCH_TABLE|ER_LOCK_WAIT_TIMEOUT|SQLITE_BUSY|SQLITE_ERROR)\b/)?.[1];
+ const errno=reportedCode||raw.match(/\b(ECONNREFUSED|ENOTFOUND|EHOSTUNREACH|ETIMEDOUT|EACCES|ENOSPC|ER_ACCESS_DENIED_ERROR|ER_NO_SUCH_TABLE|ER_LOCK_WAIT_TIMEOUT|SQLITE_BUSY|SQLITE_ERROR)\b/)?.[1];
  if(errno)details.runtime_error_code=errno;
  if(code.startsWith('NGINX_'))details.failure_type='nginx_configuration_activation';
  if(code.startsWith('CERTIFICATE_'))details.failure_stage=code.replace('CERTIFICATE_','').toLowerCase();

@@ -103,3 +103,11 @@ test('patched swallowed administrative/background failures propagate or persist 
   }
  }finally{await rm(fixture,{recursive:true,force:true});}
 });
+
+test('actual mysql direct or wrapped error code supplies confirmed safe database evidence',()=>{
+ for(const metadata of [{code:'ER_NO_SUCH_TABLE'},{nativeError:{code:'ER_LOCK_WAIT_TIMEOUT'}}]){
+  const event=failureRecord(Object.assign(new Error("select setting.*: Table 'nyxguard.setting' does not exist password=CANARY"),metadata),{path:'/api/settings',method:'GET'});
+  assert.equal(event.code,'DATABASE_OPERATION_FAILED');assert.equal(event.details.runtime_error_code,metadata.code||metadata.nativeError.code);assert.equal(event.cause_kind,'reported_error');assert.ok(!JSON.stringify(event).includes('CANARY'));assert.ok(!JSON.stringify(event).includes('nyxguard.setting'));
+ }
+ const unknown=failureRecord(Object.assign(new Error('Unknown failure'),{code:'CANARY_PRIVATE_CODE',nativeError:{code:'CANARY_NATIVE_CODE'}}));assert.equal(unknown.code,'OPERATION_FAILED');assert.ok(!JSON.stringify(unknown).includes('CANARY'));
+});
