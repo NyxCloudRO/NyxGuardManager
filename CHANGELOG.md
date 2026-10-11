@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.0.12 — 2026-10-11
+
+- Restored compact Protected Apps rows, domain badges, keyboard focus, confirmed-state updates and security-change confirmations.
+- Preserved recovery installation identity across retries and improved safe licensing transport/configuration diagnostics.
+- Validated certificate names before persistence, classified inaccessible DNS zones, and awaited failed-issuance credential cleanup.
+- Removed routine missing-session checks from new administrative audit writes while retaining significant access failures and historical records.
+- Corrected Nginx activation tracking for connected DNS resolver sockets, valid long hostname maps, zero DDoS burst configuration, and protection headers on proxied responses.
+- Kept Update Manager accessible when no newer release is advertised.
+- Retained database schema 46, VPN Agent 5.0.1 and historical recovery compatibility.
+
+See [release notes](release-source/5.0.12/RELEASE-NOTES.md) for qualification and limitations.
+
 ## 5.0.11 — 2026-10-11
 
 - Repaired Certbot initialization, immutable dependency seeding, corruption recovery and Cloudflare DNS plugin handling.

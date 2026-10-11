@@ -1,5 +1,7 @@
 # Installation and operating system compatibility
 
+Current Manager release: **5.0.12**, compatible VPN Agent **5.0.1**, schema **46**. See [current validation coverage](validation-5.0.12.md) for focused acceptance; the historical OS evidence below remains distinct.
+
 Use the [README installation commands](../README.md#installation) for a root shell or an ordinary user with sudo privileges. Existing installations use the [guarded update procedure](../README.md#update-in-place).
 
 ## Supported operating systems

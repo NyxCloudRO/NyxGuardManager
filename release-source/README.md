@@ -1,6 +1,6 @@
 # Release source map
 
-Current Manager release: **5.0.11**, compatible VPN Agent **5.0.1**, schema **46**. The [5.0.11 build](5.0.11/README.md) sanitizes the pinned public filesystem and creates fresh layers without inherited runtime credentials. The host updater is self-contained; normal upgrades use existing MariaDB and storage. Versioned directories below retain historical build, compatibility and regression inputs.
+Current Manager release: **5.0.12**, compatible VPN Agent **5.0.1**, schema **46**. The [5.0.12 build](5.0.12/README.md) layers asserted corrective patches on the immutable sanitized public 5.0.11 image. The host updater is self-contained and preserves existing MariaDB and storage. Versioned directories retain historical build and regression inputs.
 
 `release-source/` contains the versioned build inputs, asserted compiled
 frontend patches, and tests for supported releases. Disposable test output
