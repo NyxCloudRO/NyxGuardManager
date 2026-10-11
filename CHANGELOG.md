@@ -7,6 +7,7 @@
 - Validated certificate names before persistence, classified inaccessible DNS zones, and awaited failed-issuance credential cleanup.
 - Removed routine missing-session checks from new administrative audit writes while retaining significant access failures and historical records.
 - Corrected Nginx activation tracking for connected DNS resolver sockets, valid long hostname maps, zero DDoS burst configuration, and protection headers on proxied responses.
+- Made durable database fingerprints independent of process time zone, preventing false preservation and rollback failures.
 - Kept Update Manager accessible when no newer release is advertised.
 - Retained database schema 46, VPN Agent 5.0.1 and historical recovery compatibility.
 

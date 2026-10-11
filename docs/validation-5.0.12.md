@@ -14,6 +14,7 @@ Manager 5.0.12 retains schema 46 and VPN Agent 5.0.1. All fixtures use synthetic
 - Existing access, migration, certificate error and historical recovery compatibility tests remain passing.
 - Genuine v5.0.0 and v5.0.11 host updater routes reach schema 46, preserve database/container/volume identity and application fingerprints, survive recreation and support same-version no-op updates.
 - Injected cold-backup failure and termination restart unchanged original services. Injected target readiness failure performs verified rollback to the previous application/data state. All three scenarios preserve application fingerprints and clear pending recovery only after health checks.
+- A real database fixture reproduces timezone-dependent fingerprints under the old check and verifies identical fingerprints under UTC and Bucharest with the corrected check. DEV rollback was verified after the same correction.
 - Controlled WireGuard import, connection, ping and fresh handshake succeed through the Manager API without returning private keys.
 
 ## Real-world findings and boundaries

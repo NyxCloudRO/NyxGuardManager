@@ -10,6 +10,7 @@ Corrective release based on v5.0.11. Database schema remains **46**; VPN Agent r
 - Routine missing-session portal checks no longer create administrative audit writes. Invalid supplied credentials, revoked access and exceptional failures remain auditable; historical records remain intact.
 - Nginx activation no longer treats connected outbound DNS resolver sockets as ingress listeners. Genuine ingress listeners and active proxy connections retain activation safeguards.
 - Protection headers survive proxy-location header inheritance. Valid long hostnames fit generated maps, and a zero DDoS burst uses valid Nginx syntax.
+- Durable database fingerprints use an explicit SQL timestamp time zone, preventing unchanged records from falsely failing preservation or rollback checks.
 - Update Manager remains available when the application is already current.
 
 ## Install and update
