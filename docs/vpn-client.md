@@ -2,13 +2,13 @@
 
 All network addresses and identities in this guide are illustrative placeholders. Replace them with your own configuration.
 
-NyxGuard Manager 5.0.10 can connect to multiple remote sites as a WireGuard client. Each site has its own interface, routes, status, lifecycle controls, and connectivity test. Remote applications remain private and can be used as NyxGuard Proxy Host upstreams after the tunnel is working.
+NyxGuard Manager 5.0.11 can connect to multiple remote sites as a WireGuard client. Each site has its own interface, routes, status, lifecycle controls, and connectivity test. Remote applications remain private and can be used as NyxGuard Proxy Host upstreams after the tunnel is working.
 
 ## Architecture and security boundary
 
 The supported stack uses two compatible images:
 
-- `nyxmael/nyxguardmanager:5.0.10` runs the web application without network-administration privileges.
+- `nyxmael/nyxguardmanager:5.0.11` runs the web application without network-administration privileges.
 - `nyxmael/nyxguardmanager-vpn-agent:5.0.1` owns WireGuard operations and receives only `NET_ADMIN` plus `/dev/net/tun`.
 
 The agent shares the manager network namespace but listens only on loopback. Calls are authenticated with a random token stored in a dedicated shared volume. Client private keys stay in the restricted VPN volume and are never returned by the API.
@@ -116,7 +116,7 @@ curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/ins
 curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/update.sh | bash
 ```
 
-Ordinary sudo users replace `bash` with `sudo bash`. Manager 5.0.10 supports the published source/schema policy for 5.0.0–5.0.9, reuses persistent storage, and preserves installed VPN topology. Historical 4.x major transitions remain in their release runbooks. See [application lifecycle](application-lifecycle.md) for normal upgrades and backups.
+Ordinary sudo users replace `bash` with `sudo bash`. Manager 5.0.11 supports the published source/schema policy for 5.0.0–5.0.10, reuses persistent storage, and preserves installed VPN topology. Historical 4.x major transitions remain in their release runbooks. See [application lifecycle](application-lifecycle.md) for normal upgrades and backups.
 
 ### Host TUN prerequisite
 
@@ -147,7 +147,7 @@ UNIT
 systemctl daemon-reload
 ```
 
-This activates the compatible Agent defined by the installation and persists startup without changing Manager or MariaDB. Confirm its health, Manager-to-Agent API availability, configuration persistence and reboot behavior. Customized installations must use their actual Compose directory/unit. The ordinary already-current updater intentionally makes no topology changes; legacy `NYXGUARD_REPAIR_VPN` is not part of the 5.0.10 normal updater.
+This activates the compatible Agent defined by the installation and persists startup without changing Manager or MariaDB. Confirm its health, Manager-to-Agent API availability, configuration persistence and reboot behavior. Customized installations must use their actual Compose directory/unit. The ordinary already-current updater intentionally makes no topology changes; legacy `NYXGUARD_REPAIR_VPN` is not part of the 5.0.11 normal updater.
 
 ## Health and troubleshooting
 
