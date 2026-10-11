@@ -437,18 +437,22 @@ def main():
   run(['systemctl','daemon-reload'])
  # Baseline after stopping write-producing Manager and Agent, before stopping DB.
  stage('Backup: pausing application writes and capturing the database baseline')
- compose('stop','-t','60',*[s for s in services if s!='db'])
- db=inspect(m['database_id']);env={x.split('=',1)[0]:x.split('=',1)[1] for x in db['Config']['Env'] if '=' in x}
- # Capture SQL through an ephemeral read-only process in the old image, sharing
- # only the existing DB network; no replacement stack or cloned database.
- net=next(iter(db['NetworkSettings']['Networks']))
- helper='nyxguard-baseline-'+backup.name+'-'+str(os.getpid())
- m['baseline_helper']=helper;save(m)
- args=['run','--rm','--name',helper,'--network',net,'--entrypoint','node','-i']
- managerenv={x.split('=',1)[0]:x.split('=',1)[1] for x in inspect(manager)['Config']['Env'] if '=' in x}
- for k in ['DB_MYSQL_HOST','DB_MYSQL_PORT','DB_MYSQL_USER','DB_MYSQL_PASSWORD','DB_MYSQL_NAME']:args+=['-e',k+'='+managerenv[k]]
- args+=[inspect(manager)['Image']]
  try:
+  compose('stop','-t','60',*[s for s in services if s!='db'])
+  db=inspect(m['database_id'])
+  # Capture SQL through an ephemeral read-only process in the old image, sharing
+  # only the existing DB network; no replacement stack or cloned database.
+  net=next(iter(db['NetworkSettings']['Networks']))
+  helper='nyxguard-baseline-'+backup.name+'-'+str(os.getpid())
+  m['baseline_helper']=helper;save(m)
+  args=['run','--rm','--name',helper,'--network',net,'--entrypoint','node','-i']
+  managerenv={x.split('=',1)[0]:x.split('=',1)[1] for x in inspect(manager)['Config']['Env'] if '=' in x}
+  for k in ['DB_MYSQL_HOST','DB_MYSQL_PORT','DB_MYSQL_USER','DB_MYSQL_PASSWORD','DB_MYSQL_NAME']:
+   # The application's SQL connection defaults an omitted port to 3306.
+   if k=='DB_MYSQL_PORT' and k not in managerenv:continue
+   if k not in managerenv:raise RuntimeError('Required database connection setting is unavailable: '+k)
+   args+=['-e',k+'='+managerenv[k]]
+  args+=[inspect(manager)['Image']]
   try:m['baseline']=json.loads(docker(*args,'-e',SNAPSHOT,input='null',capture=True))
   except BaseException as primary:
    try:cleanup_baseline(m)

@@ -174,6 +174,64 @@ class ReadinessLifecycle(unittest.TestCase):
  def test_healthy_services_and_probe_complete_acceptance(self):
   self.assertLess(self.exercise(lambda elapsed:self.progress(complete=True)),1)
 
+class BaselinePreparationRecovery(unittest.TestCase):
+ def exercise(self,missing=None,stop_failure=False):
+  with tempfile.TemporaryDirectory() as directory:
+   root=pathlib.Path(directory);state=root/'.upgrade';data=root/'data';data.mkdir()
+   for name in ('.env','docker-compose.yml','vault.key'):(root/name).write_text('fixture')
+   environment={'DB_MYSQL_HOST':'db','DB_MYSQL_USER':'fixture','DB_MYSQL_PASSWORD':'SECRET_CANARY','DB_MYSQL_NAME':'fixture'}
+   if missing:environment.pop(missing)
+   running={'db':True,'nyxguard-manager':True};commands=[];events=[];health_calls=[];opened=[]
+   def compose(*args,**kw):
+    commands.append(args)
+    if args[0]=='stop':
+     for service in args[3:]:running[service]=False
+     if stop_failure and args[2]=='60':raise RuntimeError('Partial stop fixture failure')
+    if args[0]=='start':running[args[1]]=True
+    return ''
+   def inspect(service):
+    mounts=[{'Type':'volume','Name':'fixture_'+service,'Source':str(data),'Destination':'/data'}]
+    if service=='nyxguard-manager':mounts.append({'Type':'bind','Source':str(root/'vault.key'),'Destination':'/run/nyxguard-licensing/vault.key'})
+    return {'Id':service,'Image':'fixture-image','Config':{'Env':[key+'='+value for key,value in environment.items()]},
+     'Mounts':mounts,'NetworkSettings':{'Networks':{'fixture-network':{}}},'State':{'Running':running[service],'ExitCode':0}}
+   def docker(*args,**kw):
+    if args[0]=='ps':return '' if '--filter' in args else 'db nyxguard-manager'
+    self.assertEqual(args[0],'run');self.assertNotIn('DB_MYSQL_PORT=', ' '.join(args))
+    self.assertFalse(running['nyxguard-manager']);self.assertTrue(running['db'])
+    return json.dumps({'tables':{},'migrations':['fixture.js']})
+   def run(args,**kw):
+    if args[0]=='du':return '1 fixture'
+    if args[0]=='tar':raise RuntimeError('Archive fixture failure')
+    self.fail('Unexpected external command in private workflow fixture')
+   def health(manifest):
+    health_calls.append(dict(running));self.assertTrue(all(running.values()))
+    if len(health_calls)>1:self.assertTrue((state/'pending.json').exists())
+   def tracked_open(*args,**kw):
+    file=open(*args,**kw);opened.append(file);return file
+   output=io.StringIO()
+   try:
+    with patch.dict(runner,ROOT=root,STATE=state,DIAGNOSTIC=None,config=lambda:{'services':{'db':{},'nyxguard-manager':{}}},
+     cid=lambda service:service,version=lambda manager:'5.0.10',compose=compose,inspect=inspect,docker=docker,run=run,
+     health=health,open=tracked_open,public_failure=lambda manifest,stage,status:events.append(status)),\
+     patch.dict(os.environ,FORCE_TAG='5.0.11',NYXGUARD_AUTO_YES='1'),patch.object(runner['os'],'geteuid',return_value=0),\
+     patch.object(runner['shutil'],'disk_usage',return_value=types.SimpleNamespace(free=10*1024**3)),\
+     patch.object(runner['sys'],'argv',['update.sh']),contextlib.redirect_stdout(output):
+     with self.assertRaises(RuntimeError) as error:runner['main']()
+   finally:
+    for file in opened:file.close()
+   self.assertTrue(all(running.values()));self.assertEqual(len(health_calls),2)
+   self.assertFalse((state/'pending.json').exists());self.assertEqual(events,['services_restarted'])
+   self.assertFalse(list(state.glob('backup-*/result.json')))
+   self.assertNotIn('SECRET_CANARY',output.getvalue())
+   self.assertNotIn('SECRET_CANARY',''.join(file.read_text() for file in state.glob('diagnostic-*.jsonl')))
+   return str(error.exception)
+ def test_official_source_without_optional_database_port_reaches_baseline_and_recovers_archive_failure(self):
+  self.assertEqual(self.exercise(),'Archive fixture failure')
+ def test_missing_required_connection_setting_restarts_verified_services_without_disclosing_values(self):
+  self.assertIn('Required database connection setting',self.exercise(missing='DB_MYSQL_PASSWORD'))
+ def test_partial_application_stop_failure_restarts_verified_services(self):
+  self.assertEqual(self.exercise(stop_failure=True),'Partial stop fixture failure')
+
 class RecoveryState(unittest.TestCase):
  def test_restart_failure_keeps_pending_recovery(self):
   with tempfile.TemporaryDirectory() as directory:
