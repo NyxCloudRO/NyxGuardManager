@@ -16,3 +16,18 @@ const uploadResponse='return _.pick(row.meta, internalCertificate.allowedSslFile
 if(source.split(uploadResponse).length!==2)throw new Error('Certified certificate upload response marker differs');
 source=source.replace(uploadResponse,'return internalCertificate.cleanMeta(_.pick(row.meta, internalCertificate.allowedSslFiles));');
 fs.writeFileSync(file,source);
+
+const routes=root+'/routes/nginx/certificates.js';
+let routeSource=fs.readFileSync(routes,'utf8');
+const routerMarker=/const router = express.Router\(\{[\s\S]*?\n\}\);/g;
+const routers=routeSource.match(routerMarker);
+if(routers?.length!==1)throw new Error('Certified certificate response router marker differs');
+routeSource="import {safeCertificateResponse} from '../../internal/certificate-errors.mjs';\n"+routeSource.replace(routerMarker,routers[0]+`
+// Sanitize all JSON certificate list/detail/create/update/renew responses while
+// preserving explicitly authorized binary certificate exports.
+router.use((_req,res,next)=>{
+ const json=res.json;
+ res.json=function(value){return json.call(this,safeCertificateResponse(value));};
+ next();
+});`);
+fs.writeFileSync(routes,routeSource);

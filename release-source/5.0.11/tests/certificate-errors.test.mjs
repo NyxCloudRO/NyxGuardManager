@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {certificateFailure,certificateOperation,runCertbot} from '../internal/certificate-errors.mjs';
+import {certificateFailure,certificateOperation,runCertbot,safeCertificateResponse} from '../internal/certificate-errors.mjs';
 const secret='SYNTHETIC_PRIVATE_VALUE';
 for(const [detail,code] of [
  ['Invalid API token','CERTIFICATE_DNS_CREDENTIALS'],['Cloudflare authentication error','CERTIFICATE_DNS_CREDENTIALS'],
@@ -27,4 +27,20 @@ test('plugin and subprocess failures drop original messages and nested causes',a
 test('plugin and storage failures describe the confirmed failing dependency',()=>{
  assert.equal(certificateFailure(new Error('packaging failed '+secret),{phase:'plugin'}).code,'CERTIFICATE_PLUGIN_FAILED');
  assert.equal(certificateFailure(new Error('EACCES '+secret)).code,'CERTIFICATE_STORAGE_FAILED');
+});
+
+test('certificate API metadata is sanitized without changing internal material',()=>{
+ const row={id:1,provider:'other',expires_on:new Date('2030-01-01T00:00:00Z'),meta:{certificate:'PUBLIC_PEM',certificate_key:secret,intermediate_certificate:'CHAIN_PEM',dns_provider_credentials:secret,other_setting:'preserved'}};
+ const response=safeCertificateResponse(row);
+ assert.deepEqual(response.meta,{certificate:true,certificate_key:true,intermediate_certificate:true,other_setting:'preserved'});
+ assert.equal(response.expires_on,'2030-01-01T00:00:00.000Z');
+ assert.equal(row.meta.certificate_key,secret);assert.equal(row.meta.dns_provider_credentials,secret);
+ assert.ok(!JSON.stringify(response).includes(secret));
+});
+test('certificate collection and expanded records retain safe presence indicators',()=>{
+ const rows=[{id:2,meta:{certificate_key:secret}},{id:3,certificate:{id:4,meta:{certificate_key:secret,certificate:''}}}];
+ const response=safeCertificateResponse(rows);
+ assert.equal(response[0].meta.certificate_key,true);assert.equal(response[1].certificate.meta.certificate_key,true);
+ assert.equal(response[1].certificate.meta.certificate,false);
+ assert.ok(!JSON.stringify(response).includes(secret));assert.equal(rows[0].meta.certificate_key,secret);
 });

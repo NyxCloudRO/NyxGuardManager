@@ -31,3 +31,19 @@ export async function runCertbot(execute,command,args,options) {
  await certificateOperation(()=>execute(command,args,options));
  return 'Certificate tooling operation completed.';
 }
+
+// Apply only at the certificate API response boundary. Internal records retain
+// the material required for writing/recreating custom certificate files.
+export function safeCertificateResponse(value) {
+ if(Array.isArray(value))return value.map(safeCertificateResponse);
+ if(!value||typeof value!=='object')return value;
+ if(typeof value.toJSON==='function')return safeCertificateResponse(value.toJSON());
+ const result=Object.fromEntries(Object.entries(value).map(([key,item])=>[key,safeCertificateResponse(item)]));
+ if(result.meta&&typeof result.meta==='object') {
+  for(const key of ['certificate','certificate_key','intermediate_certificate']) {
+   if(Object.hasOwn(result.meta,key))result.meta[key]=Boolean(result.meta[key]);
+  }
+  delete result.meta.dns_provider_credentials;
+ }
+ return result;
+}
