@@ -1,6 +1,6 @@
 # Public host updater
 
-Current Manager release: **5.0.10**, compatible VPN Agent **5.0.1**, schema **45**. The self-contained `update.sh` supports the published 5.0.0–5.0.9 source/schema policy, verifies a cold backup, and replaces application code using existing Compose services and storage. It does not download handover helpers. See [application lifecycle](../docs/application-lifecycle.md).
+Current Manager release: **5.0.11**, compatible VPN Agent **5.0.1**, schema **46**. The self-contained `update.sh` supports the published 5.0.0–5.0.10 source/schema policy, verifies a cold backup, and replaces application code using existing Compose services and storage. It does not download handover helpers. See [application lifecycle](../docs/application-lifecycle.md).
 
 ## Historical adapter and runtime provenance through 5.0.9
 
@@ -47,4 +47,4 @@ Runtime reconciliation regression tests require Bash, jq and Python 3:
 python3 release-source/5.0.1/tests/public-updater-runtime.test.py
 ```
 
-Manager 5.0.10 uses the self-contained host updater and sanitized release build described in [application lifecycle](../docs/application-lifecycle.md). Historical handover sources remain for historical recovery only.
+Manager 5.0.11 uses the self-contained host updater and sanitized release build described in [application lifecycle](../docs/application-lifecycle.md). Historical handover sources remain for historical recovery only.

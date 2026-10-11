@@ -1,0 +1,8 @@
+/* The support layout made this growing group justify from the left. Keep
+   its safe wrapping, but anchor the complete group at the card's inner edge. */
+html[data-app-theme] #root .nyx-dashboard-viewport [role="group"][aria-label="NyxGuard live stats"] {
+  position:static;
+  left:auto;
+  margin-inline-start:auto;
+  justify-content:flex-end;
+}

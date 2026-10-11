@@ -1,5 +1,18 @@
 # Changelog
 
+## 5.0.11 — 2026-10-11
+
+- Repaired Certbot initialization, immutable dependency seeding, corruption recovery and Cloudflare DNS plugin handling.
+- Repaired certificate API confidentiality: certificate JSON omits stored private keys, PEM material and provider credentials while retaining safe presence indicators. Authorized binary certificate export remains available.
+- Improved Access List enforcement: successful mutations wait for effective Nginx enforcement; uncertain or partial activation returns a truthful failure with operational diagnostics.
+- Improved CLI updater stages, elapsed time, bounded progress, long-operation heartbeats and sanitized failure diagnostics, including large-history verification.
+- Improved verified rollback and partial backup-preparation recovery; optional SQL port defaults to 3306.
+- Added persistent operational error diagnostics and additive database migration/schema 46, safe native error classification and bounded failure grouping.
+- Improved sanitized Support Bundle content, Recent problems and troubleshooting while preserving the Diagnostics & Support design.
+- Integrated relevant administrative audit, Event Center, UI and regression fixes.
+
+See [release notes](release-source/5.0.11/RELEASE-NOTES.md) for compatibility, qualification scope and known limitations.
+
 ## 5.0.10 — 2026-10-10
 
 - Replace normal upgrade handovers with one self-contained host updater using Compose, the existing MariaDB service and persistent storage.

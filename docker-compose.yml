@@ -1,7 +1,7 @@
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:5.0.10
+    image: nyxmael/nyxguardmanager:5.0.11
     restart: unless-stopped
     ports:
       - "80:80"
@@ -17,6 +17,7 @@ services:
       DB_MYSQL_PASSWORD: "${DB_MYSQL_PASSWORD}"
       DB_MYSQL_NAME: "${DB_MYSQL_NAME:-nyxguard}"
       SKIP_CERTBOT_OWNERSHIP: "true"
+      DISABLE_IPV6: "${DISABLE_IPV6:-false}"
       NYXCLOUD_LICENSE_VAULT_KEY_PATH: "/run/nyxguard-licensing/vault.key"
       NYXCLOUD_AUTHORITY_URL: "https://licensing.nyxcloud.ro"
       NYXCLOUD_SUPPORT_URL: "https://support-storage.nyxcloud.ro"
