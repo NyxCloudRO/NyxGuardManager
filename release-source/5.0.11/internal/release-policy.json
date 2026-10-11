@@ -1,7 +1,7 @@
 {
   "format": "nyxguard-release-policy-v1",
   "version": "5.0.11",
-  "schema": 45,
+  "schema": 46,
   "agent": "5.0.1",
   "sources": {
     "5.0.0": 42,

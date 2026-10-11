@@ -20,7 +20,10 @@ systemd-detect-virt() { echo VIRT_PROBE >&2; echo "$TEST_VIRT"; }
 uname() { echo "$TEST_KERNEL"; }
 hostname() { echo 192.0.2.1; }
 docker() {
-  if [[ "$1 $2" == "image inspect" ]]; then echo 5.0.4;
+  if [[ "$1 $2" == "volume ls" ]]; then return 0;
+  elif [[ "$1 $2" == "image inspect" ]]; then echo 5.0.4;
+  elif [[ "$1" == inspect ]]; then echo healthy;
+  elif [[ "$1" == run && "$*" == *'console.log(p.agent)'* ]]; then echo 5.0.0;
   else echo "DOCKER $*"; fi
 }
 start_vpn_stack() { echo VPN_STACK; }
@@ -28,6 +31,7 @@ install_systemd_unit() { echo "SYSTEMD_VPN=$1"; }
 main
 '''
             env = os.environ | {'INSTALL_DIR': directory, 'APP_TAG': '5.0.4',
+                  'NYXGUARD_VAULT_DIR': directory + '/vault',
                   'NYXGUARD_REQUIRE_VPN': '1' if required else '0',
                   'TUN_STATE': 'usable' if usable else 'missing',
                   'PREP_SUCCEEDS': 'yes' if preparation else 'no',
@@ -56,7 +60,8 @@ main
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('NyxGuard Manager 5.0.4 is up and running.', result.stdout)
         self.assertIn('VPN Agent pending — TUN unavailable', result.stdout)
-        self.assertIn('NYXGUARD_REPAIR_VPN=1', result.stdout)
+        self.assertIn('VPN Agent activation', result.stdout)
+        self.assertNotIn('NYXGUARD_REPAIR_VPN=1', result.stdout)
         self.assertIn('pct set <CTID> --dev0 path=/dev/net/tun,mode=0666', result.stdout)
         self.assertIn('SYSTEMD_VPN=0', result.stdout)
         self.assertNotIn('VPN_STACK', result.stdout)

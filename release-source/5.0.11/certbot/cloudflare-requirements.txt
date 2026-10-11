@@ -1,0 +1,6 @@
+# Dependencies absent from the immutable 5.0.9 seed. No resolver drift at build time.
+certbot-dns-cloudflare==5.3.1 --hash=sha256:ce0faa65bc20493b1d6a6569b1e079f5a0d7795b80963bb23b7c70360f21161c
+cloudflare==2.19.4 --hash=sha256:3b6000a01a237c23bccfdf6d20256ea5111ec74a826ae9e74f9f0e5bb5b2383f
+jsonlines==4.0.0 --hash=sha256:185b334ff2ca5a91362993f42e83588a360cf95ce4b71a73548502bda52a7c55
+attrs==26.1.0 --hash=sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309
+PyYAML==6.0.3 --hash=sha256:b8bb0864c5a28024fac8a632c443c87c5aa6f215c0b126c449ae1a150412f31d
