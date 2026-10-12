@@ -4,7 +4,7 @@ Ordinary updates use the [canonical root/sudo commands](../README.md#updates-and
 
 ## Restore a retained host backup
 
-The 5.0.11 host updater retains verified cold backups under the installation's `.upgrade/backup-*` directories. Review the root-only `manifest.json` and `result.json` to select the correct pre-upgrade point. Restore uses the exact installation storage paths, previous application identities and matching database files; it does not create a parallel database or application stack.
+The 5.0.12 host updater retains verified cold backups under the installation's `.upgrade/backup-*` directories. Review the root-only `manifest.json` and `result.json` to select the correct pre-upgrade point. Restore uses the exact installation storage paths, previous application identities and matching database files; it does not create a parallel database or application stack.
 
 As root, download the current updater, then select a backup from this installation:
 
@@ -17,7 +17,7 @@ Use the current `main` updater shown above; the original immutable 5.0.10 asset/
 
 ## Historical recovery through 5.0.9
 
-The material below describes the previous recovery implementation and historical major transitions. It does not describe the normal 5.0.11 upgrade workflow.
+The material below describes the previous recovery implementation and historical major transitions. It does not describe the normal 5.0.12 upgrade workflow.
 
 # Advanced recovery and independent installations
 

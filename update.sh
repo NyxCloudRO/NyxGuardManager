@@ -176,7 +176,7 @@ def health(m,readiness=None):
 # migration bookkeeping, retention and notification dispatch are not corruption.
 SNAPSHOT=r'''
 const mysql=require('/app/node_modules/mysql2/promise');const crypto=require('crypto');
-(async()=>{let c=await mysql.createConnection({host:process.env.DB_MYSQL_HOST,port:process.env.DB_MYSQL_PORT||3306,user:process.env.DB_MYSQL_USER,password:process.env.DB_MYSQL_PASSWORD,database:process.env.DB_MYSQL_NAME});
+(async()=>{let c=await mysql.createConnection({host:process.env.DB_MYSQL_HOST,port:process.env.DB_MYSQL_PORT||3306,user:process.env.DB_MYSQL_USER,password:process.env.DB_MYSQL_PASSWORD,database:process.env.DB_MYSQL_NAME,timezone:"Z"});
 let [tables]=await c.query('SHOW TABLES');let names=tables.map(t=>Object.values(t)[0]);let result={};
 const important=['user','auth','user_permission','setting','proxy_host','certificate','access_list','access_list_auth','access_list_client','nyxguard_settings','nyxguard_country_rule','nyxguard_ip_rule','nyxguard_waf_rule','dead_host','redirection_host','stream','nyxcloud_license_state','audit_log'];
 const history={nyxcloud_license_state:['id','installation_id'],audit_log:['id','created_on','action','object_type','object_id']};
