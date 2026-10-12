@@ -15,7 +15,9 @@ Use the [README installation commands](../README.md#installation) for a root she
 | Debian 12 | Supported | Working installs recorded in 3.0.0; 5.0.7 privilege/package checks | No new OS-specific validation claimed |
 | Debian 13 | Supported | Working installs recorded in 3.0.0 | Controlled runtime/upgrade checks; fresh-host OS retesting not claimed |
 
-Support carries forward independently of hotfix retesting. The [compatibility evidence below](#compatibility-evidence) records the evidence and configuration limits; [5.0.11 validation coverage](validation-5.0.11.md) describes the focused release tests. Historical family labels do not certify every point release or a fresh-host installation in 5.0.11.
+Support carries forward independently of hotfix retesting. The [compatibility evidence below](#compatibility-evidence) records the evidence and configuration limits; [historical 5.0.11 coverage](validation-5.0.11.md) and [current 5.0.12 coverage](validation-5.0.12.md) distinguish executed tests. Historical family labels do not certify every point release.
+
+For 5.0.12, native Ubuntu 24.04.5 fresh installations passed with stock installer deadlines, including Manager-only without TUN and Manager plus Agent with TUN. Required-VPN rejection, later Agent activation and same-version no-op were also checked.
 
 The installer requires Ubuntu or Debian, apt-get and a running systemd host; it prepares Docker/Compose dependencies. VPN also requires usable host TUN and a reachable WireGuard endpoint. Restricted guests without TUN can run Manager and MariaDB without VPN. Other distributions and versions outside this matrix have no established official support; manual Docker deployment is an evaluation path, not a support guarantee.
 
@@ -28,7 +30,7 @@ The matrix restores the established support contract; the focused hotfix test li
 - **Ubuntu 26.04 LTS:** the [5.0.4 release notes](../release-source/5.0.4/RELEASE-NOTES.md#ubuntu-2604-lts) record accepted Manager/MariaDB operation, installer execution with distribution Docker/Compose packages, schema 45, application APIs, systemd startup and reboot persistence on 26.04.1. VPN acceptance required usable TUN and included handshakes, connectivity and restart/reboot checks.
 - **Later focused coverage:** [5.0.7](validation-5.0.7.md) records Ubuntu 24.04 runtime installation with existing packages and Debian 12 privilege/package resolution. These checks are narrower than full fresh-host validation. [5.0.8](validation-5.0.8.md) records upgrade, recovery and host-contract tests and explicitly states their limits; it does not establish new fresh-host acceptance for every OS in the matrix.
 
-The [installer](../install.sh) checks distribution identity (Ubuntu/Debian), apt-get availability and a running systemd host; it does not filter OS version numbers. That broad check is an installation prerequisite, not evidence that every release or derivative is officially supported. The 5.0.11 host workflow is documented in [application lifecycle](application-lifecycle.md); historical compatibility evidence remains unchanged.
+The [installer](../install.sh) checks distribution identity (Ubuntu/Debian), apt-get availability and a running systemd host; it does not filter OS version numbers. That broad check is an installation prerequisite, not evidence that every release or derivative is officially supported. The 5.0.12 host workflow is documented in [application lifecycle](application-lifecycle.md); historical compatibility evidence remains unchanged.
 
 The [5.0.9 validation guide](validation-5.0.9.md) records the isolated Debian 13 existing-data upgrade, verified rollback/retry and focused contracts. It does not claim fresh-host installation across the matrix.
 

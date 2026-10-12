@@ -15,6 +15,9 @@ Manager 5.0.12 retains schema 46 and VPN Agent 5.0.1. All fixtures use synthetic
 - Genuine v5.0.0 and v5.0.11 host updater routes reach schema 46, preserve database/container/volume identity and application fingerprints, survive recreation and support same-version no-op updates.
 - Injected cold-backup failure and termination restart unchanged original services. Injected target readiness failure performs verified rollback to the previous application/data state. All three scenarios preserve application fingerprints and clear pending recovery only after health checks.
 - A real database fixture reproduces timezone-dependent fingerprints under the old check and verifies identical fingerprints under UTC and Bucharest with the corrected check. DEV rollback was verified after the same correction.
+- Stock installer on a disposable native Ubuntu 24.04 host: fresh Manager-only with unavailable TUN, required-VPN rejection without TUN, same-version no-op without an Agent, later Agent activation, and fresh Manager plus compatible Agent. Fresh setup/login, schema 46 and authenticated Agent API checks passed.
+- Actual controlled guest reboot: changed kernel boot ID, active startup service, healthy Manager/Agent, unchanged vault hash, preserved application fingerprints/schema 46 and restored WireGuard connection with a successful ping.
+- Updater regression suite: 48 passed and 5 skipped; skipped cases are not counted as passing.
 - Controlled WireGuard import, connection, ping and fresh handshake succeed through the Manager API without returning private keys.
 
 ## Real-world findings and boundaries
@@ -22,5 +25,9 @@ Manager 5.0.12 retains schema 46 and VPN Agent 5.0.1. All fixtures use synthetic
 A failed Cloudflare request contained a validly spelled but unintended second domain outside the accessible zone. The plugin failed during zone discovery, before an ACME propagation decision. Correcting the requested wildcard/apex pair produced a real valid certificate. Existing working certificate material was inspected read-only and preserved. Exposed provider credentials must be rotated before additional live testing; no new agent-run live staging or production issuance is claimed.
 
 Licensing transport failures, email delivery failures and recovery binding mismatches were investigated separately. Authorized infrastructure maintenance restored public authority transport and queued recovery email delivery. Live customer recovery confirmation and entitlement replacement are not replayed as qualification tests. Case-sensitive purchase identities remain distinct; this release does not merge customers or modify unrelated product entitlements.
+
+A local software-emulated Ubuntu reboot fixture needs extended internal/external health-probe and test-client deadlines. Its initial stock installer timed out; that attempt is not a passing fresh-install result. Native Ubuntu fresh installations passed with stock deadlines. Reboot qualification uses the unchanged application image and probe logic with fixture-only timeout overrides and a manually installed startup unit with retry settings for delayed readiness. Synthetic proxy data was prepared after a timed-out fixture creation; successful proxy creation acceptance comes from the native installations.
+
+The controlled WireGuard peer endpoint was corrected to stable Docker DNS after its container IP changed, before the verified second reboot. This is controlled reboot verification, not proof of stock emulated installer timing or power-loss recovery.
 
 Historical OS compatibility carries forward. A focused disposable Ubuntu host check does not certify every supported distribution or hardware configuration. OpenVPN and broad attack-detection efficacy remain unqualified.

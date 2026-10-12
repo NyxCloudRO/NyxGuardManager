@@ -119,6 +119,8 @@ Network: host access to Docker registries and certificate services; inbound TCP 
 
 Support carries forward independently of hotfix retesting. The [installation and compatibility guide](docs/installation.md) records the evidence and configuration limits; [5.0.12 validation coverage](docs/validation-5.0.12.md) describes the focused release tests. Historical family labels do not certify every point release.
 
+For 5.0.12, native Ubuntu 24.04.5 fresh installations passed with stock installer deadlines, including Manager-only without TUN and Manager plus Agent with TUN. Required-VPN rejection, later Agent activation and same-version no-op were also checked.
+
 The installer requires Ubuntu or Debian, apt-get and a running systemd host; it prepares Docker/Compose dependencies. VPN also requires usable host TUN and a reachable WireGuard endpoint. Restricted guests without TUN can run Manager and MariaDB without VPN. Other distributions and versions outside this matrix have no established official support; manual Docker deployment is an evaluation path, not a support guarantee.
 
 ## Docker deployment
