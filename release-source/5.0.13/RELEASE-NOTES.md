@@ -1,15 +1,29 @@
 # NyxGuard Manager 5.0.13
 
-Manager 5.0.13 consolidates management UI presentation and ships with VPN Agent 5.0.2. Database schema remains 46.
+A smoother management experience, clearer protection controls, and more flexible WireGuard connections.
 
-- Stable five-step Proxy Host wizard, compact shared toolbars, viewport-aware action menus, compact protection switches and traffic-rule actions.
-- Shared accessible in-app confirmations and compact management dialogs, preserving original forms, validations and permission checks.
-- Update notifications appear only for freshly verified, compatible newer stable images; manual Update Manager remains available in Settings.
-- Theme-aware notification channel selection, single-write saves, Slack configuration compatibility, preserved masked email credentials, and removal of raw credential-bearing configuration JSON from responses.
-- Correct effective Auth Bypass override presentation and immediate reconciliation after failed mutation responses.
-- Ordered Access List client persistence and literal handling of passwords beginning with a dash.
-- Full-tunnel WireGuard profile imports without mandatory subnet overrides, preserved local/control response routes, explicit manual-table semantics, and upload draft retention.
+## Easier everyday management
 
-Normal updates retain existing MariaDB, licensing vault, profiles and storage. The release policy selects Agent 5.0.2. No production installation is automatically upgraded by publication.
+- Configure Proxy Hosts in a stable five-step wizard with clear sections and a live configuration summary.
+- Manage more applications and traffic rules at a glance with compact rows and controls.
+- Use consistent search, Help, action menus, and in-app confirmations across management pages.
+- Enjoy refined account, user, Access List, and certificate dialogs with improved keyboard navigation and responsive layouts.
+- Review Recent Problems in a more compact layout while keeping diagnostic detail close at hand.
 
-See [validation coverage](../../docs/validation-5.0.13.md) for executed scenarios and qualified limitations. Live public ACME issuance is not a UI acceptance test. Imported custom certificates retain the baseline limitation that renewal and archive download are supported for Let's Encrypt certificates; no custom renewal/download success is claimed.
+## Clearer status and notifications
+
+- See update notifications when a compatible newer stable release is verified. Manual Update Manager remains available in Settings.
+- Choose Webhook, Slack, or Email channels with a selector that follows all twelve supported themes.
+- Keep notification settings and saved email credentials when editing channels.
+- See application Auth Bypass controls reflect each application's effective configuration.
+
+## More flexible VPN connections
+
+- Import standard WireGuard full-tunnel profiles without having to enter replacement remote networks.
+- Keep local management access available while a managed full tunnel is connected.
+- Use optional remote-network overrides for split routing, or retain explicit manual routing-table settings.
+- Keep the selected profile and entered details available to retry an unsuccessful upload.
+
+This release includes VPN Agent 5.0.2 and retains database schema 46. Existing configuration, licensing data, and storage remain compatible with normal updates.
+
+See [validation coverage](../../docs/validation-5.0.13.md) for supported platforms and qualification scope.
