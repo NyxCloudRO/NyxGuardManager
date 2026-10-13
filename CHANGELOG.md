@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.0.13 — 2026-10-13
+
+- Consolidated stable management wizards, toolbars, viewport-aware action menus and accessible in-app confirmations.
+- Improved compact applications, traffic rules, diagnostics density and truthful update notifications.
+- Corrected notification themes, duplicate saves, Slack configuration compatibility and credential response confidentiality.
+- Corrected Auth Bypass effective-state presentation and failed-write reconciliation.
+- Preserved Access List rule order and passwords beginning with a dash.
+- Added VPN Agent 5.0.2 full-tunnel support with local/control route preservation and upload draft retention.
+- Retained schema 46 and existing installation/update/recovery storage contracts.
+
+See [release notes](release-source/5.0.13/RELEASE-NOTES.md) for scope and limitations.
+
 ## 5.0.12 — 2026-10-11
 
 - Restored compact Protected Apps rows, domain badges, keyboard focus, confirmed-state updates and security-change confirmations.

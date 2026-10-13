@@ -1,0 +1,13 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';
+const c=vm.createContext({});vm.runInContext(fs.readFileSync(new URL('../frontend/wizard-component.js',import.meta.url),'utf8'),c);
+const valid={path:'/api',forwardHost:'upstream.example.test',forwardScheme:'http',forwardPort:8080,advancedConfig:'proxy_set_header X-Test yes;'};
+const validate=locations=>JSON.parse(JSON.stringify(c.NyxValidateProxyLocations({locations})));
+test('no locations preserves ordinary proxy save',()=>assert.deepEqual(validate([]),{}));
+test('valid location and advanced config remain accepted',()=>assert.deepEqual(validate([valid]),{}));
+test('blank location cannot be silently omitted',()=>assert.match(validate([{...valid,path:''}]).locations[0].path,/requires a path/));
+test('duplicate paths are identified after whitespace normalization',()=>assert.match(validate([valid,{...valid,path:' /api '}]).locations[1].path,/Duplicate/));
+test('distinct paths preserve priority/order',()=>assert.deepEqual(validate([valid,{...valid,path:'/other'}]),{}));
+test('missing upstream rejected',()=>assert.match(validate([{...valid,forwardHost:' '}]).locations[0].forwardHost,/hostname/));
+for(const value of [0,65536,1.5,'not-a-port'])test('invalid port '+value,()=>assert.match(validate([{...valid,forwardPort:value}]).locations[0].forwardPort,/65535/));
+test('string port from browser form is accepted',()=>assert.deepEqual(validate([{...valid,forwardPort:'443',forwardScheme:'https'}]),{}));
+test('existing nginx path expressions are retained',()=>assert.deepEqual(validate([{...valid,path:'~ ^/api/'}]),{}));
