@@ -138,7 +138,7 @@ For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:5.0.14
+    image: nyxmael/nyxguardmanager:5.0.15
     restart: unless-stopped
     ports:
       - "80:80"
