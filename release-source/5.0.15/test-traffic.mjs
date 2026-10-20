@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';import fs from'node:fs/promises';import os from'node:os';import path from'node:path';import vm from'node:vm';import zlib from'node:zlib';
 const lib=process.argv[2]||'.', {accessSummary,trafficWindow}=await import(path.resolve(lib,'traffic-summary.mjs')),{scanHistoricalLog,clearHistoricalLogCache,historicalCacheState}=await import(path.resolve(lib,'historical-log-cache.mjs'));
-const source=await fs.readFile(new URL('./attack-log.js',import.meta.url),'utf8');
-const parser=vm.runInNewContext(source.slice(source.indexOf('function monthToIndex'),source.indexOf('async function readRecentLines'))+';parseAccessLine');
+const {parseAccessLine:parser}=await import('./parser.mjs');
 const dir=await fs.mkdtemp(path.join(os.tmpdir(),'nyx-task7-')),now=Date.parse('2026-10-26T00:00:00Z'),days=[1,7,30,60,90,180];let checks=0;
 function eq(a,b){assert.deepEqual(a,b);checks++;}
 const events=[];for(const d of days){for(const delta of [-1,0,1]){const t=now-d*86400000+delta,blocked=delta===0;events.push({t,status:blocked?403:200,rx:17+d,tx:1003+d});}}
