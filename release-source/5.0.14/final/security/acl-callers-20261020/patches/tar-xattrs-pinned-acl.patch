@@ -1,0 +1,90 @@
+--- a/src/xattrs.c
++++ b/src/xattrs.c
+@@ -379,27 +379,61 @@
+         WARN ((0, 0, _("POSIX ACL support is not available")));
+       done = 1;
+ #else
+-      int err = file_has_acl_at (parentfd, file_name, &st->stat);
++      int own_pin = -1;
++      struct stat actual;
++      /* Existing tar creation callers use zero as their no-fd sentinel. */
++      if (fd <= 0)
++        fd = own_pin = openat (parentfd, file_name, O_PATH | O_CLOEXEC
++                               | (dereference_option ? 0 : O_NOFOLLOW));
++      if (fd < 0 || fstat (fd, &actual) != 0
++          || actual.st_dev != st->stat.st_dev
++          || actual.st_ino != st->stat.st_ino)
++        {
++          if (own_pin >= 0)
++            close (own_pin);
++          ERROR ((0, ESTALE, _("%s: File changed before ACL read"),
++                  quotearg_colon (file_name)));
++          return;
++        }
++      /* Symlink ACLs are not followed unless archive traversal selected
++         the referent, in which case the descriptor names that referent. */
++      if (S_ISLNK (actual.st_mode))
++        {
++          if (own_pin >= 0)
++            close (own_pin);
++          return;
++        }
++      char pinned_name[64];
++      sprintf (pinned_name, "/proc/self/fd/%d", fd);
++      int err = file_has_acl_at (AT_FDCWD, pinned_name, &actual);
+       if (err == 0)
+-        return;
++        {
++          if (own_pin >= 0)
++            close (own_pin);
++          return;
++        }
+       if (err == -1)
+         {
+           call_arg_warn ("file_has_acl_at", file_name);
++          if (own_pin >= 0)
++            close (own_pin);
+           return;
+         }
+ 
+-      xattrs__acls_get_a (parentfd, file_name, st,
++      xattrs__acls_get_a (AT_FDCWD, pinned_name, st,
+                           &st->acls_a_ptr, &st->acls_a_len);
+       if (!xisfile)
+-        xattrs__acls_get_d (parentfd, file_name, st,
++        xattrs__acls_get_d (AT_FDCWD, pinned_name, st,
+                             &st->acls_d_ptr, &st->acls_d_len);
++      if (own_pin >= 0)
++        close (own_pin);
+ #endif
+     }
+ }
+ 
+ void
+ xattrs_acls_set (struct tar_stat_info const *st,
+-                 char const *file_name, char typeflag)
++                 char const *file_name, char typeflag, int fd)
+ {
+   if (acls_option > 0 && typeflag != SYMTYPE)
+     {
+@@ -409,10 +443,18 @@
+         WARN ((0, 0, _("POSIX ACL support is not available")));
+       done = 1;
+ #else
+-      xattrs__acls_set (st, file_name, ACL_TYPE_ACCESS,
++      if (fd < 0)
++        {
++          ERROR ((0, ESTALE, _("%s: No bound descriptor for ACL restoration"),
++                  quotearg_colon (file_name)));
++          return;
++        }
++      char pinned_name[64];
++      sprintf (pinned_name, "/proc/self/fd/%d", fd);
++      xattrs__acls_set (st, pinned_name, ACL_TYPE_ACCESS,
+                         st->acls_a_ptr, st->acls_a_len, false);
+       if (typeflag == DIRTYPE || typeflag == GNUTYPE_DUMPDIR)
+-        xattrs__acls_set (st, file_name, ACL_TYPE_DEFAULT,
++        xattrs__acls_set (st, pinned_name, ACL_TYPE_DEFAULT,
+                           st->acls_d_ptr, st->acls_d_len, true);
+ #endif
+     }

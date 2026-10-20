@@ -1,0 +1,32 @@
+{
+  "en": {
+    "task7_1.notifications.no-events": "No events selected. Only manual tests can send notifications.",
+    "task7_1.notifications.manual-test": "Manual connectivity test",
+    "task7_1.notifications.invalid-events": "Select valid notification events."
+  },
+  "es": {
+    "task7_1.notifications.no-events": "No hay eventos seleccionados. Solo las pruebas manuales pueden enviar notificaciones.",
+    "task7_1.notifications.manual-test": "Prueba manual de conexión",
+    "task7_1.notifications.invalid-events": "Selecciona eventos de notificación válidos."
+  },
+  "fr": {
+    "task7_1.notifications.no-events": "Aucun événement sélectionné. Seuls les tests manuels peuvent envoyer des notifications.",
+    "task7_1.notifications.manual-test": "Test manuel de connexion",
+    "task7_1.notifications.invalid-events": "Sélectionnez des événements de notification valides."
+  },
+  "de": {
+    "task7_1.notifications.no-events": "Keine Ereignisse ausgewählt. Nur manuelle Tests können Benachrichtigungen senden.",
+    "task7_1.notifications.manual-test": "Manueller Verbindungstest",
+    "task7_1.notifications.invalid-events": "Wählen Sie gültige Benachrichtigungsereignisse aus."
+  },
+  "it": {
+    "task7_1.notifications.no-events": "Nessun evento selezionato. Solo i test manuali possono inviare notifiche.",
+    "task7_1.notifications.manual-test": "Test manuale di connessione",
+    "task7_1.notifications.invalid-events": "Seleziona eventi di notifica validi."
+  },
+  "ro": {
+    "task7_1.notifications.no-events": "Niciun eveniment selectat. Doar testele manuale pot trimite notificări.",
+    "task7_1.notifications.manual-test": "Test manual de conectivitate",
+    "task7_1.notifications.invalid-events": "Selectează evenimente valide pentru notificări."
+  }
+}

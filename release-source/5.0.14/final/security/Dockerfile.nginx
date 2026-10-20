@@ -1,0 +1,12 @@
+FROM nyxguardmanager:5.0.14-security-candidate AS build
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y libpcre3-dev libssl-dev zlib1g-dev patch
+COPY final/security/vendor /vendor
+COPY final/security/build-nginx.py /build-nginx.py
+RUN python3 /build-nginx.py
+FROM nyxguardmanager:5.0.14-security-candidate
+COPY --from=build /patched-nginx /usr/sbin/nginx
+# These unused AV1/image conversion and SSH client helpers are not used by Manager,
+# its avatar storage, certificate workflows or VPN Agent. Preserve all other dependencies.
+RUN DEBIAN_FRONTEND=noninteractive apt-get purge -y libaom3 openssh-client
+COPY final/RELEASE-NOTES.md /app/CHANGELOG_PUBLIC.md
+LABEL nyxguard.security.nginx-backport="CVE-2026-42533;upstream-six-commit-series"

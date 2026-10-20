@@ -1,0 +1,44 @@
+{
+  "en": {
+    "task7.coverage": "Recorded access logs only. Complete history and collection continuity are unverified; equal totals may reflect limited retention. RX: request bytes; TX: response bytes. HTTP 4xx/5xx count as blocked; this differs from Traffic Rules blocked observations.",
+    "task7.event.first-seen": "First seen",
+    "task7.event.unknown": "Latest occurrence unavailable",
+    "task7.as-of": "As of {time}.",
+    "task7.unknown-status": "Unknown"
+  },
+  "es": {
+    "task7.coverage": "Solo registros de acceso conservados. No se han verificado el historial completo ni la continuidad; los totales iguales pueden deberse a la retención limitada. RX: bytes de solicitud; TX: bytes de respuesta. HTTP 4xx/5xx se cuentan como bloqueados; difiere de las observaciones de Reglas de tráfico.",
+    "task7.event.first-seen": "Primera aparición",
+    "task7.event.unknown": "Última aparición no disponible",
+    "task7.as-of": "Datos al {time}.",
+    "task7.unknown-status": "Desconocido"
+  },
+  "fr": {
+    "task7.coverage": "Journaux d’accès conservés uniquement. L’historique complet et la continuité ne sont pas vérifiés ; des totaux égaux peuvent refléter une conservation limitée. RX : octets des requêtes ; TX : octets des réponses. HTTP 4xx/5xx sont comptés comme bloqués, contrairement aux observations des Règles de trafic.",
+    "task7.event.first-seen": "Première occurrence",
+    "task7.event.unknown": "Dernière occurrence indisponible",
+    "task7.as-of": "Données au {time}.",
+    "task7.unknown-status": "Inconnu"
+  },
+  "de": {
+    "task7.coverage": "Nur aufbewahrte Zugriffsprotokolle. Vollständigkeit und Erfassungskontinuität sind ungeprüft; gleiche Summen können durch begrenzte Aufbewahrung entstehen. RX: Anfragebytes; TX: Antwortbytes. HTTP 4xx/5xx zählen als blockiert; dies unterscheidet sich von den Beobachtungen unter Verkehrsregeln.",
+    "task7.event.first-seen": "Erstmals gesehen",
+    "task7.event.unknown": "Letztes Auftreten nicht verfügbar",
+    "task7.as-of": "Stand: {time}.",
+    "task7.unknown-status": "Unbekannt"
+  },
+  "it": {
+    "task7.coverage": "Solo registri di accesso conservati. Cronologia completa e continuità non verificate; totali uguali possono riflettere una conservazione limitata. RX: byte delle richieste; TX: byte delle risposte. HTTP 4xx/5xx contano come bloccati, diversamente dalle osservazioni delle Regole di traffico.",
+    "task7.event.first-seen": "Prima occorrenza",
+    "task7.event.unknown": "Ultima occorrenza non disponibile",
+    "task7.as-of": "Dati al {time}.",
+    "task7.unknown-status": "Sconosciuto"
+  },
+  "ro": {
+    "task7.coverage": "Doar jurnalele de acces păstrate. Istoricul complet și continuitatea colectării nu sunt verificate; totalurile egale pot reflecta retenția limitată. RX: octeți ai cererilor; TX: octeți ai răspunsurilor. HTTP 4xx/5xx sunt numărate ca blocate; diferă de observațiile din Reguli de trafic.",
+    "task7.event.first-seen": "Prima apariție",
+    "task7.event.unknown": "Ultima apariție indisponibilă",
+    "task7.as-of": "Date la {time}.",
+    "task7.unknown-status": "Necunoscut"
+  }
+}

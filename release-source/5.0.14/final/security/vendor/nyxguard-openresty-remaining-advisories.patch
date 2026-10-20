@@ -1,0 +1,1058 @@
+--- a/src/event/ngx_event_openssl.c
++++ b/src/event/ngx_event_openssl.c
+@@ -4887,7 +4887,7 @@
+     /* sync keys to the worker process memory */
+ 
+     ngx_memcpy(keys->elts, cache->ticket_keys,
+-               2 * sizeof(ngx_ssl_ticket_key_t));
++               keys->nelts * sizeof(ngx_ssl_ticket_key_t));
+ 
+     ngx_shmtx_unlock(&shpool->mutex);
+ 
+--- a/src/event/ngx_event_openssl_stapling.c
++++ b/src/event/ngx_event_openssl_stapling.c
+@@ -111,6 +111,7 @@
+ 
+     ngx_resolver_t              *resolver;
+     ngx_msec_t                   resolver_timeout;
++    ngx_resolver_ctx_t          *resolve;
+ 
+     ngx_msec_t                   timeout;
+ 
+@@ -1303,6 +1304,10 @@
+     ngx_log_debug0(NGX_LOG_DEBUG_EVENT, ctx->log, 0,
+                    "ssl ocsp done");
+ 
++    if (ctx->resolve) {
++        ngx_resolve_name_done(ctx->resolve);
++    }
++
+     if (ctx->peer.connection) {
+         ngx_close_connection(ctx->peer.connection);
+     }
+@@ -1395,7 +1400,10 @@
+         resolve->data = ctx;
+         resolve->timeout = ctx->resolver_timeout;
+ 
++        ctx->resolve = resolve;
++
+         if (ngx_resolve_name(resolve) != NGX_OK) {
++            ctx->resolve = NULL;
+             ngx_ssl_ocsp_error(ctx);
+             return;
+         }
+@@ -1484,6 +1492,7 @@
+     }
+ 
+     ngx_resolve_name_done(resolve);
++    ctx->resolve = NULL;
+ 
+     ngx_ssl_ocsp_connect(ctx);
+     return;
+@@ -1491,6 +1500,8 @@
+ failed:
+ 
+     ngx_resolve_name_done(resolve);
++    ctx->resolve = NULL;
++
+     ngx_ssl_ocsp_error(ctx);
+ }
+ 
+--- a/src/event/quic/ngx_event_quic_migration.c
++++ b/src/event/quic/ngx_event_quic_migration.c
+@@ -193,6 +193,8 @@
+ 
+     path->validated = 1;
+ 
++    ngx_quic_set_connection_path(c, path);
++
+     if (path->mtu_unvalidated) {
+         path->mtu_unvalidated = 0;
+         return ngx_quic_validate_path(c, path);
+@@ -510,9 +512,10 @@
+     qc->path = next;
+     qc->path->tag = NGX_QUIC_PATH_ACTIVE;
+ 
+-    ngx_quic_set_connection_path(c, next);
++    if (next->validated) {
++        ngx_quic_set_connection_path(c, next);
+ 
+-    if (!next->validated && next->state != NGX_QUIC_PATH_VALIDATING) {
++    } else if (next->state != NGX_QUIC_PATH_VALIDATING) {
+         if (ngx_quic_validate_path(c, next) != NGX_OK) {
+             return NGX_ERROR;
+         }
+@@ -806,8 +809,6 @@
+         qc->path = bkp;
+         qc->path->tag = NGX_QUIC_PATH_ACTIVE;
+ 
+-        ngx_quic_set_connection_path(c, qc->path);
+-
+         ngx_log_error(NGX_LOG_INFO, c->log, 0,
+                       "quic path seq:%uL addr:%V is restored from backup",
+                       qc->path->seqnum, &qc->path->addr_text);
+--- a/src/http/modules/ngx_http_charset_filter_module.c
++++ b/src/http/modules/ngx_http_charset_filter_module.c
+@@ -689,7 +689,6 @@
+     u_char        c, *p, *src, *dst, *saved, **table;
+     uint32_t      n;
+     ngx_buf_t    *b;
+-    ngx_uint_t    i;
+     ngx_chain_t  *out, *cl, **ll;
+ 
+     src = buf->pos;
+@@ -783,18 +782,12 @@
+     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, pool->log, 0,
+                    "http charset utf saved: %z", ctx->saved_len);
+ 
+-    p = src;
+-
+-    for (i = ctx->saved_len; i < NGX_UTF_LEN; i++) {
+-        ctx->saved[i] = *p++;
+-
+-        if (p == buf->last) {
+-            break;
+-        }
+-    }
++    len = ngx_min(NGX_UTF_LEN - ctx->saved_len, (size_t) (buf->last - src));
++    ngx_memcpy(&ctx->saved[ctx->saved_len], src, len);
++    len += ctx->saved_len;
+ 
+     saved = ctx->saved;
+-    n = ngx_utf8_decode(&saved, i);
++    n = ngx_utf8_decode(&saved, len);
+ 
+     c = '\0';
+ 
+@@ -810,7 +803,7 @@
+ 
+         /* incomplete UTF-8 symbol */
+ 
+-        if (i < NGX_UTF_LEN) {
++        if (len < NGX_UTF_LEN) {
+             out = ngx_http_charset_get_buf(pool, ctx);
+             if (out == NULL) {
+                 return NULL;
+@@ -823,8 +816,7 @@
+             b->sync = 1;
+             b->shadow = buf;
+ 
+-            ngx_memcpy(&ctx->saved[ctx->saved_len], src, i);
+-            ctx->saved_len += i;
++            ctx->saved_len = len;
+ 
+             return out;
+         }
+@@ -863,6 +855,10 @@
+         ngx_log_debug0(NGX_LOG_DEBUG_HTTP, pool->log, 0,
+                        "http charset invalid utf 1");
+ 
++        if (saved < &ctx->saved[ctx->saved_len]) {
++            saved = &ctx->saved[ctx->saved_len];
++        }
++
+     } else {
+         dst = ngx_sprintf(dst, "&#%uD;", n);
+     }
+--- a/src/http/modules/ngx_http_dav_module.c
++++ b/src/http/modules/ngx_http_dav_module.c
+@@ -535,19 +535,20 @@
+ static ngx_int_t
+ ngx_http_dav_copy_move_handler(ngx_http_request_t *r)
+ {
+-    u_char                   *p, *host, *last, ch;
+-    size_t                    len, root;
+-    ngx_err_t                 err;
+-    ngx_int_t                 rc, depth;
+-    ngx_uint_t                overwrite, slash, dir, flags;
+-    ngx_str_t                 path, uri, duri, args;
+-    ngx_tree_ctx_t            tree;
+-    ngx_copy_file_t           cf;
+-    ngx_file_info_t           fi;
+-    ngx_table_elt_t          *dest, *over;
+-    ngx_ext_rename_file_t     ext;
+-    ngx_http_dav_copy_ctx_t   copy;
+-    ngx_http_dav_loc_conf_t  *dlcf;
++    u_char                    *p, *host, *last, ch;
++    size_t                     len, root;
++    ngx_err_t                  err;
++    ngx_int_t                  rc, depth;
++    ngx_uint_t                 overwrite, slash, dir, flags;
++    ngx_str_t                  path, uri, duri, args;
++    ngx_tree_ctx_t             tree;
++    ngx_copy_file_t            cf;
++    ngx_file_info_t            fi;
++    ngx_table_elt_t           *dest, *over;
++    ngx_ext_rename_file_t      ext;
++    ngx_http_dav_copy_ctx_t    copy;
++    ngx_http_dav_loc_conf_t   *dlcf;
++    ngx_http_core_loc_conf_t  *clcf;
+ 
+     if (r->headers_in.content_length_n > 0 || r->headers_in.chunked) {
+         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+@@ -644,6 +645,18 @@
+         return NGX_HTTP_CONFLICT;
+     }
+ 
++    clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
++
++    if (clcf->alias
++        && clcf->alias != NGX_MAX_SIZE_T_VALUE
++        && duri.len < clcf->alias)
++    {
++        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
++                      "client sent invalid \"Destination\" header: \"%V\"",
++                      &dest->value);
++        return NGX_HTTP_BAD_REQUEST;
++    }
++
+     depth = ngx_http_dav_depth(r, NGX_HTTP_DAV_INFINITY_DEPTH);
+ 
+     if (depth != NGX_HTTP_DAV_INFINITY_DEPTH) {
+--- a/src/http/modules/ngx_http_grpc_module.c
++++ b/src/http/modules/ngx_http_grpc_module.c
+@@ -744,6 +744,12 @@
+         tmp_len = 0;
+ 
+     } else {
++        if (r->method_name.len > NGX_HTTP_V2_MAX_FIELD) {
++            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
++                          "too long http2 method: \"%V\"", &r->method_name);
++            return NGX_ERROR;
++        }
++
+         len += 1 + NGX_HTTP_V2_INT_OCTETS + r->method_name.len;
+         tmp_len = r->method_name.len;
+     }
+@@ -764,6 +770,12 @@
+         uri_len = r->uri.len + escape + sizeof("?") - 1 + r->args.len;
+     }
+ 
++    if (uri_len > NGX_HTTP_V2_MAX_FIELD) {
++        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
++                      "too long http2 URI");
++        return NGX_ERROR;
++    }
++
+     len += 1 + NGX_HTTP_V2_INT_OCTETS + uri_len;
+ 
+     if (tmp_len < uri_len) {
+@@ -773,6 +785,12 @@
+     /* :authority header */
+ 
+     if (!glcf->host_set) {
++        if (ctx->host.len > NGX_HTTP_V2_MAX_FIELD) {
++            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
++                          "too long http2 host: \"%V\"", &ctx->host);
++            return NGX_ERROR;
++        }
++
+         len += 1 + NGX_HTTP_V2_INT_OCTETS + ctx->host.len;
+ 
+         if (tmp_len < ctx->host.len) {
+@@ -803,6 +821,18 @@
+             continue;
+         }
+ 
++        if (key_len > NGX_HTTP_V2_MAX_FIELD) {
++            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
++                          "too long http2 header name");
++            return NGX_ERROR;
++        }
++
++        if (val_len > NGX_HTTP_V2_MAX_FIELD) {
++            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
++                          "too long http2 header value");
++            return NGX_ERROR;
++        }
++
+         headers_len += 1 + NGX_HTTP_V2_INT_OCTETS + key_len
+                  + NGX_HTTP_V2_INT_OCTETS + val_len;
+ 
+@@ -839,6 +869,20 @@
+                 continue;
+             }
+ 
++            if (header[i].key.len > NGX_HTTP_V2_MAX_FIELD) {
++                ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
++                              "too long http2 header name: \"%V\"",
++                              &header[i].key);
++                return NGX_ERROR;
++            }
++
++            if (header[i].value.len > NGX_HTTP_V2_MAX_FIELD) {
++                ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
++                              "too long http2 header value: \"%V: %V\"",
++                              &header[i].key, &header[i].value);
++                return NGX_ERROR;
++            }
++
+             len += 1 + NGX_HTTP_V2_INT_OCTETS + header[i].key.len
+                      + NGX_HTTP_V2_INT_OCTETS + header[i].value.len;
+ 
+--- a/src/http/modules/ngx_http_mp4_module.c
++++ b/src/http/modules/ngx_http_mp4_module.c
+@@ -318,8 +318,8 @@
+     ngx_http_mp4_trak_t *trak);
+ static ngx_int_t ngx_http_mp4_crop_stts_data(ngx_http_mp4_file_t *mp4,
+     ngx_http_mp4_trak_t *trak, ngx_uint_t start);
+-static uint32_t ngx_http_mp4_seek_key_frame(ngx_http_mp4_file_t *mp4,
+-    ngx_http_mp4_trak_t *trak, uint32_t start_sample);
++static ngx_int_t ngx_http_mp4_seek_key_frame(ngx_http_mp4_file_t *mp4,
++    ngx_http_mp4_trak_t *trak, uint32_t start_sample, uint32_t *key_prefix);
+ static ngx_int_t ngx_http_mp4_read_stss_atom(ngx_http_mp4_file_t *mp4,
+     uint64_t atom_data_size);
+ static ngx_int_t ngx_http_mp4_update_stss_atom(ngx_http_mp4_file_t *mp4,
+@@ -901,8 +901,11 @@
+         }
+     }
+ 
+-    if (end_offset < start_offset) {
+-        end_offset = start_offset;
++    if (end_offset <= start_offset) {
++        ngx_log_error(NGX_LOG_ERR, mp4->file.log, 0,
++                      "no data between start time and end time in \"%s\"",
++                      mp4->file.name.data);
++        return NGX_ERROR;
+     }
+ 
+     mp4->moov_size += 8;
+@@ -913,7 +916,7 @@
+ 
+     *prev = &mp4->mdat_atom;
+ 
+-    if (start_offset > mp4->mdat_data.buf->file_last) {
++    if (start_offset >= mp4->mdat_data.buf->file_last) {
+         ngx_log_error(NGX_LOG_ERR, mp4->file.log, 0,
+                       "start time is out mp4 mdat atom in \"%s\"",
+                       mp4->file.name.data);
+@@ -2294,7 +2297,7 @@
+                    "mp4 time-to-sample entries:%uD", entries);
+ 
+     if (ngx_mp4_atom_data_size(ngx_mp4_stts_atom_t)
+-        + entries * sizeof(ngx_mp4_stts_entry_t) > atom_data_size)
++        + (uint64_t) entries * sizeof(ngx_mp4_stts_entry_t) > atom_data_size)
+     {
+         ngx_log_error(NGX_LOG_ERR, mp4->file.log, 0,
+                       "\"%s\" mp4 stts atom too small", mp4->file.name.data);
+@@ -2455,7 +2458,11 @@
+ found:
+ 
+     if (start) {
+-        key_prefix = ngx_http_mp4_seek_key_frame(mp4, trak, start_sample);
++        if (ngx_http_mp4_seek_key_frame(mp4, trak, start_sample, &key_prefix)
++            != NGX_OK)
++        {
++            return NGX_ERROR;
++        }
+ 
+         start_sample -= key_prefix;
+ 
+@@ -2499,22 +2506,24 @@
+ }
+ 
+ 
+-static uint32_t
++static ngx_int_t
+ ngx_http_mp4_seek_key_frame(ngx_http_mp4_file_t *mp4, ngx_http_mp4_trak_t *trak,
+-    uint32_t start_sample)
++    uint32_t start_sample, uint32_t *key_prefix)
+ {
+-    uint32_t              key_prefix, sample, *entry, *end;
++    uint32_t              sample, *entry, *end;
+     ngx_buf_t            *data;
+     ngx_http_mp4_conf_t  *conf;
+ 
++    *key_prefix = 0;
++
+     conf = ngx_http_get_module_loc_conf(mp4->request, ngx_http_mp4_module);
+     if (!conf->start_key_frame) {
+-        return 0;
++        return NGX_OK;
+     }
+ 
+     data = trak->out[NGX_HTTP_MP4_STSS_DATA].buf;
+     if (data == NULL) {
+-        return 0;
++        return NGX_OK;
+     }
+ 
+     entry = (uint32_t *) data->pos;
+@@ -2523,22 +2532,28 @@
+     /* sync samples starts from 1 */
+     start_sample++;
+ 
+-    key_prefix = 0;
+-
+     while (entry < end) {
+         sample = ngx_mp4_get_32value(entry);
++
++        if (sample == 0) {
++            ngx_log_error(NGX_LOG_ERR, mp4->file.log, 0,
++                          "zero sync sample in \"%s\"",
++                          mp4->file.name.data);
++            return NGX_ERROR;
++        }
++
+         if (sample > start_sample) {
+             break;
+         }
+ 
+-        key_prefix = start_sample - sample;
++        *key_prefix = start_sample - sample;
+         entry++;
+     }
+ 
+     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, mp4->file.log, 0,
+-                   "mp4 key frame prefix:%uD", key_prefix);
++                   "mp4 key frame prefix:%uD", *key_prefix);
+ 
+-    return key_prefix;
++    return NGX_OK;
+ }
+ 
+ 
+@@ -2597,7 +2612,7 @@
+     atom->last = atom_table;
+ 
+     if (ngx_mp4_atom_data_size(ngx_http_mp4_stss_atom_t)
+-        + entries * sizeof(uint32_t) > atom_data_size)
++        + (uint64_t) entries * sizeof(uint32_t) > atom_data_size)
+     {
+         ngx_log_error(NGX_LOG_ERR, mp4->file.log, 0,
+                       "\"%s\" mp4 stss atom too small", mp4->file.name.data);
+@@ -2802,7 +2817,7 @@
+     atom->last = atom_table;
+ 
+     if (ngx_mp4_atom_data_size(ngx_mp4_ctts_atom_t)
+-        + entries * sizeof(ngx_mp4_ctts_entry_t) > atom_data_size)
++        + (uint64_t) entries * sizeof(ngx_mp4_ctts_entry_t) > atom_data_size)
+     {
+         ngx_log_error(NGX_LOG_ERR, mp4->file.log, 0,
+                       "\"%s\" mp4 ctts atom too small", mp4->file.name.data);
+@@ -2984,7 +2999,7 @@
+                    "sample-to-chunk entries:%uD", entries);
+ 
+     if (ngx_mp4_atom_data_size(ngx_mp4_stsc_atom_t)
+-        + entries * sizeof(ngx_mp4_stsc_entry_t) > atom_data_size)
++        + (uint64_t) entries * sizeof(ngx_mp4_stsc_entry_t) > atom_data_size)
+     {
+         ngx_log_error(NGX_LOG_ERR, mp4->file.log, 0,
+                       "\"%s\" mp4 stsc atom too small", mp4->file.name.data);
+@@ -3362,7 +3377,7 @@
+ 
+     if (size == 0) {
+         if (ngx_mp4_atom_data_size(ngx_mp4_stsz_atom_t)
+-            + entries * sizeof(uint32_t) > atom_data_size)
++            + (uint64_t) entries * sizeof(uint32_t) > atom_data_size)
+         {
+             ngx_log_error(NGX_LOG_ERR, mp4->file.log, 0,
+                           "\"%s\" mp4 stsz atom too small",
+@@ -3416,7 +3431,7 @@
+     if (data) {
+         entries = trak->sample_sizes_entries;
+ 
+-        if (trak->start_sample > entries) {
++        if (trak->start_sample >= entries) {
+             ngx_log_error(NGX_LOG_ERR, mp4->file.log, 0,
+                           "start time is out mp4 stsz samples in \"%s\"",
+                           mp4->file.name.data);
+@@ -3521,7 +3536,7 @@
+     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, mp4->file.log, 0, "chunks:%uD", entries);
+ 
+     if (ngx_mp4_atom_data_size(ngx_mp4_stco_atom_t)
+-        + entries * sizeof(uint32_t) > atom_data_size)
++        + (uint64_t) entries * sizeof(uint32_t) > atom_data_size)
+     {
+         ngx_log_error(NGX_LOG_ERR, mp4->file.log, 0,
+                       "\"%s\" mp4 stco atom too small", mp4->file.name.data);
+@@ -3591,7 +3606,7 @@
+         return NGX_ERROR;
+     }
+ 
+-    if (trak->start_chunk > trak->chunks) {
++    if (trak->start_chunk >= trak->chunks) {
+         ngx_log_error(NGX_LOG_ERR, mp4->file.log, 0,
+                       "start time is out mp4 stco chunks in \"%s\"",
+                       mp4->file.name.data);
+@@ -3737,7 +3752,7 @@
+     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, mp4->file.log, 0, "chunks:%uD", entries);
+ 
+     if (ngx_mp4_atom_data_size(ngx_mp4_co64_atom_t)
+-        + entries * sizeof(uint64_t) > atom_data_size)
++        + (uint64_t) entries * sizeof(uint64_t) > atom_data_size)
+     {
+         ngx_log_error(NGX_LOG_ERR, mp4->file.log, 0,
+                       "\"%s\" mp4 co64 atom too small", mp4->file.name.data);
+@@ -3806,7 +3821,7 @@
+         return NGX_ERROR;
+     }
+ 
+-    if (trak->start_chunk > trak->chunks) {
++    if (trak->start_chunk >= trak->chunks) {
+         ngx_log_error(NGX_LOG_ERR, mp4->file.log, 0,
+                       "start time is out mp4 co64 chunks in \"%s\"",
+                       mp4->file.name.data);
+--- a/src/http/modules/ngx_http_proxy_module.c
++++ b/src/http/modules/ngx_http_proxy_module.c
+@@ -1839,6 +1839,10 @@
+ 
+     u = r->upstream;
+ 
++    if (r->state == 0) {
++        r->header_name_start = u->buffer.pos;
++    }
++
+     rc = ngx_http_parse_status_line(r, &u->buffer, &ctx->status);
+ 
+     if (rc == NGX_AGAIN) {
+@@ -1846,6 +1850,7 @@
+     }
+ 
+     if (rc == NGX_ERROR) {
++        u->buffer.pos = r->header_name_start;
+ 
+ #if (NGX_HTTP_CACHE)
+ 
+--- a/src/http/modules/ngx_http_scgi_module.c
++++ b/src/http/modules/ngx_http_scgi_module.c
+@@ -1044,6 +1044,10 @@
+ 
+     u = r->upstream;
+ 
++    if (r->state == 0) {
++        r->header_name_start = u->buffer.pos;
++    }
++
+     rc = ngx_http_parse_status_line(r, &u->buffer, status);
+ 
+     if (rc == NGX_AGAIN) {
+@@ -1052,6 +1056,8 @@
+ 
+     if (rc == NGX_ERROR) {
+         u->process_header = ngx_http_scgi_process_header;
++        u->buffer.pos = r->header_name_start;
++        r->state = 0;
+         return ngx_http_scgi_process_header(r);
+     }
+ 
+--- a/src/http/modules/ngx_http_uwsgi_module.c
++++ b/src/http/modules/ngx_http_uwsgi_module.c
+@@ -1275,6 +1275,10 @@
+ 
+     u = r->upstream;
+ 
++    if (r->state == 0) {
++        r->header_name_start = u->buffer.pos;
++    }
++
+     rc = ngx_http_parse_status_line(r, &u->buffer, status);
+ 
+     if (rc == NGX_AGAIN) {
+@@ -1283,6 +1287,8 @@
+ 
+     if (rc == NGX_ERROR) {
+         u->process_header = ngx_http_uwsgi_process_header;
++        u->buffer.pos = r->header_name_start;
++        r->state = 0;
+         return ngx_http_uwsgi_process_header(r);
+     }
+ 
+--- a/src/http/ngx_http_copy_filter_module.c
++++ b/src/http/ngx_http_copy_filter_module.c
+@@ -87,6 +87,13 @@
+     ngx_output_chain_ctx_t       *ctx;
+     ngx_http_core_loc_conf_t     *clcf;
+     ngx_http_copy_filter_conf_t  *conf;
++#if (NGX_HAVE_FILE_AIO)
++    ngx_output_chain_aio_pt       aio_handler;
++#endif
++#if (NGX_THREADS)
++    ngx_int_t                   (*thread_handler)(ngx_thread_task_t *task,
++                                                  ngx_file_t *file);
++#endif
+ 
+     c = r->connection;
+ 
+@@ -140,10 +147,39 @@
+ 
+ #if (NGX_HAVE_FILE_AIO || NGX_THREADS)
+     ctx->aio = r->aio;
++
++#if (NGX_HAVE_FILE_AIO)
++    aio_handler = ctx->aio_handler;
++#endif
++#if (NGX_THREADS)
++    thread_handler = ctx->thread_handler;
++#endif
++
++    /*
++     * each pending operation holds a reference in r->main->blocked;
++     * with the counter close to its limit the file is read
++     * synchronously instead, so that it cannot overflow
++     */
++
++    if (r->main->blocked >= NGX_HTTP_MAX_BLOCKED) {
++#if (NGX_HAVE_FILE_AIO)
++        ctx->aio_handler = NULL;
++#endif
++#if (NGX_THREADS)
++        ctx->thread_handler = NULL;
++#endif
++    }
+ #endif
+ 
+     rc = ngx_output_chain(ctx, in);
+ 
++#if (NGX_HAVE_FILE_AIO)
++    ctx->aio_handler = aio_handler;
++#endif
++#if (NGX_THREADS)
++    ctx->thread_handler = thread_handler;
++#endif
++
+     if (ctx->in == NULL) {
+         r->buffered &= ~NGX_HTTP_COPY_BUFFERED;
+ 
+--- a/src/http/ngx_http_core_module.c
++++ b/src/http/ngx_http_core_module.c
+@@ -1894,7 +1894,7 @@
+ 
+     alias = clcf->alias;
+ 
+-    if (alias && !r->valid_location) {
++    if (alias && (!r->valid_location || r->uri_changed)) {
+         ngx_log_error(NGX_LOG_ALERT, r->connection->log, 0,
+                       "\"alias\" cannot be used in location \"%V\" "
+                       "where URI was rewritten", &clcf->name);
+--- a/src/http/ngx_http_file_cache.c
++++ b/src/http/ngx_http_file_cache.c
+@@ -440,6 +440,10 @@
+         return NGX_HTTP_CACHE_SCARCE;
+     }
+ 
++    if (r->main->blocked >= NGX_HTTP_MAX_BLOCKED) {
++        return NGX_HTTP_CACHE_SCARCE;
++    }
++
+     c->waiting = 1;
+ 
+     if (c->wait_time == 0) {
+@@ -692,7 +696,9 @@
+ 
+ #if (NGX_HAVE_FILE_AIO)
+ 
+-    if (clcf->aio == NGX_HTTP_AIO_ON && ngx_file_aio) {
++    if (clcf->aio == NGX_HTTP_AIO_ON && ngx_file_aio
++        && r->main->blocked < NGX_HTTP_MAX_BLOCKED)
++    {
+         n = ngx_file_aio_read(&c->file, c->buf->pos, c->body_start, 0, r->pool);
+ 
+         if (n != NGX_AGAIN) {
+@@ -717,7 +723,9 @@
+ 
+ #if (NGX_THREADS)
+ 
+-    if (clcf->aio == NGX_HTTP_AIO_THREADS) {
++    if (clcf->aio == NGX_HTTP_AIO_THREADS
++        && r->main->blocked < NGX_HTTP_MAX_BLOCKED)
++    {
+         c->file.thread_task = c->thread_task;
+         c->file.thread_handler = ngx_http_cache_thread_handler;
+         c->file.thread_ctx = r;
+--- a/src/http/ngx_http_request.c
++++ b/src/http/ngx_http_request.c
+@@ -932,31 +932,6 @@
+         goto done;
+     }
+ 
+-    sscf = ngx_http_get_module_srv_conf(cscf->ctx, ngx_http_ssl_module);
+-
+-#if (defined TLS1_3_VERSION                                                   \
+-     && !defined LIBRESSL_VERSION_NUMBER && !defined OPENSSL_IS_BORINGSSL)
+-
+-    /*
+-     * SSL_SESSION_get0_hostname() is only available in OpenSSL 1.1.1+,
+-     * but servername being negotiated in every TLSv1.3 handshake
+-     * is only returned in OpenSSL 1.1.1+ as well
+-     */
+-
+-    if (sscf->verify) {
+-        const char  *hostname;
+-
+-        hostname = SSL_SESSION_get0_hostname(SSL_get0_session(ssl_conn));
+-
+-        if (hostname != NULL && ngx_strcmp(hostname, servername) != 0) {
+-            c->ssl->handshake_rejected = 1;
+-            *ad = SSL_AD_ACCESS_DENIED;
+-            return SSL_TLSEXT_ERR_ALERT_FATAL;
+-        }
+-    }
+-
+-#endif
+-
+     hc->ssl_servername = ngx_palloc(c->pool, sizeof(ngx_str_t));
+     if (hc->ssl_servername == NULL) {
+         goto error;
+@@ -970,6 +945,8 @@
+ 
+     ngx_set_connection_log(c, clcf->error_log);
+ 
++    sscf = ngx_http_get_module_srv_conf(hc->conf_ctx, ngx_http_ssl_module);
++
+     c->ssl->buffer_size = sscf->buffer_size;
+ 
+     if (sscf->ssl.ctx) {
+@@ -2500,6 +2477,14 @@
+ {
+     ngx_http_posted_request_t  **p;
+ 
++    for (p = &r->main->posted_requests; *p; p = &(*p)->next) {
++        if ((*p)->request == r) {
++            ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
++                           "http request already posted");
++            return NGX_OK;
++        }
++    }
++
+     if (pr == NULL) {
+         pr = ngx_palloc(r->pool, sizeof(ngx_http_posted_request_t));
+         if (pr == NULL) {
+@@ -2510,8 +2495,6 @@
+     pr->request = r;
+     pr->next = NULL;
+ 
+-    for (p = &r->main->posted_requests; *p; p = &(*p)->next) { /* void */ }
+-
+     *p = pr;
+ 
+     return NGX_OK;
+@@ -2631,6 +2614,8 @@
+ 
+             r->main->count--;
+ 
++            r->write_event_handler = ngx_http_request_empty_handler;
++
+             if (pr->postponed && pr->postponed->request == r) {
+                 pr->postponed = pr->postponed->next;
+             }
+--- a/src/http/ngx_http_request.h
++++ b/src/http/ngx_http_request.h
+@@ -11,6 +11,7 @@
+ 
+ #define NGX_HTTP_MAX_URI_CHANGES           10
+ #define NGX_HTTP_MAX_SUBREQUESTS           50
++#define NGX_HTTP_MAX_BLOCKED               250
+ 
+ /* must be 2^n */
+ #define NGX_HTTP_LC_HEADER_LEN             32
+--- a/src/http/ngx_http_script.c
++++ b/src/http/ngx_http_script.c
+@@ -643,7 +643,7 @@
+     e.request = r;
+     e.flushed = 1;
+ 
+-    n = len;
++    n = 0;
+ 
+     while (*(uintptr_t *) e.ip) {
+         lcode = *(ngx_http_script_len_code_pt *) e.ip;
+@@ -651,8 +651,8 @@
+     }
+ 
+ 
+-    value->len = n;
+-    value->data = ngx_pnalloc(r->pool, n);
++    value->len = n + len;
++    value->data = ngx_pnalloc(r->pool, n + len);
+     if (value->data == NULL) {
+         return NULL;
+     }
+@@ -1082,6 +1082,8 @@
+ void
+ ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
+ {
++    int                           *cap;
++    u_char                        *p;
+     size_t                         len;
+     ngx_int_t                      rc;
+     ngx_uint_t                     n;
+@@ -1188,15 +1190,19 @@
+     if (code->lengths == NULL) {
+         e->buf.len = code->size;
+ 
+-        if (code->uri) {
+-            if (r->ncaptures && (r->quoted_uri || r->plus_in_uri)) {
+-                e->buf.len += 2 * ngx_escape_uri(NULL, r->uri.data, r->uri.len,
+-                                                 NGX_ESCAPE_ARGS);
+-            }
+-        }
++        cap = r->captures;
++        p = r->captures_data;
+ 
+         for (n = 2; n < r->ncaptures; n += 2) {
+-            e->buf.len += r->captures[n + 1] - r->captures[n];
++            e->buf.len += cap[n + 1] - cap[n];
++
++            if (code->uri) {
++                if (r->quoted_uri || r->plus_in_uri) {
++                    e->buf.len += 2 * ngx_escape_uri(NULL, &p[cap[n]],
++                                                     cap[n + 1] - cap[n],
++                                                     NGX_ESCAPE_ARGS);
++                }
++            }
+         }
+ 
+     } else {
+@@ -1228,6 +1234,7 @@
+         return;
+     }
+ 
++    e->is_args = 0;
+     e->quote = code->redirect;
+ 
+     e->pos = e->buf.data;
+@@ -1841,6 +1848,7 @@
+     le.ip = code->lengths->elts;
+     le.line = e->line;
+     le.request = e->request;
++    le.is_args = e->is_args;
+     le.quote = e->quote;
+ 
+     for (len = 0; *(uintptr_t *) le.ip; len += lcode(&le)) {
+@@ -1857,20 +1865,28 @@
+ 
+     e->pos = e->buf.data;
+     e->end = e->buf.data + len;
++
++    e->sp->len = e->buf.len;
++    e->sp->data = e->buf.data;
++    e->sp++;
+ }
+ 
+ 
+ void
+ ngx_http_script_complex_value_end_code(ngx_http_script_engine_t *e)
+ {
++    ngx_http_variable_value_t  *val;
++
++    val = e->sp - 1;
++
+     e->ip += sizeof(ngx_http_script_complex_value_end_code_t);
+ 
+     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, e->request->connection->log, 0,
+                    "http script complex value end");
+ 
+-    e->sp->len = e->pos - e->buf.data;
+-    e->sp->data = e->buf.data;
+-    e->sp++;
++    if (val->data == e->buf.data) {
++        val->len = e->pos - e->buf.data;
++    }
+ }
+ 
+ 
+--- a/src/http/ngx_http_upstream.c
++++ b/src/http/ngx_http_upstream.c
+@@ -3965,6 +3965,12 @@
+     task->event.data = r;
+     task->event.handler = ngx_http_upstream_thread_event_handler;
+ 
++    if (r->main->blocked >= NGX_HTTP_MAX_BLOCKED) {
++        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
++                      "too many operations pending");
++        return NGX_ERROR;
++    }
++
+     if (ngx_thread_task_post(tp, task) != NGX_OK) {
+         return NGX_ERROR;
+     }
+--- a/src/http/v3/ngx_http_v3_parse.c
++++ b/src/http/v3/ngx_http_v3_parse.c
+@@ -1831,6 +1831,8 @@
+                            st->type, st->length);
+ 
+             if (st->type != NGX_HTTP_V3_FRAME_DATA && st->length > 0) {
++                st->skip = st->length;
++                st->length = 0;
+                 st->state = sw_skip;
+                 break;
+             }
+@@ -1840,7 +1842,7 @@
+ 
+         case sw_skip:
+ 
+-            rc = ngx_http_v3_parse_skip(b, &st->length);
++            rc = ngx_http_v3_parse_skip(b, &st->skip);
+             if (rc != NGX_DONE) {
+                 return rc;
+             }
+--- a/src/http/v3/ngx_http_v3_parse.h
++++ b/src/http/v3/ngx_http_v3_parse.h
+@@ -121,6 +121,7 @@
+     ngx_uint_t                      state;
+     ngx_uint_t                      type;
+     ngx_uint_t                      length;
++    ngx_uint_t                      skip;
+     ngx_http_v3_parse_varlen_int_t  vlint;
+ } ngx_http_v3_parse_data_t;
+ 
+--- a/src/mail/ngx_mail_auth_http_module.c
++++ b/src/mail/ngx_mail_auth_http_module.c
+@@ -1321,11 +1321,14 @@
+     b->last = ngx_copy(b->last, passwd.data, passwd.len);
+     *b->last++ = CR; *b->last++ = LF;
+ 
+-    if (s->auth_method != NGX_MAIL_AUTH_PLAIN && s->salt.len) {
++    if ((s->auth_method == NGX_MAIL_AUTH_APOP
++         || s->auth_method == NGX_MAIL_AUTH_CRAM_MD5)
++        && s->salt.len)
++    {
+         b->last = ngx_cpymem(b->last, "Auth-Salt: ", sizeof("Auth-Salt: ") - 1);
+         b->last = ngx_copy(b->last, s->salt.data, s->salt.len);
+ 
+-        s->passwd.data = NULL;
++        ngx_str_null(&s->passwd);
+     }
+ 
+     b->last = ngx_cpymem(b->last, "Auth-Protocol: ",
+--- a/src/mail/ngx_mail_smtp_handler.c
++++ b/src/mail/ngx_mail_smtp_handler.c
+@@ -13,6 +13,7 @@
+ 
+ 
+ static void ngx_mail_smtp_resolve_addr_handler(ngx_resolver_ctx_t *ctx);
++static ngx_int_t ngx_mail_smtp_validate_host(ngx_str_t *name);
+ static void ngx_mail_smtp_resolve_name(ngx_event_t *rev);
+ static void ngx_mail_smtp_resolve_name_handler(ngx_resolver_ctx_t *ctx);
+ static void ngx_mail_smtp_block_reading(ngx_event_t *rev);
+@@ -127,6 +128,20 @@
+         return;
+     }
+ 
++    if (ngx_mail_smtp_validate_host(&ctx->name) != NGX_OK) {
++        ngx_log_error(NGX_LOG_ERR, c->log, 0,
++                      "%V resolved to invalid host name \"%V\"",
++                      &c->addr_text, &ctx->name);
++
++        s->host = smtp_tempunavail;
++
++        ngx_resolve_addr_done(ctx);
++
++        ngx_mail_smtp_greeting(s, s->connection);
++
++        return;
++    }
++
+     c->log->action = "in resolving client hostname";
+ 
+     s->host.data = ngx_pstrdup(c->pool, &ctx->name);
+@@ -149,6 +164,36 @@
+ }
+ 
+ 
++static ngx_int_t
++ngx_mail_smtp_validate_host(ngx_str_t *name)
++{
++    u_char      ch;
++    ngx_uint_t  i;
++
++    if (name->len == 0) {
++        return NGX_DECLINED;
++    }
++
++    for (i = 0; i < name->len; i++) {
++        ch = name->data[i];
++
++        /* allow only characters from RFC 1034, Section 3.5 */
++
++        if ((ch >= 'a' && ch <= 'z')
++            || (ch >= 'A' && ch <= 'Z')
++            || (ch >= '0' && ch <= '9')
++            || ch == '-' || ch == '.')
++        {
++            continue;
++        }
++
++        return NGX_DECLINED;
++    }
++
++    return NGX_OK;
++}
++
++
+ static void
+ ngx_mail_smtp_resolve_name(ngx_event_t *rev)
+ {
+@@ -782,6 +827,9 @@
+ 
+     ngx_str_set(&s->out, smtp_ok);
+ 
++    ngx_str_null(&s->login);
++    ngx_str_null(&s->passwd);
++
+     return NGX_OK;
+ }
+ 
+--- a/src/stream/ngx_stream_script.c
++++ b/src/stream/ngx_stream_script.c
+@@ -519,7 +519,7 @@
+     e.session = s;
+     e.flushed = 1;
+ 
+-    n = len;
++    n = 0;
+ 
+     while (*(uintptr_t *) e.ip) {
+         lcode = *(ngx_stream_script_len_code_pt *) e.ip;
+@@ -527,8 +527,8 @@
+     }
+ 
+ 
+-    value->len = n;
+-    value->data = ngx_pnalloc(s->connection->pool, n);
++    value->len = n + len;
++    value->data = ngx_pnalloc(s->connection->pool, n + len);
+     if (value->data == NULL) {
+         return NULL;
+     }
+--- a/src/stream/ngx_stream_ssl_module.c
++++ b/src/stream/ngx_stream_ssl_module.c
+@@ -521,35 +521,12 @@
+         goto done;
+     }
+ 
+-    sscf = ngx_stream_get_module_srv_conf(cscf->ctx, ngx_stream_ssl_module);
+-
+-#if (defined TLS1_3_VERSION                                                   \
+-     && !defined LIBRESSL_VERSION_NUMBER && !defined OPENSSL_IS_BORINGSSL)
+-
+-    /*
+-     * SSL_SESSION_get0_hostname() is only available in OpenSSL 1.1.1+,
+-     * but servername being negotiated in every TLSv1.3 handshake
+-     * is only returned in OpenSSL 1.1.1+ as well
+-     */
+-
+-    if (sscf->verify) {
+-        const char  *hostname;
+-
+-        hostname = SSL_SESSION_get0_hostname(SSL_get0_session(ssl_conn));
+-
+-        if (hostname != NULL && ngx_strcmp(hostname, servername) != 0) {
+-            c->ssl->handshake_rejected = 1;
+-            *ad = SSL_AD_ACCESS_DENIED;
+-            return SSL_TLSEXT_ERR_ALERT_FATAL;
+-        }
+-    }
+-
+-#endif
+-
+     s->srv_conf = cscf->ctx->srv_conf;
+ 
+     ngx_set_connection_log(c, cscf->error_log);
+ 
++    sscf = ngx_stream_get_module_srv_conf(s, ngx_stream_ssl_module);
++
+     if (sscf->ssl.ctx) {
+         if (SSL_set_SSL_CTX(ssl_conn, sscf->ssl.ctx) == NULL) {
+             goto error;

@@ -1,0 +1,63 @@
+/* Owner-requested global height contract. The established application shell
+   already marks every route's bridge and bounded scroll frame, including older
+   module pages and native AppPage pages. Grow those existing surfaces; retain
+   their widths, padding, overflow ownership and compact content flow. */
+html[data-app-theme] .nyx-scroll-bridge,
+html[data-app-theme] .nyx-route-content:not(:has(.nyx-central-scroll-frame)) {
+ display:flex;
+ flex-direction:column;
+}
+html[data-app-theme] .nyx-central-scroll-frame {
+ display:flex;
+ flex-direction:column;
+ flex:1 1 auto;
+}
+html[data-app-theme] .nyx-central-scroll-frame > :only-child,
+html[data-app-theme] .nyx-route-content:not(:has(.nyx-central-scroll-frame)) > :only-child {
+ flex:1 1 auto;
+ min-height:0;
+}
+/* Use the accepted AppPage footer clearance once, at the shared viewport.
+   Normalize its previous per-shell padding so newer pages keep the same gap
+   while legacy and bounded pages receive it too. The native grid owns the
+   actual header/footer sizes; no viewport subtraction or fixed page height. */
+html[data-app-theme] .nyx-dashboard-viewport {
+ --nyx-page-footer-gap:24px;
+ padding-bottom:var(--nyx-page-footer-gap)!important;
+ box-sizing:border-box;
+}
+html[data-app-theme] .nyx-dashboard-viewport .app-page-shell {
+ padding-bottom:0!important;
+}
+
+/* Owner-requested Event Center scroll pattern: keep the established padded
+   outer frame stationary. Ordinary pages scroll in their existing inner card;
+   Event Center retains its native history-table scroll owner. */
+html[data-app-theme] .nyx-app-frame .nyx-app-shell .nyx-dashboard-viewport .nyx-central-scroll-frame {
+ overflow:hidden!important;
+ scrollbar-gutter:auto;
+}
+html[data-app-theme] [data-nyx-page-scroll] {
+ overscroll-behavior:contain;
+ scrollbar-gutter:stable;
+}
+html[data-app-theme] [data-nyx-page-scroll]:focus-visible {
+ outline:1px solid var(--app-primary);
+ outline-offset:-2px;
+}
+
+/* Match the established frame inset at rounded scroll-track ends. The native
+   theme still owns scrollbar width, colors and thumb shape. */
+html[data-app-theme] [data-nyx-page-scroll]::-webkit-scrollbar-track {
+ margin-block:16px;
+}
+
+/* Legacy theme sheets force framed cards to overflow visibly, even when a
+   page explicitly owns scrolling. Resolve that conflict only for the audited
+   scroll region; native nested tables, editors and Event Center stay intact. */
+@layer nyxguard-scroll-ownership {
+ html[data-app-theme] [data-nyx-page-scroll] {
+  min-height:0!important;
+  overflow:auto!important;
+ }
+}

@@ -1,0 +1,140 @@
+[
+  {
+    "sha": "4f0df130ba72982d34984f38d5007898765716b8",
+    "file": "4f0df130ba72982d34984f38d5007898765716b8.patch",
+    "url": "https://github.com/nginx/nginx/commit/4f0df130ba72982d34984f38d5007898765716b8.patch",
+    "sha256": "c22f66068c4b7b957c8af3b6ef089edd0e0154e3faae8feb2a8e13efbbfce5af"
+  },
+  {
+    "sha": "a172c880cb51f882a5dc999437e8b3a4f87630cc",
+    "file": "a172c880cb51f882a5dc999437e8b3a4f87630cc.patch",
+    "url": "https://github.com/nginx/nginx/commit/a172c880cb51f882a5dc999437e8b3a4f87630cc.patch",
+    "sha256": "47345c6935d04bdffa7d6486894af8f38fa88039bbf8afdb43693a6ffe2c7908"
+  },
+  {
+    "sha": "b23ac73b00313d159a99636c21ef71b828781018",
+    "file": "b23ac73b00313d159a99636c21ef71b828781018.patch",
+    "url": "https://github.com/nginx/nginx/commit/b23ac73b00313d159a99636c21ef71b828781018.patch",
+    "sha256": "1770abdc5d130a590cf58454cd9776de65ed76ed7531e2009cfc3ba8725c31f8"
+  },
+  {
+    "sha": "a1d18284e0a173c4ef2b28425535d0f640ae0a82",
+    "file": "a1d18284e0a173c4ef2b28425535d0f640ae0a82.patch",
+    "url": "https://github.com/nginx/nginx/commit/a1d18284e0a173c4ef2b28425535d0f640ae0a82.patch",
+    "sha256": "869eec3142f55b099fe1cda140839fed90a53b979dfd11a8762db036ede202e5"
+  },
+  {
+    "sha": "6a8513761fb327f67fcc6cfcf1ad216887e2589f",
+    "file": "6a8513761fb327f67fcc6cfcf1ad216887e2589f.patch",
+    "url": "https://github.com/nginx/nginx/commit/6a8513761fb327f67fcc6cfcf1ad216887e2589f.patch",
+    "sha256": "8c561d0006296d8954965e4505aa1687ce7544aacd0827aa3deeef4e31373913"
+  },
+  {
+    "sha": "0f71dd8ea94ab8c123413b2e465be12a35392e9c",
+    "file": "0f71dd8ea94ab8c123413b2e465be12a35392e9c.patch",
+    "url": "https://github.com/nginx/nginx/commit/0f71dd8ea94ab8c123413b2e465be12a35392e9c.patch",
+    "sha256": "e40cd1fd6a67d2dd3e6a23602df14c5b282c69156ccb2cca3eb545422c96fd90"
+  },
+  {
+    "sha": "3f135ae2eb60ce376196c898a6c7cb4d774f7068",
+    "file": "3f135ae2eb60ce376196c898a6c7cb4d774f7068.patch",
+    "url": "https://github.com/nginx/nginx/commit/3f135ae2eb60ce376196c898a6c7cb4d774f7068.patch",
+    "sha256": "af8f92c4883506d92f844805a3e870e9a6c5d6bc256a10a6258e17cccb4db95a"
+  },
+  {
+    "sha": "54b7945961b2eaafc480d6b85d9635d0db1c126a",
+    "file": "54b7945961b2eaafc480d6b85d9635d0db1c126a.patch",
+    "url": "https://github.com/nginx/nginx/commit/54b7945961b2eaafc480d6b85d9635d0db1c126a.patch",
+    "sha256": "97e06f7f1cf92b444836e2b7efff99545ee19da4ae00bcbd78fdf14587a6a977"
+  },
+  {
+    "sha": "60c4243eb8775d51662a01def8a7dad5d9fb34a7",
+    "file": "60c4243eb8775d51662a01def8a7dad5d9fb34a7.patch",
+    "url": "https://github.com/nginx/nginx/commit/60c4243eb8775d51662a01def8a7dad5d9fb34a7.patch",
+    "sha256": "b1ee26a427e1f67fbadf6edeacdd1393834ea5a61d55e1adaa63158a75bad2b2"
+  },
+  {
+    "sha": "ddde692db11ab8238e9ca661007f64c9f6d764d2",
+    "file": "ddde692db11ab8238e9ca661007f64c9f6d764d2.patch",
+    "url": "https://github.com/nginx/nginx/commit/ddde692db11ab8238e9ca661007f64c9f6d764d2.patch",
+    "sha256": "106620938c2b3e5505e49e781c2e41cb379472919e40e18f04f7e6ce4e57bb52"
+  },
+  {
+    "sha": "915bc034e363a48be3bb3c59ba1e1182a370f367",
+    "file": "915bc034e363a48be3bb3c59ba1e1182a370f367.patch",
+    "url": "https://github.com/nginx/nginx/commit/915bc034e363a48be3bb3c59ba1e1182a370f367.patch",
+    "sha256": "a162042f4bd56c3cb1e3d260288889e1b6288e0ce104018960041afb921a4cd8"
+  },
+  {
+    "sha": "f496c50c51c9d40339a021e602ddb9a190137afd",
+    "file": "f496c50c51c9d40339a021e602ddb9a190137afd.patch",
+    "url": "https://github.com/nginx/nginx/commit/f496c50c51c9d40339a021e602ddb9a190137afd.patch",
+    "sha256": "f45ef1683ccec666a1c198a7fbfed084b429cdfd2dee82b1f55d8b2e818331e6"
+  },
+  {
+    "sha": "587c47aed19ddec799eee953a38837936e585b39",
+    "file": "587c47aed19ddec799eee953a38837936e585b39.patch",
+    "url": "https://github.com/nginx/nginx/commit/587c47aed19ddec799eee953a38837936e585b39.patch",
+    "sha256": "c7ecfe4ccbd926261f57c3b540fe6e2f08def34a7e90647c97e4aee42c8abb2e"
+  },
+  {
+    "sha": "90b30edffea4f427608c36e3849643b6f9841bc4",
+    "file": "90b30edffea4f427608c36e3849643b6f9841bc4.patch",
+    "url": "https://github.com/nginx/nginx/commit/90b30edffea4f427608c36e3849643b6f9841bc4.patch",
+    "sha256": "ec8b30fab2559fbbf921a53a62aa8d86e8088108e21a6aa493009ddb1aa32a3f"
+  },
+  {
+    "sha": "fdedba031bf1ad6a80c61b1aec1418d1a87ae296",
+    "file": "fdedba031bf1ad6a80c61b1aec1418d1a87ae296.patch",
+    "url": "https://github.com/nginx/nginx/commit/fdedba031bf1ad6a80c61b1aec1418d1a87ae296.patch",
+    "sha256": "d4732105fcac7acaecbeac483fef215c5256d3510465fd3cd7687abd4e0a83a2"
+  },
+  {
+    "sha": "7abb1b4009fdf63e17a1721a932295714eb1fbb7",
+    "file": "7abb1b4009fdf63e17a1721a932295714eb1fbb7.patch",
+    "url": "https://github.com/nginx/nginx/commit/7abb1b4009fdf63e17a1721a932295714eb1fbb7.patch",
+    "sha256": "8af42ddd28a5f30335361c1bf6f17923bef29e35a2bc97ec35210a6c7033b72c"
+  },
+  {
+    "sha": "ce1da78900b07e72f37a25f55e6606220ac45902",
+    "file": "ce1da78900b07e72f37a25f55e6606220ac45902.patch",
+    "url": "https://github.com/nginx/nginx/commit/ce1da78900b07e72f37a25f55e6606220ac45902.patch",
+    "sha256": "679648737ad45d75d20ae61000137ffae7c40256f6119fb3082fc8500028313e"
+  },
+  {
+    "sha": "d2b8d47741820c9fb134c6731ecb40b21f3085b1",
+    "file": "d2b8d47741820c9fb134c6731ecb40b21f3085b1.patch",
+    "url": "https://github.com/nginx/nginx/commit/d2b8d47741820c9fb134c6731ecb40b21f3085b1.patch",
+    "sha256": "a77d8560bb0b874859db38296da924932f1076fc5b45bf8988845a45ff5dfe81"
+  },
+  {
+    "sha": "5461e8bbc09230a4cf8e3d7737c176ae69b091f1",
+    "file": "5461e8bbc09230a4cf8e3d7737c176ae69b091f1.patch",
+    "url": "https://github.com/nginx/nginx/commit/5461e8bbc09230a4cf8e3d7737c176ae69b091f1.patch",
+    "sha256": "cb86fd801d1fa5ab1f3f43c1171377c24f22da22c1a3d30ff084d6c99eaf67a7"
+  },
+  {
+    "sha": "baef7fdac28e4e1fe26509b50b8d15603393e28e",
+    "file": "baef7fdac28e4e1fe26509b50b8d15603393e28e.patch",
+    "url": "https://github.com/nginx/nginx/commit/baef7fdac28e4e1fe26509b50b8d15603393e28e.patch",
+    "sha256": "d854b85cfd7d21a910ceadcdd6b2ae98344b1f87b88ae47d71d618601b5a3007"
+  },
+  {
+    "sha": "39d7d0ba0799fcff6baee52b6525f45739593cfd",
+    "file": "39d7d0ba0799fcff6baee52b6525f45739593cfd.patch",
+    "url": "https://github.com/nginx/nginx/commit/39d7d0ba0799fcff6baee52b6525f45739593cfd.patch",
+    "sha256": "3e316bb96a07ddd4dcfa49d83f35a6c9de41ee816f32b0240dbe0798b4bfda08"
+  },
+  {
+    "sha": "46b9f5d389447b3b822ea71f5ac86ebc316c2975",
+    "file": "46b9f5d389447b3b822ea71f5ac86ebc316c2975.patch",
+    "url": "https://github.com/nginx/nginx/commit/46b9f5d389447b3b822ea71f5ac86ebc316c2975.patch",
+    "sha256": "5598dedaa370b935234cda73618ddc3a88a51b1a457efef9797ba8a72055603d"
+  },
+  {
+    "sha": "9c02c84a7443f3d736a1a5eb3f596de9af8a0c9c",
+    "file": "9c02c84a7443f3d736a1a5eb3f596de9af8a0c9c.patch",
+    "url": "https://github.com/nginx/nginx/commit/9c02c84a7443f3d736a1a5eb3f596de9af8a0c9c.patch",
+    "sha256": "26fe9080eddfc568d8fcb49d93ace5279a13a78cbee0611a3482a1efa7cfc25e"
+  }
+]

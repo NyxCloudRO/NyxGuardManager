@@ -1,0 +1,11 @@
+{
+  "internal/nyxguard/nginx.js": "118b10df711a42653241c151b7d7bfc85a9b1f4d8d34173bc943b262586df9cd",
+  "templates/proxy_host.conf": "381cc0c2ff22f01acf307efdfc8f296a4521505f5bb3245c3278f6016119b95f",
+  "index.js": "216522b8fff74981e98b14723fb17fead4fcfbfd323a426aa312f5e6ed68ca9d",
+  "routes/nyxguard/index.js": "5a0b24a438d46987495c91f92f23a3f4dc1c7557063334185576214de727f221",
+  "internal/monitoring-policy.mjs": "7dbdaaec83243535ce4a2f70c776e2edeb8365353f08b85ca691b2f287b14115",
+  "internal/monitoring-routes.mjs": "9e4162680a26a72a9dd6cffdb0e6393a134c27437805912aa9d05dfe97ef70d0",
+  "internal/release-policy.json": "c059c76efbaa9c0afd198e41342e344fff8edb7acdd78c9b113d7ac6637633d4",
+  "internal/readiness.mjs": "6bde3955651915048eee105f25cc3a3199a11a1c0686b7cd93fe16bebd0fac57",
+  "routes/settings.js": "a635a44de5d3a986fd469a35e155e3d1889c5bbc32003fcd855672d3d561513d"
+}

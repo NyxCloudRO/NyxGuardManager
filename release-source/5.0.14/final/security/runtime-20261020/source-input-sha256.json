@@ -1,0 +1,20 @@
+{
+  "expat_2.5.0-1+deb12u4.debian.tar.xz": "f522d550e0a3ff992c293f2c49d44a1248985863d64005f91e086afc5d295908",
+  "expat_2.5.0.orig.tar.gz": "ab00ee05c7067fd10a35c5d2a4922ebba746ddd50ff83b79c828da17bbdf1757",
+  "expat_2.5.0-1+deb12u4.dsc": "e1537fb367ee0036f87b3bc2e8f44de9fb042b7c141643aaaa187bca0f25b0e4",
+  "python3.11_3.11.2-6+deb12u9.debian.tar.xz": "c40df926f2856785028b4a40478e90382b84e2c7b2d22e3b8e49e79377586627",
+  "python3.11_3.11.2.orig.tar.gz": "2411c74bda5bbcfcddaf4531f66d1adc73f247f529aee981b029513aefdbf849",
+  "python3.11_3.11.2-6+deb12u9.dsc": "49c0d6e1f0d3aeef542de2e908da11bcbcb9343654fb70b51fe4f80865c9dc92",
+  "libtasn1-6_4.19.0-2+deb12u1.dsc": "54eabe8526f590a52771d99ce8c592d3edd549e98d84ea6649db473d528cc6ec",
+  "libtasn1-6_4.19.0-2+deb12u1.debian.tar.xz": "878db2aeeb04e43a70750480a4f17498b7ed46fb5fe433acb6721b3e6d38088c",
+  "libtasn1-6_4.19.0.orig.tar.gz": "1613f0ac1cf484d6ec0ce3b8c06d56263cc7242f1c23b30d82d23de345a63f7a",
+  "openldap_2.5.13+dfsg-5.dsc": "3192f78a46825039c6c9de6808ae98ab3d1c8846f43d2109ed654fd9c33fe472",
+  "openldap_2.5.13+dfsg-5.debian.tar.xz": "161e22c1c79e2f7c6013cfc2bbf0265d6bbb78d91a0fcfa9ca866837f2c31d88",
+  "openldap_2.5.13+dfsg.orig.tar.xz": "1d95c400a3eae6730246614ef16883de3dbd1b14b01a1ebe3a9aa1ccad2c13ec",
+  "openssl_3.0.22-1~deb12u1.dsc": "9eb196075ff65fed9512c743d5ccf918b77c3c637f6d518e4be550cf9065c655",
+  "openssl_3.0.22-1~deb12u1.debian.tar.xz": "08ee68527218d6d9a0fa4741ec8ffef47646cdcad0ed0822b84bf11677c66108",
+  "openssl_3.0.22.orig.tar.gz": "67ebca7e50d17383028045486653492195b83db95f8558709701bb47b5c1ef81",
+  "gzip_1.12-1.debian.tar.xz": "fcf2317e8eeddd66766ec5f3853025b109bd13815ec86ed6563e1af68d17193a",
+  "gzip_1.12.orig.tar.xz": "ce5e03e519f637e1f814011ace35c4f87b33c0bbabeec35baf5fbd3479e91956",
+  "gzip_1.12-1.dsc": "49a287787a0b4fc816eb576c011c472d1f630ec1778dfa120bd7fce4a844c253"
+}

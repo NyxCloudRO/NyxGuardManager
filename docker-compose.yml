@@ -1,7 +1,7 @@
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:5.0.13
+    image: nyxmael/nyxguardmanager:5.0.14
     restart: unless-stopped
     ports:
       - "80:80"
@@ -67,6 +67,7 @@ services:
   db:
     container_name: nyxguard-db
     image: jc21/mariadb-aria:latest
+    command: ["--skip-innodb=0", "--innodb=ON", "--innodb-flush-log-at-trx-commit=1"]
     restart: unless-stopped
     environment:
       TZ: "${TZ:-UTC}"

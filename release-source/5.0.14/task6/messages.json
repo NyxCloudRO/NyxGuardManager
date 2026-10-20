@@ -1,0 +1,8 @@
+{
+ "en":{"settings.interface.tab":"Interface","settings.interface.appearance":"Appearance / Theme"},
+ "es":{"settings.interface.tab":"Interfaz","settings.interface.appearance":"Apariencia / Tema"},
+ "fr":{"settings.interface.tab":"Interface","settings.interface.appearance":"Apparence / Thème"},
+ "de":{"settings.interface.tab":"Oberfläche","settings.interface.appearance":"Darstellung / Design"},
+ "it":{"settings.interface.tab":"Interfaccia","settings.interface.appearance":"Aspetto / Tema"},
+ "ro":{"settings.interface.tab":"Interfață","settings.interface.appearance":"Aspect / Temă"}
+}

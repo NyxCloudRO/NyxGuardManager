@@ -1,0 +1,33 @@
+[
+  {
+    "package": "coreutils",
+    "version": "9.1-1+nyxguard1",
+    "deb": "coreutils_9.1-1+nyxguard1_amd64.deb",
+    "sha256": "aadd26cd76f3108a870b3bc791f541152dd11278ceabb804c480abbfdf5f29be",
+    "changed_runtime_files": {
+      "/bin/cp": "280a8b4678a696ca55985f7ff3e7e9f204fd8411e7cd74d401557dbfce1f8d2b",
+      "/bin/mv": "8c070dd92d8a9a9bccff78d413372fa7c48abbe7acfacc92b7be2dbc82b9a344"
+    },
+    "note": "ACL 2.4 implementation retains existing SONAME, legacy installed filename and all old exports; caller packages retain other payloads."
+  },
+  {
+    "package": "tar",
+    "version": "1.34+dfsg-1.2+deb12u1+nyxguard1",
+    "deb": "tar_1.34+dfsg-1.2+deb12u1+nyxguard1_amd64.deb",
+    "sha256": "4a513133aabce37dd87a4e26d97544baf10547f0e8c051257164df0f89026289",
+    "changed_runtime_files": {
+      "/bin/tar": "9421acaf875d42e4a82fef8cc47da286aac5e442f43ca9d1fe6c4eb0c3f4a133"
+    },
+    "note": "ACL 2.4 implementation retains existing SONAME, legacy installed filename and all old exports; caller packages retain other payloads."
+  },
+  {
+    "package": "libacl1",
+    "version": "2.4.0-0nyxguard1",
+    "deb": "libacl1_2.4.0-0nyxguard1_amd64.deb",
+    "sha256": "9459979387e6325bc58c28751dfe5202b330812e8cf9c376394576caba8f9ec7",
+    "changed_runtime_files": {
+      "/usr/lib/x86_64-linux-gnu/libacl.so.1.1.2301": "acc396e5c12c356b2ab41665ddd7c534c2854a743a3a640d3d8dd95cd7329c37"
+    },
+    "note": "ACL 2.4 implementation retains existing SONAME, legacy installed filename and all old exports; caller packages retain other payloads."
+  }
+]

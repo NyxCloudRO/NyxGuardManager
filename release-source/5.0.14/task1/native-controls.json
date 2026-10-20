@@ -1,0 +1,1109 @@
+{
+  "index-B5xIFQm5-5013-7f8c7487369c.js": [
+    {
+      "old": "e.jsx(v,{className:\"btn-primary\",onClick:()=>E.mutate(),disabled:!o||E.isPending,children:e.jsx(t,{id:\"web-controls.apply-create-activate\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,v,{nyxMutation:true,nyxModule:\"web_controls\",className:\"btn-primary\",onClick:()=>E.mutate(),disabled:!o||E.isPending,children:e.jsx(t,{id:\"web-controls.apply-create-activate\"})})"
+    },
+    {
+      "old": "e.jsx(_,{...j,inputId:\"web-controls-mode\",styles:N,value:I.find(s=>s.value===D(o?.mode,\"monitor\")),options:I,onChange:s=>{const l=p(o??{});x(l,[\"mode\"],D(s?.value,\"monitor\")),u.current=l,m(l)},isDisabled:!o})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,_,{nyxMutation:true,nyxModule:\"web_controls\",...j,inputId:\"web-controls-mode\",styles:N,value:I.find(s=>s.value===D(o?.mode,\"monitor\")),options:I,onChange:s=>{const l=p(o??{});x(l,[\"mode\"],D(s?.value,\"monitor\")),u.current=l,m(l)},isDisabled:!o})"
+    },
+    {
+      "old": "e.jsx(\"input\",{id:\"web-controls-inbound-enabled\",type:\"checkbox\",className:\"form-check-input\",checked:o?.inbound?.enabled!==!1,onChange:s=>{const l=p(o??{});x(l,[\"inbound\",\"enabled\"],s.target.checked),u.current=l,m(l)},disabled:!o})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"web_controls\",id:\"web-controls-inbound-enabled\",type:\"checkbox\",className:\"form-check-input\",checked:o?.inbound?.enabled!==!1,onChange:s=>{const l=p(o??{});x(l,[\"inbound\",\"enabled\"],s.target.checked),u.current=l,m(l)},disabled:!o})"
+    },
+    {
+      "old": "e.jsx(_,{...j,inputId:\"web-controls-inbound-mode\",styles:N,value:I.find(s=>s.value===D(o?.inbound?.enforcement?.mode,\"monitor\")),options:I,onChange:s=>{const l=p(o??{});x(l,[\"inbound\",\"enforcement\",\"mode\"],D(s?.value,\"monitor\")),u.current=l,m(l)},isDisabled:!o})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,_,{nyxMutation:true,nyxModule:\"web_controls\",...j,inputId:\"web-controls-inbound-mode\",styles:N,value:I.find(s=>s.value===D(o?.inbound?.enforcement?.mode,\"monitor\")),options:I,onChange:s=>{const l=p(o??{});x(l,[\"inbound\",\"enforcement\",\"mode\"],D(s?.value,\"monitor\")),u.current=l,m(l)},isDisabled:!o})"
+    },
+    {
+      "old": "e.jsx(\"input\",{id:\"web-controls-browser-enabled\",type:\"checkbox\",className:\"form-check-input\",checked:o?.browser?.enabled!==!1,onChange:s=>{const l=p(o??{});x(l,[\"browser\",\"enabled\"],s.target.checked),u.current=l,m(l)},disabled:!o})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"web_controls\",id:\"web-controls-browser-enabled\",type:\"checkbox\",className:\"form-check-input\",checked:o?.browser?.enabled!==!1,onChange:s=>{const l=p(o??{});x(l,[\"browser\",\"enabled\"],s.target.checked),u.current=l,m(l)},disabled:!o})"
+    },
+    {
+      "old": "e.jsx(_,{...j,inputId:\"web-controls-browser-mode\",styles:N,value:P.find(s=>s.value===L(o?.browser?.enforcement?.mode,\"report-only\")),options:P,onChange:s=>{const l=p(o??{});x(l,[\"browser\",\"enforcement\",\"mode\"],L(s?.value,\"report-only\")),u.current=l,m(l)},isDisabled:!o})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,_,{nyxMutation:true,nyxModule:\"web_controls\",...j,inputId:\"web-controls-browser-mode\",styles:N,value:P.find(s=>s.value===L(o?.browser?.enforcement?.mode,\"report-only\")),options:P,onChange:s=>{const l=p(o??{});x(l,[\"browser\",\"enforcement\",\"mode\"],L(s?.value,\"report-only\")),u.current=l,m(l)},isDisabled:!o})"
+    },
+    {
+      "old": "e.jsx(_,{...j,inputId:\"web-controls-headers-preset\",styles:N,value:K.find(s=>s.value===U(o?.browser?.headersPreset??o?.browser?.headers_preset,\"balanced\")),options:K,onChange:s=>{const l=p(o??{}),oe=U(s?.value,\"balanced\");x(l,[\"browser\",\"headersPreset\"],oe),u.current=l,m(l)},isDisabled:!o})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,_,{nyxMutation:true,nyxModule:\"web_controls\",...j,inputId:\"web-controls-headers-preset\",styles:N,value:K.find(s=>s.value===U(o?.browser?.headersPreset??o?.browser?.headers_preset,\"balanced\")),options:K,onChange:s=>{const l=p(o??{}),oe=U(s?.value,\"balanced\");x(l,[\"browser\",\"headersPreset\"],oe),u.current=l,m(l)},isDisabled:!o})"
+    },
+    {
+      "old": "e.jsx(_,{...j,inputId:\"web-controls-csp-mode\",styles:N,value:P.find(s=>s.value===L(o?.browser?.csp?.mode,\"report-only\")),options:P,onChange:s=>{const l=p(o??{});x(l,[\"browser\",\"csp\",\"mode\"],L(s?.value,\"report-only\")),u.current=l,m(l)},isDisabled:!o})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,_,{nyxMutation:true,nyxModule:\"web_controls\",...j,inputId:\"web-controls-csp-mode\",styles:N,value:P.find(s=>s.value===L(o?.browser?.csp?.mode,\"report-only\")),options:P,onChange:s=>{const l=p(o??{});x(l,[\"browser\",\"csp\",\"mode\"],L(s?.value,\"report-only\")),u.current=l,m(l)},isDisabled:!o})"
+    },
+    {
+      "old": "e.jsx(\"input\",{id:\"web-controls-outbound-enabled\",type:\"checkbox\",className:\"form-check-input\",checked:o?.outbound?.enabled!==!1,onChange:s=>{const l=p(o??{});x(l,[\"outbound\",\"enabled\"],s.target.checked),u.current=l,m(l)},disabled:!o})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"web_controls\",id:\"web-controls-outbound-enabled\",type:\"checkbox\",className:\"form-check-input\",checked:o?.outbound?.enabled!==!1,onChange:s=>{const l=p(o??{});x(l,[\"outbound\",\"enabled\"],s.target.checked),u.current=l,m(l)},disabled:!o})"
+    },
+    {
+      "old": "e.jsx(\"input\",{id:\"web-controls-outbound-allow-http\",type:\"checkbox\",className:\"form-check-input\",checked:o?.outbound?.schemes?.allowHttp??o?.outbound?.schemes?.allow_http===!0,onChange:s=>{const l=p(o??{});x(l,[\"outbound\",\"schemes\",\"allowHttp\"],s.target.checked),u.current=l,m(l)},disabled:!o})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"web_controls\",id:\"web-controls-outbound-allow-http\",type:\"checkbox\",className:\"form-check-input\",checked:o?.outbound?.schemes?.allowHttp??o?.outbound?.schemes?.allow_http===!0,onChange:s=>{const l=p(o??{});x(l,[\"outbound\",\"schemes\",\"allowHttp\"],s.target.checked),u.current=l,m(l)},disabled:!o})"
+    },
+    {
+      "old": "e.jsx(v,{className:\"btn-outline-light\",onClick:()=>{if(!a.data?.effectivePolicy)return;try{typeof window<\"u\"&&window.localStorage.removeItem(S)}catch{}const s=p(a.data.effectivePolicy);u.current=s,m(s)},disabled:a.isLoading,children:e.jsx(t,{id:\"web-controls.btn.reset-quick\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,v,{nyxMutation:true,nyxModule:\"web_controls\",className:\"btn-outline-light\",onClick:()=>{if(!a.data?.effectivePolicy)return;try{typeof window<\"u\"&&window.localStorage.removeItem(S)}catch{}const s=p(a.data.effectivePolicy);u.current=s,m(s)},disabled:a.isLoading,children:e.jsx(t,{id:\"web-controls.btn.reset-quick\"})})"
+    },
+    {
+      "old": "e.jsx(v,{className:\"btn-primary\",onClick:()=>h($),disabled:!o,children:e.jsx(t,{id:\"web-controls.btn.apply-to-json\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,v,{nyxMutation:true,nyxModule:\"web_controls\",className:\"btn-primary\",onClick:()=>h($),disabled:!o,children:e.jsx(t,{id:\"web-controls.btn.apply-to-json\"})})"
+    },
+    {
+      "old": "e.jsx(v,{className:\"btn-primary\",onClick:()=>E.mutate(),disabled:!o||E.isPending,children:e.jsx(t,{id:\"web-controls.btn.create-activate-quick\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,v,{nyxMutation:true,nyxModule:\"web_controls\",className:\"btn-primary\",onClick:()=>E.mutate(),disabled:!o||E.isPending,children:e.jsx(t,{id:\"web-controls.btn.create-activate-quick\"})})"
+    },
+    {
+      "old": "e.jsx(\"textarea\",{id:B,className:r.textarea,value:c,onChange:s=>h(s.target.value),placeholder:d.formatMessage({id:\"web-controls.new-version.placeholder\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"textarea\",{nyxMutation:true,nyxModule:\"web_controls\",id:B,className:r.textarea,value:c,onChange:s=>h(s.target.value),placeholder:d.formatMessage({id:\"web-controls.new-version.placeholder\"})})"
+    },
+    {
+      "old": "e.jsx(v,{className:\"btn-primary\",onClick:()=>Q.mutate(),disabled:!c||Q.isPending,children:e.jsx(t,{id:\"web-controls.create-and-activate\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,v,{nyxMutation:true,nyxModule:\"web_controls\",className:\"btn-primary\",onClick:()=>Q.mutate(),disabled:!c||Q.isPending,children:e.jsx(t,{id:\"web-controls.create-and-activate\"})})"
+    },
+    {
+      "old": "e.jsx(v,{className:\"btn-outline-light\",onClick:()=>{h(W)},disabled:a.isLoading,children:e.jsx(t,{id:\"web-controls.prefill\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,v,{nyxMutation:true,nyxModule:\"web_controls\",className:\"btn-outline-light\",onClick:()=>{h(W)},disabled:a.isLoading,children:e.jsx(t,{id:\"web-controls.prefill\"})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{id:H,className:\"form-control\",style:{maxWidth:220},value:y,onChange:s=>M(s.target.value),placeholder:d.formatMessage({id:\"web-controls.activate-version.placeholder\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"web_controls\",id:H,className:\"form-control\",style:{maxWidth:220},value:y,onChange:s=>M(s.target.value),placeholder:d.formatMessage({id:\"web-controls.activate-version.placeholder\"})})"
+    },
+    {
+      "old": "e.jsx(v,{className:\"btn-primary\",onClick:()=>A.mutate(),disabled:!y||A.isPending,children:e.jsx(t,{id:\"web-controls.activate\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,v,{nyxMutation:true,nyxModule:\"web_controls\",className:\"btn-primary\",onClick:()=>A.mutate(),disabled:!y||A.isPending,children:e.jsx(t,{id:\"web-controls.activate\"})})"
+    },
+    {
+      "old": "e.jsx(v,{className:\"btn-outline-danger\",onClick:()=>J.mutate(),disabled:J.isPending,children:e.jsx(t,{id:\"web-controls.rollback\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,v,{nyxMutation:true,nyxModule:\"web_controls\",className:\"btn-outline-danger\",onClick:()=>J.mutate(),disabled:J.isPending,children:e.jsx(t,{id:\"web-controls.rollback\"})})"
+    }
+  ],
+  "index-B_A1pRP7-409dev-5013-7f8c7487369c.js": [
+    {
+      "old": "t.jsx(\"button\",{type:\"button\",className:s.window,disabled:Q.isPending,onClick:()=>NyxRequestConfirmation({title:\"Clear selected history?\",action:\"Clear selected history\",reducesProtection:true,message:o.formatMessage({id:\"nyxguard.traffic.clear-confirm\"},{window:X(r)}),onConfirm:()=>Q.mutateAsync()}),children:t.jsx(a,{id:\"nyxguard.traffic.clear-logs\"})})",
+      "next": "window.NyxGuardCapabilities.control(t.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:s.window,disabled:Q.isPending,onClick:()=>NyxRequestConfirmation({title:\"Clear selected history?\",action:\"Clear selected history\",reducesProtection:true,message:o.formatMessage({id:\"nyxguard.traffic.clear-confirm\"},{window:X(r)}),onConfirm:()=>Q.mutateAsync()}),children:t.jsx(a,{id:\"nyxguard.traffic.clear-logs\"})})"
+    }
+  ],
+  "index-BiykMfhJ-5013-7f8c7487369c.js": [
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:b.className,disabled:!b.canToggle||B.isPending,onClick:()=>B.mutate(b.next),title:b.canToggle?b.next?r.formatMessage({id:\"nyxguard.globalgate.enable-waf-all\"}):r.formatMessage({id:\"nyxguard.globalgate.disable-waf-all\"}):r.formatMessage({id:\"nyxguard.globalgate.no-proxy-hosts\"}),children:b.label})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",type:\"button\",className:b.className,disabled:!b.canToggle||B.isPending,onClick:()=>B.mutate(b.next),title:b.canToggle?b.next?r.formatMessage({id:\"nyxguard.globalgate.enable-waf-all\"}):r.formatMessage({id:\"nyxguard.globalgate.disable-waf-all\"}):r.formatMessage({id:\"nyxguard.globalgate.no-proxy-hosts\"}),children:b.label})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:l.botDefenseEnabled?a.badgeOn:a.badgeOff,disabled:u.isPending,onClick:()=>{const s=!l.botDefenseEnabled;d({...l,botDefenseEnabled:s}),u.mutate({botDefenseEnabled:s})},children:l.botDefenseEnabled?r.formatMessage({id:\"nyxguard.globalgate.on\"}):r.formatMessage({id:\"nyxguard.globalgate.off\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",type:\"button\",className:l.botDefenseEnabled?a.badgeOn:a.badgeOff,disabled:u.isPending,onClick:()=>{const s=!l.botDefenseEnabled;d({...l,botDefenseEnabled:s}),u.mutate({botDefenseEnabled:s})},children:l.botDefenseEnabled?r.formatMessage({id:\"nyxguard.globalgate.on\"}):r.formatMessage({id:\"nyxguard.globalgate.off\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:l.ddosEnabled?a.badgeOn:a.badgeOff,disabled:u.isPending,onClick:()=>{const s=!l.ddosEnabled;d({...l,ddosEnabled:s}),u.mutate({ddosEnabled:s})},children:l.ddosEnabled?r.formatMessage({id:\"nyxguard.globalgate.on\"}):r.formatMessage({id:\"nyxguard.globalgate.off\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",type:\"button\",className:l.ddosEnabled?a.badgeOn:a.badgeOff,disabled:u.isPending,onClick:()=>{const s=!l.ddosEnabled;d({...l,ddosEnabled:s}),u.mutate({ddosEnabled:s})},children:l.ddosEnabled?r.formatMessage({id:\"nyxguard.globalgate.on\"}):r.formatMessage({id:\"nyxguard.globalgate.off\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:l.sqliEnabled?a.badgeOn:a.badgeOff,disabled:u.isPending,onClick:()=>{const s=!l.sqliEnabled;d({...l,sqliEnabled:s}),u.mutate({sqliEnabled:s})},children:l.sqliEnabled?r.formatMessage({id:\"nyxguard.globalgate.on\"}):r.formatMessage({id:\"nyxguard.globalgate.off\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",type:\"button\",className:l.sqliEnabled?a.badgeOn:a.badgeOff,disabled:u.isPending,onClick:()=>{const s=!l.sqliEnabled;d({...l,sqliEnabled:s}),u.mutate({sqliEnabled:s})},children:l.sqliEnabled?r.formatMessage({id:\"nyxguard.globalgate.on\"}):r.formatMessage({id:\"nyxguard.globalgate.off\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:P.className,disabled:u.isPending,onClick:()=>{const s=!l.authBypassEnabled;d({...l,authBypassEnabled:s}),u.mutate({authBypassEnabled:s})},title:r.formatMessage({id:\"nyxguard.globalgate.auth-bypass-help\"}),children:P.label})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",type:\"button\",className:P.className,disabled:u.isPending,onClick:()=>{const s=!l.authBypassEnabled;d({...l,authBypassEnabled:s}),u.mutate({authBypassEnabled:s})},title:r.formatMessage({id:\"nyxguard.globalgate.auth-bypass-help\"}),children:P.label})"
+    },
+    {
+      "old": "e.jsxs(\"select\",{className:a.input,value:l.logRetentionDays,onChange:s=>d({...l,logRetentionDays:x(s.target.value,l.logRetentionDays)}),children:[e.jsx(\"option\",{value:30,children:\"30\"}),e.jsx(\"option\",{value:60,children:\"60\"}),e.jsx(\"option\",{value:90,children:\"90\"}),e.jsx(\"option\",{value:180,children:\"180\"})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"select\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",className:a.input,value:l.logRetentionDays,onChange:s=>d({...l,logRetentionDays:x(s.target.value,l.logRetentionDays)}),children:[e.jsx(\"option\",{value:30,children:\"30\"}),e.jsx(\"option\",{value:60,children:\"60\"}),e.jsx(\"option\",{value:90,children:\"90\"}),e.jsx(\"option\",{value:180,children:\"180\"})]})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:a.ghost,disabled:M.isPending||l.logRetentionDays===(g.data?.logRetentionDays??90),onClick:()=>M.mutate(l.logRetentionDays),children:e.jsx(t,{id:\"apply\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:a.ghost,disabled:M.isPending||l.logRetentionDays===(g.data?.logRetentionDays??90),onClick:()=>M.mutate(l.logRetentionDays),children:e.jsx(t,{id:\"apply\"})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:a.input,type:\"number\",min:1,max:1e4,value:l.ddosRateRps,onChange:s=>d({...l,ddosRateRps:x(s.target.value,l.ddosRateRps)})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",className:a.input,type:\"number\",min:1,max:1e4,value:l.ddosRateRps,onChange:s=>d({...l,ddosRateRps:x(s.target.value,l.ddosRateRps)})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:a.input,type:\"number\",min:0,max:1e5,value:l.ddosBurst,onChange:s=>d({...l,ddosBurst:x(s.target.value,l.ddosBurst)})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",className:a.input,type:\"number\",min:0,max:1e5,value:l.ddosBurst,onChange:s=>d({...l,ddosBurst:x(s.target.value,l.ddosBurst)})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:a.input,type:\"number\",min:1,max:1e5,value:l.ddosConnLimit,onChange:s=>d({...l,ddosConnLimit:x(s.target.value,l.ddosConnLimit)})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",className:a.input,type:\"number\",min:1,max:1e5,value:l.ddosConnLimit,onChange:s=>d({...l,ddosConnLimit:x(s.target.value,l.ddosConnLimit)})})"
+    },
+    {
+      "old": "e.jsx(\"textarea\",{className:a.textarea,value:l.botUaTokens,onChange:s=>d({...l,botUaTokens:s.target.value})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"textarea\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",className:a.textarea,value:l.botUaTokens,onChange:s=>d({...l,botUaTokens:s.target.value})})"
+    },
+    {
+      "old": "e.jsx(\"textarea\",{className:a.textarea,value:l.botPathTokens,onChange:s=>d({...l,botPathTokens:s.target.value})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"textarea\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",className:a.textarea,value:l.botPathTokens,onChange:s=>d({...l,botPathTokens:s.target.value})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:a.input,type:\"number\",min:1,max:1e3,value:l.sqliThreshold,onChange:s=>d({...l,sqliThreshold:x(s.target.value,l.sqliThreshold)})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",className:a.input,type:\"number\",min:1,max:1e3,value:l.sqliThreshold,onChange:s=>d({...l,sqliThreshold:x(s.target.value,l.sqliThreshold)})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:a.input,type:\"number\",min:0,max:1048576,value:l.sqliMaxBody,onChange:s=>d({...l,sqliMaxBody:x(s.target.value,l.sqliMaxBody)})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",className:a.input,type:\"number\",min:0,max:1048576,value:l.sqliMaxBody,onChange:s=>d({...l,sqliMaxBody:x(s.target.value,l.sqliMaxBody)})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:a.input,type:\"number\",min:0,max:1e3,value:l.sqliProbeMinScore,onChange:s=>d({...l,sqliProbeMinScore:x(s.target.value,l.sqliProbeMinScore)})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",className:a.input,type:\"number\",min:0,max:1e3,value:l.sqliProbeMinScore,onChange:s=>d({...l,sqliProbeMinScore:x(s.target.value,l.sqliProbeMinScore)})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:a.input,type:\"number\",min:1,max:1e5,value:l.sqliProbeBanScore,onChange:s=>d({...l,sqliProbeBanScore:x(s.target.value,l.sqliProbeBanScore)})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",className:a.input,type:\"number\",min:1,max:1e5,value:l.sqliProbeBanScore,onChange:s=>d({...l,sqliProbeBanScore:x(s.target.value,l.sqliProbeBanScore)})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:a.input,type:\"number\",min:1,max:600,value:l.sqliProbeWindowSec,onChange:s=>d({...l,sqliProbeWindowSec:x(s.target.value,l.sqliProbeWindowSec)})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",className:a.input,type:\"number\",min:1,max:600,value:l.sqliProbeWindowSec,onChange:s=>d({...l,sqliProbeWindowSec:x(s.target.value,l.sqliProbeWindowSec)})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:a.input,type:\"number\",min:1,max:1e3,value:l.authfailThreshold,onChange:s=>d({...l,authfailThreshold:x(s.target.value,l.authfailThreshold)})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",className:a.input,type:\"number\",min:1,max:1e3,value:l.authfailThreshold,onChange:s=>d({...l,authfailThreshold:x(s.target.value,l.authfailThreshold)})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:a.input,type:\"number\",min:5,max:3600,value:l.authfailWindowSec,onChange:s=>d({...l,authfailWindowSec:x(s.target.value,l.authfailWindowSec)})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",className:a.input,type:\"number\",min:5,max:3600,value:l.authfailWindowSec,onChange:s=>d({...l,authfailWindowSec:x(s.target.value,l.authfailWindowSec)})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:a.input,type:\"number\",min:1,max:8760,value:l.authfailBanHours,onChange:s=>d({...l,authfailBanHours:x(s.target.value,l.authfailBanHours)})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",className:a.input,type:\"number\",min:1,max:8760,value:l.authfailBanHours,onChange:s=>d({...l,authfailBanHours:x(s.target.value,l.authfailBanHours)})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:a.rateBanBtn,onClick:()=>S.mutate(s.ip),disabled:S.isPending,title:r.formatMessage({id:\"nyxguard.globalgate.rate-ban\"}),children:e.jsx(t,{id:\"nyxguard.globalgate.rate-ban\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:a.rateBanBtn,onClick:()=>S.mutate(s.ip),disabled:S.isPending,title:r.formatMessage({id:\"nyxguard.globalgate.rate-ban\"}),children:e.jsx(t,{id:\"nyxguard.globalgate.rate-ban\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:a.primary,disabled:u.isPending||!l,onClick:()=>{l&&u.mutate(l)},children:u.isPending?r.formatMessage({id:\"nyxguard.globalgate.saving\"}):O?r.formatMessage({id:\"nyxguard.globalgate.saved\"}):r.formatMessage({id:\"nyxguard.globalgate.save-settings\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",type:\"button\",className:a.primary,disabled:u.isPending||!l,onClick:()=>{l&&u.mutate(l)},children:u.isPending?r.formatMessage({id:\"nyxguard.globalgate.saving\"}):O?r.formatMessage({id:\"nyxguard.globalgate.saved\"}):r.formatMessage({id:\"nyxguard.globalgate.save-settings\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:a.ghost,disabled:u.isPending||!g.data,onClick:()=>{g.data&&d(g.data)},children:e.jsx(t,{id:\"reset\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",type:\"button\",className:a.ghost,disabled:u.isPending||!g.data,onClick:()=>{g.data&&d(g.data)},children:e.jsx(t,{id:\"reset\"})})"
+    },
+    {
+      "old": "e.jsxs(\"button\",{type:\"button\",className:a.primary,style:{whiteSpace:\"nowrap\",marginLeft:16,flexShrink:0},onClick:G,children:[\"+ \",e.jsx(t,{id:\"nyxguard.globalgate.waf-rules.add\"})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:a.primary,style:{whiteSpace:\"nowrap\",marginLeft:16,flexShrink:0},onClick:G,children:[\"+ \",e.jsx(t,{id:\"nyxguard.globalgate.waf-rules.add\"})]})"
+    },
+    {
+      "old": "e.jsxs(\"select\",{className:a.input,value:c.draft.pattern_type,onChange:s=>m(n=>({...n,draft:{...n.draft,pattern_type:s.target.value}})),children:[e.jsx(\"option\",{value:\"uri\",children:r.formatMessage({id:\"nyxguard.globalgate.waf-rules.type-uri\"})}),e.jsx(\"option\",{value:\"ua\",children:r.formatMessage({id:\"nyxguard.globalgate.waf-rules.type-ua\"})}),e.jsx(\"option\",{value:\"method\",children:r.formatMessage({id:\"nyxguard.globalgate.waf-rules.type-method\"})}),e.jsx(\"option\",{value:\"header\",children:r.formatMessage({id:\"nyxguard.globalgate.waf-rules.type-header\"})}),e.jsx(\"option\",{value:\"ip\",children:r.formatMessage({id:\"nyxguard.globalgate.waf-rules.type-ip\"})})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"select\",{nyxMutation:true,nyxModule:\"nyxguard\",className:a.input,value:c.draft.pattern_type,onChange:s=>m(n=>({...n,draft:{...n.draft,pattern_type:s.target.value}})),children:[e.jsx(\"option\",{value:\"uri\",children:r.formatMessage({id:\"nyxguard.globalgate.waf-rules.type-uri\"})}),e.jsx(\"option\",{value:\"ua\",children:r.formatMessage({id:\"nyxguard.globalgate.waf-rules.type-ua\"})}),e.jsx(\"option\",{value:\"method\",children:r.formatMessage({id:\"nyxguard.globalgate.waf-rules.type-method\"})}),e.jsx(\"option\",{value:\"header\",children:r.formatMessage({id:\"nyxguard.globalgate.waf-rules.type-header\"})}),e.jsx(\"option\",{value:\"ip\",children:r.formatMessage({id:\"nyxguard.globalgate.waf-rules.type-ip\"})})]})"
+    },
+    {
+      "old": "e.jsxs(\"select\",{className:a.input,value:c.draft.action,onChange:s=>m(n=>({...n,draft:{...n.draft,action:s.target.value}})),children:[e.jsx(\"option\",{value:\"block\",children:r.formatMessage({id:\"nyxguard.globalgate.waf-rules.action-block\"})}),e.jsx(\"option\",{value:\"allow\",children:r.formatMessage({id:\"nyxguard.globalgate.waf-rules.action-allow\"})})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"select\",{nyxMutation:true,nyxModule:\"nyxguard\",className:a.input,value:c.draft.action,onChange:s=>m(n=>({...n,draft:{...n.draft,action:s.target.value}})),children:[e.jsx(\"option\",{value:\"block\",children:r.formatMessage({id:\"nyxguard.globalgate.waf-rules.action-block\"})}),e.jsx(\"option\",{value:\"allow\",children:r.formatMessage({id:\"nyxguard.globalgate.waf-rules.action-allow\"})})]})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:a.input,type:\"text\",placeholder:\"X-My-Header\",value:c.draft.header_name,onChange:s=>m(n=>({...n,draft:{...n.draft,header_name:s.target.value}}))})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"nyxguard\",className:a.input,type:\"text\",placeholder:\"X-My-Header\",value:c.draft.header_name,onChange:s=>m(n=>({...n,draft:{...n.draft,header_name:s.target.value}}))})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:a.input,type:\"text\",placeholder:r.formatMessage({id:\"nyxguard.globalgate.waf-rules.pattern-placeholder\"}),value:c.draft.pattern,onChange:s=>m(n=>({...n,draft:{...n.draft,pattern:s.target.value}}))})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"nyxguard\",className:a.input,type:\"text\",placeholder:r.formatMessage({id:\"nyxguard.globalgate.waf-rules.pattern-placeholder\"}),value:c.draft.pattern,onChange:s=>m(n=>({...n,draft:{...n.draft,pattern:s.target.value}}))})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:a.input,type:\"number\",min:0,max:9999,value:c.draft.priority,onChange:s=>m(n=>({...n,draft:{...n.draft,priority:Number.parseInt(s.target.value,10)||100}}))})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"nyxguard\",className:a.input,type:\"number\",min:0,max:9999,value:c.draft.priority,onChange:s=>m(n=>({...n,draft:{...n.draft,priority:Number.parseInt(s.target.value,10)||100}}))})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:a.input,type:\"text\",value:c.draft.note,onChange:s=>m(n=>({...n,draft:{...n.draft,note:s.target.value}}))})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"nyxguard\",className:a.input,type:\"text\",value:c.draft.note,onChange:s=>m(n=>({...n,draft:{...n.draft,note:s.target.value}}))})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:a.primary,disabled:v.isPending||!c.draft.pattern.trim(),onClick:()=>v.mutate({editId:c.editId,draft:c.draft}),children:e.jsx(t,{id:\"nyxguard.globalgate.waf-rules.save\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:a.primary,disabled:v.isPending||!c.draft.pattern.trim(),onClick:()=>v.mutate({editId:c.editId,draft:c.draft}),children:e.jsx(t,{id:\"nyxguard.globalgate.waf-rules.save\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:a.ghost,onClick:k,children:e.jsx(t,{id:\"nyxguard.globalgate.waf-rules.cancel\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:a.ghost,onClick:k,children:e.jsx(t,{id:\"nyxguard.globalgate.waf-rules.cancel\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:a.ghost,style:{padding:\"4px 10px\",fontSize:12},onClick:()=>H(s),children:e.jsx(t,{id:\"nyxguard.globalgate.waf-rules.edit\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:a.ghost,style:{padding:\"4px 10px\",fontSize:12},onClick:()=>H(s),children:e.jsx(t,{id:\"nyxguard.globalgate.waf-rules.edit\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:a.rateBanBtn,style:{padding:\"4px 10px\",fontSize:12},disabled:E.isPending,onClick:()=>NyxRequestConfirmation({title:\"Delete WAF rule?\",action:\"Delete rule\",reducesProtection:true,message:r.formatMessage({id:\"nyxguard.globalgate.waf-rules.confirm-delete\"}),onConfirm:()=>E.mutateAsync(s.id)}),children:e.jsx(t,{id:\"nyxguard.globalgate.waf-rules.delete\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:a.rateBanBtn,style:{padding:\"4px 10px\",fontSize:12},disabled:E.isPending,onClick:()=>NyxRequestConfirmation({title:\"Delete WAF rule?\",action:\"Delete rule\",reducesProtection:true,message:r.formatMessage({id:\"nyxguard.globalgate.waf-rules.confirm-delete\"}),onConfirm:()=>E.mutateAsync(s.id)}),children:e.jsx(t,{id:\"nyxguard.globalgate.waf-rules.delete\"})})"
+    }
+  ],
+  "index-C8uhQqRV-5013-7f8c7487369c.js": [
+    {
+      "old": "n.jsx(NyxAppControl,{applied:a.configurationApplied,className:s.toggle,type:\"button\",disabled:d.isPending||!i.data,\"aria-pressed\":e,onClick:()=>{if(!e)d.mutate({id:a.id,wafEnabled:!e});else NyxRequestConfirmation({title:\"Disable WAF?\",action:\"Disable WAF\",reducesProtection:true,message:\"Application: \"+r+\". Disabling WAF removes web application firewall protection and its dependent security controls from this application.\",onConfirm:()=>d.mutateAsync({id:a.id,wafEnabled:!e})})},\"aria-label\":(e?t.formatMessage({id:\"nyxguard.apps.action.disable-waf\"}):t.formatMessage({id:\"nyxguard.apps.action.enable-waf\"}))+\" for \"+r,children:e?\"On\":\"Off\"})",
+      "next": "window.NyxGuardCapabilities.control(n.jsx,NyxAppControl,{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",applied:a.configurationApplied,className:s.toggle,type:\"button\",disabled:d.isPending||!i.data,\"aria-pressed\":e,onClick:()=>{if(!e)d.mutate({id:a.id,wafEnabled:!e});else NyxRequestConfirmation({title:\"Disable WAF?\",action:\"Disable WAF\",reducesProtection:true,message:\"Application: \"+r+\". Disabling WAF removes web application firewall protection and its dependent security controls from this application.\",onConfirm:()=>d.mutateAsync({id:a.id,wafEnabled:!e})})},\"aria-label\":(e?t.formatMessage({id:\"nyxguard.apps.action.disable-waf\"}):t.formatMessage({id:\"nyxguard.apps.action.enable-waf\"}))+\" for \"+r,children:e?\"On\":\"Off\"})"
+    },
+    {
+      "old": "n.jsx(NyxAppControl,{applied:a.configurationApplied,className:u(s.toggle,{[s.toggleGlobalOff]:m,[s.toggleDisabled]:!e}),type:\"button\",disabled:!e||d.isPending||!i.data,title:e?m?t.formatMessage({id:\"nyxguard.apps.tooltip.bot-global-off\"}):t.formatMessage({id:\"nyxguard.apps.tooltip.toggle-bot\"}):t.formatMessage({id:\"nyxguard.apps.tooltip.enable-waf-first\"}),\"aria-pressed\":e&&o&&c,onClick:()=>{if(!c)d.mutate({id:a.id,wafEnabled:!0,botDefenseEnabled:!c});else NyxRequestConfirmation({title:\"Disable Bot Defence?\",action:\"Disable Bot Defence\",reducesProtection:true,message:\"Application: \"+r+\". Disabling Bot Defence allows traffic that this application’s bot checks would otherwise block.\",onConfirm:()=>d.mutateAsync({id:a.id,wafEnabled:!0,botDefenseEnabled:!c})})},\"aria-label\":(m?t.formatMessage({id:\"nyxguard.apps.action.bot-global-off\"}):c?t.formatMessage({id:\"nyxguard.apps.action.disable-bot\"}):t.formatMessage({id:\"nyxguard.apps.action.enable-bot\"}))+\" for \"+r,children:m?\"Global off\":c?\"On\":\"Off\"})",
+      "next": "window.NyxGuardCapabilities.control(n.jsx,NyxAppControl,{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",applied:a.configurationApplied,className:u(s.toggle,{[s.toggleGlobalOff]:m,[s.toggleDisabled]:!e}),type:\"button\",disabled:!e||d.isPending||!i.data,title:e?m?t.formatMessage({id:\"nyxguard.apps.tooltip.bot-global-off\"}):t.formatMessage({id:\"nyxguard.apps.tooltip.toggle-bot\"}):t.formatMessage({id:\"nyxguard.apps.tooltip.enable-waf-first\"}),\"aria-pressed\":e&&o&&c,onClick:()=>{if(!c)d.mutate({id:a.id,wafEnabled:!0,botDefenseEnabled:!c});else NyxRequestConfirmation({title:\"Disable Bot Defence?\",action:\"Disable Bot Defence\",reducesProtection:true,message:\"Application: \"+r+\". Disabling Bot Defence allows traffic that this application’s bot checks would otherwise block.\",onConfirm:()=>d.mutateAsync({id:a.id,wafEnabled:!0,botDefenseEnabled:!c})})},\"aria-label\":(m?t.formatMessage({id:\"nyxguard.apps.action.bot-global-off\"}):c?t.formatMessage({id:\"nyxguard.apps.action.disable-bot\"}):t.formatMessage({id:\"nyxguard.apps.action.enable-bot\"}))+\" for \"+r,children:m?\"Global off\":c?\"On\":\"Off\"})"
+    },
+    {
+      "old": "n.jsx(NyxAppControl,{applied:a.configurationApplied,className:u(s.toggle,{[s.toggleGlobalOff]:x,[s.toggleDisabled]:!e}),type:\"button\",disabled:!e||d.isPending||!i.data,title:e?x?t.formatMessage({id:\"nyxguard.apps.tooltip.ddos-global-off\"}):t.formatMessage({id:\"nyxguard.apps.tooltip.toggle-ddos\"}):t.formatMessage({id:\"nyxguard.apps.tooltip.enable-waf-first\"}),\"aria-pressed\":e&&_&&f,onClick:()=>{if(!f)d.mutate({id:a.id,wafEnabled:!0,ddosEnabled:!f});else NyxRequestConfirmation({title:\"Disable DDoS protection?\",action:\"Disable DDoS protection\",reducesProtection:true,message:\"Application: \"+r+\". Disabling DDoS Shield removes this application’s request and connection rate protections.\",onConfirm:()=>d.mutateAsync({id:a.id,wafEnabled:!0,ddosEnabled:!f})})},\"aria-label\":(x?t.formatMessage({id:\"nyxguard.apps.action.ddos-global-off\"}):f?t.formatMessage({id:\"nyxguard.apps.action.disable-ddos\"}):t.formatMessage({id:\"nyxguard.apps.action.enable-ddos\"}))+\" for \"+r,children:x?\"Global off\":f?\"On\":\"Off\"})",
+      "next": "window.NyxGuardCapabilities.control(n.jsx,NyxAppControl,{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",applied:a.configurationApplied,className:u(s.toggle,{[s.toggleGlobalOff]:x,[s.toggleDisabled]:!e}),type:\"button\",disabled:!e||d.isPending||!i.data,title:e?x?t.formatMessage({id:\"nyxguard.apps.tooltip.ddos-global-off\"}):t.formatMessage({id:\"nyxguard.apps.tooltip.toggle-ddos\"}):t.formatMessage({id:\"nyxguard.apps.tooltip.enable-waf-first\"}),\"aria-pressed\":e&&_&&f,onClick:()=>{if(!f)d.mutate({id:a.id,wafEnabled:!0,ddosEnabled:!f});else NyxRequestConfirmation({title:\"Disable DDoS protection?\",action:\"Disable DDoS protection\",reducesProtection:true,message:\"Application: \"+r+\". Disabling DDoS Shield removes this application’s request and connection rate protections.\",onConfirm:()=>d.mutateAsync({id:a.id,wafEnabled:!0,ddosEnabled:!f})})},\"aria-label\":(x?t.formatMessage({id:\"nyxguard.apps.action.ddos-global-off\"}):f?t.formatMessage({id:\"nyxguard.apps.action.disable-ddos\"}):t.formatMessage({id:\"nyxguard.apps.action.enable-ddos\"}))+\" for \"+r,children:x?\"Global off\":f?\"On\":\"Off\"})"
+    },
+    {
+      "old": "n.jsx(NyxAppControl,{applied:a.configurationApplied,className:u(s.toggle,{[s.toggleGlobalOff]:E,[s.toggleDisabled]:!e}),type:\"button\",disabled:!e||d.isPending||!i.data,title:e?E?t.formatMessage({id:\"nyxguard.apps.tooltip.sqli-global-off\"}):t.formatMessage({id:\"nyxguard.apps.tooltip.toggle-sqli\"}):t.formatMessage({id:\"nyxguard.apps.tooltip.enable-waf-first\"}),\"aria-pressed\":e&&h&&y,onClick:()=>{if(!y)d.mutate({id:a.id,wafEnabled:!0,sqliEnabled:!y});else NyxRequestConfirmation({title:\"Disable SQL Shield?\",action:\"Disable SQL Shield\",reducesProtection:true,message:\"Application: \"+r+\". Disabling SQL Shield removes SQL injection detection from this application’s traffic.\",onConfirm:()=>d.mutateAsync({id:a.id,wafEnabled:!0,sqliEnabled:!y})})},\"aria-label\":(E?t.formatMessage({id:\"nyxguard.apps.action.sqli-global-off\"}):y?t.formatMessage({id:\"nyxguard.apps.action.disable-sqli\"}):t.formatMessage({id:\"nyxguard.apps.action.enable-sqli\"}))+\" for \"+r,children:E?\"Global off\":y?\"On\":\"Off\"})",
+      "next": "window.NyxGuardCapabilities.control(n.jsx,NyxAppControl,{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",applied:a.configurationApplied,className:u(s.toggle,{[s.toggleGlobalOff]:E,[s.toggleDisabled]:!e}),type:\"button\",disabled:!e||d.isPending||!i.data,title:e?E?t.formatMessage({id:\"nyxguard.apps.tooltip.sqli-global-off\"}):t.formatMessage({id:\"nyxguard.apps.tooltip.toggle-sqli\"}):t.formatMessage({id:\"nyxguard.apps.tooltip.enable-waf-first\"}),\"aria-pressed\":e&&h&&y,onClick:()=>{if(!y)d.mutate({id:a.id,wafEnabled:!0,sqliEnabled:!y});else NyxRequestConfirmation({title:\"Disable SQL Shield?\",action:\"Disable SQL Shield\",reducesProtection:true,message:\"Application: \"+r+\". Disabling SQL Shield removes SQL injection detection from this application’s traffic.\",onConfirm:()=>d.mutateAsync({id:a.id,wafEnabled:!0,sqliEnabled:!y})})},\"aria-label\":(E?t.formatMessage({id:\"nyxguard.apps.action.sqli-global-off\"}):y?t.formatMessage({id:\"nyxguard.apps.action.disable-sqli\"}):t.formatMessage({id:\"nyxguard.apps.action.enable-sqli\"}))+\" for \"+r,children:E?\"Global off\":y?\"On\":\"Off\"})"
+    },
+    {
+      "old": "n.jsx(NyxAppControl,{applied:a.configurationApplied,className:u(s.toggle,{[s.toggleActive]:b,[s.toggleDisabled]:!e}),type:\"button\",disabled:!e||d.isPending||!i.data,title:e?b&&!M?\"This application override is enabled. Recognized authenticated traffic bypasses applicable bot, SQL injection and rate checks.\":b?t.formatMessage({id:\"nyxguard.apps.tooltip.auth-bypass-on\"}):t.formatMessage({id:\"nyxguard.apps.tooltip.auth-info\"}):t.formatMessage({id:\"nyxguard.apps.tooltip.enable-waf-first\"}),\"aria-pressed\":e&&b,onClick:()=>{if(b)d.mutate({id:a.id,wafEnabled:!0,authBypassEnabled:!b});else NyxRequestConfirmation({title:\"Enable Auth Bypass?\",action:\"Enable Auth Bypass\",reducesProtection:true,message:\"Application: \"+r+\". Enabling Authenticated Traffic Bypass exempts traffic recognized as authenticated from applicable bot, SQL injection and rate protections. It does not authenticate users or grant application access.\",onConfirm:()=>d.mutateAsync({id:a.id,wafEnabled:!0,authBypassEnabled:!b})})},\"aria-label\":(b?t.formatMessage({id:\"nyxguard.apps.action.disable-auth\"}):t.formatMessage({id:\"nyxguard.apps.action.enable-auth\"}))+\" for \"+r,children:e&&b?\"On\":\"Off\"})",
+      "next": "window.NyxGuardCapabilities.control(n.jsx,NyxAppControl,{nyxMutation:true,nyxRequires:[\"proxy_hosts\"],nyxModule:\"nyxguard\",applied:a.configurationApplied,className:u(s.toggle,{[s.toggleActive]:b,[s.toggleDisabled]:!e}),type:\"button\",disabled:!e||d.isPending||!i.data,title:e?b&&!M?\"This application override is enabled. Recognized authenticated traffic bypasses applicable bot, SQL injection and rate checks.\":b?t.formatMessage({id:\"nyxguard.apps.tooltip.auth-bypass-on\"}):t.formatMessage({id:\"nyxguard.apps.tooltip.auth-info\"}):t.formatMessage({id:\"nyxguard.apps.tooltip.enable-waf-first\"}),\"aria-pressed\":e&&b,onClick:()=>{if(b)d.mutate({id:a.id,wafEnabled:!0,authBypassEnabled:!b});else NyxRequestConfirmation({title:\"Enable Auth Bypass?\",action:\"Enable Auth Bypass\",reducesProtection:true,message:\"Application: \"+r+\". Enabling Authenticated Traffic Bypass exempts traffic recognized as authenticated from applicable bot, SQL injection and rate protections. It does not authenticate users or grant application access.\",onConfirm:()=>d.mutateAsync({id:a.id,wafEnabled:!0,authBypassEnabled:!b})})},\"aria-label\":(b?t.formatMessage({id:\"nyxguard.apps.action.disable-auth\"}):t.formatMessage({id:\"nyxguard.apps.action.enable-auth\"}))+\" for \"+r,children:e&&b?\"On\":\"Off\"})"
+    },
+    {
+      "old": "section:B,permission:D",
+      "next": "section:B,permission:\"view\""
+    }
+  ],
+  "index-DHuZiE1T-task2-5013-7f8c7487369c.js": [
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:j===\"allow\"?r.pillActiveBtn:r.pillBtn,onClick:()=>Q(\"allow\"),children:e.jsx(s,{id:\"allow\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:j===\"allow\"?r.pillActiveBtn:r.pillBtn,onClick:()=>Q(\"allow\"),children:e.jsx(s,{id:\"allow\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:j===\"deny\"?r.pillActiveBtn:r.pillBtn,onClick:()=>Q(\"deny\"),children:e.jsx(s,{id:\"deny\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:j===\"deny\"?r.pillActiveBtn:r.pillBtn,onClick:()=>Q(\"deny\"),children:e.jsx(s,{id:\"deny\"})})"
+    },
+    {
+      "old": "e.jsx(oe,{options:I,value:I.find(t=>t.value===z)??I[0],onChange:t=>{R(t?.value??null)},styles:Je,menuPortalTarget:typeof document<\"u\"?document.body:null,menuPosition:\"fixed\",menuShouldBlockScroll:!0,isSearchable:!1})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,oe,{nyxMutation:true,nyxModule:\"nyxguard\",options:I,value:I.find(t=>t.value===z)??I[0],onChange:t=>{R(t?.value??null)},styles:Je,menuPortalTarget:typeof document<\"u\"?document.body:null,menuPosition:\"fixed\",menuShouldBlockScroll:!0,isSearchable:!1})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:r.input,id:\"nyx-rule-value\",\"aria-invalid\":!!E,\"aria-describedby\":E?\"nyx-rule-value-error\":undefined,value:d===\"ip\"?b:v,onChange:t=>{d===\"ip\"?G(t.target.value):P(t.target.value)},placeholder:ne})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"nyxguard\",className:r.input,id:\"nyx-rule-value\",\"aria-invalid\":!!E,\"aria-describedby\":E?\"nyx-rule-value-error\":undefined,value:d===\"ip\"?b:v,onChange:t=>{d===\"ip\"?G(t.target.value):P(t.target.value)},placeholder:ne})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:r.input,id:\"nyx-rule-note\",maxLength:255,value:g,onChange:t=>B(t.target.value),placeholder:n.formatMessage({id:\"nyxguard.rules.note-placeholder\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"nyxguard\",className:r.input,id:\"nyx-rule-note\",maxLength:255,value:g,onChange:t=>B(t.target.value),placeholder:n.formatMessage({id:\"nyxguard.rules.note-placeholder\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{className:r.primary,type:\"button\",disabled:!!E||U.isPending||V.isPending||editIp.isPending||editCountry.isPending,onClick:()=>{editing?d===\"ip\"?editIp.mutate():editCountry.mutate():d===\"ip\"?U.mutate():V.mutate()},children:editing?\"Save Changes\":e.jsx(s,{id:\"nyxguard.rules.save-rule\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",className:r.primary,type:\"button\",disabled:!!E||U.isPending||V.isPending||editIp.isPending||editCountry.isPending,onClick:()=>{editing?d===\"ip\"?editIp.mutate():editCountry.mutate():d===\"ip\"?U.mutate():V.mutate()},children:editing?\"Save Changes\":e.jsx(s,{id:\"nyxguard.rules.save-rule\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:r.ghost,onClick:()=>{setEditing(null),G(\"\"),P(\"\"),B(\"\")},children:\"Cancel\"})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:r.ghost,onClick:()=>{setEditing(null),G(\"\"),P(\"\"),B(\"\")},children:\"Cancel\"})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:r.ghost+\" nyx-rule-bulk-delete\",disabled:J.isPending||X.isPending||(d===\"ip\"?(c.data?.items?.length??0)===0:(x.data?.items?.length??0)===0),onClick:()=>NyxRequestRuleConfirmation({title:d===\"ip\"?\"Delete all IP rules?\":\"Delete all country rules?\",action:\"Delete all rules\",reducesProtection:true,message:n.formatMessage({id:d===\"ip\"?\"nyxguard.rules.delete-all-ip-confirm\":\"nyxguard.rules.delete-all-country-confirm\"},{count:d===\"ip\"?(c.data?.items?.length??0):(x.data?.items?.length??0)}),onConfirm:()=>d===\"ip\"?J.mutateAsync():X.mutateAsync()}),children:e.jsx(s,{id:\"nyxguard.rules.delete-all\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:r.ghost+\" nyx-rule-bulk-delete\",disabled:J.isPending||X.isPending||(d===\"ip\"?(c.data?.items?.length??0)===0:(x.data?.items?.length??0)===0),onClick:()=>NyxRequestRuleConfirmation({title:d===\"ip\"?\"Delete all IP rules?\":\"Delete all country rules?\",action:\"Delete all rules\",reducesProtection:true,message:n.formatMessage({id:d===\"ip\"?\"nyxguard.rules.delete-all-ip-confirm\":\"nyxguard.rules.delete-all-country-confirm\"},{count:d===\"ip\"?(c.data?.items?.length??0):(x.data?.items?.length??0)}),onConfirm:()=>d===\"ip\"?J.mutateAsync():X.mutateAsync()}),children:e.jsx(s,{id:\"nyxguard.rules.delete-all\"})})"
+    },
+    {
+      "old": "e.jsx(NyxRuleState,{\"aria-label\":\"Enabled rule \"+(t.ipCidr||t.countryCode),type:\"checkbox\",checked:t.enabled&&!t.expired&&!Boolean(t.expiresOn&&Date.parse(t.expiresOn)<=Date.now()),disabled:ae.isPending||t.expired||Boolean(t.expiresOn&&Date.parse(t.expiresOn)<=Date.now()),title:t.expired||Boolean(t.expiresOn&&Date.parse(t.expiresOn)<=Date.now())?\"Expired — renew a manual rule or wait for fresh crawler verification\":\"Enable or disable this active rule\",onChange:l=>ae.mutate({id:t.id,enabled:l.target.checked})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,NyxRuleState,{nyxMutation:true,nyxModule:\"nyxguard\",\"aria-label\":\"Enabled rule \"+(t.ipCidr||t.countryCode),type:\"checkbox\",checked:t.enabled&&!t.expired&&!Boolean(t.expiresOn&&Date.parse(t.expiresOn)<=Date.now()),disabled:ae.isPending||t.expired||Boolean(t.expiresOn&&Date.parse(t.expiresOn)<=Date.now()),title:t.expired||Boolean(t.expiresOn&&Date.parse(t.expiresOn)<=Date.now())?\"Expired — renew a manual rule or wait for fresh crawler verification\":\"Enable or disable this active rule\",onChange:l=>ae.mutate({id:t.id,enabled:l.target.checked})})"
+    },
+    {
+      "old": "e.jsx(NyxRuleAction,{kind:\"edit\",target:t.ipCidr,type:\"button\",className:r.ghost,disabled:Boolean((t.expired||Boolean(t.expiresOn&&Date.parse(t.expiresOn)<=Date.now()))&&t.ruleOrigin===\"verified_crawler\"),title:(t.expired||Boolean(t.expiresOn&&Date.parse(t.expiresOn)<=Date.now()))&&t.ruleOrigin===\"verified_crawler\"?\"Expired crawler verification cannot be renewed manually\":\"Edit rule\",onClick:()=>{setEditing({id:t.id,type:\"ip\"}),k(\"ip\"),Q(t.action),G(t.ipCidr),B(t.note||\"\"),document.querySelector(\"[data-task2-rules]\").scrollIntoView({block:\"start\",behavior:\"smooth\"})},children:\"Edit\"})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,NyxRuleAction,{nyxMutation:true,nyxModule:\"nyxguard\",kind:\"edit\",target:t.ipCidr,type:\"button\",className:r.ghost,disabled:Boolean((t.expired||Boolean(t.expiresOn&&Date.parse(t.expiresOn)<=Date.now()))&&t.ruleOrigin===\"verified_crawler\"),title:(t.expired||Boolean(t.expiresOn&&Date.parse(t.expiresOn)<=Date.now()))&&t.ruleOrigin===\"verified_crawler\"?\"Expired crawler verification cannot be renewed manually\":\"Edit rule\",onClick:()=>{setEditing({id:t.id,type:\"ip\"}),k(\"ip\"),Q(t.action),G(t.ipCidr),B(t.note||\"\"),document.querySelector(\"[data-task2-rules]\").scrollIntoView({block:\"start\",behavior:\"smooth\"})},children:\"Edit\"})"
+    },
+    {
+      "old": "e.jsx(NyxRuleAction,{kind:\"delete\",target:t.ipCidr,type:\"button\",className:r.ghost,disabled:W.isPending,onClick:()=>NyxRequestRuleConfirmation({title:\"Delete IP rule?\",action:\"Delete rule\",reducesProtection:true,message:\"Delete the \"+t.action.toUpperCase()+\" rule for \"+t.ipCidr+\"? This removes only this rule from the active policy.\",onConfirm:()=>W.mutateAsync(t.id)}),children:e.jsx(s,{id:\"delete\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,NyxRuleAction,{nyxMutation:true,nyxModule:\"nyxguard\",kind:\"delete\",target:t.ipCidr,type:\"button\",className:r.ghost,disabled:W.isPending,onClick:()=>NyxRequestRuleConfirmation({title:\"Delete IP rule?\",action:\"Delete rule\",reducesProtection:true,message:\"Delete the \"+t.action.toUpperCase()+\" rule for \"+t.ipCidr+\"? This removes only this rule from the active policy.\",onConfirm:()=>W.mutateAsync(t.id)}),children:e.jsx(s,{id:\"delete\"})})"
+    },
+    {
+      "old": "e.jsx(NyxRuleState,{\"aria-label\":\"Enabled rule \"+(t.ipCidr||t.countryCode),type:\"checkbox\",checked:t.enabled&&!Boolean(t.expiresOn&&Date.parse(t.expiresOn)<=Date.now()),disabled:se.isPending||Boolean(t.expiresOn&&Date.parse(t.expiresOn)<=Date.now()),title:t.expiresOn&&Date.parse(t.expiresOn)<=Date.now()?\"Expired rule is not enforced\":\"Enable or disable this active rule\",onChange:l=>se.mutate({id:t.id,enabled:l.target.checked})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,NyxRuleState,{nyxMutation:true,nyxModule:\"nyxguard\",\"aria-label\":\"Enabled rule \"+(t.ipCidr||t.countryCode),type:\"checkbox\",checked:t.enabled&&!Boolean(t.expiresOn&&Date.parse(t.expiresOn)<=Date.now()),disabled:se.isPending||Boolean(t.expiresOn&&Date.parse(t.expiresOn)<=Date.now()),title:t.expiresOn&&Date.parse(t.expiresOn)<=Date.now()?\"Expired rule is not enforced\":\"Enable or disable this active rule\",onChange:l=>se.mutate({id:t.id,enabled:l.target.checked})})"
+    },
+    {
+      "old": "e.jsx(NyxRuleAction,{kind:\"edit\",target:t.countryCode,type:\"button\",className:r.ghost,onClick:()=>{setEditing({id:t.id,type:\"country\"}),k(\"country\"),Q(t.action),P(t.countryCode),B(t.note||\"\"),document.querySelector(\"[data-task2-rules]\").scrollIntoView({block:\"start\",behavior:\"smooth\"})},children:\"Edit\"})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,NyxRuleAction,{nyxMutation:true,nyxModule:\"nyxguard\",kind:\"edit\",target:t.countryCode,type:\"button\",className:r.ghost,onClick:()=>{setEditing({id:t.id,type:\"country\"}),k(\"country\"),Q(t.action),P(t.countryCode),B(t.note||\"\"),document.querySelector(\"[data-task2-rules]\").scrollIntoView({block:\"start\",behavior:\"smooth\"})},children:\"Edit\"})"
+    },
+    {
+      "old": "e.jsx(NyxRuleAction,{kind:\"delete\",target:t.countryCode,type:\"button\",className:r.ghost,disabled:Z.isPending,onClick:()=>NyxRequestRuleConfirmation({title:\"Delete country rule?\",action:\"Delete rule\",reducesProtection:true,message:\"Delete the \"+t.action.toUpperCase()+\" rule for \"+t.countryCode+\"? This removes only this rule from the active policy.\",onConfirm:()=>Z.mutateAsync(t.id)}),children:e.jsx(s,{id:\"delete\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,NyxRuleAction,{nyxMutation:true,nyxModule:\"nyxguard\",kind:\"delete\",target:t.countryCode,type:\"button\",className:r.ghost,disabled:Z.isPending,onClick:()=>NyxRequestRuleConfirmation({title:\"Delete country rule?\",action:\"Delete rule\",reducesProtection:true,message:\"Delete the \"+t.action.toUpperCase()+\" rule for \"+t.countryCode+\"? This removes only this rule from the active policy.\",onConfirm:()=>Z.mutateAsync(t.id)}),children:e.jsx(s,{id:\"delete\"})})"
+    }
+  ],
+  "index-DTnhxNQ_-5013-7f8c7487369c.js": [
+    {
+      "old": "e.jsxs(\"button\",{type:\"button\",className:t.primaryBtn,onClick:f,children:[\"+ \",e.jsx(s,{id:\"settings.notifications.add\"})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.primaryBtn,onClick:f,children:[\"+ \",e.jsx(s,{id:\"settings.notifications.add\"})]})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:t.notifInput,type:\"text\",value:d.draft.name,onChange:n=>l(p=>({...p,draft:{...p.draft,name:n.target.value}}))})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",className:t.notifInput,type:\"text\",value:d.draft.name,onChange:n=>l(p=>({...p,draft:{...p.draft,name:n.target.value}}))})"
+    },
+    {
+      "old": "e.jsx(NyxChannelSelect,{inputId:\"nyx-notification-channel-type\",\"aria-label\":r.formatMessage({id:\"settings.notifications.channel-type\"}),className:\"react-select-container nyx-notification-channel-type\",classNamePrefix:\"react-select\",isSearchable:false,isClearable:false,menuPlacement:\"auto\",options:[\"webhook\",\"slack\",\"email\"].map(type=>({value:type,label:r.formatMessage({id:\"settings.notifications.type-\"+type})})),value:{value:d.draft.type,label:r.formatMessage({id:\"settings.notifications.type-\"+d.draft.type})},onChange:n=>l(p=>p.draft.type===n.value?p:({...p,draft:{...p.draft,type:n.value,config:{}}}))})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,NyxChannelSelect,{nyxMutation:true,nyxModule:\"settings\",inputId:\"nyx-notification-channel-type\",\"aria-label\":r.formatMessage({id:\"settings.notifications.channel-type\"}),className:\"react-select-container nyx-notification-channel-type\",classNamePrefix:\"react-select\",isSearchable:false,isClearable:false,menuPlacement:\"auto\",options:[\"webhook\",\"slack\",\"email\"].map(type=>({value:type,label:r.formatMessage({id:\"settings.notifications.type-\"+type})})),value:{value:d.draft.type,label:r.formatMessage({id:\"settings.notifications.type-\"+d.draft.type})},onChange:n=>l(p=>p.draft.type===n.value?p:({...p,draft:{...p.draft,type:n.value,config:{}}}))})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:t.notifInput,type:\"url\",placeholder:\"https://example.com/hook\",value:j.url??\"\",onChange:n=>u(\"url\",n.target.value)})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",className:t.notifInput,type:\"url\",placeholder:\"https://example.com/hook\",value:j.url??\"\",onChange:n=>u(\"url\",n.target.value)})"
+    },
+    {
+      "old": "e.jsx(\"textarea\",{className:t.notifTextarea,placeholder:\"Authorization: Bearer token\",value:j.headers??\"\",onChange:n=>u(\"headers\",n.target.value)})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"textarea\",{nyxMutation:true,nyxModule:\"settings\",className:t.notifTextarea,placeholder:\"Authorization: Bearer token\",value:j.headers??\"\",onChange:n=>u(\"headers\",n.target.value)})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:t.notifInput,type:\"url\",placeholder:\"https://hooks.slack.com/services/...\",value:j.webhookUrl??\"\",onChange:n=>u(\"webhookUrl\",n.target.value)})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",className:t.notifInput,type:\"url\",placeholder:\"https://hooks.slack.com/services/...\",value:j.webhookUrl??\"\",onChange:n=>u(\"webhookUrl\",n.target.value)})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:t.notifInput,type:\"text\",placeholder:\"smtp.example.com\",value:j.host??\"\",onChange:n=>u(\"host\",n.target.value)})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",className:t.notifInput,type:\"text\",placeholder:\"smtp.example.com\",value:j.host??\"\",onChange:n=>u(\"host\",n.target.value)})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:t.notifInput,type:\"number\",placeholder:\"587\",value:j.port??\"587\",onChange:n=>u(\"port\",n.target.value)})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",className:t.notifInput,type:\"number\",placeholder:\"587\",value:j.port??\"587\",onChange:n=>u(\"port\",n.target.value)})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:t.notifInput,type:\"text\",value:j.user??\"\",onChange:n=>u(\"user\",n.target.value)})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",className:t.notifInput,type:\"text\",value:j.user??\"\",onChange:n=>u(\"user\",n.target.value)})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:t.notifInput,type:\"password\",value:j.pass??\"\",onChange:n=>u(\"pass\",n.target.value)})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",className:t.notifInput,type:\"password\",value:j.pass??\"\",onChange:n=>u(\"pass\",n.target.value)})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:t.notifInput,type:\"email\",value:j.from??\"\",onChange:n=>u(\"from\",n.target.value)})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",className:t.notifInput,type:\"email\",value:j.from??\"\",onChange:n=>u(\"from\",n.target.value)})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:t.notifInput,type:\"email\",value:j.to??\"\",onChange:n=>u(\"to\",n.target.value)})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",className:t.notifInput,type:\"email\",value:j.to??\"\",onChange:n=>u(\"to\",n.target.value)})"
+    },
+    {
+      "old": "e.jsx(\"input\",{type:\"checkbox\",id:\"smtp-tls\",checked:!!j.tls,onChange:n=>u(\"tls\",n.target.checked)})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",type:\"checkbox\",id:\"smtp-tls\",checked:!!j.tls,onChange:n=>u(\"tls\",n.target.checked)})"
+    },
+    {
+      "old": "e.jsx(\"input\",{type:\"checkbox\",checked:d.draft.events.includes(n),onChange:()=>S(n)})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",type:\"checkbox\",checked:d.draft.events.includes(n),onChange:()=>S(n)})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.primaryBtn,disabled:g.isPending||!d.draft.name.trim(),onClick:()=>{if(nyxChannelSave.current)return;nyxChannelSave.current=true;g.mutate({editId:d.editId,draft:d.draft},{onSettled:()=>{nyxChannelSave.current=false}})},children:e.jsx(s,{id:\"settings.notifications.save\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.primaryBtn,disabled:g.isPending||!d.draft.name.trim(),onClick:()=>{if(nyxChannelSave.current)return;nyxChannelSave.current=true;g.mutate({editId:d.editId,draft:d.draft},{onSettled:()=>{nyxChannelSave.current=false}})},children:e.jsx(s,{id:\"settings.notifications.save\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.ghostBtn,onClick:x,children:e.jsx(s,{id:\"settings.notifications.cancel\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.ghostBtn,onClick:x,children:e.jsx(s,{id:\"settings.notifications.cancel\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.ghostBtn,style:{padding:\"4px 12px\",fontSize:13},disabled:m.isPending,onClick:()=>m.mutate(n.id),children:e.jsx(s,{id:\"settings.notifications.test\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.ghostBtn,style:{padding:\"4px 12px\",fontSize:13},disabled:m.isPending,onClick:()=>m.mutate(n.id),children:e.jsx(s,{id:\"settings.notifications.test\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.ghostBtn,style:{padding:\"4px 12px\",fontSize:13},onClick:()=>b(n),children:e.jsx(s,{id:\"settings.notifications.edit\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.ghostBtn,style:{padding:\"4px 12px\",fontSize:13},onClick:()=>b(n),children:e.jsx(s,{id:\"settings.notifications.edit\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.dangerBtn,style:{padding:\"4px 12px\",fontSize:13},disabled:h.isPending,onClick:()=>NyxRequestConfirmation({title:\"Delete notification channel?\",action:\"Delete channel\",reducesProtection:true,message:r.formatMessage({id:\"settings.notifications.confirm-delete\"}),onConfirm:()=>h.mutateAsync(n.id)}),children:e.jsx(s,{id:\"settings.notifications.delete\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.dangerBtn,style:{padding:\"4px 12px\",fontSize:13},disabled:h.isPending,onClick:()=>NyxRequestConfirmation({title:\"Delete notification channel?\",action:\"Delete channel\",reducesProtection:true,message:r.formatMessage({id:\"settings.notifications.confirm-delete\"}),onConfirm:()=>h.mutateAsync(n.id)}),children:e.jsx(s,{id:\"settings.notifications.delete\"})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:t.notifInput,type:\"text\",placeholder:r.formatMessage({id:\"settings.integrations.field-name-placeholder\"}),value:c,onChange:o=>d(o.target.value),onKeyDown:o=>{o.key===\"Enter\"&&c.trim()&&u.mutate()}})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",className:t.notifInput,type:\"text\",placeholder:r.formatMessage({id:\"settings.integrations.field-name-placeholder\"}),value:c,onChange:o=>d(o.target.value),onKeyDown:o=>{o.key===\"Enter\"&&c.trim()&&u.mutate()}})"
+    },
+    {
+      "old": "e.jsxs(\"button\",{type:\"button\",className:t.primaryBtn,disabled:!c.trim()||u.isPending,onClick:()=>u.mutate(),children:[\"+ \",e.jsx(s,{id:\"settings.integrations.add\"})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.primaryBtn,disabled:!c.trim()||u.isPending,onClick:()=>u.mutate(),children:[\"+ \",e.jsx(s,{id:\"settings.integrations.add\"})]})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.copyBtn,onClick:()=>{navigator.clipboard.writeText(l.token).then(()=>z(r.formatMessage({id:\"settings.integrations.token-copied\"})))},children:e.jsx(s,{id:\"settings.integrations.copy-token\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.copyBtn,onClick:()=>{navigator.clipboard.writeText(l.token).then(()=>z(r.formatMessage({id:\"settings.integrations.token-copied\"})))},children:e.jsx(s,{id:\"settings.integrations.copy-token\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.secondaryBtn,onClick:()=>f(null),children:e.jsx(s,{id:\"settings.integrations.token-dismiss\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.secondaryBtn,onClick:()=>f(null),children:e.jsx(s,{id:\"settings.integrations.token-dismiss\"})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:t.renameInput,type:\"text\",value:g,autoFocus:!0,onChange:N=>h(N.target.value),onKeyDown:N=>{N.key===\"Enter\"&&g.trim()?p.mutate({id:o.id,name:g.trim()}):N.key===\"Escape\"&&(x(null),h(\"\"))}})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",className:t.renameInput,type:\"text\",value:g,autoFocus:!0,onChange:N=>h(N.target.value),onKeyDown:N=>{N.key===\"Enter\"&&g.trim()?p.mutate({id:o.id,name:g.trim()}):N.key===\"Escape\"&&(x(null),h(\"\"))}})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.primaryBtn,disabled:!g.trim()||p.isPending,onClick:()=>p.mutate({id:o.id,name:g.trim()}),children:e.jsx(s,{id:\"settings.integrations.rename-save\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.primaryBtn,disabled:!g.trim()||p.isPending,onClick:()=>p.mutate({id:o.id,name:g.trim()}),children:e.jsx(s,{id:\"settings.integrations.rename-save\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.secondaryBtn,onClick:()=>{x(null),h(\"\")},children:e.jsx(s,{id:\"common.cancel\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.secondaryBtn,onClick:()=>{x(null),h(\"\")},children:e.jsx(s,{id:\"common.cancel\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:o.enabled?t.badgeOn:t.badgeOff,disabled:S.isPending,title:o.enabled?r.formatMessage({id:\"settings.integrations.disable\"}):r.formatMessage({id:\"settings.integrations.enable\"}),onClick:()=>S.mutate({id:o.id,enabled:o.enabled?0:1}),children:o.enabled?r.formatMessage({id:\"nyxguard.globalgate.on\"}):r.formatMessage({id:\"nyxguard.globalgate.off\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:o.enabled?t.badgeOn:t.badgeOff,disabled:S.isPending,title:o.enabled?r.formatMessage({id:\"settings.integrations.disable\"}):r.formatMessage({id:\"settings.integrations.enable\"}),onClick:()=>S.mutate({id:o.id,enabled:o.enabled?0:1}),children:o.enabled?r.formatMessage({id:\"nyxguard.globalgate.on\"}):r.formatMessage({id:\"nyxguard.globalgate.off\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.secondaryBtn,disabled:b!==null,title:r.formatMessage({id:\"settings.integrations.rename-title\"}),onClick:()=>{x(o.id),h(o.name)},children:e.jsx(s,{id:\"settings.integrations.rename\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.secondaryBtn,disabled:b!==null,title:r.formatMessage({id:\"settings.integrations.rename-title\"}),onClick:()=>{x(o.id),h(o.name)},children:e.jsx(s,{id:\"settings.integrations.rename\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.secondaryBtn,disabled:j.isPending,title:r.formatMessage({id:\"settings.integrations.rotate-title\"}),onClick:()=>NyxRequestConfirmation({title:\"Rotate API key secret?\",action:\"Rotate secret\",reducesProtection:true,message:r.formatMessage({id:\"settings.integrations.rotate-confirm\"}),onConfirm:()=>j.mutateAsync(o.id)}),children:e.jsx(s,{id:\"settings.integrations.rotate\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.secondaryBtn,disabled:j.isPending,title:r.formatMessage({id:\"settings.integrations.rotate-title\"}),onClick:()=>NyxRequestConfirmation({title:\"Rotate API key secret?\",action:\"Rotate secret\",reducesProtection:true,message:r.formatMessage({id:\"settings.integrations.rotate-confirm\"}),onConfirm:()=>j.mutateAsync(o.id)}),children:e.jsx(s,{id:\"settings.integrations.rotate\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.deleteBtn,disabled:n.isPending,onClick:()=>NyxRequestConfirmation({title:\"Delete API key?\",action:\"Delete key\",reducesProtection:true,message:r.formatMessage({id:\"settings.integrations.delete-confirm\"}),onConfirm:()=>n.mutateAsync(o.id)}),children:e.jsx(s,{id:\"settings.notifications.delete\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.deleteBtn,disabled:n.isPending,onClick:()=>NyxRequestConfirmation({title:\"Delete API key?\",action:\"Delete key\",reducesProtection:true,message:r.formatMessage({id:\"settings.integrations.delete-confirm\"}),onConfirm:()=>n.mutateAsync(o.id)}),children:e.jsx(s,{id:\"settings.notifications.delete\"})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{type:\"checkbox\",id:\"sso-enabled\",checked:l.enabled===\"1\",onChange:m=>f(u=>({...u,enabled:m.target.checked?\"1\":\"0\"}))})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"admin\",type:\"checkbox\",id:\"sso-enabled\",checked:l.enabled===\"1\",onChange:m=>f(u=>({...u,enabled:m.target.checked?\"1\":\"0\"}))})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:t.notifInput,type:\"url\",placeholder:\"https://auth.example.com\",value:l.providerUrl,onChange:m=>f(u=>({...u,providerUrl:m.target.value}))})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"admin\",className:t.notifInput,type:\"url\",placeholder:\"https://auth.example.com\",value:l.providerUrl,onChange:m=>f(u=>({...u,providerUrl:m.target.value}))})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:t.notifInput,type:\"text\",placeholder:\"nyxguard\",value:l.appSlug,onChange:m=>f(u=>({...u,appSlug:m.target.value}))})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"admin\",className:t.notifInput,type:\"text\",placeholder:\"nyxguard\",value:l.appSlug,onChange:m=>f(u=>({...u,appSlug:m.target.value}))})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:t.notifInput,type:\"text\",value:l.clientId,onChange:m=>f(u=>({...u,clientId:m.target.value}))})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"admin\",className:t.notifInput,type:\"text\",value:l.clientId,onChange:m=>f(u=>({...u,clientId:m.target.value}))})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:t.notifInput,type:\"password\",value:l.clientSecret,onChange:m=>f(u=>({...u,clientSecret:m.target.value}))})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"admin\",className:t.notifInput,type:\"password\",value:l.clientSecret,onChange:m=>f(u=>({...u,clientSecret:m.target.value}))})"
+    },
+    {
+      "old": "e.jsxs(\"button\",{type:\"button\",className:t.primaryBtn,disabled:g.isPending,onClick:()=>g.mutate(),children:[c?\"✓ \":\"\",e.jsx(s,{id:\"settings.sso.save\"})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"button\",{nyxMutation:true,nyxModule:\"admin\",type:\"button\",className:t.primaryBtn,disabled:g.isPending,onClick:()=>g.mutate(),children:[c?\"✓ \":\"\",e.jsx(s,{id:\"settings.sso.save\"})]})"
+    },
+    {
+      "old": "e.jsx(\"input\",{type:\"checkbox\",id:\"lan-enabled\",checked:c,onChange:i=>{d(i.target.checked),C.mutate({enabled:i.target.checked,rules:l})},style:{width:16,height:16,cursor:\"pointer\"}})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",type:\"checkbox\",id:\"lan-enabled\",checked:c,onChange:i=>{d(i.target.checked),C.mutate({enabled:i.target.checked,rules:l})},style:{width:16,height:16,cursor:\"pointer\"}})"
+    },
+    {
+      "old": "e.jsxs(\"select\",{className:t.notifInput,value:b,onChange:i=>{x(i.target.value),h(\"\")},children:[e.jsx(\"option\",{value:\"ip\",children:r.formatMessage({id:\"settings.lan.type-ip\"})}),e.jsx(\"option\",{value:\"mac\",children:r.formatMessage({id:\"settings.lan.type-mac\"})})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"select\",{nyxMutation:true,nyxModule:\"settings\",className:t.notifInput,value:b,onChange:i=>{x(i.target.value),h(\"\")},children:[e.jsx(\"option\",{value:\"ip\",children:r.formatMessage({id:\"settings.lan.type-ip\"})}),e.jsx(\"option\",{value:\"mac\",children:r.formatMessage({id:\"settings.lan.type-mac\"})})]})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:t.notifInput,type:\"text\",value:g,onChange:i=>h(i.target.value),placeholder:b===\"ip\"?r.formatMessage({id:\"settings.lan.value-placeholder-ip\"}):r.formatMessage({id:\"settings.lan.value-placeholder-mac\"}),onKeyDown:i=>{i.key===\"Enter\"&&M()}})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",className:t.notifInput,type:\"text\",value:g,onChange:i=>h(i.target.value),placeholder:b===\"ip\"?r.formatMessage({id:\"settings.lan.value-placeholder-ip\"}):r.formatMessage({id:\"settings.lan.value-placeholder-mac\"}),onKeyDown:i=>{i.key===\"Enter\"&&M()}})"
+    },
+    {
+      "old": "e.jsx(\"input\",{className:t.notifInput,type:\"text\",value:m,onChange:i=>u(i.target.value),placeholder:r.formatMessage({id:\"settings.lan.note-placeholder\"}),onKeyDown:i=>{i.key===\"Enter\"&&M()}})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",className:t.notifInput,type:\"text\",value:m,onChange:i=>u(i.target.value),placeholder:r.formatMessage({id:\"settings.lan.note-placeholder\"}),onKeyDown:i=>{i.key===\"Enter\"&&M()}})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.primaryBtn,onClick:M,disabled:C.isPending||!!P,children:e.jsx(s,{id:\"settings.lan.add-rule\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.primaryBtn,onClick:M,disabled:C.isPending||!!P,children:e.jsx(s,{id:\"settings.lan.add-rule\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.ghostBtn,style:{fontSize:\"0.75rem\",padding:\"2px 8px\"},onClick:()=>ne(i.ip,i.mac),children:e.jsx(s,{id:\"settings.lan.arp-use-ip\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.ghostBtn,style:{fontSize:\"0.75rem\",padding:\"2px 8px\"},onClick:()=>ne(i.ip,i.mac),children:e.jsx(s,{id:\"settings.lan.arp-use-ip\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.ghostBtn,style:{fontSize:\"0.75rem\",padding:\"2px 8px\",marginLeft:4},onClick:()=>{x(\"mac\"),h(i.mac),u(i.ip)},children:e.jsx(s,{id:\"settings.lan.arp-use-mac\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.ghostBtn,style:{fontSize:\"0.75rem\",padding:\"2px 8px\",marginLeft:4},onClick:()=>{x(\"mac\"),h(i.mac),u(i.ip)},children:e.jsx(s,{id:\"settings.lan.arp-use-mac\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.dangerBtn,onClick:Z,disabled:C.isPending,children:e.jsx(s,{id:\"settings.lan.delete-selected\",data:{count:S.size}})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.dangerBtn,onClick:Z,disabled:C.isPending,children:e.jsx(s,{id:\"settings.lan.delete-selected\",data:{count:S.size}})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.dangerBtn,onClick:ee,disabled:C.isPending,children:e.jsx(s,{id:\"settings.lan.delete-all\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.dangerBtn,onClick:ee,disabled:C.isPending,children:e.jsx(s,{id:\"settings.lan.delete-all\"})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{type:\"checkbox\",checked:S.size===l.length&&l.length>0,onChange:se})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",type:\"checkbox\",checked:S.size===l.length&&l.length>0,onChange:se})"
+    },
+    {
+      "old": "e.jsx(\"input\",{type:\"checkbox\",checked:S.has(i.id),onChange:()=>te(i.id)})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",type:\"checkbox\",checked:S.has(i.id),onChange:()=>te(i.id)})"
+    },
+    {
+      "old": "e.jsx(\"input\",{type:\"checkbox\",checked:i.enabled,onChange:v=>X(i.id,v.target.checked)})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"settings\",type:\"checkbox\",checked:i.enabled,onChange:v=>X(i.id,v.target.checked)})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.deleteBtn,onClick:()=>Y(i.id),disabled:C.isPending,style:{fontSize:\"0.78rem\",padding:\"3px 10px\"},children:e.jsx(s,{id:\"settings.lan.delete-rule\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.deleteBtn,onClick:()=>Y(i.id),disabled:C.isPending,style:{fontSize:\"0.78rem\",padding:\"3px 10px\"},children:e.jsx(s,{id:\"settings.lan.delete-rule\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:t.primaryBtn,onClick:J,disabled:C.isPending,children:C.isPending?\"…\":e.jsx(s,{id:\"settings.lan.save\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"settings\",type:\"button\",className:t.primaryBtn,onClick:J,disabled:C.isPending,children:C.isPending?\"…\":e.jsx(s,{id:\"settings.lan.save\"})})"
+    },
+    {
+      "old": "e.jsx(U,{className:\"btn-primary\",onClick:()=>f.mutate(),disabled:f.isPending||x.isPending||b.isPending,isLoading:f.isPending,children:e.jsx(s,{id:\"settings.backup.export-button\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,U,{nyxMutation:true,nyxModule:\"admin\",className:\"btn-primary\",onClick:()=>f.mutate(),disabled:f.isPending||x.isPending||b.isPending,isLoading:f.isPending,children:e.jsx(s,{id:\"settings.backup.export-button\"})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{type:\"file\",accept:\"application/json,.json\",className:\"form-control\",onChange:g=>c(g.target.files?.[0]??null),disabled:x.isPending||b.isPending})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"admin\",type:\"file\",accept:\"application/json,.json\",className:\"form-control\",onChange:g=>c(g.target.files?.[0]??null),disabled:x.isPending||b.isPending})"
+    },
+    {
+      "old": "e.jsx(U,{className:\"btn-primary\",onClick:()=>x.mutate(),disabled:!a||x.isPending||b.isPending,isLoading:x.isPending,children:e.jsx(s,{id:\"settings.backup.import-button\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,U,{nyxMutation:true,nyxModule:\"admin\",className:\"btn-primary\",onClick:()=>x.mutate(),disabled:!a||x.isPending||b.isPending,isLoading:x.isPending,children:e.jsx(s,{id:\"settings.backup.import-button\"})})"
+    },
+    {
+      "old": "section:re,permission:le",
+      "next": "section:\"settings\",permission:le"
+    },
+    {
+      "old": "user?.roles.includes(\"admin\")?",
+      "next": "window.NyxGuardCapabilities.canViewRoute(user,\"/settings\")?"
+    },
+    {
+      "old": "K=\"5.0.13\"",
+      "next": "K=\"5.0.14\""
+    },
+    {
+      "old": "onClick:()=>l(\"lan-access\"),children:e.jsx(s,{id:\"settings.lan.tab\"})",
+      "next": "\"data-nyx-settings-tab\":\"lan-access\",onClick:()=>l(\"lan-access\"),children:e.jsx(s,{id:\"settings.lan.tab\"})"
+    }
+  ],
+  "index-W-QFtloY-409dev-5013-7f8c7487369c.js": [
+    {
+      "old": "t.jsx(\"button\",{type:\"button\",className:N(a.banOption,_),disabled:u,onClick:()=>r(l.ip,b),title:`Set ban to ${m}`,children:m},b)",
+      "next": "window.NyxGuardCapabilities.control(t.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:N(a.banOption,_),disabled:u,onClick:()=>r(l.ip,b),title:`Set ban to ${m}`,children:m},b)"
+    },
+    {
+      "old": "t.jsx(\"button\",{type:\"button\",className:a.window,disabled:M.isPending,onClick:()=>NyxRequestConfirmation({title:\"Clear selected history?\",action:\"Clear selected history\",reducesProtection:true,message:n.formatMessage({id:\"nyxguard.attacks.clear-confirm\"},{days:r}),onConfirm:()=>M.mutateAsync()}),children:t.jsx(s,{id:\"nyxguard.attacks.clear-logs\"})})",
+      "next": "window.NyxGuardCapabilities.control(t.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:a.window,disabled:M.isPending,onClick:()=>NyxRequestConfirmation({title:\"Clear selected history?\",action:\"Clear selected history\",reducesProtection:true,message:n.formatMessage({id:\"nyxguard.attacks.clear-confirm\"},{days:r}),onConfirm:()=>M.mutateAsync()}),children:t.jsx(s,{id:\"nyxguard.attacks.clear-logs\"})})"
+    }
+  ],
+  "professional-support-5013-7f8c7487369c.js": [
+    {
+      "old": "  function button(label, action, className) {",
+      "next": "  function mutationButton(label, action, className) {\n    var node=button(label,function(event){if(window.NyxGuardCapabilities.canMutate(\"admin\"))action(event);},className);\n    node.disabled=!window.NyxGuardCapabilities.canMutate(\"admin\");\n    return node;\n  }\n  function button(label, action, className) {",
+      "count": 1
+    },
+    {
+      "old": "button(\"Request recovery\",",
+      "next": "mutationButton(\"Request recovery\",",
+      "count": 1
+    },
+    {
+      "old": "button(\"Confirm recovery\",",
+      "next": "mutationButton(\"Confirm recovery\",",
+      "count": 1
+    },
+    {
+      "old": "button(\"Claim\",",
+      "next": "mutationButton(\"Claim\",",
+      "count": 1
+    },
+    {
+      "old": "button(\"Activate\",",
+      "next": "mutationButton(\"Activate\",",
+      "count": 1
+    },
+    {
+      "old": "button(\"Refresh status\",",
+      "next": "mutationButton(\"Refresh status\",",
+      "count": 1
+    },
+    {
+      "old": "button(\"Generate Support Bundle\",",
+      "next": "mutationButton(\"Generate Support Bundle\",",
+      "count": 2
+    },
+    {
+      "old": "button(\"Download bundle\",",
+      "next": "mutationButton(\"Download bundle\",",
+      "count": 1
+    },
+    {
+      "old": "button(\"Upload Support Bundle\",",
+      "next": "mutationButton(\"Upload Support Bundle\",",
+      "count": 1
+    },
+    {
+      "old": "button(\"Run workflow\",",
+      "next": "mutationButton(\"Run workflow\",",
+      "count": 1
+    },
+    {
+      "old": "if (className) node.className = className;",
+      "next": "if (className) node.className = className;\n    if((tag===\"input\"||tag===\"select\"||tag===\"textarea\")&&!window.NyxGuardCapabilities.canMutate(\"admin\"))node.disabled=true;",
+      "count": 1
+    },
+    {
+      "old": "bundleAction.disabled = !canDiagnose();",
+      "next": "bundleAction.disabled = !canDiagnose() || !window.NyxGuardCapabilities.canMutate(\"admin\");",
+      "count": 1
+    },
+    {
+      "old": "generate.disabled = !canDiagnose();",
+      "next": "generate.disabled = !canDiagnose() || !window.NyxGuardCapabilities.canMutate(\"admin\");",
+      "count": 1
+    },
+    {
+      "old": "upload.disabled = !canUpload();",
+      "next": "upload.disabled = !canUpload() || !window.NyxGuardCapabilities.canMutate(\"admin\");",
+      "count": 1
+    },
+    {
+      "old": "run.disabled = !canDiagnose();",
+      "next": "run.disabled = !canDiagnose();",
+      "count": 2
+    },
+    {
+      "old": "function canDiagnose() { return !!(latestStatus && latestStatus.enabled); }",
+      "next": "function canDiagnose() { return window.NyxGuardCapabilities.identity?.monitoringOnly || !!(latestStatus && latestStatus.enabled); }",
+      "count": 1
+    },
+    {
+      "old": "    run.disabled = !canDiagnose();\n    controls.append(run);",
+      "next": "    run.disabled = !canDiagnose();\n    controls.append(run);",
+      "count": 1
+    },
+    {
+      "old": "    parent.append(element(\"div\", \"nyx-support-check-groups\"));",
+      "next": "    parent.append(element(\"div\", \"nyx-support-check-groups\"));\n    if(!window.NyxGuardCapabilities.canMutate(\"admin\"))request(\"/api/professional-support/diagnostics\").then(function(data){if(parent.isConnected)renderDiagnostics(parent,data);}).catch(function(error){notice(parent,error.message,true);});",
+      "count": 1
+    },
+    {
+      "old": "  function renderRoute() {",
+      "next": "  function renderRoute() {\n    if(!window.NyxGuardCapabilities?.canViewRoute(window.NyxGuardCapabilities.identity,\"/settings\")){unmount();return;}"
+    },
+    {
+      "old": "    node.type = \"button\";",
+      "next": "    node.type = \"button\";\n    if(!window.NyxGuardCapabilities.canMutate(\"admin\")&&/^Run [Dd]iagnostics$/.test(label))node.textContent=window.NyxGuardCapabilities.message(\"nyxagent.refresh-observations\");"
+    },
+    {
+      "old": "    summary.replaceChildren();",
+      "next": "    summary.replaceChildren();\n    if(data.read_only){lastDiagnostics=data.cached;notice(parent,window.NyxGuardCapabilities.message(\"nyxagent.observations-only\"));}"
+    },
+    {
+      "old": "    form.append(hostSelect, focusSelect, run);",
+      "next": "    run.disabled=run.disabled||!window.NyxGuardCapabilities.canMutate(\"admin\");\n    hostSelect.disabled=false;focusSelect.disabled=false;\n    form.append(hostSelect, focusSelect, run);"
+    }
+  ],
+  "vpn-client-4014-5013-7f8c7487369c.js": [
+    {
+      "old": "else if (currentData.loaded && !sites.length) adding = true;",
+      "next": "else if (currentData.loaded && !sites.length) adding = window.NyxGuardCapabilities.canMutate();",
+      "count": 1
+    },
+    {
+      "old": "\t\telse if (adding) panel.querySelectorAll(\"button,input\").forEach(function (element) { element.disabled = false; });",
+      "next": "\t\telse if (adding) panel.querySelectorAll(\"button,input\").forEach(function (element) { element.disabled = false; });\n        if(!window.NyxGuardCapabilities.canMutate())panel.querySelectorAll('[data-vpn-action=\"add\"],[data-vpn-action=\"rename\"],[data-vpn-action=\"connect\"],[data-vpn-action=\"disconnect\"],[data-vpn-action=\"delete\"],[data-vpn-action=\"test\"],[data-vpn-quick-connect],input').forEach(function(control){control.disabled=true;});",
+      "count": 1
+    },
+    {
+      "old": "\tfunction findLanTab() {\n\t\tvar labels = [\"lan access\", \"acces lan\", \"acceso lan\", \"accès lan\", \"accesso lan\"];\n\t\treturn Array.from(document.querySelectorAll(\"button\")).find(function (button) {\n\t\t\treturn labels.indexOf((button.textContent || \"\").replace(/\\s+/g, \" \").trim().toLowerCase()) !== -1;\n\t\t}) || null;\n\t}\n",
+      "next": "\tfunction findLanTab() {\n\t\treturn document.querySelector('.nyx-route-content [data-nyx-settings-tab=\"lan-access\"]');\n\t}\n"
+    }
+  ],
+  "index-DJfFx4nu-5013-7f8c7487369c.js": [
+    {
+      "old": "h('button',{className:'event-clear'",
+      "next": "window.NyxGuardCapabilities.control(h,'button',{nyxMutation:true,nyxModule:'auditlog',className:'event-clear'",
+      "count": 1
+    }
+  ],
+  "index-CTHAIRmi-409dev-4012certfix4-threatpagination3-5013-7f8c7487369c.js": [
+    {
+      "old": "g.jsx(\"button\",{type:\"button\",className:\"btn btn-sm btn-primary\",onClick:()=>P.mutate(),disabled:P.isPending,children:g.jsx(K,{id:\"site-header.restart-now\"})})",
+      "next": "window.NyxGuardCapabilities.control(g.jsx,\"button\",{nyxMutation:true,nyxModule:\"admin\",type:\"button\",className:\"btn btn-sm btn-primary\",onClick:()=>P.mutate(),disabled:P.isPending,children:g.jsx(K,{id:\"site-header.restart-now\"})})"
+    },
+    {
+      "old": "g.jsxs(\"button\",{type:\"button\",className:\"btn btn-sm btn-outline-light\",onClick:()=>O.mutate(),disabled:O.isPending,children:[g.jsx($V,{size:14}),g.jsx(K,{id:\"site-header.check-now\"})]})",
+      "next": "window.NyxGuardCapabilities.control(g.jsxs,\"button\",{nyxMutation:true,nyxModule:\"admin\",type:\"button\",className:\"btn btn-sm btn-outline-light\",onClick:()=>O.mutate(),disabled:O.isPending,children:[g.jsx($V,{size:14}),g.jsx(K,{id:\"site-header.check-now\"})]})"
+    },
+    {
+      "old": "g.jsxs(\"button\",{type:\"button\",className:\"btn btn-sm btn-outline-light\",onClick:()=>D.mutate(),disabled:D.isPending,children:[g.jsx(iL,{size:14}),g.jsx(K,{id:\"site-header.download-backup\"})]})",
+      "next": "window.NyxGuardCapabilities.control(g.jsxs,\"button\",{nyxMutation:true,nyxModule:\"admin\",type:\"button\",className:\"btn btn-sm btn-outline-light\",onClick:()=>D.mutate(),disabled:D.isPending,children:[g.jsx(iL,{size:14}),g.jsx(K,{id:\"site-header.download-backup\"})]})"
+    },
+    {
+      "old": "g.jsx(\"input\",{type:\"checkbox\",checked:c,onChange:ne=>d(ne.target.checked)})",
+      "next": "window.NyxGuardCapabilities.control(g.jsx,\"input\",{nyxMutation:true,nyxModule:\"admin\",type:\"checkbox\",checked:c,onChange:ne=>d(ne.target.checked)})"
+    },
+    {
+      "old": "g.jsxs(\"button\",{type:\"button\",className:\"btn btn-primary\",onClick:()=>B.mutate(),disabled:!H||B.isPending,children:[g.jsx(qV,{size:14}),g.jsx(K,{id:\"site-header.update-now\"})]})",
+      "next": "window.NyxGuardCapabilities.control(g.jsxs,\"button\",{nyxMutation:true,nyxModule:\"admin\",type:\"button\",className:\"btn btn-primary\",onClick:()=>B.mutate(),disabled:!H||B.isPending,children:[g.jsx(qV,{size:14}),g.jsx(K,{id:\"site-header.update-now\"})]})"
+    },
+    {
+      "old": "g.jsx(\"button\",{type:\"button\",className:\"btn btn-primary\",onClick:()=>P.mutate(),disabled:P.isPending,children:g.jsx(K,{id:\"site-header.restart-now\"})})",
+      "next": "window.NyxGuardCapabilities.control(g.jsx,\"button\",{nyxMutation:true,nyxModule:\"admin\",type:\"button\",className:\"btn btn-primary\",onClick:()=>P.mutate(),disabled:P.isPending,children:g.jsx(K,{id:\"site-header.restart-now\"})})"
+    },
+    {
+      "old": "g.jsxs(\"a\",{href:\"?\",className:\"dropdown-item\",onClick:o=>{o.preventDefault(),Bge(\"me\")},children:[g.jsx(sL,{width:16}),g.jsx(K,{id:\"user.two-factor\"})]})",
+      "next": "window.NyxGuardCapabilities.control(g.jsxs,\"a\",{nyxMutation:\"hide\",nyxModule:\"me\",href:\"?\",className:\"dropdown-item\",onClick:o=>{o.preventDefault(),Bge(\"me\")},children:[g.jsx(sL,{width:16}),g.jsx(K,{id:\"user.two-factor\"})]})"
+    },
+    {
+      "old": "t=e?.roles.includes(\"admin\")",
+      "next": "t=window.NyxGuardCapabilities.canViewRoute(e,\"/settings\")",
+      "count": 2
+    },
+    {
+      "old": "q=!!_.data?.show&&!v",
+      "next": "q=!!_.data?.show&&!v&&NyxCanManage(e,\"admin\")"
+    },
+    {
+      "old": "g.jsxs(\"div\",{className:\"tab-content\",children:[g.jsxs(\"div\",{className:\"tab-pane active show\",id:\"tab-details\"",
+      "next": "g.jsxs(NyxReadOnlyRegion,{module:\"access_lists\",className:\"tab-content\",children:[g.jsxs(\"div\",{className:\"tab-pane active show\",id:\"tab-details\""
+    },
+    {
+      "old": "g.jsxs(\"div\",{className:\"tab-content\",children:[g.jsxs(NyxWizardDetails,",
+      "next": "g.jsxs(NyxReadOnlyRegion,{module:\"proxy_hosts\",className:\"tab-content\",children:[g.jsxs(NyxWizardDetails,"
+    },
+    {
+      "old": "g.jsx(wt,{type:\"submit\",actionType:\"primary\",className:\"ms-auto bg-cyan\",\"data-bs-dismiss\":\"modal\",isLoading:f,disabled:f,children:g.jsx(K,{id:\"save\"})})",
+      "next": "window.NyxGuardCapabilities.control(g.jsx,wt,{nyxMutation:\"hide\",nyxModule:\"access_lists\",type:\"submit\",actionType:\"primary\",className:\"ms-auto bg-cyan\",\"data-bs-dismiss\":\"modal\",isLoading:f,disabled:f,children:g.jsx(K,{id:\"save\"})})"
+    },
+    {
+      "old": "if(f)return;const w=m(T);",
+      "next": "if(f||!window.NyxGuardCapabilities.canMutate(\"access_lists\"))return;const w=m(T);"
+    },
+    {
+      "old": "if(y)return;v(!0),m(null);const w=",
+      "next": "if(y||!window.NyxGuardCapabilities.canMutate(\"proxy_hosts\"))return;v(!0),m(null);const w="
+    },
+    {
+      "old": "l&&a&&l?.id!==a?.id?",
+      "next": "sV(l?.roles)&&a&&l?.id!==a?.id?"
+    },
+    {
+      "old": "a?.id===l?.id?(delete ue.isDisabled,delete ue.roles)",
+      "next": "!sV(l?.roles)||a?.id===l?.id?(delete ue.isDisabled,delete ue.roles)"
+    },
+    {
+      "old": "children:\"NyxGuard Security\"",
+      "next": "children:g.jsx(K,{id:\"permissions.group.security\"})"
+    },
+    {
+      "old": "g.jsx(Xe,{name:\"nyxguard\",children:({field:_,form:w})=>A(_,w)})",
+      "next": "g.jsx(Xe,{name:\"nyxguard\",children:({field:_,form:w})=>A(_,w)}),g.jsx(\"small\",{className:\"text-secondary\",children:g.jsx(K,{id:\"permissions.scope.security\"})})"
+    },
+    {
+      "old": "!T&&g.jsxs(g.Fragment,{children:[",
+      "next": "!T&&g.jsxs(g.Fragment,{children:[g.jsxs(\"div\",{className:\"mb-3\",children:[g.jsx(\"label\",{className:\"form-label\",children:g.jsx(K,{id:\"proxy-hosts\"})}),g.jsx(Xe,{name:\"proxyHosts\",children:({field:_,form:w})=>A(_,w)})]}),"
+    },
+    {
+      "old": "g.jsx(Xe,{name:\"settings\",children:({field:_,form:w})=>A(_,w)})",
+      "next": "g.jsx(Xe,{name:\"settings\",children:({field:_,form:w})=>A(_,w)}),g.jsx(\"small\",{className:\"text-secondary\",children:g.jsx(K,{id:\"permissions.scope.settings\"})})"
+    },
+    {
+      "old": "value:\"manage\",checked:_.value===\"manage\",onChange",
+      "next": "value:\"manage\",checked:_.value===\"manage\",disabled:l?.roles?.includes(\"nyxagent\"),onChange"
+    },
+    {
+      "old": "checked:_.value===\"hidden\",disabled:P",
+      "next": "checked:_.value===\"hidden\",disabled:P||l?.roles?.includes(\"nyxagent\")"
+    },
+    {
+      "old": "nyxguard:l.permissions?.nyxguard",
+      "next": "nyxguard:l.roles?.includes(\"nyxagent\")?\"view\":l.permissions?.nyxguard"
+    },
+    {
+      "old": "webControls:l.permissions?.webControls",
+      "next": "webControls:l.roles?.includes(\"nyxagent\")?\"view\":l.permissions?.webControls"
+    },
+    {
+      "old": "users:l.permissions?.users",
+      "next": "users:l.roles?.includes(\"nyxagent\")?\"view\":l.permissions?.users"
+    },
+    {
+      "old": "auditlog:l.permissions?.auditlog",
+      "next": "auditlog:l.roles?.includes(\"nyxagent\")?\"view\":l.permissions?.auditlog"
+    },
+    {
+      "old": "settings:l.permissions?.settings",
+      "next": "settings:l.roles?.includes(\"nyxagent\")?\"view\":l.permissions?.settings"
+    },
+    {
+      "old": "accessLists:l.permissions?.accessLists",
+      "next": "accessLists:l.roles?.includes(\"nyxagent\")?\"view\":l.permissions?.accessLists"
+    },
+    {
+      "old": "certificates:l.permissions?.certificates",
+      "next": "certificates:l.roles?.includes(\"nyxagent\")?\"view\":l.permissions?.certificates"
+    },
+    {
+      "old": "proxyHosts:l.permissions?.proxyHosts",
+      "next": "proxyHosts:l.roles?.includes(\"nyxagent\")?\"view\":l.permissions?.proxyHosts"
+    },
+    {
+      "old": "visibility:l.permissions?.visibility",
+      "next": "visibility:l.roles?.includes(\"nyxagent\")?\"all\":l.permissions?.visibility"
+    },
+    {
+      "old": "$t.create(({id:e,visible:t,remove:n})=>{const{data:a,isLoading:i,error:o}=aee(e);return g.jsxs(NyxManagementModal,{kind:\"certificate-details\"",
+      "next": "const NyxCertificateDetails=$t.create(({id:e,visible:t,remove:n})=>{const{data:a,isLoading:i,error:o}=aee(e);return g.jsxs(NyxManagementModal,{kind:\"certificate-details\""
+    },
+    {
+      "old": "if(a?.id!==l?.id&&!ue.roles?.includes?.(\"admin\"))",
+      "next": "if(sV(l?.roles)&&a?.id!==l?.id&&!ue.roles?.includes?.(\"admin\"))"
+    },
+    {
+      "old": "g.jsxs(\"div\",{className:\"tab-pane\",id:\"tab-protection\"",
+      "next": "g.jsxs(NyxReadOnlyRegion,{module:\"nyxguard\",className:\"tab-pane\",id:\"tab-protection\""
+    },
+    {
+      "old": "queryKey:[\"update-manager\",\"whats-new\"],queryFn:()=>K6(),enabled:!!e",
+      "next": "queryKey:[\"update-manager\",\"whats-new\"],queryFn:()=>K6(),enabled:!!t"
+    },
+    {
+      "old": "T=l?.roles.indexOf(\"admin\")!==-1",
+      "next": "T=sV(l?.roles)"
+    },
+    {
+      "old": "g.jsx(\"li\",{className:\"nav-item\",role:\"presentation\",children:g.jsx(\"a\",{href:\"#tab-protection\",className:\"nav-link\",\"data-bs-toggle\":\"tab\",\"aria-selected\":\"false\",tabIndex:-1,role:\"tab\",children:g.jsxs(g.Fragment,{children:[g.jsx(\"span\",{className:\"nyx-step-number\",\"aria-hidden\":true,children:\"2\"}),g.jsx(K,{id:\"proxy-host.protection\"})]})})})",
+      "next": "g.jsx(NyxViewControl,{module:\"nyxguard\",children:g.jsx(\"li\",{className:\"nav-item\",role:\"presentation\",children:g.jsx(\"a\",{href:\"#tab-protection\",className:\"nav-link\",\"data-bs-toggle\":\"tab\",\"aria-selected\":\"false\",tabIndex:-1,role:\"tab\",children:g.jsxs(g.Fragment,{children:[g.jsx(\"span\",{className:\"nyx-step-number\",\"aria-hidden\":true,children:\"2\"}),g.jsx(K,{id:\"proxy-host.protection\"})]})})})})"
+    },
+    {
+      "old": "function NyxActionDropdown({children,className=\"dropdown\"}) {",
+      "next": "function NyxActionDropdown({children,className=\"dropdown\",userRecord}) {\n const {data:actionActor}=ql(\"me\");\n const actionAllowed=!userRecord||window.NyxGuardCapabilities.userMenuAllowed(actionActor,userRecord);"
+    },
+    {
+      "old": "if(!I.isValidElement(button)||!I.isValidElement(content))throw Error(\"Action dropdown requires its existing trigger and menu\");",
+      "next": "I.useLayoutEffect(()=>{if(!actionAllowed&&open)close(false);},[actionAllowed,open,close]);\n if(!actionAllowed)return null;\n if(!I.isValidElement(button)||!I.isValidElement(content))throw Error(\"Action dropdown requires its existing trigger and menu\");"
+    }
+  ],
+  "local-dev-fixes-409dev-5013-7f8c7487369c.js": [
+    {
+      "old": "var existing = panel.querySelectorAll(\":scope > .prefs-action-links\");",
+      "next": "panel.querySelectorAll(\".nyx-support-license-nav,.nyx-support-diagnostics-nav\").forEach(function(link){link.hidden=!window.NyxGuardCapabilities?.canViewRoute(window.NyxGuardCapabilities.identity,\"/settings\");});\n                var existing = panel.querySelectorAll(\":scope > .prefs-action-links\");"
+    },
+    {
+      "old": "function applyViewOnlyMode() {",
+      "next": "function applyViewOnlyMode() { return; // Native capabilities replace obsolete text/DOM masking.\n"
+    },
+    {
+      "old": "function alignPermissionModalWithSidebar() {",
+      "next": "function alignPermissionModalWithSidebar() { return; // Native permission groups must not be removed or relabeled.\n"
+    }
+  ],
+  "index-BqF3trRq-409dev-5013-7f8c7487369c.js": [
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:s.window,disabled:H.isPending,onClick:()=>NyxRequestConfirmation({title:\"Clear selected history?\",action:\"Clear selected history\",reducesProtection:true,message:a.formatMessage({id:\"nyxguard.ips.clear-confirm\"},{window:z}),onConfirm:()=>H.mutateAsync()}),children:e.jsx(n,{id:\"nyxguard.ips.clear-logs\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:s.window,disabled:H.isPending,onClick:()=>NyxRequestConfirmation({title:\"Clear selected history?\",action:\"Clear selected history\",reducesProtection:true,message:a.formatMessage({id:\"nyxguard.ips.clear-confirm\"},{window:z}),onConfirm:()=>H.mutateAsync()}),children:e.jsx(n,{id:\"nyxguard.ips.clear-logs\"})})"
+    },
+    {
+      "old": "e.jsxs(\"select\",{value:G,onChange:t=>O(Number.parseInt(t.target.value,10)),className:\"form-select form-select-sm\",style:{width:140},children:[e.jsx(\"option\",{value:30,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:30})}),e.jsx(\"option\",{value:60,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:60})}),e.jsx(\"option\",{value:90,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:90})}),e.jsx(\"option\",{value:180,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:180})})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"select\",{nyxMutation:true,nyxModule:\"nyxguard\",value:G,onChange:t=>O(Number.parseInt(t.target.value,10)),className:\"form-select form-select-sm\",style:{width:140},children:[e.jsx(\"option\",{value:30,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:30})}),e.jsx(\"option\",{value:60,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:60})}),e.jsx(\"option\",{value:90,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:90})}),e.jsx(\"option\",{value:180,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:180})})]})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:s.applyBtn,disabled:T.isPending||G===(S.data?.logRetentionDays??90),onClick:()=>T.mutate(),children:e.jsx(n,{id:\"apply\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:s.applyBtn,disabled:T.isPending||G===(S.data?.logRetentionDays??90),onClick:()=>T.mutate(),children:e.jsx(n,{id:\"apply\"})})"
+    },
+    {
+      "old": "e.jsxs(\"select\",{value:I,onChange:t=>X(t.target.value),className:\"form-select form-select-sm\",style:{width:190},title:a.formatMessage({id:\"nyxguard.ips.geoip-provider-title\"}),children:[e.jsx(\"option\",{value:\"maxmind\",children:\"MaxMind GeoLite2\"}),e.jsx(\"option\",{value:\"ip2location\",children:\"IP2Location (.mmdb)\"})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"select\",{nyxMutation:true,nyxModule:\"nyxguard\",value:I,onChange:t=>X(t.target.value),className:\"form-select form-select-sm\",style:{width:190},title:a.formatMessage({id:\"nyxguard.ips.geoip-provider-title\"}),children:[e.jsx(\"option\",{value:\"maxmind\",children:\"MaxMind GeoLite2\"}),e.jsx(\"option\",{value:\"ip2location\",children:\"IP2Location (.mmdb)\"})]})"
+    },
+    {
+      "old": "e.jsx(\"input\",{type:\"file\",accept:\".mmdb\",onChange:t=>U(t.target.files?.[0]??null),className:\"form-control form-control-sm\",style:{width:260}})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"file\",accept:\".mmdb\",onChange:t=>U(t.target.files?.[0]??null),className:\"form-control form-control-sm\",style:{width:260}})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:s.applyBtn,disabled:!q||h.isPending,onClick:()=>h.mutate(),children:e.jsx(n,{id:\"nyxguard.ips.upload\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:s.applyBtn,disabled:!q||h.isPending,onClick:()=>h.mutate(),children:e.jsx(n,{id:\"nyxguard.ips.upload\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:s.applyBtn,disabled:V.isPending,onClick:()=>V.mutate(),children:e.jsx(n,{id:\"nyxguard.ips.clear\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:s.applyBtn,disabled:V.isPending,onClick:()=>V.mutate(),children:e.jsx(n,{id:\"nyxguard.ips.clear\"})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{value:B,onChange:t=>Y(t.target.value),placeholder:a.formatMessage({id:\"nyxguard.ips.maxmind-account-id\"}),className:\"form-control form-control-sm\",style:{width:180}})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"nyxguard\",value:B,onChange:t=>Y(t.target.value),placeholder:a.formatMessage({id:\"nyxguard.ips.maxmind-account-id\"}),className:\"form-control form-control-sm\",style:{width:180}})"
+    },
+    {
+      "old": "e.jsx(\"input\",{value:L,onChange:t=>$(t.target.value),placeholder:a.formatMessage({id:\"nyxguard.ips.maxmind-license-key\"}),type:\"password\",className:\"form-control form-control-sm\",style:{width:260}})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"nyxguard\",value:L,onChange:t=>$(t.target.value),placeholder:a.formatMessage({id:\"nyxguard.ips.maxmind-license-key\"}),type:\"password\",className:\"form-control form-control-sm\",style:{width:260}})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:s.applyBtn,disabled:!B.trim()||!L.trim()||j.isPending,onClick:()=>j.mutate(),children:e.jsx(n,{id:\"save\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:s.applyBtn,disabled:!B.trim()||!L.trim()||j.isPending,onClick:()=>j.mutate(),children:e.jsx(n,{id:\"save\"})})"
+    }
+  ],
+  "index-C40Q8nCD-5013-7f8c7487369c.js": [
+    {
+      "old": "e.jsxs(\"a\",{className:\"dropdown-item\",href:\"#\",onClick:o=>{o.preventDefault(),d?.(row.id)},children:[e.jsx(S,{size:16}),e.jsx(t,{id:\"action.delete\"})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"a\",{nyxMutation:\"hide\",nyxModule:\"access_lists\",className:\"dropdown-item\",href:\"#\",onClick:o=>{o.preventDefault(),d?.(row.id)},children:[e.jsx(S,{size:16}),e.jsx(t,{id:\"action.delete\"})]})"
+    },
+    {
+      "old": "e.jsxs(\"a\",{className:\"dropdown-item\",href:\"#\",onClick:o=>{o.preventDefault(),d?.(s.row.original.id)},children:[e.jsx(S,{size:16}),e.jsx(t,{id:\"action.delete\"})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"a\",{nyxMutation:\"hide\",nyxModule:\"access_lists\",className:\"dropdown-item\",href:\"#\",onClick:o=>{o.preventDefault(),d?.(s.row.original.id)},children:[e.jsx(S,{size:16}),e.jsx(t,{id:\"action.delete\"})]})"
+    },
+    {
+      "old": "id:\"action.edit\"",
+      "next": "id:window.NyxGuardCapabilities.canMutate(\"access_lists\")?\"action.edit\":\"action.view-details\"",
+      "count": 2
+    }
+  ],
+  "index-K4lT3P_L-5013-7f8c7487369c.js": [
+    {
+      "old": "e.jsxs(\"a\",{className:\"dropdown-item\",href:\"#\",onClick:t=>{t.preventDefault(),u?.(s.row.original.id)},children:[e.jsx(re,{size:16}),e.jsx(o,{id:\"action.edit\"})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"a\",{nyxMutation:\"hide\",nyxModule:\"users\",nyxPersonalOwner:s.row.original.id,nyxTargetAdmin:window.NyxGuardCapabilities.administratorRecord(s.row.original),className:\"dropdown-item\",href:\"#\",onClick:t=>{t.preventDefault(),u?.(s.row.original.id)},children:[e.jsx(re,{size:16}),e.jsx(o,{id:\"action.edit\"})]})"
+    },
+    {
+      "old": "e.jsxs(\"a\",{className:\"dropdown-item\",href:\"#\",onClick:t=>{t.preventDefault(),m?.(s.row.original.id)},children:[e.jsx(F,{size:16}),e.jsx(o,{id:\"action.permissions\"})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"a\",{nyxMutation:\"hide\",nyxModule:\"admin\",className:\"dropdown-item\",href:\"#\",onClick:t=>{t.preventDefault(),m?.(s.row.original.id)},children:[e.jsx(F,{size:16}),e.jsx(o,{id:\"action.permissions\"})]})"
+    },
+    {
+      "old": "e.jsxs(\"a\",{className:\"dropdown-item\",href:\"#\",onClick:t=>{t.preventDefault(),g?.(s.row.original.id)},children:[e.jsx(v,{size:16}),e.jsx(o,{id:\"user.set-password\"})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"a\",{nyxMutation:\"hide\",nyxModule:\"admin\",className:\"dropdown-item\",href:\"#\",onClick:t=>{t.preventDefault(),g?.(s.row.original.id)},children:[e.jsx(v,{size:16}),e.jsx(o,{id:\"user.set-password\"})]})"
+    },
+    {
+      "old": "e.jsxs(\"a\",{className:\"dropdown-item\",href:\"#\",onClick:t=>{t.preventDefault(),j?.(s.row.original.id,s.row.original.isDisabled)},children:[e.jsx(te,{size:16}),e.jsx(o,{id:s.row.original.isDisabled?\"action.enable\":\"action.disable\"})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"a\",{nyxMutation:\"hide\",nyxModule:\"admin\",className:\"dropdown-item\",href:\"#\",onClick:t=>{t.preventDefault(),j?.(s.row.original.id,s.row.original.isDisabled)},children:[e.jsx(te,{size:16}),e.jsx(o,{id:s.row.original.isDisabled?\"action.enable\":\"action.disable\"})]})"
+    },
+    {
+      "old": "e.jsxs(\"a\",{className:\"dropdown-item\",href:\"#\",onClick:t=>{t.preventDefault(),x?.(s.row.original.id)},children:[e.jsx(y,{size:16}),e.jsx(o,{id:\"user.login-as\",data:{name:s.row.original.name}})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"a\",{nyxMutation:\"hide\",nyxModule:\"admin\",className:\"dropdown-item\",href:\"#\",onClick:t=>{t.preventDefault(),x?.(s.row.original.id)},children:[e.jsx(y,{size:16}),e.jsx(o,{id:\"user.login-as\",data:{name:s.row.original.name}})]})"
+    },
+    {
+      "old": "e.jsxs(\"a\",{className:\"dropdown-item\",href:\"#\",onClick:t=>{t.preventDefault(),d?.(s.row.original.id)},children:[e.jsx(G,{size:16}),e.jsx(o,{id:\"action.delete\"})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"a\",{nyxMutation:\"hide\",nyxModule:\"users\",nyxTargetAdmin:window.NyxGuardCapabilities.administratorRecord(s.row.original),className:\"dropdown-item\",href:\"#\",onClick:t=>{t.preventDefault(),d?.(s.row.original.id)},children:[e.jsx(G,{size:16}),e.jsx(o,{id:\"action.delete\"})]})"
+    },
+    {
+      "old": "const n=r||[];",
+      "next": "const n=monitoringOnly||r?.includes(\"nyxagent\")?[\"nyxagent\"]:[...(r||[])];"
+    },
+    {
+      "old": "id:`role.${i}`",
+      "next": "id:i===\"nyxagent\"?\"user.nyx-agent\":`role.${i}`"
+    },
+    {
+      "old": "section:$,permission:W",
+      "next": "section:\"users\",permission:W"
+    },
+    {
+      "old": "e.jsx(P,{size:\"sm\",className:\"btn-orange\",onClick:()=>f(\"new\"),children:e.jsxs(e.Fragment,{children:[e.jsx(NyxToolbarPlus,{}),e.jsx(o,{id:\"object.add\",tData:{object:\"user\"}})]})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,P,{nyxMutation:\"hide\",nyxModule:\"users\",size:\"sm\",className:\"btn-orange\",onClick:()=>f(\"new\"),children:e.jsxs(e.Fragment,{children:[e.jsx(NyxToolbarPlus,{}),e.jsx(o,{id:\"object.add\",tData:{object:\"user\"}})]})})"
+    },
+    {
+      "old": "function me({roles:r})",
+      "next": "function me({roles:r,monitoringOnly})"
+    },
+    {
+      "old": "roles:s.getValue()",
+      "next": "roles:s.getValue(),monitoringOnly:s.row.original.monitoringOnly"
+    },
+    {
+      "old": "cell:s=>e.jsxs(NyxActionDropdown,{className:\"dropdown\",children:",
+      "next": "cell:s=>e.jsxs(NyxActionDropdown,{userRecord:s.row.original,className:\"dropdown\",children:"
+    }
+  ],
+  "index-Dd_E7hOB-5013-7f8c7487369c.js": [
+    {
+      "old": "id:\"action.edit\"",
+      "next": "id:window.NyxGuardCapabilities.canMutate(\"proxy_hosts\")?\"action.edit\":\"action.view-details\""
+    }
+  ],
+  "index-B_A1pRP7-408dev-5013-7f8c7487369c.js": [
+    {
+      "old": "t.jsx(\"button\",{type:\"button\",className:s.window,disabled:Q.isPending,onClick:()=>NyxRequestConfirmation({title:\"Clear selected history?\",action:\"Clear selected history\",reducesProtection:true,message:o.formatMessage({id:\"nyxguard.traffic.clear-confirm\"},{window:X(r)}),onConfirm:()=>Q.mutateAsync()}),children:t.jsx(a,{id:\"nyxguard.traffic.clear-logs\"})})",
+      "next": "window.NyxGuardCapabilities.control(t.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:s.window,disabled:Q.isPending,onClick:()=>NyxRequestConfirmation({title:\"Clear selected history?\",action:\"Clear selected history\",reducesProtection:true,message:o.formatMessage({id:\"nyxguard.traffic.clear-confirm\"},{window:X(r)}),onConfirm:()=>Q.mutateAsync()}),children:t.jsx(a,{id:\"nyxguard.traffic.clear-logs\"})})"
+    }
+  ],
+  "index-B_A1pRP7-5013-7f8c7487369c.js": [
+    {
+      "old": "t.jsx(\"button\",{type:\"button\",className:s.window,disabled:Q.isPending,onClick:()=>NyxRequestConfirmation({title:\"Clear selected history?\",action:\"Clear selected history\",reducesProtection:true,message:o.formatMessage({id:\"nyxguard.traffic.clear-confirm\"},{window:X(r)}),onConfirm:()=>Q.mutateAsync()}),children:t.jsx(a,{id:\"nyxguard.traffic.clear-logs\"})})",
+      "next": "window.NyxGuardCapabilities.control(t.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:s.window,disabled:Q.isPending,onClick:()=>NyxRequestConfirmation({title:\"Clear selected history?\",action:\"Clear selected history\",reducesProtection:true,message:o.formatMessage({id:\"nyxguard.traffic.clear-confirm\"},{window:X(r)}),onConfirm:()=>Q.mutateAsync()}),children:t.jsx(a,{id:\"nyxguard.traffic.clear-logs\"})})"
+    }
+  ],
+  "index-BqF3trRq-408dev-5013-7f8c7487369c.js": [
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:s.window,disabled:H.isPending,onClick:()=>NyxRequestConfirmation({title:\"Clear selected history?\",action:\"Clear selected history\",reducesProtection:true,message:a.formatMessage({id:\"nyxguard.ips.clear-confirm\"},{window:z}),onConfirm:()=>H.mutateAsync()}),children:e.jsx(n,{id:\"nyxguard.ips.clear-logs\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:s.window,disabled:H.isPending,onClick:()=>NyxRequestConfirmation({title:\"Clear selected history?\",action:\"Clear selected history\",reducesProtection:true,message:a.formatMessage({id:\"nyxguard.ips.clear-confirm\"},{window:z}),onConfirm:()=>H.mutateAsync()}),children:e.jsx(n,{id:\"nyxguard.ips.clear-logs\"})})"
+    },
+    {
+      "old": "e.jsxs(\"select\",{value:G,onChange:t=>O(Number.parseInt(t.target.value,10)),className:\"form-select form-select-sm\",style:{width:140},children:[e.jsx(\"option\",{value:30,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:30})}),e.jsx(\"option\",{value:60,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:60})}),e.jsx(\"option\",{value:90,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:90})}),e.jsx(\"option\",{value:180,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:180})})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"select\",{nyxMutation:true,nyxModule:\"nyxguard\",value:G,onChange:t=>O(Number.parseInt(t.target.value,10)),className:\"form-select form-select-sm\",style:{width:140},children:[e.jsx(\"option\",{value:30,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:30})}),e.jsx(\"option\",{value:60,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:60})}),e.jsx(\"option\",{value:90,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:90})}),e.jsx(\"option\",{value:180,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:180})})]})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:s.applyBtn,disabled:T.isPending||G===(S.data?.logRetentionDays??90),onClick:()=>T.mutate(),children:e.jsx(n,{id:\"apply\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:s.applyBtn,disabled:T.isPending||G===(S.data?.logRetentionDays??90),onClick:()=>T.mutate(),children:e.jsx(n,{id:\"apply\"})})"
+    },
+    {
+      "old": "e.jsxs(\"select\",{value:I,onChange:t=>X(t.target.value),className:\"form-select form-select-sm\",style:{width:190},title:a.formatMessage({id:\"nyxguard.ips.geoip-provider-title\"}),children:[e.jsx(\"option\",{value:\"maxmind\",children:\"MaxMind GeoLite2\"}),e.jsx(\"option\",{value:\"ip2location\",children:\"IP2Location (.mmdb)\"})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"select\",{nyxMutation:true,nyxModule:\"nyxguard\",value:I,onChange:t=>X(t.target.value),className:\"form-select form-select-sm\",style:{width:190},title:a.formatMessage({id:\"nyxguard.ips.geoip-provider-title\"}),children:[e.jsx(\"option\",{value:\"maxmind\",children:\"MaxMind GeoLite2\"}),e.jsx(\"option\",{value:\"ip2location\",children:\"IP2Location (.mmdb)\"})]})"
+    },
+    {
+      "old": "e.jsx(\"input\",{type:\"file\",accept:\".mmdb\",onChange:t=>U(t.target.files?.[0]??null),className:\"form-control form-control-sm\",style:{width:260}})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"file\",accept:\".mmdb\",onChange:t=>U(t.target.files?.[0]??null),className:\"form-control form-control-sm\",style:{width:260}})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:s.applyBtn,disabled:!q||h.isPending,onClick:()=>h.mutate(),children:e.jsx(n,{id:\"nyxguard.ips.upload\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:s.applyBtn,disabled:!q||h.isPending,onClick:()=>h.mutate(),children:e.jsx(n,{id:\"nyxguard.ips.upload\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:s.applyBtn,disabled:V.isPending,onClick:()=>V.mutate(),children:e.jsx(n,{id:\"nyxguard.ips.clear\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:s.applyBtn,disabled:V.isPending,onClick:()=>V.mutate(),children:e.jsx(n,{id:\"nyxguard.ips.clear\"})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{value:B,onChange:t=>Y(t.target.value),placeholder:a.formatMessage({id:\"nyxguard.ips.maxmind-account-id\"}),className:\"form-control form-control-sm\",style:{width:180}})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"nyxguard\",value:B,onChange:t=>Y(t.target.value),placeholder:a.formatMessage({id:\"nyxguard.ips.maxmind-account-id\"}),className:\"form-control form-control-sm\",style:{width:180}})"
+    },
+    {
+      "old": "e.jsx(\"input\",{value:L,onChange:t=>$(t.target.value),placeholder:a.formatMessage({id:\"nyxguard.ips.maxmind-license-key\"}),type:\"password\",className:\"form-control form-control-sm\",style:{width:260}})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"nyxguard\",value:L,onChange:t=>$(t.target.value),placeholder:a.formatMessage({id:\"nyxguard.ips.maxmind-license-key\"}),type:\"password\",className:\"form-control form-control-sm\",style:{width:260}})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:s.applyBtn,disabled:!B.trim()||!L.trim()||j.isPending,onClick:()=>j.mutate(),children:e.jsx(n,{id:\"save\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:s.applyBtn,disabled:!B.trim()||!L.trim()||j.isPending,onClick:()=>j.mutate(),children:e.jsx(n,{id:\"save\"})})"
+    }
+  ],
+  "index-BqF3trRq-5013-7f8c7487369c.js": [
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:s.window,disabled:H.isPending,onClick:()=>NyxRequestConfirmation({title:\"Clear selected history?\",action:\"Clear selected history\",reducesProtection:true,message:a.formatMessage({id:\"nyxguard.ips.clear-confirm\"},{window:z}),onConfirm:()=>H.mutateAsync()}),children:e.jsx(n,{id:\"nyxguard.ips.clear-logs\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:s.window,disabled:H.isPending,onClick:()=>NyxRequestConfirmation({title:\"Clear selected history?\",action:\"Clear selected history\",reducesProtection:true,message:a.formatMessage({id:\"nyxguard.ips.clear-confirm\"},{window:z}),onConfirm:()=>H.mutateAsync()}),children:e.jsx(n,{id:\"nyxguard.ips.clear-logs\"})})"
+    },
+    {
+      "old": "e.jsxs(\"select\",{value:G,onChange:t=>O(Number.parseInt(t.target.value,10)),className:\"form-select form-select-sm\",style:{width:140},children:[e.jsx(\"option\",{value:30,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:30})}),e.jsx(\"option\",{value:60,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:60})}),e.jsx(\"option\",{value:90,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:90})}),e.jsx(\"option\",{value:180,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:180})})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"select\",{nyxMutation:true,nyxModule:\"nyxguard\",value:G,onChange:t=>O(Number.parseInt(t.target.value,10)),className:\"form-select form-select-sm\",style:{width:140},children:[e.jsx(\"option\",{value:30,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:30})}),e.jsx(\"option\",{value:60,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:60})}),e.jsx(\"option\",{value:90,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:90})}),e.jsx(\"option\",{value:180,children:a.formatMessage({id:\"nyxguard.ips.days\"},{days:180})})]})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:s.applyBtn,disabled:T.isPending||G===(S.data?.logRetentionDays??90),onClick:()=>T.mutate(),children:e.jsx(n,{id:\"apply\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:s.applyBtn,disabled:T.isPending||G===(S.data?.logRetentionDays??90),onClick:()=>T.mutate(),children:e.jsx(n,{id:\"apply\"})})"
+    },
+    {
+      "old": "e.jsxs(\"select\",{value:I,onChange:t=>X(t.target.value),className:\"form-select form-select-sm\",style:{width:190},title:a.formatMessage({id:\"nyxguard.ips.geoip-provider-title\"}),children:[e.jsx(\"option\",{value:\"maxmind\",children:\"MaxMind GeoLite2\"}),e.jsx(\"option\",{value:\"ip2location\",children:\"IP2Location (.mmdb)\"})]})",
+      "next": "window.NyxGuardCapabilities.control(e.jsxs,\"select\",{nyxMutation:true,nyxModule:\"nyxguard\",value:I,onChange:t=>X(t.target.value),className:\"form-select form-select-sm\",style:{width:190},title:a.formatMessage({id:\"nyxguard.ips.geoip-provider-title\"}),children:[e.jsx(\"option\",{value:\"maxmind\",children:\"MaxMind GeoLite2\"}),e.jsx(\"option\",{value:\"ip2location\",children:\"IP2Location (.mmdb)\"})]})"
+    },
+    {
+      "old": "e.jsx(\"input\",{type:\"file\",accept:\".mmdb\",onChange:t=>U(t.target.files?.[0]??null),className:\"form-control form-control-sm\",style:{width:260}})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"file\",accept:\".mmdb\",onChange:t=>U(t.target.files?.[0]??null),className:\"form-control form-control-sm\",style:{width:260}})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:s.applyBtn,disabled:!q||h.isPending,onClick:()=>h.mutate(),children:e.jsx(n,{id:\"nyxguard.ips.upload\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:s.applyBtn,disabled:!q||h.isPending,onClick:()=>h.mutate(),children:e.jsx(n,{id:\"nyxguard.ips.upload\"})})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:s.applyBtn,disabled:V.isPending,onClick:()=>V.mutate(),children:e.jsx(n,{id:\"nyxguard.ips.clear\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:s.applyBtn,disabled:V.isPending,onClick:()=>V.mutate(),children:e.jsx(n,{id:\"nyxguard.ips.clear\"})})"
+    },
+    {
+      "old": "e.jsx(\"input\",{value:B,onChange:t=>Y(t.target.value),placeholder:a.formatMessage({id:\"nyxguard.ips.maxmind-account-id\"}),className:\"form-control form-control-sm\",style:{width:180}})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"nyxguard\",value:B,onChange:t=>Y(t.target.value),placeholder:a.formatMessage({id:\"nyxguard.ips.maxmind-account-id\"}),className:\"form-control form-control-sm\",style:{width:180}})"
+    },
+    {
+      "old": "e.jsx(\"input\",{value:L,onChange:t=>$(t.target.value),placeholder:a.formatMessage({id:\"nyxguard.ips.maxmind-license-key\"}),type:\"password\",className:\"form-control form-control-sm\",style:{width:260}})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"input\",{nyxMutation:true,nyxModule:\"nyxguard\",value:L,onChange:t=>$(t.target.value),placeholder:a.formatMessage({id:\"nyxguard.ips.maxmind-license-key\"}),type:\"password\",className:\"form-control form-control-sm\",style:{width:260}})"
+    },
+    {
+      "old": "e.jsx(\"button\",{type:\"button\",className:s.applyBtn,disabled:!B.trim()||!L.trim()||j.isPending,onClick:()=>j.mutate(),children:e.jsx(n,{id:\"save\"})})",
+      "next": "window.NyxGuardCapabilities.control(e.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:s.applyBtn,disabled:!B.trim()||!L.trim()||j.isPending,onClick:()=>j.mutate(),children:e.jsx(n,{id:\"save\"})})"
+    }
+  ],
+  "index-W-QFtloY-408dev-5013-7f8c7487369c.js": [
+    {
+      "old": "t.jsx(\"button\",{type:\"button\",className:N(a.banOption,_),disabled:u,onClick:()=>r(l.ip,b),title:`Set ban to ${m}`,children:m},b)",
+      "next": "window.NyxGuardCapabilities.control(t.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:N(a.banOption,_),disabled:u,onClick:()=>r(l.ip,b),title:`Set ban to ${m}`,children:m},b)"
+    },
+    {
+      "old": "t.jsx(\"button\",{type:\"button\",className:a.window,disabled:M.isPending,onClick:()=>NyxRequestConfirmation({title:\"Clear selected history?\",action:\"Clear selected history\",reducesProtection:true,message:n.formatMessage({id:\"nyxguard.attacks.clear-confirm\"},{days:r}),onConfirm:()=>M.mutateAsync()}),children:t.jsx(s,{id:\"nyxguard.attacks.clear-logs\"})})",
+      "next": "window.NyxGuardCapabilities.control(t.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:a.window,disabled:M.isPending,onClick:()=>NyxRequestConfirmation({title:\"Clear selected history?\",action:\"Clear selected history\",reducesProtection:true,message:n.formatMessage({id:\"nyxguard.attacks.clear-confirm\"},{days:r}),onConfirm:()=>M.mutateAsync()}),children:t.jsx(s,{id:\"nyxguard.attacks.clear-logs\"})})"
+    }
+  ],
+  "index-W-QFtloY-5013-7f8c7487369c.js": [
+    {
+      "old": "t.jsx(\"button\",{type:\"button\",className:N(a.banOption,_),disabled:u,onClick:()=>r(l.ip,b),title:`Set ban to ${m}`,children:m},b)",
+      "next": "window.NyxGuardCapabilities.control(t.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:N(a.banOption,_),disabled:u,onClick:()=>r(l.ip,b),title:`Set ban to ${m}`,children:m},b)"
+    },
+    {
+      "old": "t.jsx(\"button\",{type:\"button\",className:a.window,disabled:M.isPending,onClick:()=>NyxRequestConfirmation({title:\"Clear selected history?\",action:\"Clear selected history\",reducesProtection:true,message:n.formatMessage({id:\"nyxguard.attacks.clear-confirm\"},{days:r}),onConfirm:()=>M.mutateAsync()}),children:t.jsx(s,{id:\"nyxguard.attacks.clear-logs\"})})",
+      "next": "window.NyxGuardCapabilities.control(t.jsx,\"button\",{nyxMutation:true,nyxModule:\"nyxguard\",type:\"button\",className:a.window,disabled:M.isPending,onClick:()=>NyxRequestConfirmation({title:\"Clear selected history?\",action:\"Clear selected history\",reducesProtection:true,message:n.formatMessage({id:\"nyxguard.attacks.clear-confirm\"},{days:r}),onConfirm:()=>M.mutateAsync()}),children:t.jsx(s,{id:\"nyxguard.attacks.clear-logs\"})})"
+    }
+  ],
+  "index-BfJf9XXp-4012certfix4-5013-7f8c7487369c.js": [
+    {
+      "old": "l.jsxs(\"a\",{className:\"dropdown-item\",href:\"#\",onClick:f=>{f.preventDefault(),a?.(row.id)},children:[l.jsx(tn,{size:16}),l.jsx(N,{id:\"action.download\"})]})",
+      "next": "window.NyxGuardCapabilities.control(l.jsxs,\"a\",{nyxMutation:\"hide\",nyxModule:\"admin\",className:\"dropdown-item\",href:\"#\",onClick:f=>{f.preventDefault(),a?.(row.id)},children:[l.jsx(tn,{size:16}),l.jsx(N,{id:\"action.download\"})]})"
+    },
+    {
+      "old": "l.jsxs(\"a\",{className:\"dropdown-item\",href:\"#\",onClick:f=>{f.preventDefault(),a?.(o.row.original.id)},children:[l.jsx(tn,{size:16}),l.jsx(N,{id:\"action.download\"})]})",
+      "next": "window.NyxGuardCapabilities.control(l.jsxs,\"a\",{nyxMutation:\"hide\",nyxModule:\"admin\",className:\"dropdown-item\",href:\"#\",onClick:f=>{f.preventDefault(),a?.(o.row.original.id)},children:[l.jsx(tn,{size:16}),l.jsx(N,{id:\"action.download\"})]})"
+    },
+    {
+      "old": "l.jsxs(\"a\",{className:\"dropdown-item\",href:\"#\",onClick:f=>{f.preventDefault(),n?.(row.id)},children:[l.jsx(Mr,{size:16}),l.jsx(N,{id:\"action.renew\"})]})",
+      "next": "l.jsx(\"a\",{className:\"dropdown-item\",href:\"#\",onClick:event=>{event.preventDefault();window.NyxGuardCapabilities.certificateDetails(row.id);},children:l.jsx(N,{id:\"action.view-details\"})}),window.NyxGuardCapabilities.control(l.jsxs,\"a\",{nyxMutation:\"hide\",nyxModule:\"certificates\",className:\"dropdown-item\",href:\"#\",onClick:f=>{f.preventDefault(),n?.(row.id)},children:[l.jsx(Mr,{size:16}),l.jsx(N,{id:\"action.renew\"})]})"
+    },
+    {
+      "old": "l.jsxs(\"a\",{className:\"dropdown-item\",href:\"#\",onClick:f=>{f.preventDefault(),n?.(o.row.original.id)},children:[l.jsx(Mr,{size:16}),l.jsx(N,{id:\"action.renew\"})]})",
+      "next": "l.jsx(\"a\",{className:\"dropdown-item\",href:\"#\",onClick:event=>{event.preventDefault();window.NyxGuardCapabilities.certificateDetails(o.row.original.id);},children:l.jsx(N,{id:\"action.view-details\"})}),window.NyxGuardCapabilities.control(l.jsxs,\"a\",{nyxMutation:\"hide\",nyxModule:\"certificates\",className:\"dropdown-item\",href:\"#\",onClick:f=>{f.preventDefault(),n?.(o.row.original.id)},children:[l.jsx(Mr,{size:16}),l.jsx(N,{id:\"action.renew\"})]})"
+    }
+  ],
+  "index-CP-DF6LG-5013-7f8c7487369c.js": [
+    {
+      "old": "q=Ue(),pendingUpdateQuery=L({queryKey:",
+      "next": "q=Ue({enabled:window.NyxGuardCapabilities.canViewRoute(window.NyxGuardCapabilities.identity,\"/nyxguard/proxy\")}),pendingUpdateQuery=L({enabled:window.NyxGuardCapabilities.canViewRoute(window.NyxGuardCapabilities.identity,\"/settings\"),queryKey:"
+    }
+  ]
+}

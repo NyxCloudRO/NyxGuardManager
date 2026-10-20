@@ -1,0 +1,30 @@
+import fs from'node:fs';import path from'node:path';import assert from'node:assert/strict';import{createHash}from'node:crypto';import{parse}from'acorn';import{readCatalogs,applyEdits}from'./catalogs.mjs';
+const app=process.argv[2],front=path.join(app,'frontend'),assets=path.join(front,'assets'),manifest=JSON.parse(fs.readFileSync(path.join(front,'nyxguard-build.json'))),hash=b=>createHash('sha256').update(b).digest('hex');
+assert.equal(manifest.task,7,'Task 7 frontend baseline required');
+for(const[n,h]of Object.entries(manifest.assets))assert.equal(hash(fs.readFileSync(path.join(assets,n))),h,n);
+const find=prefix=>{const names=Object.keys(manifest.assets).filter(n=>n.startsWith(prefix)&&n.endsWith('.js'));assert.equal(names.length,1);return names[0];};
+const changes=[['index-CP-DF6LG','C.data?.coverage?e.jsx("div",{role:"status","data-nyx-traffic-coverage":true,className:"task2-scan-notice",children:[window.NyxI18n.message("task7.coverage")," ",e.jsx("time",{dateTime:C.data.now,children:window.NyxI18n.message("task7.as-of",{time:new Date(C.data.now).toLocaleString(window.NyxI18n.locale)})})]}):null,'],['index-B_A1pRP7-5013','d.data?.coverage?t.jsx("div",{role:"status",className:"task2-scan-notice",children:window.NyxI18n.message("task7.coverage")}):null,']];
+for(const[prefix,fragment]of changes){const file=path.join(assets,find(prefix)),s=fs.readFileSync(file,'utf8');assert.equal(s.split(fragment).length,2,'Coverage banner source differs');fs.writeFileSync(file,s.replace(fragment,''));}
+// Replace the obsolete compatibility shim with the canonical native form workflow.
+const shim=find('notification-visibility-');assert.ok(readAsset(shim).includes('__nyxNotificationPayloadGuard'));
+fs.writeFileSync(path.join(assets,shim),'// Native Notifications owns draft state, serialization and rendering.\n');
+function readAsset(n){return fs.readFileSync(path.join(assets,n),'utf8');}
+const settings=find('index-DTnhxNQ_');let source=readAsset(settings);
+function once(text,from,to){assert.equal(text.split(from).length,2,from.slice(0,90));return text.replace(from,to);}
+source=once(source,'function Ft(){const nyxChannelSave=y.useRef(false);','function Ft(){const nyxTestFlight=y.useRef(false);const nyxChannelSave=y.useRef(false);');
+source=once(source,'onSuccess:()=>{a.invalidateQueries({queryKey:["notifications"]}),z(r.formatMessage({id:"notification.object-saved"})),x()}', 'onSuccess:async n=>{await a.cancelQueries({queryKey:["notifications"]});a.setQueryData(["notifications"],p=>{const rows=Array.isArray(p)?p:[];return rows.some(w=>w.id===n.id)?rows.map(w=>w.id===n.id?n:w):[...rows,n]});await a.invalidateQueries({queryKey:["notifications"]});z(r.formatMessage({id:"notification.object-saved"}));x()}');
+source=once(source,'onClick:()=>m.mutate(n.id)','title:r.formatMessage({id:"task7_1.notifications.manual-test"}),onClick:()=>{if(nyxTestFlight.current)return;nyxTestFlight.current=true;m.mutate(n.id,{onSettled:()=>{nyxTestFlight.current=false}})}');
+// Freeze the submitted draft until the server confirms save, including cancel/add/edit.
+const begin=source.indexOf('function Ft()'),end=source.indexOf('function ',begin+15);assert.ok(end>begin);
+let form=source.slice(begin,end);form=form.replaceAll('nyxMutation:true,nyxModule:"settings",','nyxMutation:true,nyxModule:"settings",disabled:g.isPending,');form=form.replaceAll('disabled:m.isPending,','disabled:g.isPending||m.isPending,').replaceAll('disabled:h.isPending,','disabled:g.isPending||h.isPending,');
+form=once(form,'inputId:"nyx-notification-channel-type",','isDisabled:g.isPending,inputId:"nyx-notification-channel-type",');
+form=once(form,'children:e.jsx(s,{id:"settings.notifications.events-label"})}),e.jsx("div",{className:t.notifEvents,','children:e.jsx(s,{id:"settings.notifications.events-label"})}),d.draft.events.length===0&&e.jsx("span",{className:t.notifHelp,role:"status",children:e.jsx(s,{id:"task7_1.notifications.no-events"})}),e.jsx("div",{className:t.notifEvents,');
+form=form.replaceAll('k(n instanceof Error?n.message:String(n))','k(n instanceof Error&&n.message==="Invalid notification events"?r.formatMessage({id:"task7_1.notifications.invalid-events"}):n instanceof Error?n.message:String(n))');
+source=source.slice(0,begin)+form+source.slice(end);fs.writeFileSync(path.join(assets,settings),source);
+const main=find('index-CTHAIRmi'),messages=JSON.parse(fs.readFileSync(new URL('./notification-messages.json',import.meta.url))),catalog=readCatalogs(readAsset(main)),edits=[];
+for(const lang of ['en','es','fr','de','it','ro']){for(const key of Object.keys(messages[lang]))assert.ok(!(key in catalog.catalogs[lang]));edits.push({start:catalog.nodes[lang].end-1,end:catalog.nodes[lang].end-1,value:','+Object.entries(messages[lang]).map(([k,v])=>JSON.stringify(k)+':'+JSON.stringify(v)).join(',')});}
+fs.writeFileSync(path.join(assets,main),applyEdits(readAsset(main),edits));
+// Rename the asset graph coherently so browsers cannot retain stale module references.
+const names=Object.keys(manifest.assets).sort(),read=n=>fs.readFileSync(path.join(assets,n),'utf8'),digest=hash(names.map(n=>n+'\n'+hash(read(n))).join('\n')),renames=new Map(names.map(n=>[n,n.replace(/\.(m?js|css)$/,'-task7_1-'+digest.slice(0,12)+'.$1')]));
+for(const[old,next]of renames){let s=read(old);for(const[a,b]of renames)s=s.replaceAll(a,b);if(next.endsWith('.js'))parse(s,{ecmaVersion:'latest',sourceType:'module'});fs.writeFileSync(path.join(assets,next),s);fs.unlinkSync(path.join(assets,old));}
+const index=path.join(front,'index.html');let html=fs.readFileSync(index,'utf8');for(const[a,b]of renames)html=html.replaceAll(a,b);fs.writeFileSync(index,html);manifest.task='7.1';manifest.assets=Object.fromEntries([...renames.values()].sort().map(n=>[n,hash(read(n))]));manifest.task7_1={ownerRequestedCoverageBannerRemoval:true,semanticModulesChanged:changes.map(x=>x[0])};fs.writeFileSync(path.join(front,'nyxguard-build.json'),JSON.stringify(manifest,null,2));console.log('Owner-requested coverage banner removal verified; asset graph parsed and versioned');

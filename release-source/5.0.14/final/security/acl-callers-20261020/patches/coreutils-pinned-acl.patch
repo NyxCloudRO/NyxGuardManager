@@ -1,0 +1,222 @@
+--- a/src/copy.c
++++ b/src/copy.c
+@@ -1918,6 +1918,47 @@
+   return dst_back_status == 0 && SAME_INODE (*src_st, dst_back_sb);
+ }
+ 
++/* Linux release backport: resolve an ACL object once, check its identity,
++   and keep it alive across metadata operations.  O_PATH does not open devices
++   or block on FIFOs and does not add a read-permission requirement.  The
++   kernel-generated procfs reference names this descriptor's object, even if
++   a pathname ancestor is subsequently replaced.  Never fall back to NAME. */
++static void
++nyx_acl_close (int *fd)
++{
++  int saved_errno = errno;
++  if (*fd >= 0)
++    close (*fd);
++  errno = saved_errno;
++}
++
++static int
++nyx_acl_pin (int dirfd, char const *name, struct stat const *expected,
++             int flags)
++{
++  int fd = openat (dirfd, name, O_PATH | O_CLOEXEC | flags);
++  struct stat actual;
++  if (fd < 0)
++    return -1;
++  if (fstat (fd, &actual) != 0)
++    {
++      int saved_errno = errno;
++      close (fd);
++      errno = saved_errno;
++      return -1;
++    }
++  if (S_ISLNK (actual.st_mode)
++      || (expected && (! SAME_INODE (actual, *expected)
++                       || (actual.st_mode & S_IFMT)
++                          != (expected->st_mode & S_IFMT))))
++    {
++      close (fd);
++      errno = ESTALE;
++      return -1;
++    }
++  return fd;
++}
++
+ /* Copy the file SRC_NAME to the file DST_NAME aka DST_DIRFD+DST_RELNAME.
+    If NONEXISTENT_DST is positive, DST_NAME does not exist even as a
+    dangling symlink; if negative, it does not exist except possibly
+@@ -1958,6 +1999,13 @@
+   bool copied_as_regular = false;
+   bool dest_is_symlink = false;
+   bool have_dst_lstat = false;
++  int nyx_src_pin __attribute__ ((cleanup (nyx_acl_close))) = -1;
++  int nyx_dst_pin __attribute__ ((cleanup (nyx_acl_close))) = -1;
++  int nyx_parent_pin __attribute__ ((cleanup (nyx_acl_close))) = -1;
++  char nyx_src_acl[64], nyx_dst_acl[64];
++  int nyx_create_dirfd = dst_dirfd;
++  char const *nyx_create_name = dst_relname;
++
+ 
+   /* Whether the destination is (or was) known to be new, updated as
+      more info comes in.  This may become true if the destination is a
+@@ -2616,6 +2664,43 @@
+   if (! set_process_security_ctx (src_name, dst_name, src_mode, new_dst, x))
+     return false;
+ 
++  /* Regular files already carry their opened descriptors in copy_reg.
++     Pin the other objects that will receive ACL preservation. */
++  if (!S_ISREG (src_mode) && !S_ISLNK (src_mode)
++      && !(x->copy_as_regular && !S_ISDIR (src_mode))
++      && (x->preserve_mode || x->move_mode || x->set_mode
++          || x->explicit_no_preserve_mode))
++    {
++      nyx_src_pin = nyx_acl_pin (AT_FDCWD, src_name, &src_sb,
++                                 dereference ? 0 : O_NOFOLLOW);
++      if (nyx_src_pin < 0)
++        {
++          error (0, errno, _("cannot stat %s"), quoteaf (src_name));
++          return false;
++        }
++      sprintf (nyx_src_acl, "/proc/self/fd/%d", nyx_src_pin);
++      /* Bind creation and subsequent ACL acquisition to the same parent.
++         Following an intentional symlink while acquiring that parent is
++         supported; later pathname substitutions cannot redirect the ACL. */
++      char *nyx_parent = dir_name (dst_relname);
++      nyx_parent_pin = openat (dst_dirfd, nyx_parent,
++                               O_PATH | O_DIRECTORY | O_CLOEXEC);
++      free (nyx_parent);
++      if (nyx_parent_pin < 0)
++        {
++          error (0, errno, _("cannot stat %s"), quoteaf (dst_name));
++          return false;
++        }
++      char *nyx_base = base_name (dst_relname);
++      strip_trailing_slashes (nyx_base);
++      /* alloca keeps this basename valid through every early return. */
++      char *nyx_leaf = alloca (strlen (nyx_base) + 1);
++      strcpy (nyx_leaf, nyx_base);
++      free (nyx_base);
++      nyx_create_dirfd = nyx_parent_pin;
++      nyx_create_name = nyx_leaf;
++    }
++
+   if (S_ISDIR (src_mode))
+     {
+       struct dir_list *dir;
+@@ -2646,7 +2731,7 @@
+              to ask mkdir to copy all the CHMOD_MODE_BITS, letting mkdir
+              decide what to do with S_ISUID | S_ISGID | S_ISVTX.  */
+           mode_t mode = dst_mode_bits & ~omitted_permissions;
+-          if (mkdirat (dst_dirfd, dst_relname, mode) != 0)
++          if (mkdirat (nyx_create_dirfd, nyx_create_name, mode) != 0)
+             {
+               error (0, errno, _("cannot create directory %s"),
+                      quoteaf (dst_name));
+@@ -2657,7 +2742,7 @@
+              for writing the directory's contents. Check if these
+              permissions are there.  */
+ 
+-          if (fstatat (dst_dirfd, dst_relname, &dst_sb,
++          if (fstatat (nyx_create_dirfd, nyx_create_name, &dst_sb,
+                        AT_SYMLINK_NOFOLLOW) != 0)
+             {
+               error (0, errno, _("cannot stat %s"), quoteaf (dst_name));
+@@ -2711,6 +2796,18 @@
+               }
+         }
+ 
++      if (nyx_src_pin >= 0)
++        {
++          nyx_dst_pin = nyx_acl_pin (nyx_create_dirfd, nyx_create_name,
++                                    &dst_sb, O_NOFOLLOW);
++          if (nyx_dst_pin < 0)
++            {
++              error (0, errno, _("cannot stat %s"), quoteaf (dst_name));
++              return false;
++            }
++          sprintf (nyx_dst_acl, "/proc/self/fd/%d", nyx_dst_pin);
++        }
++
+       /* Decide whether to copy the contents of the directory.  */
+       if (x->one_file_system && parent && parent->st_dev != src_sb.st_dev)
+         {
+@@ -2820,8 +2917,8 @@
+          does not.  But fall back on mkfifoat, because on some BSD systems,
+          mknodat always fails when asked to create a FIFO.  */
+       mode_t mode = src_mode & ~omitted_permissions;
+-      if (mknodat (dst_dirfd, dst_relname, mode, 0) != 0)
+-        if (mkfifoat (dst_dirfd, dst_relname, mode & ~S_IFIFO) != 0)
++      if (mknodat (nyx_create_dirfd, nyx_create_name, mode, 0) != 0)
++        if (mkfifoat (nyx_create_dirfd, nyx_create_name, mode & ~S_IFIFO) != 0)
+           {
+             error (0, errno, _("cannot create fifo %s"), quoteaf (dst_name));
+             goto un_backup;
+@@ -2830,7 +2927,7 @@
+   else if (S_ISBLK (src_mode) || S_ISCHR (src_mode) || S_ISSOCK (src_mode))
+     {
+       mode_t mode = src_mode & ~omitted_permissions;
+-      if (mknodat (dst_dirfd, dst_relname, mode, src_sb.st_rdev) != 0)
++      if (mknodat (nyx_create_dirfd, nyx_create_name, mode, src_sb.st_rdev) != 0)
+         {
+           error (0, errno, _("cannot create special file %s"),
+                  quoteaf (dst_name));
+@@ -2907,6 +3004,20 @@
+       goto un_backup;
+     }
+ 
++  if (nyx_src_pin >= 0 && nyx_dst_pin < 0)
++    {
++      nyx_dst_pin = nyx_acl_pin (nyx_create_dirfd, nyx_create_name,
++                                NULL, O_NOFOLLOW);
++      struct stat nyx_created;
++      if (nyx_dst_pin < 0 || fstat (nyx_dst_pin, &nyx_created) != 0
++          || (nyx_created.st_mode & S_IFMT) != (src_mode & S_IFMT))
++        {
++          error (0, ESTALE, _("cannot stat %s"), quoteaf (dst_name));
++          return false;
++        }
++      sprintf (nyx_dst_acl, "/proc/self/fd/%d", nyx_dst_pin);
++    }
++
+   /* With -Z or --preserve=context, set the context for existing files.
+      Note this is done already for copy_reg() for reasons described therein.  */
+   if (!new_dst && !x->copy_as_regular && !S_ISDIR (src_mode)
+@@ -2969,7 +3080,8 @@
+   if (!dest_is_symlink && x->preserve_ownership
+       && (new_dst || !SAME_OWNER_AND_GROUP (src_sb, dst_sb)))
+     {
+-      switch (set_owner (x, dst_name, dst_dirfd, dst_relname, -1,
++      switch (set_owner (x, nyx_dst_pin < 0 ? dst_name : nyx_dst_acl,
++                         dst_dirfd, dst_relname, -1,
+                          &src_sb, new_dst, &dst_sb))
+         {
+         case -1:
+@@ -2994,20 +3106,22 @@
+ 
+   if (x->preserve_mode || x->move_mode)
+     {
+-      if (copy_acl (src_name, -1, dst_name, -1, src_mode) != 0
++      if (copy_acl (nyx_src_pin < 0 ? src_name : nyx_src_acl, -1,
++                    nyx_dst_pin < 0 ? dst_name : nyx_dst_acl, -1, src_mode) != 0
+           && x->require_preserve)
+         return false;
+     }
+   else if (x->set_mode)
+     {
+-      if (set_acl (dst_name, -1, x->mode) != 0)
++      if (set_acl (nyx_dst_pin < 0 ? dst_name : nyx_dst_acl, -1, x->mode) != 0)
+         return false;
+     }
+   else if (x->explicit_no_preserve_mode && new_dst)
+     {
+       int default_permissions = S_ISDIR (src_mode) || S_ISSOCK (src_mode)
+                                 ? S_IRWXUGO : MODE_RW_UGO;
+-      if (set_acl (dst_name, -1, default_permissions & ~cached_umask ()) != 0)
++      if (set_acl (nyx_dst_pin < 0 ? dst_name : nyx_dst_acl, -1,
++                   default_permissions & ~cached_umask ()) != 0)
+         return false;
+     }
+   else

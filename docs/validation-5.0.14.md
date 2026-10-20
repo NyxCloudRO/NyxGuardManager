@@ -1,0 +1,11 @@
+# 5.0.14 release qualification
+
+Private acceptance evidence covers an isolated clean installation, a real 5.0.13 schema-46 upgrade to schema 49, unchanged existing traffic values, database image/volume preservation, VPN Agent 5.0.2 reattachment, verified pre-upgrade backup restoration, and recovery after a hard interruption during candidate replacement.
+
+Focused tests cover native WAF decision attribution, portal session integrity and context rejection, exclusion of ordinary auth failures/expiry/authorized sessions, repeated collection, genuine zero, unavailable sources, exact UTC windows and existing corrected traffic/certificate/ban metrics. The final exporter is tested with Prometheus's parser and a real Grafana/Prometheus pipeline. Synthetic SQL fixtures are distinguished from real enforcement requests. Prior accepted locale, theme, permission, Notifications and collector evidence is reused where corresponding source and frontend hashes remain unchanged.
+
+The final linux/amd64 image passed clean installation and a separately seeded 5.0.13 upgrade to schema 49. Manager and compatible VPN Agent 5.0.2 are healthy, direct database probes pass, and all 66 original fixture rows across 34 tables retain their hashes. Protected identity files remain unchanged; three generated Nginx include files change as expected during upgrade. Earlier interruption and restoration evidence is reused for unchanged updater paths.
+
+Final audit status (20 October 2026): **release gates PASS within the recorded supported scope**. Exact-image Trivy, Grype, Syft, Gitleaks, provenance and image-privacy checks retain and reconcile raw observations. ACL 2.4 preserves the legacy ABI; corrected cp/mv and tar callers pin the selected filesystem objects and reject changed deferred-restoration targets. Ordinary ACL, xattr, symlink, move, archive, FIFO and log-rotation compatibility checks pass. The upstream ACL suite retains one unavailable-block-device errno mismatch under container policy; no unconditional full-suite pass is claimed.
+
+Only linux/amd64 is qualified. Existing local base-image/vendor prerequisites remain documented. No production rollout, complete historical coverage, real external ACME issuance, external webhook receipt or universal host/platform coverage is claimed. The public release manifest binds the image, source commit and asset checksums.

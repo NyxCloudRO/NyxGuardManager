@@ -1,0 +1,15 @@
+# Manager 5.0.14 upgrade and recovery
+
+Use the reviewed 5.0.14 host updater for the supported upgrade path. Never replace only the Manager image on an engine-disabled database.
+
+The updater detects supported installations, pauses write-producing services, captures configuration and a quiesced SQL baseline, stops MariaDB cleanly, and verifies cold storage archives and extraction before applying changes. It preserves the exact database image, volumes, credentials, application signing keys, licensing vault identity and VPN configuration. If InnoDB is unavailable, the target policy adds persistent command flags and recreates only the database service on those same mounts. Migration 49 converts only `nyxguard_traffic_stat` and `nyxguard_traffic_state`. Other Aria tables retain their engines. A repeated upgrade to the current version exits without migration or counter replay.
+
+The release starts the native collector, checks schema 49, verifies preserved records and service readiness, and reattaches the unchanged compatible VPN Agent to the Manager network namespace. External monitoring configuration and the existing integration token persist independently; no external monitoring administrator credentials are required for an application upgrade.
+
+An interrupted update leaves a restricted `.upgrade/pending.json` recovery record. Run the same updater with `--recover-only`; the installed systemd startup guard uses that recovery runner before normal startup. Recovery verifies archive checksums, restores the matching pre-upgrade database and files, recreates the matching service configuration, then checks original schema, records, volume identities and licensing vault. The backup manifest retains the controlled database recreation metadata needed for a later explicit restoration.
+
+An intentional later `--restore-backup /absolute/install/.upgrade/backup-TIMESTAMP` requires operator confirmation and restores that backup's exact point in time. Later application writes would be lost. It is not an ordinary image downgrade and must not select an arbitrary old backup. Preserve the entire matching recovery set. Schema 49's down migration deliberately refuses destructive rollback; no reversible SQL down migration is claimed.
+
+The 5.0.13 → 5.0.14 candidate qualification used isolated named volumes and known existing records. It included a real InnoDB prerequisite transition, schema and traffic preservation, healthy VPN reattachment, a hard-interrupted candidate replacement and successful recovery to 5.0.13. These are DEV qualification results, not evidence of a production rollout.
+
+The final audited linux/amd64 image passed a separate clean installation and seeded 5.0.13 → 5.0.14 host update. The updater preserved the database image and volumes and completed a verified backup. All 66 original fixture rows across 34 tables remained unchanged, along with protected identity files; the final schema is 49 and VPN Agent 5.0.2 is healthy. Exact-image security, privacy and source/artifact gates pass within their recorded scope. The release manifest binds the final source and image identities.

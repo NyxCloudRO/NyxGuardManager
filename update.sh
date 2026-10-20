@@ -10,7 +10,7 @@ chmod 700 "$runner"
 cat >"$runner" <<'NYXGUARD_HOST_UPGRADE_PY'
 #!/usr/bin/env python3
 """A single host process: verified cold backup, Compose app replacement, recovery."""
-import collections,contextlib,fcntl,hashlib,json,os,pathlib,re,shutil,signal,subprocess,sys,tempfile,threading,time,urllib.request,uuid
+import collections,contextlib,fcntl,hashlib,json,os,pathlib,re,shlex,shutil,signal,subprocess,sys,tempfile,threading,time,urllib.request,uuid
 _saved=pathlib.Path(__file__).resolve().parent
 ROOT=pathlib.Path(os.environ.get('INSTALL_DIR',str(_saved.parent) if _saved.name=='.upgrade' else '/opt/nyxguardmanager'))
 STATE=ROOT/'.upgrade'
@@ -72,7 +72,11 @@ def atom(path,value):
   os.chmod(tmp,0o600);f.write(value);f.flush();os.fsync(f.fileno())
  os.replace(tmp,path)
  fd=os.open(path.parent,os.O_DIRECTORY);os.fsync(fd);os.close(fd)
-def save(m): atom(STATE/'pending.json',json.dumps(m))
+def save(m):
+ atom(STATE/'pending.json',json.dumps(m))
+ # The durable backup must retain engine-transition identities for later explicit restoration.
+ if m.get('hashes') and m.get('backup') and (pathlib.Path(m['backup'])/'manifest.json').exists():
+  atom(pathlib.Path(m['backup'])/'manifest.json',json.dumps(m))
 def semver(v):
  if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+',v): raise RuntimeError('Release version is invalid')
  return tuple(map(int,v.split('.')))
@@ -90,6 +94,29 @@ def cid(service,timeout=900):
  s=compose('ps','-aq',service,capture=True,timeout=timeout).strip().splitlines()
  if len(s)!=1:raise RuntimeError('Exactly one installed '+service+' container is required')
  return s[0]
+def configure_traffic_engine(new,policy,baseline,database):
+ # Target-declared prerequisite only. Preserve the database image, mounts and credentials.
+ if policy.get('database',{}).get('trafficEngine')!='InnoDB':return False
+ if baseline.get('innodbAvailable') is True:return False
+ service=new['services']['db']
+ command=service.get('command') or database.get('Config',{}).get('Cmd') or []
+ if isinstance(command,str):command=shlex.split(command)
+ if not isinstance(command,list) or not all(isinstance(v,str)for v in command):raise RuntimeError('Unsupported database command')
+ service['command']=[*command,'--skip-innodb=0','--innodb=ON','--innodb-flush-log-at-trx-commit=1']
+ service['image']=database['Image']
+ return True
+
+def verify_database_identity(m,rollback=False):
+ current=inspect(cid('db'))
+ expected=m.get('rollback_database_id') if rollback else m.get('database_active_id')
+ if not m.get('database_reconfigured'):
+  if current['Id']!=m['database_id']:raise RuntimeError('Database container identity changed')
+ else:
+  if expected and current['Id']!=expected:raise RuntimeError('Database container changed after the controlled engine transition')
+  if current['Image']!=m['database_image']:raise RuntimeError('Database image changed during engine transition')
+  mounts=sorted((x['Type'],x['Source'],x['Destination'],x.get('RW',False))for x in current['Mounts'])
+  if mounts!=[tuple(x)for x in m['database_mounts']]:raise RuntimeError('Database mounts changed during engine transition')
+
 def version(c):
  v=docker('exec',c,'node','-e','console.log(require("/app/package.json").version)',capture=True).strip();semver(v);return v
 
@@ -176,7 +203,7 @@ def health(m,readiness=None):
 # migration bookkeeping, retention and notification dispatch are not corruption.
 SNAPSHOT=r'''
 const mysql=require('/app/node_modules/mysql2/promise');const crypto=require('crypto');
-(async()=>{let c=await mysql.createConnection({host:process.env.DB_MYSQL_HOST,port:process.env.DB_MYSQL_PORT||3306,user:process.env.DB_MYSQL_USER,password:process.env.DB_MYSQL_PASSWORD,database:process.env.DB_MYSQL_NAME,timezone:"Z"});
+(async()=>{let c=await mysql.createConnection({host:process.env.DB_MYSQL_HOST,port:process.env.DB_MYSQL_PORT||3306,user:process.env.DB_MYSQL_USER,password:process.env.DB_MYSQL_PASSWORD,database:process.env.DB_MYSQL_NAME,timezone:"Z",jsonStrings:true});
 let [tables]=await c.query('SHOW TABLES');let names=tables.map(t=>Object.values(t)[0]);let result={};
 const important=['user','auth','user_permission','setting','proxy_host','certificate','access_list','access_list_auth','access_list_client','nyxguard_settings','nyxguard_country_rule','nyxguard_ip_rule','nyxguard_waf_rule','dead_host','redirection_host','stream','nyxcloud_license_state','audit_log'];
 const history={nyxcloud_license_state:['id','installation_id'],audit_log:['id','created_on','action','object_type','object_id']};
@@ -196,7 +223,8 @@ for(let t of important.filter(t=>names.includes(t))){
 }
 let [migrations]=await c.query('SELECT name FROM migrations ORDER BY id');let [lock]=await c.query('SELECT is_locked FROM migrations_lock');
 if(lock.some(x=>x.is_locked))throw Error('Database migration is locked');
-console.log(JSON.stringify({tables:result,migrations:migrations.map(x=>x.name)}));await c.end();
+const [engines]=await c.query('SHOW ENGINES');const innodbAvailable=engines.some(x=>x.Engine==='InnoDB'&&['YES','DEFAULT'].includes(x.Support));
+console.log(JSON.stringify({tables:result,migrations:migrations.map(x=>x.name),innodbAvailable}));await c.end();
 })().catch(()=>{console.error('Database/configuration acceptance failed');process.exit(1)});
 '''
 def snapshot(manager,baseline=None):
@@ -294,13 +322,15 @@ def restore(m):
   saved=backup/'files'/str(m['files'].index(path))
   shutil.copy2(saved,path)
   if sha(pathlib.Path(path))!=m['hashes']['files/'+str(m['files'].index(path))]:raise RuntimeError('Restored installation file differs from the verified backup')
- # Pin the previous Manager/Agent to the saved local image identities. DB is
- # restarted in place, never recreated by the updater.
+ # Restore exact previous service configuration. A target-declared engine transition
+ # may require recreating DB on the same verified image and persistent storage.
  old=json.loads((backup/'rollback-compose.json').read_text())
  atom(ROOT/'docker-compose.yml',json.dumps(old))
  overlay=ROOT/'docker-compose.vpn.yml'
  if overlay.exists():overlay.unlink()
- compose('start','db')
+ if m.get('database_reconfigured'):
+  compose('up','-d','--no-deps','db');m['rollback_database_id']=cid('db');save(m)
+ else:compose('start','db')
  compose('up','-d','--no-deps','nyxguard-manager')
  if 'vpn-client-agent' in m['services']:compose('up','-d','--no-deps','--force-recreate','vpn-client-agent')
  health(m)
@@ -309,7 +339,7 @@ def restore(m):
  restored=snapshot(cid('nyxguard-manager'),m['baseline'])
  if restored['migrations']!=m['baseline']['migrations']:raise RuntimeError('Restored migration history differs from the recovery point')
  preservation(m['baseline'],restored)
- if cid('db')!=m['database_id']:raise RuntimeError('Database container identity changed')
+ verify_database_identity(m,rollback=True)
  restored_containers=[inspect(cid(service)) for service in m['services']]
  attached={mount['Name'] for container in restored_containers for mount in container['Mounts'] if mount['Type']=='volume'}
  if attached!=set(m['volume_names']):raise RuntimeError('Restored persistent Docker volume identities changed')
@@ -360,7 +390,6 @@ def main():
    with open('/dev/tty','r') as tty_input, open('/dev/tty','w') as tty:
     tty.write('Restore this pre-upgrade backup? Later application writes will be lost. [y/N] ');tty.flush()
     if tty_input.readline().strip().lower() not in ('y','yes'):log('Recovery cancelled.');return
-  stage('Application: starting the accepted release')
   m['phase']='applying';save(m);restore(m);return
  if pending.exists():
   m=json.loads(pending.read_text())
@@ -385,6 +414,10 @@ def main():
  health(m)
  cs=[inspect(cid(s)) for s in services]
  m['diagnostic_image']=next(c.get('Image') for c in cs if c['Id']==manager)
+ database=next(c for c in cs if c['Id']==m['database_id'])
+ m['database_image']=database['Image']
+ m['database_mounts']=sorted((x['Type'],x['Source'],x['Destination'],x.get('RW',False))for x in database['Mounts'])
+ m['database_reconfigured']=False
  # Existing image identities and all persistent mount paths are recorded once.
  volume_names=set();storage=[];files=[str(ROOT/'docker-compose.yml'),str(ROOT/'.env')]
  if (ROOT/'.version').exists():files.append(str(ROOT/'.version'))
@@ -410,7 +443,13 @@ def main():
  allcs=docker('ps','-aq',capture=True).split()
  owned={c['Id'] for c in cs}
  for c in allcs:
-  other=inspect(c)
+  try:other=inspect(c)
+  except RuntimeError:
+   # Ephemeral unrelated containers may exit between inventory and inspection.
+   # Ignore only an identity independently confirmed absent; other failures fail closed.
+   remaining=docker('ps','-aq','--no-trunc',capture=True).split()
+   if not any(value.startswith(c) for value in remaining):continue
+   raise
   if other['Id'] not in owned and any(x.get('Name') in volume_names or x['Source'] in storage for x in other['Mounts']):raise RuntimeError('Persistent storage is shared by another container; stop and review ownership')
  total=0
  for p in storage:total+=int(run(['du','-sb',p],capture=True).split()[0])
@@ -466,7 +505,7 @@ def main():
    if inspect(c['Id'])['State']['Running']:raise RuntimeError('Services are still writing; backup refused')
   old=json.loads(json.dumps(cfg))
   for svc in services:
-   if svc!='db':old['services'][svc]['image']=inspect(cid(svc))['Image']
+   old['services'][svc]['image']=inspect(cid(svc))['Image']
   atom(backup/'rollback-compose.json',json.dumps(old))
   for i,p in enumerate(files):shutil.copy2(p,backup/'files'/str(i))
   stage('Backup: archiving and verifying persistent storage')
@@ -518,16 +557,23 @@ def main():
   new=json.loads(json.dumps(cfg));new['services']['nyxguard-manager']['image']=accepted
   if 'vpn-client-agent' in new['services']:new['services']['vpn-client-agent']['image']=agent_ref or 'nyxmael/nyxguardmanager-vpn-agent:'+policy['agent']
   for k in ('NPM_BUILD_VERSION','NPM_BUILD_COMMIT','NPM_BUILD_DATE'):new['services']['nyxguard-manager'].get('environment',{}).pop(k,None)
+  database=inspect(m['database_id'])
+  m['database_reconfigured']=configure_traffic_engine(new,policy,m['baseline'],database)
+  m['database_image']=database['Image']
+  m['database_mounts']=sorted((x['Type'],x['Source'],x['Destination'],x.get('RW',False))for x in database['Mounts'])
   m['phase']='applying';save(m)
   atom(ROOT/'docker-compose.yml',json.dumps(new))
   if (ROOT/'docker-compose.vpn.yml').exists():(ROOT/'docker-compose.vpn.yml').unlink()
-  compose('start','db')
+  if m.get('database_reconfigured'):
+   compose('up','-d','--no-deps','db');m['database_active_id']=cid('db');save(m)
+  else:compose('start','db')
   compose('up','-d','--no-deps','nyxguard-manager')
   # The Agent shares Manager's network namespace, so only that attachment is
   # recreated with the SAME Agent image, keys and persistent storage.
   if agent:compose('up','-d','--no-deps','--force-recreate','vpn-client-agent')
   health(m,policy.get('readiness'))
-  if cid('db')!=m['database_id']:raise RuntimeError('Database container was unnecessarily recreated')
+  verify_database_identity(m)
+  if policy.get('database',{}).get('trafficEngine')=='InnoDB' and not snapshot(cid('nyxguard-manager'))['innodbAvailable']:raise RuntimeError('Required transactional engine is unavailable')
   if version(cid('nyxguard-manager'))!=target:raise RuntimeError('Running application version differs from target')
   if inspect(cid('nyxguard-manager'))['Image']!=image['Id']:raise RuntimeError('Running Manager differs from accepted image')
   stage('Acceptance: verifying schema and persistent data')
@@ -538,8 +584,8 @@ def main():
   if attached!=volume_names:raise RuntimeError('Persistent Docker volume identities changed')
   if sha(pathlib.Path(vault))!=m['hashes']['files/'+str(files.index(vault))]:raise RuntimeError('Licensing vault key changed')
   atom(ROOT/'.version',target+'\n')
-  atom(backup/'result.json',json.dumps({'result':'success','from':current,'to':target,'image':accepted,'database_container_preserved':True,'volumes_preserved':True}))
-  pending.unlink();log('Upgrade successful: '+current+' -> '+target+'. Persistent storage and database container preserved.')
+  atom(backup/'result.json',json.dumps({'result':'success','from':current,'to':target,'image':accepted,'database_container_preserved':not m.get('database_reconfigured',False),'volumes_preserved':True}))
+  pending.unlink();log('Upgrade successful: '+current+' -> '+target+'. Persistent storage preserved; database engine prerequisites verified.')
   log('Verified Manager image: '+accepted)
  except BaseException as primary:
   failed_stage=OPERATION

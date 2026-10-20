@@ -1,0 +1,53 @@
+{
+  "upstream": "https://github.com/gcc-mirror/gcc/commit/59d235ffa5a69231eb42e5290d52dc8c90d28b7a",
+  "package": {
+    "source": "Debian gcc-12 12.2.0-14+deb12u1; debian/rules patch",
+    "upstream": "59d235ffa5a69231eb42e5290d52dc8c90d28b7a",
+    "adaptation": "Retain GCC12 ALIGNED_ALLOC-first selection; omit newer branch-only unlikely attributes; identical overflow guards and handler loop.",
+    "source_before_sha256": "c6eb658baa269e331d8e9ddec226ad1a8c04f36a70b565f0788d93db27872a95",
+    "source_after_sha256": "363f99a7c05ad02de239428fb372a0ea01b2410cd1e88e66ea4a800460626271",
+    "package_version": "12.2.0-14+deb12u1+nyxguard1",
+    "runtime_sha256": "c9f25fc67dc1dfda3c943ad561b725d31aa3488d12eb9fb5f04eb9eef708a7de",
+    "exported_symbols": 5875,
+    "removed_symbols": 0,
+    "added_symbols": 0,
+    "soname": "libstdc++.so.6",
+    "generated_thread_header": "libgcc/gthr-default.h -> gthr-posix.h",
+    "configure_script": "build-gcc-posix.sh"
+  },
+  "inputs": [
+    {
+      "url": "https://deb.debian.org/debian/pool/main/g/gcc-12/gcc-12_12.2.0-14+deb12u1.debian.tar.xz",
+      "sha256": "59f7f7763a0c355e3f27ff9e7ac80d06382b29939361a87e7b139226bfe7402e",
+      "file": "gcc-12_12.2.0-14+deb12u1.debian.tar.xz"
+    },
+    {
+      "url": "https://deb.debian.org/debian/pool/main/g/gcc-12/gcc-12_12.2.0-14+deb12u1.dsc",
+      "sha256": "3aed0b189189c744dc9f4b74798a51d3e512ea85e492568db788a927c88e20ba",
+      "file": "gcc-12_12.2.0-14+deb12u1.dsc"
+    },
+    {
+      "url": "https://deb.debian.org/debian/pool/main/g/gcc-12/gcc-12_12.2.0.orig.tar.gz",
+      "sha256": "b8298be16aeeb96a889c6afed0a8e2241b47452e89cc81fe65ea849d5c740fcb",
+      "file": "gcc-12_12.2.0.orig.tar.gz"
+    }
+  ],
+  "files": {
+    "gcc-downloads.json": "df47f4815e47fe1200091fa4da382f6346c8d03c2048b661dcb6139a3d08f65e",
+    "build-gcc-posix.sh": "51e63671d5129dfd86dee4b59c40d76ce4462342980dbdab662133938b06f1f2",
+    "prepare-gcc.py": "4733ac2fbea3a1e58ffb124a4d8ca9547e92422c394bcdc24615fcada46e89b5",
+    "package-libstdcxx.py": "d47dfec854eeae85699d67f97ce13f13e9857b42574574496a67b2bfcc3da612",
+    "verify-gcc.py": "b954ec28d07b846bc7125d680c664490e2b933fa5f75ad419cbcd1899e8e2698",
+    "cpp-runtime.cpp": "eb375798b7180e4580aea370b6eda83bd348645cf679de62eda754eaffe93a0a",
+    "README.md": "42a63b7a0770b5366bbb443d7bebdead6a7094dd485c9ee99bb8cc6365d4f53c",
+    "aligned-new-boundary.cpp": "6a56ce045eb1f1ca63e76276baed662cc28aa069176e0b892a6fac9b451c23c7",
+    "gcc-aligned-new-backport.patch": "80b75e1b0f02ffd8cee3a4ed7ae1d02978b23c53b4514d95bf360a3007cb58ae"
+  },
+  "abi_verification": {
+    "external_symbols_including_gnu_unique": 5981,
+    "global_and_weak_subset": 5875,
+    "removed": 0,
+    "added": 0,
+    "version_definitions_equal": true
+  }
+}

@@ -1,0 +1,25 @@
+[
+  {
+    "file": "curl_7.88.1.orig.tar.gz",
+    "sha256": "cdb38b72e36bc5d33d5b8810f8018ece1baa29a8f215b4495e495ded82bbf3c7",
+    "url": "https://deb.debian.org/debian/pool/main/c/curl/curl_7.88.1.orig.tar.gz"
+  },
+  {
+    "file": "curl_7.88.1-10+deb12u15.debian.tar.xz",
+    "sha256": "961b78bc48492c5693e4decb352ddd176f343260a8956f48b2887874048ef23b",
+    "url": "https://deb.debian.org/debian/pool/main/c/curl/curl_7.88.1-10+deb12u15.debian.tar.xz"
+  },
+  {
+    "file": "curl_7.88.1-10+deb12u15.dsc",
+    "sha256": "2744f12e3aef161c0361743fa1b318296b122e566e47f381e4a63320fbcc23f4",
+    "url": "https://deb.debian.org/debian/pool/main/c/curl/curl_7.88.1-10+deb12u15.dsc"
+  },
+  {
+    "file": "curl-7.88.1-compatible-security.patch",
+    "sha256": "7f9d9ac313088fe1d1636e3036c1361a676f46fd253c3eced16b329e72f8667e"
+  },
+  {
+    "file": "prepared-ledger.json",
+    "sha256": "a3c6830d9358f3fa4f017af59b6ccf6089a4b25b10471c7eec457325b02197ef"
+  }
+]

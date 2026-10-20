@@ -1,0 +1,5 @@
+/* Give descenders and accents room inside the existing compact footer pills. */
+#root aside[data-nyx-main-navigation] .prefs-action-link span {
+  line-height: 1.35;
+  padding-block: 1px;
+}

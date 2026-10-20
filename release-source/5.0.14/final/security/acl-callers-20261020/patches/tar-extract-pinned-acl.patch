@@ -1,0 +1,315 @@
+--- a/src/extract.c
++++ b/src/extract.c
+@@ -331,6 +331,43 @@
+     }
+ }
+ 
++/* Linux ACL caller backport.  O_PATH avoids blocking or opening devices.
++   Retain the object selected by creation or by the existing identity check;
++   ACL restoration must never re-resolve the untrusted original pathname. */
++static void
++nyx_acl_close (int *fd)
++{
++  int saved_errno = errno;
++  if (*fd >= 0)
++    close (*fd);
++  errno = saved_errno;
++}
++
++static int
++nyx_acl_create (int kind, char const *name, mode_t mode, dev_t dev, int *pin)
++{
++  char *parent = dir_name (name);
++  char *leaf = base_name (name);
++  strip_trailing_slashes (leaf);
++  int parentfd = openat (chdir_fd, parent, O_PATH | O_DIRECTORY | O_CLOEXEC);
++  int result = -1;
++  if (parentfd >= 0)
++    {
++      result = (kind == 0 ? mkdirat (parentfd, leaf, mode)
++                : kind == 1 ? mkfifoat (parentfd, leaf, mode)
++                : mknodat (parentfd, leaf, mode, dev));
++      if (result == 0)
++        *pin = openat (parentfd, leaf, O_PATH | O_CLOEXEC | O_NOFOLLOW);
++    }
++  int saved_errno = errno;
++  if (parentfd >= 0)
++    close (parentfd);
++  free (parent);
++  free (leaf);
++  errno = saved_errno;
++  return result;
++}
++
+ /* Restore stat attributes (owner, group, mode and times) for
+    FILE_NAME, using information given in *ST.
+    If FD is nonnegative, it is a file descriptor for the file.
+@@ -344,7 +381,7 @@
+ set_stat (char const *file_name,
+ 	  struct tar_stat_info const *st,
+ 	  int fd, mode_t current_mode, mode_t current_mode_mask,
+-	  char typeflag, bool interdir, int atflag)
++	  char typeflag, bool interdir, int atflag, int acl_fd)
+ {
+   /* Do the utime before the chmod because some versions of utime are
+      broken and trash the modes of the file.  */
+@@ -397,7 +434,7 @@
+   /* these three calls must be done *after* fd_chown() call because fd_chown
+      causes that linux capabilities becomes cleared. */
+   xattrs_xattrs_set (st, file_name, typeflag, 1);
+-  xattrs_acls_set (st, file_name, typeflag);
++  xattrs_acls_set (st, file_name, typeflag, fd >= 0 ? fd : acl_fd);
+   xattrs_selinux_set (st, file_name, typeflag);
+ }
+ 
+@@ -464,7 +501,7 @@
+ static void
+ delay_set_stat (char const *file_name, struct tar_stat_info const *st,
+ 		mode_t current_mode, mode_t current_mode_mask,
+-		mode_t mode, int atflag)
++		mode_t mode, int atflag, int acl_fd)
+ {
+   size_t file_name_len = strlen (file_name);
+   struct delayed_set_stat *data;
+@@ -505,6 +542,33 @@
+ 	}
+     }
+ 
++  /* Save the actual extraction identity, rather than the archive's inode.
++     Reopening at restoration is checked before any ACL can be changed. */
++  if (acls_option > 0)
++    {
++      int temporary_pin = -1;
++      if (acl_fd < 0)
++        acl_fd = temporary_pin = openat (chdir_fd, file_name,
++                                         O_PATH | O_CLOEXEC
++                                         | (atflag ? O_NOFOLLOW : 0));
++      struct stat actual;
++      if (acl_fd < 0 || fstat (acl_fd, &actual) != 0
++          || !S_ISDIR (actual.st_mode))
++        {
++          ERROR ((0, ESTALE, _("%s: Cannot bind ACL directory identity"),
++                  quotearg_colon (file_name)));
++          data->dev = 0;
++          data->ino = 0;
++        }
++      else
++        {
++          data->dev = actual.st_dev;
++          data->ino = actual.st_ino;
++        }
++      if (temporary_pin >= 0)
++        close (temporary_pin);
++    }
++
+   data->mode = mode;
+   if (st)
+     {
+@@ -677,7 +741,10 @@
+       *cursor = '\0';		/* truncate the name there */
+       desired_mode = MODE_RWX & ~ newdir_umask;
+       mode = desired_mode | (we_are_root ? 0 : MODE_WXUSR);
+-      status = mkdirat (chdir_fd, file_name, mode);
++      int nyx_pin __attribute__ ((cleanup (nyx_acl_close))) = -1;
++      status = (acls_option > 0
++                    ? nyx_acl_create (0, file_name, mode, 0, &nyx_pin)
++                    : mkdirat (chdir_fd, file_name, mode));
+ 
+       if (status == 0)
+ 	{
+@@ -686,7 +753,7 @@
+ 	     repair_delayed_set_stat may need to update the struct.  */
+ 	  delay_set_stat (file_name,
+ 			  0, mode & ~ current_umask, MODE_RWX,
+-			  desired_mode, AT_SYMLINK_NOFOLLOW);
++			  desired_mode, AT_SYMLINK_NOFOLLOW, nyx_pin);
+ 
+ 	  print_for_mkdir (file_name, cursor - file_name, desired_mode);
+ 	  *interdir_made = true;
+@@ -943,6 +1010,22 @@
+ 	    }
+ 	}
+ 
++      int nyx_pin __attribute__ ((cleanup (nyx_acl_close))) = -1;
++      if (!skip_this_one && acls_option > 0)
++        {
++          nyx_pin = openat (chdir_fd, data->file_name, O_PATH | O_CLOEXEC
++                            | (data->atflag ? O_NOFOLLOW : 0));
++          struct stat actual;
++          if (nyx_pin < 0 || fstat (nyx_pin, &actual) != 0
++              || actual.st_dev != data->dev || actual.st_ino != data->ino
++              || !S_ISDIR (actual.st_mode))
++            {
++              ERROR ((0, ESTALE, _("%s: Directory changed before ACL restoration"),
++                      quotearg_colon (data->file_name)));
++              skip_this_one = true;
++            }
++        }
++
+       if (! skip_this_one)
+ 	{
+ 	  struct tar_stat_info sb;
+@@ -960,7 +1043,7 @@
+ 	  sb.xattr_map_size = data->xattr_map_size;
+ 	  set_stat (data->file_name, &sb,
+ 		    -1, current_mode, current_mode_mask,
+-		    DIRTYPE, data->interdir, data->atflag);
++		    DIRTYPE, data->interdir, data->atflag, nyx_pin);
+ 	}
+ 
+       delayed_set_stat_head = data->next;
+@@ -1009,6 +1092,9 @@
+ static int
+ extract_dir (char *file_name, int typeflag)
+ {
++  int nyx_pin __attribute__ ((cleanup (nyx_acl_close))) = -1;
++  struct stat nyx_existing;
++  bool nyx_have_existing = false;
+   int status;
+   mode_t mode;
+   mode_t current_mode = 0;
+@@ -1037,7 +1123,9 @@
+ 
+   for (;;)
+     {
+-      status = mkdirat (chdir_fd, file_name, mode);
++      status = (acls_option > 0
++                    ? nyx_acl_create (0, file_name, mode, 0, &nyx_pin)
++                    : mkdirat (chdir_fd, file_name, mode));
+       if (status == 0)
+ 	{
+ 	  current_mode = mode & ~ current_umask;
+@@ -1060,6 +1148,8 @@
+ 
+ 	  if (deref_stat (file_name, &st) == 0)
+ 	    {
++              nyx_existing = st;
++              nyx_have_existing = true;
+ 	      current_mode = st.st_mode;
+ 	      current_mode_mask = ALL_MODE_BITS;
+ 
+@@ -1120,12 +1210,34 @@
+       break;
+     }
+ 
++  if (acls_option > 0 && nyx_pin < 0 && nyx_have_existing)
++    {
++      nyx_pin = openat (chdir_fd, file_name, O_PATH | O_CLOEXEC
++                        | (atflag ? O_NOFOLLOW : 0));
++      struct stat actual;
++      if (nyx_pin < 0 || fstat (nyx_pin, &actual) != 0
++          || actual.st_dev != nyx_existing.st_dev
++          || actual.st_ino != nyx_existing.st_ino
++          || !S_ISDIR (actual.st_mode))
++        {
++          ERROR ((0, ESTALE, _("%s: Directory changed before ACL binding"),
++                  quotearg_colon (file_name)));
++          return 1;
++        }
++    }
++  if (acls_option > 0 && nyx_pin < 0 && status == 0)
++    {
++      ERROR ((0, ESTALE, _("%s: Cannot bind created ACL directory"),
++              quotearg_colon (file_name)));
++      return 1;
++    }
++
+   if (status == 0
+       || old_files_option == DEFAULT_OLD_FILES
+       || old_files_option == OVERWRITE_OLD_FILES)
+     delay_set_stat (file_name, &current_stat_info,
+ 		    current_mode, current_mode_mask,
+-		    current_stat_info.stat.st_mode, atflag);
++		    current_stat_info.stat.st_mode, atflag, nyx_pin);
+   return status;
+ }
+ 
+@@ -1311,7 +1423,7 @@
+     set_stat (file_name, &current_stat_info, fd,
+ 	      current_mode, current_mode_mask, typeflag, false,
+ 	      (old_files_option == OVERWRITE_OLD_FILES
+-	       ? 0 : AT_SYMLINK_NOFOLLOW));
++	       ? 0 : AT_SYMLINK_NOFOLLOW), -1);
+ 
+   status = close (fd);
+   if (status < 0)
+@@ -1554,7 +1666,7 @@
+       }
+ 
+   set_stat (file_name, &current_stat_info, -1, 0, 0,
+-	    SYMTYPE, false, AT_SYMLINK_NOFOLLOW);
++	    SYMTYPE, false, AT_SYMLINK_NOFOLLOW, -1);
+   return 0;
+ 
+ #else
+@@ -1575,11 +1687,12 @@
+ static int
+ extract_node (char *file_name, int typeflag)
+ {
++  int nyx_pin __attribute__ ((cleanup (nyx_acl_close))) = -1;
+   bool interdir_made = false;
+   mode_t mode = (current_stat_info.stat.st_mode & (MODE_RWX | S_IFBLK | S_IFCHR)
+ 		 & ~ (0 < same_owner_option ? S_IRWXG | S_IRWXO : 0));
+ 
+-  while (mknodat (chdir_fd, file_name, mode, current_stat_info.stat.st_rdev)
++  while ((acls_option > 0 ? nyx_acl_create (2, file_name, mode, current_stat_info.stat.st_rdev, &nyx_pin) : mknodat (chdir_fd, file_name, mode, current_stat_info.stat.st_rdev))
+ 	 != 0)
+     switch (maybe_recoverable (file_name, false, &interdir_made))
+       {
+@@ -1594,9 +1707,15 @@
+ 	return -1;
+       }
+ 
++  if (acls_option > 0 && nyx_pin < 0)
++    {
++      ERROR ((0, ESTALE, _("%s: Cannot bind created ACL object"),
++              quotearg_colon (file_name)));
++      return -1;
++    }
+   set_stat (file_name, &current_stat_info, -1,
+ 	    mode & ~ current_umask, MODE_RWX,
+-	    typeflag, false, AT_SYMLINK_NOFOLLOW);
++	    typeflag, false, AT_SYMLINK_NOFOLLOW, nyx_pin);
+   return 0;
+ }
+ #endif
+@@ -1605,11 +1724,12 @@
+ static int
+ extract_fifo (char *file_name, int typeflag)
+ {
++  int nyx_pin __attribute__ ((cleanup (nyx_acl_close))) = -1;
+   bool interdir_made = false;
+   mode_t mode = (current_stat_info.stat.st_mode & MODE_RWX
+ 		 & ~ (0 < same_owner_option ? S_IRWXG | S_IRWXO : 0));
+ 
+-  while (mkfifoat (chdir_fd, file_name, mode) != 0)
++  while ((acls_option > 0 ? nyx_acl_create (1, file_name, mode, current_stat_info.stat.st_rdev, &nyx_pin) : mkfifoat (chdir_fd, file_name, mode)) != 0)
+     switch (maybe_recoverable (file_name, false, &interdir_made))
+       {
+       case RECOVER_OK:
+@@ -1623,9 +1743,15 @@
+ 	return -1;
+       }
+ 
++  if (acls_option > 0 && nyx_pin < 0)
++    {
++      ERROR ((0, ESTALE, _("%s: Cannot bind created ACL object"),
++              quotearg_colon (file_name)));
++      return -1;
++    }
+   set_stat (file_name, &current_stat_info, -1,
+ 	    mode & ~ current_umask, MODE_RWX,
+-	    typeflag, false, AT_SYMLINK_NOFOLLOW);
++	    typeflag, false, AT_SYMLINK_NOFOLLOW, nyx_pin);
+   return 0;
+ }
+ #endif
+@@ -1884,7 +2010,7 @@
+                   st1.xattr_map = ds->xattr_map;
+                   st1.xattr_map_size = ds->xattr_map_size;
+ 		  set_stat (source, &st1, -1, 0, 0, SYMTYPE,
+-			    false, AT_SYMLINK_NOFOLLOW);
++			    false, AT_SYMLINK_NOFOLLOW, -1);
+ 		  valid_source = source;
+ 		}
+ 	    }

@@ -1,0 +1,29 @@
+[
+  {
+    "file": "glibc_2.36.orig.tar.xz",
+    "sha256": "a543c02070d46ccaf866957efd13f10c924daa74c86a90a0254db09a92a708ee",
+    "url": "https://deb.debian.org/debian/pool/main/g/glibc/glibc_2.36.orig.tar.xz"
+  },
+  {
+    "file": "glibc_2.36-9+deb12u14.debian.tar.xz",
+    "sha256": "cf4ac9cd98185452cae3ef34e2e4ee12753e3d93fd0c62c61396d4a47eec902f",
+    "url": "https://deb.debian.org/debian/pool/main/g/glibc/glibc_2.36-9+deb12u14.debian.tar.xz"
+  },
+  {
+    "file": "glibc_2.36-9+deb12u14.dsc",
+    "sha256": "cfe1f0b8dc1fa211ce5a45b3725cc38b29f88667f1140ebdca6de35cf9c6f1fd",
+    "url": "https://deb.debian.org/debian/pool/main/g/glibc/glibc_2.36-9+deb12u14.dsc"
+  },
+  {
+    "file": "glibc-CVE-2026-5450-code-and-test.patch",
+    "sha256": "71f58f621b1b8090c393a2f67fafeace29f065cf77097ff1e566bf1e27446fb2"
+  },
+  {
+    "file": "glibc-CVE-2026-5928-code-and-test.patch",
+    "sha256": "5a37dd67533bf6bbef68844fe14bb8576ff69ca44bf050ee458352c252f1bae8"
+  },
+  {
+    "file": "glibc-CVE-2026-5435-preserve-format.patch",
+    "sha256": "096810ba623714041eed1fb156d9d094200d3f15e277f1b9099789f61f0fcefa"
+  }
+]

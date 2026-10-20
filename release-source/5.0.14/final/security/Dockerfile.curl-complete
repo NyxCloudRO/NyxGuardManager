@@ -1,0 +1,3 @@
+FROM nyxguardmanager:5.0.14-curl-builder@sha256:27859a978ab72dcfbe6eda461c50d515790cca78708b00eaf0b2070f8f1860aa
+COPY final/security/complete-curl.py /complete-curl.py
+RUN python3 /complete-curl.py

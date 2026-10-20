@@ -1,0 +1,130 @@
+{
+  "VPN_FULL_TUNNEL_AGENT_REQUIRED": {
+    "summary": "ui.100cbd93ef0fef86",
+    "recommendation": "ui.67b039663504ada6"
+  },
+  "VPN_INVALID_KEY": {
+    "summary": "ui.4af72e822dad078c",
+    "recommendation": "ui.69660a3f36650c5d"
+  },
+  "VPN_ROUTE_CONFLICT": {
+    "summary": "ui.d0b1f6d482dc4b1a",
+    "recommendation": "ui.0590be39889ffeeb"
+  },
+  "HOST_UPGRADE_FAILED": {
+    "summary": "ui.1ed2332a25beb4d2",
+    "recommendation": "ui.c7a315c57727710d"
+  },
+  "HOST_BACKUP_FAILED": {
+    "summary": "ui.63f7a4e15238f3d7",
+    "recommendation": "ui.bf2a7d009c2a13ad"
+  },
+  "HOST_RECOVERY_INCOMPLETE": {
+    "summary": "ui.475172b5c7940aca",
+    "recommendation": "ui.d1e274bdf2fa563a"
+  },
+  "CERTIFICATE_RUNTIME_UNAVAILABLE": {
+    "summary": "ui.c879a21f5b4216ad",
+    "recommendation": "ui.ce805757248fc17e"
+  },
+  "CERTIFICATE_PLUGIN_FAILED": {
+    "summary": "ui.a7f1d86530dbd3d8",
+    "recommendation": "ui.2cb44f5076847538"
+  },
+  "CERTIFICATE_DNS_CREDENTIALS": {
+    "summary": "ui.e51aaed1c8f61020",
+    "recommendation": "ui.244fe92661d3ebb5"
+  },
+  "CERTIFICATE_RATE_LIMIT": {
+    "summary": "ui.ff22ee6e4d4ba4bd",
+    "recommendation": "ui.50c84aae3a0af024"
+  },
+  "CERTIFICATE_DNS_FAILED": {
+    "summary": "ui.bc33275e5ceb388f",
+    "recommendation": "ui.f49e3250d8523a64"
+  },
+  "CERTIFICATE_CHALLENGE_FAILED": {
+    "summary": "ui.a5b70d7f6da9456a",
+    "recommendation": "ui.95779a4c930c123e"
+  },
+  "CERTIFICATE_NETWORK_FAILED": {
+    "summary": "ui.d0c741df26053b65",
+    "recommendation": "ui.3267ad3909f37ef6"
+  },
+  "CERTIFICATE_STORAGE_FAILED": {
+    "summary": "ui.bf55ad0e3599e7bb",
+    "recommendation": "ui.0f0abe0dc228aa28"
+  },
+  "CERTIFICATE_OPERATION_FAILED": {
+    "summary": "ui.d0cd5f1899d7b8b1",
+    "recommendation": "ui.24da33e909bdac1f"
+  },
+  "NGINX_RELOAD_ACTIVATION_TIMEOUT": {
+    "summary": "ui.9627ca00c123e3d5",
+    "recommendation": "ui.5afa7f2d1061c081"
+  },
+  "DATABASE_OPERATION_FAILED": {
+    "summary": "ui.9eef706f2df27396",
+    "recommendation": "ui.9bd831b3702bcdf2"
+  },
+  "NGINX_CONFIGURATION_FAILED": {
+    "summary": "ui.ff5113735ebaed6b",
+    "recommendation": "ui.b4d2fc626635e9ac"
+  },
+  "INVALID_CONFIGURATION": {
+    "summary": "ui.7a275f9c60e263bf",
+    "recommendation": "ui.8dbe57427a7f3077"
+  },
+  "INTEGRATION_UNAVAILABLE": {
+    "summary": "ui.5301b554bee3a7be",
+    "recommendation": "ui.d627369c6fba5927"
+  },
+  "OPERATION_TIMEOUT": {
+    "summary": "ui.4eec693de83c02cc",
+    "recommendation": "ui.a786fe09d313b826"
+  },
+  "OPERATION_FAILED": {
+    "summary": "ui.920aaaeab7af71cf",
+    "recommendation": "ui.24da33e909bdac1f"
+  },
+  "CERTIFICATE_DNS_ZONE_NOT_FOUND": {
+    "summary": "ui.edacc2efe53b01f3",
+    "recommendation": "ui.e5603a43d44be101"
+  },
+  "LICENSING_CONFIGURATION": {
+    "summary": "ui.5154c932a48518a6",
+    "recommendation": "ui.7ff57726f551f03d"
+  },
+  "LICENSING_AUTHORITY_TLS": {
+    "summary": "ui.2952fb0ae0ed65f0",
+    "recommendation": "ui.4e001657a1647d9e"
+  },
+  "LICENSING_AUTHORITY_TIMEOUT": {
+    "summary": "ui.a056e5afae8c374a",
+    "recommendation": "ui.37f58c0bb26723e7"
+  },
+  "LICENSING_AUTHORITY_DNS": {
+    "summary": "ui.7ab5a33d0b7068c1",
+    "recommendation": "ui.71d8df538af6bac3"
+  },
+  "LICENSING_AUTHORITY_UNAVAILABLE": {
+    "summary": "ui.03034548a9d6ce79",
+    "recommendation": "ui.50a99cfb79b7f564"
+  },
+  "LICENSING_AUTHORITY_RESPONSE": {
+    "summary": "ui.7d7e9de71b7b9f6c",
+    "recommendation": "ui.dc6a2cbbe35b6059"
+  },
+  "LICENSING_REQUEST_REJECTED": {
+    "summary": "ui.241a75fa391a4e37",
+    "recommendation": "ui.0e69c23bd9bcac0a"
+  },
+  "LICENSING_INVALID_REQUEST": {
+    "summary": "ui.4d7882753e2f7df7",
+    "recommendation": "ui.31945eabea9432f6"
+  },
+  "LICENSING_RATE_LIMITED": {
+    "summary": "ui.04ec209e3d3d53ca",
+    "recommendation": "ui.e13026d4cde3fa58"
+  }
+}

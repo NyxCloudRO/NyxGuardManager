@@ -1,0 +1,51 @@
+/* An explicit important layer wins over inherited unlayered theme decoration
+   without escalating selector specificity. Every rule still requires the
+   audited action attribute; navigation cannot opt in accidentally. */
+@layer nyxguard-actions {
+/* Only the audited action registry opts in. Navigation and selector renderers never do.
+   Keep native dimensions, padding, icon gaps and loading indicators in every context.
+   The important declarations supersede legacy action-only important decoration. */
+button[data-nyx-action],a[data-nyx-action],input[data-nyx-action]{
+ --nyx-action-ink:var(--app-text-primary);--nyx-action-fill:var(--app-surface-2);--nyx-action-border:var(--app-border);
+ border-radius:8px!important;
+ background:var(--nyx-action-fill)!important;color:var(--nyx-action-ink)!important;
+ border-color:var(--nyx-action-border)!important;
+ box-shadow:none!important;text-shadow:none!important;
+ transform:none!important;filter:none!important;
+ transition:background-color .14s ease,border-color .14s ease,color .14s ease!important;
+}
+button[data-nyx-action=primary],a[data-nyx-action=primary],input[data-nyx-action=primary]{
+ --nyx-action-ink:color-mix(in srgb,var(--app-primary) 65%,var(--app-text-primary));--nyx-action-fill:color-mix(in srgb,var(--app-primary) 15%,var(--app-surface));--nyx-action-border:color-mix(in srgb,var(--app-primary) 60%,var(--app-border));
+}
+button[data-nyx-action=destructive],a[data-nyx-action=destructive],input[data-nyx-action=destructive]{
+ --nyx-action-ink:color-mix(in srgb,var(--app-error) 80%,var(--app-text-primary));--nyx-action-fill:color-mix(in srgb,var(--app-error) 12%,var(--app-surface));--nyx-action-border:color-mix(in srgb,var(--app-error) 55%,var(--app-border));
+}
+button[data-nyx-action]:hover:not(:disabled):not([aria-disabled=true]),a[data-nyx-action]:hover:not([aria-disabled=true]),input[data-nyx-action]:hover:not(:disabled){
+ background:color-mix(in srgb,var(--app-background) 8%,var(--nyx-action-fill))!important;border-color:var(--nyx-action-ink)!important;
+}
+button[data-nyx-action]:focus-visible,a[data-nyx-action]:focus-visible,input[data-nyx-action]:focus-visible{
+ outline:2px solid var(--app-primary)!important;outline-offset:2px!important;
+}
+button[data-nyx-action]:active:not(:disabled):not([aria-disabled=true]),a[data-nyx-action]:active:not([aria-disabled=true]),input[data-nyx-action]:active:not(:disabled){background:color-mix(in srgb,var(--app-background) 15%,var(--nyx-action-fill))!important;}
+button[data-nyx-action]:disabled,button[data-nyx-action][aria-disabled=true],a[data-nyx-action][aria-disabled=true],input[data-nyx-action]:disabled{opacity:.5!important;cursor:not-allowed!important;}
+button[data-nyx-action][aria-busy=true],button[data-nyx-action].btn-loading{cursor:progress!important;}
+button.nyx-rule-action[data-nyx-action]{border-radius:6px!important;}
+/* Clear inherited decorative sweeps; retain native dropdown indicators.
+   Keep the native loading class, hidden label and centered spinner semantics. */
+button[data-nyx-action]::before,a[data-nyx-action]::before,input[data-nyx-action]::before,
+button[data-nyx-action]:not(.btn-loading):not(.dropdown-toggle)::after,a[data-nyx-action]:not(.btn-loading):not(.dropdown-toggle)::after,input[data-nyx-action]:not(.btn-loading):not(.dropdown-toggle)::after{
+ content:none!important;background:none!important;animation:none!important;transition:none!important;box-shadow:none!important;
+}
+button[data-nyx-action].btn-loading,a[data-nyx-action].btn-loading,input[data-nyx-action].btn-loading{color:transparent!important;}
+button[data-nyx-action].btn-loading::after,a[data-nyx-action].btn-loading::after,input[data-nyx-action].btn-loading::after{
+ content:""!important;display:inline-block!important;position:absolute!important;
+ width:var(--tblr-btn-icon-size,1em)!important;height:var(--tblr-btn-icon-size,1em)!important;
+ inset:auto!important;left:calc(50% - var(--tblr-btn-icon-size,1em)/2)!important;top:calc(50% - var(--tblr-btn-icon-size,1em)/2)!important;
+ margin:0!important;border:2px solid var(--nyx-action-ink)!important;border-right-color:transparent!important;border-radius:50%!important;
+ color:var(--nyx-action-ink)!important;background:none!important;box-shadow:none!important;opacity:1!important;clip-path:none!important;
+ animation:nyx-action-spinner .75s linear infinite!important;
+}
+@keyframes nyx-action-spinner{to{rotate:1turn}}
+@media(prefers-reduced-motion:reduce){button[data-nyx-action],a[data-nyx-action],input[data-nyx-action]{transition:none!important;}button[data-nyx-action].btn-loading::after,a[data-nyx-action].btn-loading::after,input[data-nyx-action].btn-loading::after{animation:none!important;}}
+
+}

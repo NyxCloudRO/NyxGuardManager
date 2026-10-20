@@ -1,0 +1,905 @@
+--- a/lib/cookie.c
++++ b/lib/cookie.c
+@@ -1004,39 +1004,6 @@
+       return NULL;
+     }
+   }
+-  if(co->prefix & COOKIE_PREFIX__HOST) {
+-    /*
+-     * The __Host- prefix requires the cookie to be secure, have a "/" path
+-     * and not have a domain set.
+-     */
+-    if(co->secure && co->path && strcmp(co->path, "/") == 0 && !co->tailmatch)
+-      ;
+-    else {
+-      freecookie(co);
+-      return NULL;
+-    }
+-  }
+-
+-  if(!c->running &&    /* read from a file */
+-     c->newsession &&  /* clean session cookies */
+-     !co->expires) {   /* this is a session cookie since it doesn't expire! */
+-    freecookie(co);
+-    return NULL;
+-  }
+-
+-  co->livecookie = c->running;
+-  co->creationtime = ++c->lastct;
+-
+-  /*
+-   * Now we have parsed the incoming line, we must now check if this supersedes
+-   * an already existing cookie, which it may if the previous have the same
+-   * domain and path as this.
+-   */
+-
+-  /* at first, remove expired cookies */
+-  if(!noexpire)
+-    remove_expired(c);
+-
+ #ifdef USE_LIBPSL
+   /*
+    * Check if the domain is a Public Suffix and if yes, ignore the cookie. We
+@@ -1049,13 +1016,26 @@
+     char lcookie[256];
+     size_t dlen = strlen(domain);
+     size_t clen = strlen(co->domain);
++
++    /* trim trailing dots */
++    if(dlen && (domain[dlen - 1] == '.'))
++      dlen--;
++    if(clen && (co->domain[clen - 1] == '.'))
++      clen--;
++
+     if((dlen < sizeof(lcase)) && (clen < sizeof(lcookie))) {
+       const psl_ctx_t *psl = Curl_psl_use(data);
+       if(psl) {
+         /* the PSL check requires lowercase domain name and pattern */
+-        Curl_strntolower(lcase, domain, dlen + 1);
+-        Curl_strntolower(lcookie, co->domain, clen + 1);
++        Curl_strntolower(lcase, domain, dlen);
++        lcase[dlen] = 0;
++        Curl_strntolower(lcookie, co->domain, clen);
++        lcookie[clen] = 0;
+         acceptable = psl_is_cookie_domain_acceptable(psl, lcase, lcookie);
++        if(acceptable && co->tailmatch &&
++           strcasecompare(lcookie, lcase) &&
++           psl_is_public_suffix(psl, lcookie))
++          co->tailmatch = FALSE;
+         Curl_psl_release(data);
+       }
+       else
+@@ -1070,6 +1050,40 @@
+     }
+   }
+ #endif
++  if(co->prefix & COOKIE_PREFIX__HOST) {
++    /*
++     * The __Host- prefix requires the cookie to be secure, have a "/" path
++     * and not have a domain set.
++     */
++    if(co->secure && co->path && strcmp(co->path, "/") == 0 && !co->tailmatch)
++      ;
++    else {
++      freecookie(co);
++      return NULL;
++    }
++  }
++
++  if(!c->running &&    /* read from a file */
++     c->newsession &&  /* clean session cookies */
++     !co->expires) {   /* this is a session cookie since it doesn't expire! */
++    freecookie(co);
++    return NULL;
++  }
++
++  co->livecookie = c->running;
++  co->creationtime = ++c->lastct;
++
++  /*
++   * Now we have parsed the incoming line, we must now check if this supersedes
++   * an already existing cookie, which it may if the previous have the same
++   * domain and path as this.
++   */
++
++  /* at first, remove expired cookies */
++  if(!noexpire)
++    remove_expired(c);
++
++
+ 
+   /* A non-secure cookie may not overlay an existing secure cookie. */
+   myhash = cookiehash(co->domain);
+--- a/lib/easy.c
++++ b/lib/easy.c
+@@ -1029,6 +1029,12 @@
+ {
+   Curl_free_request_state(data);
+ 
++  /* Unlink dependency graph while its parent/children are still available.
++     Resetting UserDefined first loses the back references and leaves a UAF
++     for another handle's subsequent reset/cleanup. */
++  Curl_data_priority_cleanup(data);
++  Curl_data_priority_clear_state(data);
++
+   /* zero out UserDefined data: */
+   Curl_freeset(data);
+   memset(&data->set, 0, sizeof(struct UserDefined));
+--- a/lib/http.c
++++ b/lib/http.c
+@@ -2022,6 +2022,9 @@
+     data->state.first_remote_protocol = conn->handler->protocol;
+   }
+   Curl_safefree(data->state.aptr.host);
++#ifndef CURL_DISABLE_COOKIES
++  Curl_safefree(data->state.aptr.cookiehost);
++#endif
+ 
+   ptr = Curl_checkheaders(data, STRCONST("Host"));
+   if(ptr && (!data->state.this_is_a_follow ||
+--- a/lib/http2.c
++++ b/lib/http2.c
+@@ -638,6 +638,8 @@
+       second->req.p.http = http;
+       http2_data_setup(cf, second);
+       second->state.priority.weight = data->state.priority.weight;
++      if(data->share && curl_easy_setopt(second, CURLOPT_SHARE, data->share))
++        (void)Curl_close(&second);
+     }
+   }
+   return second;
+--- a/lib/http_digest.c
++++ b/lib/http_digest.c
+@@ -104,7 +104,30 @@
+ #endif
+   }
+   else {
++    struct connectdata *conn = data->conn;
+     digest = &data->state.digest;
++    if(digest->http_host &&
++       (!strcasecompare(digest->http_host, conn->host.name) ||
++        digest->http_port != conn->remote_port ||
++        digest->http_protocol != conn->handler->protocol ||
++        Curl_timestrcmp(digest->http_user,
++                         data->state.aptr.user ? data->state.aptr.user : "") ||
++        Curl_timestrcmp(digest->http_passwd,
++                         data->state.aptr.passwd ? data->state.aptr.passwd : "")))
++      Curl_auth_digest_cleanup(digest);
++    if(!digest->http_host) {
++      digest->http_host = strdup(conn->host.name);
++      digest->http_user = strdup(data->state.aptr.user ?
++                                 data->state.aptr.user : "");
++      digest->http_passwd = strdup(data->state.aptr.passwd ?
++                                   data->state.aptr.passwd : "");
++      if(!digest->http_host || !digest->http_user || !digest->http_passwd) {
++        Curl_auth_digest_cleanup(digest);
++        return CURLE_OUT_OF_MEMORY;
++      }
++      digest->http_port = conn->remote_port;
++      digest->http_protocol = conn->handler->protocol;
++    }
+     allocuserpwd = &data->state.aptr.userpwd;
+     userp = data->state.aptr.user;
+     passwdp = data->state.aptr.passwd;
+--- a/lib/ldap.c
++++ b/lib/ldap.c
+@@ -371,8 +371,8 @@
+     if(conn->ssl_config.verifypeer) {
+       /* Novell SDK supports DER or BASE64 files. */
+       int cert_type = LDAPSSL_CERT_FILETYPE_B64;
+-      if((data->set.ssl.cert_type) &&
+-         (strcasecompare(data->set.ssl.cert_type, "DER")))
++      if((data->set.ssl.primary.cert_type) &&
++         (strcasecompare(data->set.ssl.primary.cert_type, "DER")))
+         cert_type = LDAPSSL_CERT_FILETYPE_DER;
+       if(!ldap_ca) {
+         failf(data, "LDAP local: ERROR %s CA cert not set",
+@@ -412,8 +412,8 @@
+ #elif defined(LDAP_OPT_X_TLS)
+     if(conn->ssl_config.verifypeer) {
+       /* OpenLDAP SDK supports BASE64 files. */
+-      if((data->set.ssl.cert_type) &&
+-         (!strcasecompare(data->set.ssl.cert_type, "PEM"))) {
++      if((data->set.ssl.primary.cert_type) &&
++         (!strcasecompare(data->set.ssl.primary.cert_type, "PEM"))) {
+         failf(data, "LDAP local: ERROR OpenLDAP only supports PEM cert-type");
+         result = CURLE_SSL_CERTPROBLEM;
+         goto quit;
+--- a/lib/openldap.c
++++ b/lib/openldap.c
+@@ -684,8 +684,19 @@
+   }
+   else {
+     result = Curl_sasl_continue(&li->sasl, data, code, &progress);
+-    if(!result && progress != SASL_INPROGRESS)
+-      state(data, OLDAP_STOP);
++    if(!result) {
++      switch(progress) {
++      case SASL_DONE:
++        state(data, OLDAP_STOP);
++        break;
++      case SASL_IDLE:
++        failf(data, "Authentication cancelled");
++        result = CURLE_LOGIN_DENIED;
++        break;
++      default:
++        break;
++      }
++    }
+   }
+ 
+   if(li->servercred)
+--- a/lib/url.c
++++ b/lib/url.c
+@@ -79,6 +79,7 @@
+ #include "share.h"
+ #include "content_encoding.h"
+ #include "http_digest.h"
++#include "vauth/vauth.h"
+ #include "http_negotiate.h"
+ #include "select.h"
+ #include "multiif.h"
+@@ -444,6 +445,7 @@
+ #endif
+ #if !defined(CURL_DISABLE_HTTP) && !defined(CURL_DISABLE_CRYPTO_AUTH)
+   Curl_http_auth_cleanup_digest(data);
++  Curl_safefree(data->state.envproxy);
+ #endif
+   Curl_safefree(data->info.contenttype);
+   Curl_safefree(data->info.wouldredirect);
+@@ -745,6 +747,8 @@
+   Curl_safefree(conn->sasl_authzid);
+   Curl_safefree(conn->options);
+   Curl_safefree(conn->oauth_bearer);
++  Curl_safefree(conn->service_name);
++  Curl_safefree(conn->proxy_service_name);
+ #ifndef CURL_DISABLE_HTTP
+   Curl_dyn_free(&conn->trailer);
+ #endif
+@@ -1061,6 +1065,43 @@
+  *
+  * The force_reuse flag is set if the connection must be used.
+  */
++/* Negotiate credentials can name an ambient security identity that changes
++ * outside libcurl. Never let a different transfer inherit that connection.
++ * In 7.88 lastconnect_id is written by completed user transfers, not by
++ * maintenance attachment; keep that distinction when checking pool reuse. */
++bool Curl_conn_nego_reuse(struct Curl_easy *data,
++                          struct connectdata *needle,
++                          struct connectdata *check)
++{
++#ifdef USE_SPNEGO
++  if(check->http_negotiate_state != GSS_AUTHNONE) {
++    if(!(data->state.authhost.want & CURLAUTH_NEGOTIATE) ||
++       Curl_timestrcmp(needle->user, check->user) ||
++       Curl_timestrcmp(needle->passwd, check->passwd))
++      return FALSE;
++    if((!check->user || !check->user[0]) &&
++       data->state.lastconnect_id != check->connection_id)
++      return FALSE;
++  }
++#ifndef CURL_DISABLE_PROXY
++  if(check->proxy_negotiate_state != GSS_AUTHNONE) {
++    if(!(data->state.authproxy.want & CURLAUTH_NEGOTIATE) ||
++       Curl_timestrcmp(needle->http_proxy.user, check->http_proxy.user) ||
++       Curl_timestrcmp(needle->http_proxy.passwd, check->http_proxy.passwd))
++      return FALSE;
++    if((!check->http_proxy.user || !check->http_proxy.user[0]) &&
++       data->state.lastconnect_id != check->connection_id)
++      return FALSE;
++  }
++#endif
++#else
++  (void)data;
++  (void)needle;
++  (void)check;
++#endif
++  return TRUE;
++}
++
+ static bool
+ ConnectionExists(struct Curl_easy *data,
+                  struct connectdata *needle,
+@@ -1294,6 +1335,10 @@
+         }
+       }
+ 
++      if(!Curl_safecmp(needle->service_name, check->service_name) ||
++         !Curl_safecmp(needle->proxy_service_name, check->proxy_service_name))
++        continue;
++
+       /* GSS delegation differences do not actually affect every connection
+          and auth method, but this check takes precaution before efficiency */
+       if(needle->gssapi_delegation != check->gssapi_delegation)
+@@ -1347,7 +1392,8 @@
+           /* The schemes match or the protocol family is the same and the
+              previous connection was TLS upgraded, and the hostname and host
+              port match */
+-          if(needle->handler->flags & PROTOPT_SSL) {
++          if((needle->handler->flags & PROTOPT_SSL) ||
++             data->set.use_ssl > CURLUSESSL_NONE) {
+             /* This is a SSL connection so verify that we're using the same
+                SSL options as well */
+             if(!Curl_ssl_config_matches(&needle->ssl_config,
+@@ -1367,6 +1413,9 @@
+            mode (no tunneling) */
+         match = TRUE;
+       }
++
++      if(match && !Curl_conn_nego_reuse(data, needle, check))
++        continue;
+ 
+       if(match) {
+ #if defined(USE_NTLM)
+@@ -2458,6 +2507,19 @@
+                           the protocol doesn't work with network */
+     socksproxy = NULL;
+   }
++
++#if !defined(CURL_DISABLE_HTTP) && !defined(CURL_DISABLE_CRYPTO_AUTH)
++  if(!Curl_safecmp(data->state.envproxy, proxy)) {
++    char *newproxy = proxy ? strdup(proxy) : NULL;
++    if(proxy && !newproxy) {
++      result = CURLE_OUT_OF_MEMORY;
++      goto out;
++    }
++    Curl_auth_digest_cleanup(&data->state.proxydigest);
++    Curl_safefree(data->state.envproxy);
++    data->state.envproxy = newproxy;
++  }
++#endif
+ 
+   /***********************************************************************
+    * If this is supposed to use a proxy, we need to figure out the proxy host
+@@ -3466,6 +3528,21 @@
+   if(result)
+     goto out;
+ 
++  if(data->set.str[STRING_SERVICE_NAME]) {
++    conn->service_name = strdup(data->set.str[STRING_SERVICE_NAME]);
++    if(!conn->service_name) {
++      result = CURLE_OUT_OF_MEMORY;
++      goto out;
++    }
++  }
++  if(data->set.str[STRING_PROXY_SERVICE_NAME]) {
++    conn->proxy_service_name = strdup(data->set.str[STRING_PROXY_SERVICE_NAME]);
++    if(!conn->proxy_service_name) {
++      result = CURLE_OUT_OF_MEMORY;
++      goto out;
++    }
++  }
++
+   if(data->set.str[STRING_SASL_AUTHZID]) {
+     conn->sasl_authzid = strdup(data->set.str[STRING_SASL_AUTHZID]);
+     if(!conn->sasl_authzid) {
+@@ -3671,18 +3748,18 @@
+     data->set.blobs[BLOB_SSL_ISSUERCERT_PROXY];
+   data->set.proxy_ssl.primary.CRLfile =
+     data->set.str[STRING_SSL_CRLFILE_PROXY];
+-  data->set.proxy_ssl.cert_type = data->set.str[STRING_CERT_TYPE_PROXY];
+-  data->set.proxy_ssl.key = data->set.str[STRING_KEY_PROXY];
+-  data->set.proxy_ssl.key_type = data->set.str[STRING_KEY_TYPE_PROXY];
+-  data->set.proxy_ssl.key_passwd = data->set.str[STRING_KEY_PASSWD_PROXY];
++  data->set.proxy_ssl.primary.cert_type = data->set.str[STRING_CERT_TYPE_PROXY];
++  data->set.proxy_ssl.primary.key = data->set.str[STRING_KEY_PROXY];
++  data->set.proxy_ssl.primary.key_type = data->set.str[STRING_KEY_TYPE_PROXY];
++  data->set.proxy_ssl.primary.key_passwd = data->set.str[STRING_KEY_PASSWD_PROXY];
+   data->set.proxy_ssl.primary.clientcert = data->set.str[STRING_CERT_PROXY];
+-  data->set.proxy_ssl.key_blob = data->set.blobs[BLOB_KEY_PROXY];
++  data->set.proxy_ssl.primary.key_blob = data->set.blobs[BLOB_KEY_PROXY];
+ #endif
+   data->set.ssl.primary.CRLfile = data->set.str[STRING_SSL_CRLFILE];
+-  data->set.ssl.cert_type = data->set.str[STRING_CERT_TYPE];
+-  data->set.ssl.key = data->set.str[STRING_KEY];
+-  data->set.ssl.key_type = data->set.str[STRING_KEY_TYPE];
+-  data->set.ssl.key_passwd = data->set.str[STRING_KEY_PASSWD];
++  data->set.ssl.primary.cert_type = data->set.str[STRING_CERT_TYPE];
++  data->set.ssl.primary.key = data->set.str[STRING_KEY];
++  data->set.ssl.primary.key_type = data->set.str[STRING_KEY_TYPE];
++  data->set.ssl.primary.key_passwd = data->set.str[STRING_KEY_PASSWD];
+   data->set.ssl.primary.clientcert = data->set.str[STRING_CERT];
+ #ifdef USE_TLS_SRP
+   data->set.ssl.primary.username = data->set.str[STRING_TLSAUTH_USERNAME];
+@@ -3694,7 +3771,7 @@
+     data->set.str[STRING_TLSAUTH_PASSWORD_PROXY];
+ #endif
+ #endif
+-  data->set.ssl.key_blob = data->set.blobs[BLOB_KEY];
++  data->set.ssl.primary.key_blob = data->set.blobs[BLOB_KEY];
+ 
+   if(!Curl_clone_primary_ssl_config(&data->set.ssl.primary,
+                                     &conn->ssl_config)) {
+--- a/lib/url.h
++++ b/lib/url.h
+@@ -34,6 +34,9 @@
+ CURLcode Curl_init_userdefined(struct Curl_easy *data);
+ 
+ void Curl_freeset(struct Curl_easy *data);
++bool Curl_conn_nego_reuse(struct Curl_easy *data,
++                          struct connectdata *needle,
++                          struct connectdata *check);
+ CURLcode Curl_uc_to_curlcode(CURLUcode uc);
+ CURLcode Curl_close(struct Curl_easy **datap); /* opposite of curl_open() */
+ CURLcode Curl_connect(struct Curl_easy *, bool *async, bool *protocol_connect);
+--- a/lib/urldata.h
++++ b/lib/urldata.h
+@@ -259,6 +259,11 @@
+   char *cipher_list13;   /* list of TLS 1.3 cipher suites to use */
+   char *pinned_key;
+   char *CRLfile;         /* CRL to check certificate revocation */
++  char *cert_type; /* format for certificate (default: PEM)*/
++  char *key; /* private key file name */
++  struct curl_blob *key_blob;
++  char *key_type; /* format for private key (default: PEM) */
++  char *key_passwd; /* plain text private key password */
+   struct curl_blob *cert_blob;
+   struct curl_blob *ca_info_blob;
+   struct curl_blob *issuercert_blob;
+@@ -281,11 +286,6 @@
+   long certverifyresult; /* result from the certificate verification */
+   curl_ssl_ctx_callback fsslctx; /* function to initialize ssl ctx */
+   void *fsslctxp;        /* parameter for call back */
+-  char *cert_type; /* format for certificate (default: PEM)*/
+-  char *key; /* private key file name */
+-  struct curl_blob *key_blob;
+-  char *key_type; /* format for private key (default: PEM) */
+-  char *key_passwd; /* plain text private key password */
+   BIT(certinfo);     /* gather lots of certificate info */
+   BIT(falsestart);
+   BIT(enable_beast); /* allow this flaw for interoperability's sake */
+@@ -322,6 +322,11 @@
+ 
+ /* Struct used for Digest challenge-response authentication */
+ struct digestdata {
++  char *http_host; /* origin which owns this HTTP Digest state */
++  char *http_user;
++  char *http_passwd;
++  int http_port;
++  curl_prot_t http_protocol;
+ #if defined(USE_WINDOWS_SSPI)
+   BYTE *input_token;
+   size_t input_token_len;
+@@ -902,6 +907,8 @@
+   char *options; /* options string, allocated */
+   char *sasl_authzid;     /* authorization identity string, allocated */
+   char *oauth_bearer; /* OAUTH2 bearer, allocated */
++  char *service_name; /* immutable origin authentication service */
++  char *proxy_service_name; /* immutable proxy authentication service */
+   struct curltime now;     /* "current" time */
+   struct curltime created; /* creation time */
+   struct curltime lastused; /* when returned to the connection cache */
+@@ -1313,6 +1320,7 @@
+ #ifndef CURL_DISABLE_CRYPTO_AUTH
+   struct digestdata digest;      /* state data for host Digest auth */
+   struct digestdata proxydigest; /* state data for proxy Digest auth */
++  char *envproxy; /* last proxy string for proxy Digest state */
+ #endif
+   struct auth authhost;  /* auth details for host */
+   struct auth authproxy; /* auth details for proxy */
+--- a/lib/vauth/digest.c
++++ b/lib/vauth/digest.c
+@@ -977,6 +977,9 @@
+  */
+ void Curl_auth_digest_cleanup(struct digestdata *digest)
+ {
++  Curl_safefree(digest->http_host);
++  Curl_safefree(digest->http_user);
++  Curl_safefree(digest->http_passwd);
+   Curl_safefree(digest->nonce);
+   Curl_safefree(digest->cnonce);
+   Curl_safefree(digest->realm);
+--- a/lib/vauth/digest_sspi.c
++++ b/lib/vauth/digest_sspi.c
+@@ -648,6 +648,9 @@
+  */
+ void Curl_auth_digest_cleanup(struct digestdata *digest)
+ {
++  Curl_safefree(digest->http_host);
++  Curl_safefree(digest->http_user);
++  Curl_safefree(digest->http_passwd);
+   /* Free the input token */
+   Curl_safefree(digest->input_token);
+ 
+--- a/lib/vquic/curl_ngtcp2.c
++++ b/lib/vquic/curl_ngtcp2.c
+@@ -375,12 +375,12 @@
+   DEBUGASSERT(ssl_config);
+ 
+   if(ssl_config->primary.clientcert || ssl_config->primary.cert_blob
+-     || ssl_config->cert_type) {
++     || ssl_config->primary.cert_type) {
+     return Curl_ossl_set_client_cert(
+         data, ssl_ctx, ssl_config->primary.clientcert,
+-        ssl_config->primary.cert_blob, ssl_config->cert_type,
+-        ssl_config->key, ssl_config->key_blob,
+-        ssl_config->key_type, ssl_config->key_passwd);
++        ssl_config->primary.cert_blob, ssl_config->primary.cert_type,
++        ssl_config->primary.key, ssl_config->primary.key_blob,
++        ssl_config->primary.key_type, ssl_config->primary.key_passwd);
+   }
+ 
+   return CURLE_OK;
+--- a/lib/vssh/libssh.c
++++ b/lib/vssh/libssh.c
+@@ -783,7 +783,7 @@
+       /* Two choices, (1) private key was given on CMD,
+        * (2) use the "default" keys. */
+       if(data->set.str[STRING_SSH_PRIVATE_KEY]) {
+-        if(sshc->pubkey && !data->set.ssl.key_passwd) {
++        if(sshc->pubkey && !data->set.ssl.primary.key_passwd) {
+           rc = ssh_userauth_try_publickey(sshc->ssh_session, NULL,
+                                           sshc->pubkey);
+           if(rc == SSH_AUTH_AGAIN) {
+@@ -799,7 +799,7 @@
+ 
+         rc = ssh_pki_import_privkey_file(data->
+                                          set.str[STRING_SSH_PRIVATE_KEY],
+-                                         data->set.ssl.key_passwd, NULL,
++                                         data->set.ssl.primary.key_passwd, NULL,
+                                          NULL, &sshc->privkey);
+         if(rc != SSH_OK) {
+           failf(data, "Could not load private key file %s",
+@@ -814,7 +814,7 @@
+       }
+       else {
+         rc = ssh_userauth_publickey_auto(sshc->ssh_session, NULL,
+-                                         data->set.ssl.key_passwd);
++                                         data->set.ssl.primary.key_passwd);
+         if(rc == SSH_AUTH_AGAIN) {
+           rc = SSH_AGAIN;
+           break;
+--- a/lib/vssh/libssh2.c
++++ b/lib/vssh/libssh2.c
+@@ -1137,7 +1137,7 @@
+           break;
+         }
+ 
+-        sshc->passphrase = data->set.ssl.key_passwd;
++        sshc->passphrase = data->set.ssl.primary.key_passwd;
+         if(!sshc->passphrase)
+           sshc->passphrase = "";
+ 
+--- a/lib/vtls/gtls.c
++++ b/lib/vtls/gtls.c
+@@ -616,7 +616,7 @@
+   }
+ 
+   if(config->clientcert) {
+-    if(ssl_config->key_passwd) {
++    if(ssl_config->primary.key_passwd) {
+       const unsigned int supported_key_encryption_algorithms =
+         GNUTLS_PKCS_USE_PKCS12_3DES | GNUTLS_PKCS_USE_PKCS12_ARCFOUR |
+         GNUTLS_PKCS_USE_PKCS12_RC2_40 | GNUTLS_PKCS_USE_PBES2_3DES |
+@@ -625,9 +625,9 @@
+       rc = gnutls_certificate_set_x509_key_file2(
+            gtls->cred,
+            config->clientcert,
+-           ssl_config->key ? ssl_config->key : config->clientcert,
+-           do_file_type(ssl_config->cert_type),
+-           ssl_config->key_passwd,
++           ssl_config->primary.key ? ssl_config->primary.key : config->clientcert,
++           do_file_type(ssl_config->primary.cert_type),
++           ssl_config->primary.key_passwd,
+            supported_key_encryption_algorithms);
+       if(rc != GNUTLS_E_SUCCESS) {
+         failf(data,
+@@ -640,8 +640,8 @@
+       if(gnutls_certificate_set_x509_key_file(
+            gtls->cred,
+            config->clientcert,
+-           ssl_config->key ? ssl_config->key : config->clientcert,
+-           do_file_type(ssl_config->cert_type) ) !=
++           ssl_config->primary.key ? ssl_config->primary.key : config->clientcert,
++           do_file_type(ssl_config->primary.cert_type) ) !=
+          GNUTLS_E_SUCCESS) {
+         failf(data, "error reading X.509 key or certificate file");
+         return CURLE_SSL_CONNECT_ERROR;
+--- a/lib/vtls/mbedtls.c
++++ b/lib/vtls/mbedtls.c
+@@ -450,7 +450,7 @@
+     if(ret) {
+       mbedtls_strerror(ret, errorbuf, sizeof(errorbuf));
+       failf(data, "Error reading private key %s - mbedTLS: (-0x%04X) %s",
+-            ssl_config->key, -ret, errorbuf);
++            ssl_config->primary.key, -ret, errorbuf);
+       return CURLE_SSL_CERTPROBLEM;
+     }
+   }
+@@ -458,23 +458,23 @@
+   /* Load the client private key */
+   mbedtls_pk_init(&backend->pk);
+ 
+-  if(ssl_config->key || ssl_config->key_blob) {
+-    if(ssl_config->key) {
++  if(ssl_config->primary.key || ssl_config->primary.key_blob) {
++    if(ssl_config->primary.key) {
+ #ifdef MBEDTLS_FS_IO
+ #if MBEDTLS_VERSION_NUMBER >= 0x03000000
+-      ret = mbedtls_pk_parse_keyfile(&backend->pk, ssl_config->key,
+-                                     ssl_config->key_passwd,
++      ret = mbedtls_pk_parse_keyfile(&backend->pk, ssl_config->primary.key,
++                                     ssl_config->primary.key_passwd,
+                                      mbedtls_ctr_drbg_random,
+                                      &backend->ctr_drbg);
+ #else
+-      ret = mbedtls_pk_parse_keyfile(&backend->pk, ssl_config->key,
+-                                     ssl_config->key_passwd);
++      ret = mbedtls_pk_parse_keyfile(&backend->pk, ssl_config->primary.key,
++                                     ssl_config->primary.key_passwd);
+ #endif
+ 
+       if(ret) {
+         mbedtls_strerror(ret, errorbuf, sizeof(errorbuf));
+         failf(data, "Error reading private key %s - mbedTLS: (-0x%04X) %s",
+-              ssl_config->key, -ret, errorbuf);
++              ssl_config->primary.key, -ret, errorbuf);
+         return CURLE_SSL_CERTPROBLEM;
+       }
+ #else
+@@ -483,10 +483,10 @@
+ #endif
+     }
+     else {
+-      const struct curl_blob *ssl_key_blob = ssl_config->key_blob;
++      const struct curl_blob *ssl_key_blob = ssl_config->primary.key_blob;
+       const unsigned char *key_data =
+         (const unsigned char *)ssl_key_blob->data;
+-      const char *passwd = ssl_config->key_passwd;
++      const char *passwd = ssl_config->primary.key_passwd;
+ #if MBEDTLS_VERSION_NUMBER >= 0x03000000
+       ret = mbedtls_pk_parse_key(&backend->pk, key_data, ssl_key_blob->len,
+                                  (const unsigned char *)passwd,
+@@ -630,7 +630,7 @@
+                             NULL);
+ #endif
+ 
+-  if(ssl_config->key || ssl_config->key_blob) {
++  if(ssl_config->primary.key || ssl_config->primary.key_blob) {
+     mbedtls_ssl_conf_own_cert(&backend->config,
+                               &backend->clicert, &backend->pk);
+   }
+--- a/lib/vtls/nss.c
++++ b/lib/vtls/nss.c
+@@ -730,7 +730,7 @@
+     return CURLE_SSL_CERTPROBLEM;
+   }
+ 
+-  status = PK11_Authenticate(slot, PR_TRUE, ssl_config->key_passwd);
++  status = PK11_Authenticate(slot, PR_TRUE, ssl_config->primary.key_passwd);
+   PK11_FreeSlot(slot);
+ 
+   return (SECSuccess == status) ? CURLE_OK : CURLE_SSL_CERTPROBLEM;
+@@ -2043,7 +2043,7 @@
+     else {
+       CURLcode rv = cert_stuff(cf, data,
+                                ssl_config->primary.clientcert,
+-                               ssl_config->key);
++                               ssl_config->primary.key);
+       if(rv) {
+         /* failf() is already done in cert_stuff() */
+         result = rv;
+@@ -2116,8 +2116,8 @@
+     connssl_next->backend->handle = NULL;
+ 
+   /* This is the password associated with the cert that we're using */
+-  if(ssl_config->key_passwd) {
+-    SSL_SetPKCS11PinArg(backend->handle, ssl_config->key_passwd);
++  if(ssl_config->primary.key_passwd) {
++    SSL_SetPKCS11PinArg(backend->handle, ssl_config->primary.key_passwd);
+   }
+ 
+ #ifdef SSL_ENABLE_OCSP_STAPLING
+--- a/lib/vtls/openssl.c
++++ b/lib/vtls/openssl.c
+@@ -3487,7 +3487,7 @@
+   const long int ssl_version = conn_config->version;
+   char * const ssl_cert = ssl_config->primary.clientcert;
+   const struct curl_blob *ssl_cert_blob = ssl_config->primary.cert_blob;
+-  const char * const ssl_cert_type = ssl_config->cert_type;
++  const char * const ssl_cert_type = ssl_config->primary.cert_type;
+   const bool verifypeer = conn_config->verifypeer;
+   char error_buffer[256];
+   struct ssl_backend_data *backend = connssl->backend;
+@@ -3666,8 +3666,8 @@
+     if(!result &&
+        !cert_stuff(data, backend->ctx,
+                    ssl_cert, ssl_cert_blob, ssl_cert_type,
+-                   ssl_config->key, ssl_config->key_blob,
+-                   ssl_config->key_type, ssl_config->key_passwd))
++                   ssl_config->primary.key, ssl_config->primary.key_blob,
++                   ssl_config->primary.key_type, ssl_config->primary.key_passwd))
+       result = CURLE_SSL_CERTPROBLEM;
+     if(result)
+       /* failf() is already done in cert_stuff() */
+@@ -4121,7 +4121,10 @@
+   backend->server_cert = SSL_get1_peer_certificate(backend->handle);
+   if(!backend->server_cert) {
+     BIO_free(mem);
+-    if(!strict)
++    ptr = Curl_ssl_cf_is_proxy(cf) ?
++      data->set.str[STRING_SSL_PINNEDPUBLICKEY_PROXY] :
++      data->set.str[STRING_SSL_PINNEDPUBLICKEY];
++    if(!strict && !ptr)
+       return CURLE_OK;
+ 
+     failf(data, "SSL: couldn't get peer certificate");
+--- a/lib/vtls/schannel.c
++++ b/lib/vtls/schannel.c
+@@ -611,8 +611,8 @@
+       }
+     }
+ 
+-    if((fInCert || blob) && (data->set.ssl.cert_type) &&
+-       (!strcasecompare(data->set.ssl.cert_type, "P12"))) {
++    if((fInCert || blob) && (data->set.ssl.primary.cert_type) &&
++       (!strcasecompare(data->set.ssl.primary.cert_type, "P12"))) {
+       failf(data, "schannel: certificate format compatibility error "
+             " for %s",
+             blob ? "(memory blob)" : data->set.ssl.primary.clientcert);
+@@ -661,14 +661,14 @@
+       datablob.pbData = (BYTE*)certdata;
+       datablob.cbData = (DWORD)certsize;
+ 
+-      if(data->set.ssl.key_passwd)
+-        pwd_len = strlen(data->set.ssl.key_passwd);
++      if(data->set.ssl.primary.key_passwd)
++        pwd_len = strlen(data->set.ssl.primary.key_passwd);
+       pszPassword = (WCHAR*)malloc(sizeof(WCHAR)*(pwd_len + 1));
+       if(pszPassword) {
+         if(pwd_len > 0)
+           str_w_len = MultiByteToWideChar(CP_UTF8,
+                                           MB_ERR_INVALID_CHARS,
+-                                          data->set.ssl.key_passwd,
++                                          data->set.ssl.primary.key_passwd,
+                                           (int)pwd_len,
+                                           pszPassword, (int)(pwd_len + 1));
+ 
+--- a/lib/vtls/sectransp.c
++++ b/lib/vtls/sectransp.c
+@@ -1822,7 +1822,7 @@
+   }
+ #endif
+ 
+-  if(ssl_config->key) {
++  if(ssl_config->primary.key) {
+     infof(data, "WARNING: SSL: CURLOPT_SSLKEY is ignored by Secure "
+           "Transport. The private key must be in the Keychain.");
+   }
+@@ -1841,17 +1841,17 @@
+     else
+       err = !noErr;
+     if((err != noErr) && (is_cert_file || is_cert_data)) {
+-      if(!ssl_config->cert_type)
++      if(!ssl_config->primary.cert_type)
+         infof(data, "SSL: Certificate type not set, assuming "
+               "PKCS#12 format.");
+-      else if(!strcasecompare(ssl_config->cert_type, "P12")) {
++      else if(!strcasecompare(ssl_config->primary.cert_type, "P12")) {
+         failf(data, "SSL: The Security framework only supports "
+               "loading identities that are in PKCS#12 format.");
+         return CURLE_SSL_CERTPROBLEM;
+       }
+ 
+       err = CopyIdentityFromPKCS12File(ssl_cert, ssl_cert_blob,
+-                                       ssl_config->key_passwd,
++                                       ssl_config->primary.key_passwd,
+                                        &cert_and_key);
+     }
+ 
+--- a/lib/vtls/vtls.c
++++ b/lib/vtls/vtls.c
+@@ -142,6 +142,11 @@
+      (data->verifyhost == needle->verifyhost) &&
+      (data->verifystatus == needle->verifystatus) &&
+      blobcmp(data->cert_blob, needle->cert_blob) &&
++     blobcmp(data->key_blob, needle->key_blob) &&
++     Curl_safecmp(data->cert_type, needle->cert_type) &&
++     Curl_safecmp(data->key, needle->key) &&
++     Curl_safecmp(data->key_type, needle->key_type) &&
++     !Curl_timestrcmp(data->key_passwd, needle->key_passwd) &&
+      blobcmp(data->ca_info_blob, needle->ca_info_blob) &&
+      blobcmp(data->issuercert_blob, needle->issuercert_blob) &&
+      Curl_safecmp(data->CApath, needle->CApath) &&
+@@ -175,6 +180,11 @@
+   dest->ssl_options = source->ssl_options;
+ 
+   CLONE_BLOB(cert_blob);
++  CLONE_BLOB(key_blob);
++  CLONE_STRING(cert_type);
++  CLONE_STRING(key);
++  CLONE_STRING(key_type);
++  CLONE_STRING(key_passwd);
+   CLONE_BLOB(ca_info_blob);
+   CLONE_BLOB(issuercert_blob);
+   CLONE_STRING(CApath);
+@@ -204,6 +214,11 @@
+   Curl_safefree(sslc->cipher_list13);
+   Curl_safefree(sslc->pinned_key);
+   Curl_safefree(sslc->cert_blob);
++  Curl_safefree(sslc->key_blob);
++  Curl_safefree(sslc->cert_type);
++  Curl_safefree(sslc->key);
++  Curl_safefree(sslc->key_type);
++  Curl_safefree(sslc->key_passwd);
+   Curl_safefree(sslc->ca_info_blob);
+   Curl_safefree(sslc->issuercert_blob);
+   Curl_safefree(sslc->curves);
+--- a/lib/vtls/wolfssl.c
++++ b/lib/vtls/wolfssl.c
+@@ -519,8 +519,8 @@
+   }
+ 
+   /* Load the client certificate, and private key */
+-  if(ssl_config->primary.clientcert && ssl_config->key) {
+-    int file_type = do_file_type(ssl_config->cert_type);
++  if(ssl_config->primary.clientcert && ssl_config->primary.key) {
++    int file_type = do_file_type(ssl_config->primary.cert_type);
+ 
+     if(SSL_CTX_use_certificate_file(backend->ctx,
+                                     ssl_config->primary.clientcert,
+@@ -530,8 +530,8 @@
+       return CURLE_SSL_CONNECT_ERROR;
+     }
+ 
+-    file_type = do_file_type(ssl_config->key_type);
+-    if(SSL_CTX_use_PrivateKey_file(backend->ctx, ssl_config->key,
++    file_type = do_file_type(ssl_config->primary.key_type);
++    if(SSL_CTX_use_PrivateKey_file(backend->ctx, ssl_config->primary.key,
+                                     file_type) != 1) {
+       failf(data, "unable to set private key");
+       return CURLE_SSL_CONNECT_ERROR;
+--- a/src/tool_operate.c
++++ b/src/tool_operate.c
+@@ -46,6 +46,7 @@
+ #endif
+ 
+ #include "strcase.h"
++#include "curl_ctype.h"
+ 
+ #define ENABLE_CURLX_PRINTF
+ /* use our own printf() functions */
+@@ -691,10 +692,32 @@
+ /*
+  * Return the protocol token for the scheme used in the given URL
+  */
+-static const char *url_proto(char *url)
++/* Match lib/urlapi.c Curl_is_absolute_url(..., guess_scheme=TRUE).
++ * Keep tool security-option selection aligned with STRING_DEFAULT_PROTOCOL. */
++static bool tool_url_has_scheme(const char *url)
+ {
+-  CURLU *uh = curl_url();
++  size_t i;
++#ifdef WIN32
++  if(ISALPHA(url[0]) && url[1] == ':')
++    return FALSE;
++#endif
++  for(i = 0; i < 40; i++) {
++    char c = url[i];
++    if(!c || !(ISALNUM(c) || c == '+' || c == '-' || c == '.'))
++      break;
++  }
++  return i && url[i] == ':' && url[i + 1] == '/';
++}
++
++static const char *url_proto(char *url, const char *proto_default)
++{
++  CURLU *uh;
+   const char *proto = NULL;
++  if(url && proto_default && !tool_url_has_scheme(url)) {
++    proto = proto_token(proto_default);
++    return proto ? proto : "???";
++  }
++  uh = curl_url();
+ 
+   if(uh) {
+     if(url) {
+@@ -1258,7 +1281,7 @@
+         if(result)
+           break;
+ 
+-        use_proto = url_proto(per->this_url);
++        use_proto = url_proto(per->this_url, config->proto_default);
+ 
+         /* On most modern OSes, exiting works thoroughly,
+            we'll clean everything up via exit(), so don't bother with

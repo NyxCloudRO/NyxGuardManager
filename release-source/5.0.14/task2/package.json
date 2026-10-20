@@ -1,0 +1,1 @@
+{"private":true,"type":"module","dependencies":{"@formatjs/icu-messageformat-parser":"3.5.21","acorn":"8.14.1"},"scripts":{"test":"node --test tests/*.test.mjs"}}

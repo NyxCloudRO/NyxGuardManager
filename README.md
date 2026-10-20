@@ -7,7 +7,7 @@
 <p align="center">A self-hosted reverse proxy with application protection, traffic intelligence,<br />WireGuard access and operational diagnostics.</p>
 
 <p align="center">
-  <a href="https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.13"><img src="https://img.shields.io/badge/release-5.0.13-00c8e8?style=flat-square" alt="Release 5.0.13" /></a>
+  <a href="release-source/5.0.14/final/RELEASE-NOTES.md"><img src="https://img.shields.io/badge/candidate-5.0.14%20unpublished-00c8e8?style=flat-square" alt="Candidate 5.0.14 (unpublished)" /></a>
   <a href="https://hub.docker.com/r/nyxmael/nyxguardmanager"><img src="https://img.shields.io/docker/pulls/nyxmael/nyxguardmanager?color=00c8e8&amp;style=flat-square" alt="Docker pulls" /></a>
   <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-NMPLA-5279b8?style=flat-square" alt="NMPLA license" /></a>
 </p>
@@ -23,9 +23,9 @@
 
 Manage HTTPS applications, certificates, access policies, traffic and remote VPN sites from one interface. Configuration, certificates and operational history stay on your infrastructure.
 
-**Current release · 5.0.13** uses a conventional host-managed Docker update: replace application code, reuse persistent storage, run versioned migrations, and verify readiness. MariaDB and its volume remain intact on successful upgrades. Manager uses **VPN Agent 5.0.2** and **schema 46**.
+**Release candidate · 5.0.14 (unpublished)** uses a conventional host-managed Docker update: replace application code, reuse persistent storage, run versioned migrations, and verify readiness. The existing database image and volume are preserved; when required, the updater recreates the database service with persistent InnoDB prerequisites for transactional traffic collection. Manager uses **VPN Agent 5.0.2** and **schema 49**.
 
-[Read the release notes](https://github.com/NyxCloudRO/NyxGuardManager/releases/tag/v5.0.13) · [Browse the changelog](CHANGELOG.md)
+[Read the candidate release notes](release-source/5.0.14/final/RELEASE-NOTES.md) · [Browse the changelog](CHANGELOG.md) · [Monitoring setup](docs/monitoring.md) · [Schema 49 upgrade](docs/upgrade-5.0.14.md)
 
 <a id="quick-install"></a>
 
@@ -117,7 +117,7 @@ Network: host access to Docker registries and certificate services; inbound TCP 
 | Debian 12 | Supported | Working installs recorded in 3.0.0; 5.0.7 privilege/package checks | No new OS-specific validation claimed |
 | Debian 13 | Supported | Working installs recorded in 3.0.0 | Controlled runtime/upgrade checks; fresh-host OS retesting not claimed |
 
-Support carries forward independently of hotfix retesting. The [installation and compatibility guide](docs/installation.md) records the evidence and configuration limits; [5.0.13 validation coverage](docs/validation-5.0.13.md) describes the focused release tests. Historical family labels do not certify every point release.
+Support carries forward independently of hotfix retesting. The [installation and compatibility guide](docs/installation.md) records the evidence and configuration limits; [5.0.14 validation coverage](docs/validation-5.0.14.md) describes the focused release tests. Historical family labels do not certify every point release.
 
 For 5.0.12, native Ubuntu 24.04.5 fresh installations passed with stock installer deadlines, including Manager-only without TUN and Manager plus Agent with TUN. Required-VPN rejection, later Agent activation and same-version no-op were also checked.
 
@@ -132,13 +132,13 @@ HTTP-01 certificates need public inbound TCP 80. DNS challenges need the provide
 <details>
 <summary>Manual Docker Compose installation</summary>
 
-For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.13 uses VPN Agent 5.0.2. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
+For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.14 uses VPN Agent 5.0.2. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
 
 ```yaml
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:5.0.13
+    image: nyxmael/nyxguardmanager:5.0.14
     restart: unless-stopped
     ports:
       - "80:80"
@@ -204,6 +204,7 @@ services:
   db:
     container_name: nyxguard-db
     image: jc21/mariadb-aria:latest
+    command: ["--skip-innodb=0", "--innodb=ON", "--innodb-flush-log-at-trx-commit=1"]
     restart: unless-stopped
     environment:
       TZ: "${TZ:-UTC}"
@@ -281,7 +282,7 @@ The updater identifies the installed and latest stable published versions, asks 
 
 Database migrations run through the application's normal startup. Health, migration completion, durable configuration records and storage identities must pass before success is committed. A failed download simply restarts the unchanged installation. A failure after application replacement restores the verified pre-migration data and previous application. A repeated invocation on the current version makes no changes.
 
-Use the current `main` command above. The 5.0.13 release asset contains the qualified self-contained updater. Historical 5.0.10 assets retain their original limitations.
+Use the current `main` command above. The 5.0.14 release asset contains the qualified self-contained updater. Historical 5.0.10 assets retain their original limitations.
 
 See [installation and update architecture](docs/application-lifecycle.md) for the persistent storage map, maintenance downtime, version pinning, supported topology and backup requirements. Independent backups remain recommended. Advanced restoration and historical 4.x transitions are documented separately in [advanced recovery](docs/advanced-recovery.md). The in-app update action directs administrators to the host command.
 
