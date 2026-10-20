@@ -136,7 +136,19 @@ def readiness_budget(policy,total):
  return min(policy['maximumBudgetMs']+60000,max(300000,policy['fixedBudgetMs']+total*policy['workUnitBudgetMs']+60000))
 
 def health(m,readiness=None):
- started=time.monotonic();deadline=started+300;last_report=0;last_sample=0
+ configured=os.environ.get('NYXGUARD_READINESS_TIMEOUT_SECONDS')
+ if configured is not None and (not configured.isdigit() or not 1<=int(configured)<=1800):
+  raise RuntimeError('NYXGUARD_READINESS_TIMEOUT_SECONDS must be an integer from 1 to 1800')
+ started=time.monotonic();absolute_deadline=started+(int(configured) if configured is not None else 1800)
+ deadline=min(absolute_deadline,started+(int(configured) if configured is not None else 300));last_report=0;last_sample=0
+ last_failure=None
+ class PollFailure(Exception):
+  pass
+ def sample(category,call,*args,**kw):
+  try:return call(*args,**kw)
+  except (RuntimeError,ValueError,subprocess.TimeoutExpired) as error:
+   reason=failure_reason(error) if not isinstance(error,ValueError) else 'Invalid command response'
+   raise PollFailure(category+': '+reason) from None
  last_work=None;work_at=started;attempts=set();progress=None;manager_ready_at=None
  def command_budget(limit=10):
   remaining=deadline-time.monotonic()
@@ -145,59 +157,68 @@ def health(m,readiness=None):
  if readiness:readiness_budget(readiness,0)
  stage('Readiness: waiting for application and service health')
  while time.monotonic()<deadline:
-  good=True;statuses={};manager=None
-  for svc in m['services']:
-   service_id=cid(svc,timeout=command_budget())
-   c=inspect(service_id,timeout=command_budget());status=c['State'].get('Health',{}).get('Status')
-   statuses[svc]={'state':c['State']['Status'],'health':status or 'not configured'}
-   if svc=='nyxguard-manager':manager=c
-   if c['State']['Status']=='restarting' and c.get('RestartCount',0)>=3:raise RuntimeError('Service repeatedly exited during readiness: '+svc)
-   if c['State']['Status'] in ('exited','dead'):raise RuntimeError('Service exited during readiness: '+svc)
-   if not c['State']['Running'] or (svc!='db' and status!='healthy'):good=False
-  now=time.monotonic()
-  if manager and manager['State']['Running'] and now-last_sample>=5:
-   try:progress=json.loads(docker('exec',manager['Id'],'node','-e',STARTUP_STATUS,capture=True,timeout=command_budget()))
-   except (RuntimeError,ValueError,subprocess.TimeoutExpired):progress=None
-   last_sample=now
-   if readiness and progress:
-    if progress['attempt']:attempts.add(progress['attempt'])
-    if len(attempts)>=3:raise RuntimeError('Manager startup repeatedly restarted; inspect the preserved readiness diagnostic')
-    if progress['failed']:raise RuntimeError('Manager startup reported failure during '+progress['phase'])
-    observed=(progress['attempt'],progress['phase'],progress['units'])
-    if observed!=last_work:last_work=observed;work_at=now
-    deadline=started+readiness_budget(readiness,progress['total'])/1000
-    if not progress['complete']:
-     idle=readiness['migrationIdleMs'] if progress['phase'].startswith('migration') else readiness['startupIdleMs']
-     if (now-work_at)*1000>idle:raise RuntimeError('Manager startup stopped completing work during '+progress['phase'])
-  if readiness and not progress and (now-started)*1000>readiness['startupIdleMs']:
-   raise RuntimeError('Manager has not provided valid startup progress within the initialization limit')
-  if readiness and good:
-   try:docker('exec',manager['Id'],'node','/app/internal/readiness-probe.mjs',capture=True,timeout=command_budget(6))
-   except (RuntimeError,subprocess.TimeoutExpired):good=False;statuses['nyxguard-manager']['readiness']='pending'
-   else:statuses['nyxguard-manager']['readiness']='passed'
-  if progress and progress['complete']:
-   if manager_ready_at is None:manager_ready_at=now
-   if not good and now-manager_ready_at>120:raise RuntimeError('Application initialization completed, but service/readiness acceptance still fails')
-  if now-last_report>=15:
-   safe_progress={k:v for k,v in progress.items() if k!='attempt'} if progress else None
-   diagnostic('readiness',services=statuses,progress=safe_progress,budgetSeconds=int(deadline-started))
-   log('Service health: '+', '.join(svc+' '+v['state']+'/'+v['health'] for svc,v in statuses.items()))
-   if progress:
-    message='Startup operation: '+progress['phase']
-    if progress.get('migration'):message+='; migration '+progress['migration']+' '+str(progress.get('migrationStatus') or '')
-    if progress['total']>0 and progress['units']<=progress['total']:
-     message+='; completed work '+str(progress['units'])+'/'+str(progress['total'])+' ('+format(progress['units']*100/progress['total'],'.1f')+'%)'
-    log(message)
-   last_report=now
-  if good:
-   database_id=cid('db',timeout=command_budget())
-   docker('exec',database_id,'sh','-c','MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqladmin ping -uroot --silent',capture=True,timeout=command_budget())
-   manager_id=cid('nyxguard-manager',timeout=command_budget())
-   docker('exec',manager_id,'nginx','-t',capture=True,timeout=command_budget())
-   log('Services are healthy; database and Nginx checks passed.')
-   return
+  try:
+   good=True;statuses={};manager=None
+   for svc in m['services']:
+    service_id=sample('container lookup '+svc,cid,svc,timeout=command_budget())
+    c=sample('container inspect '+svc,inspect,service_id,timeout=command_budget());status=c['State'].get('Health',{}).get('Status')
+    statuses[svc]={'state':c['State']['Status'],'health':status or 'not configured'}
+    if svc=='nyxguard-manager':manager=c
+    if c['State']['Status']=='restarting' and c.get('RestartCount',0)>=3:raise RuntimeError('Service repeatedly exited during readiness: '+svc)
+    if c['State']['Status'] in ('exited','dead'):raise RuntimeError('Service exited during readiness: '+svc)
+    if not c['State']['Running'] or (svc!='db' and status!='healthy'):good=False
+   now=time.monotonic()
+   if manager and manager['State']['Running'] and now-last_sample>=5:
+    try:progress=json.loads(docker('exec',manager['Id'],'node','-e',STARTUP_STATUS,capture=True,timeout=command_budget()))
+    except (RuntimeError,ValueError,subprocess.TimeoutExpired) as error:
+     progress=None
+     diagnostic('readiness-command-retry',category='startup progress',reason=failure_reason(error) if not isinstance(error,ValueError) else 'Invalid command response')
+    last_sample=now
+    if readiness and progress:
+     if progress['attempt']:attempts.add(progress['attempt'])
+     if len(attempts)>=3:raise RuntimeError('Manager startup repeatedly restarted; inspect the preserved readiness diagnostic')
+     if progress['failed']:raise RuntimeError('Manager startup reported failure during '+progress['phase'])
+     observed=(progress['attempt'],progress['phase'],progress['units'])
+     if observed!=last_work:last_work=observed;work_at=now
+     deadline=min(absolute_deadline,started+(int(configured) if configured is not None else readiness_budget(readiness,progress['total'])/1000))
+     if not progress['complete']:
+      idle=readiness['migrationIdleMs'] if progress['phase'].startswith('migration') else readiness['startupIdleMs']
+      if (now-work_at)*1000>idle:raise RuntimeError('Manager startup stopped completing work during '+progress['phase'])
+   if readiness and not progress and (now-started)*1000>readiness['startupIdleMs']:
+    raise RuntimeError('Manager has not provided valid startup progress within the initialization limit')
+   if readiness and good:
+    try:docker('exec',manager['Id'],'node','/app/internal/readiness-probe.mjs',capture=True,timeout=command_budget(6))
+    except (RuntimeError,subprocess.TimeoutExpired) as error:
+     good=False;statuses['nyxguard-manager']['readiness']='pending'
+     diagnostic('readiness-command-retry',category='application readiness',reason=failure_reason(error))
+    else:statuses['nyxguard-manager']['readiness']='passed'
+   if progress and progress['complete']:
+    if manager_ready_at is None:manager_ready_at=now
+    if not good and now-manager_ready_at>120:raise RuntimeError('Application initialization completed, but service/readiness acceptance still fails')
+   if now-last_report>=15:
+    safe_progress={k:v for k,v in progress.items() if k!='attempt'} if progress else None
+    diagnostic('readiness',services=statuses,progress=safe_progress,budgetSeconds=int(deadline-started))
+    log('Service health: '+', '.join(svc+' '+v['state']+'/'+v['health'] for svc,v in statuses.items()))
+    if progress:
+     message='Startup operation: '+progress['phase']
+     if progress.get('migration'):message+='; migration '+progress['migration']+' '+str(progress.get('migrationStatus') or '')
+     if progress['total']>0 and progress['units']<=progress['total']:
+      message+='; completed work '+str(progress['units'])+'/'+str(progress['total'])+' ('+format(progress['units']*100/progress['total'],'.1f')+'%)'
+     log(message)
+    last_report=now
+   if good:
+    database_id=sample('database lookup',cid,'db',timeout=command_budget())
+    sample('database acceptance',docker,'exec',database_id,'sh','-c','MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqladmin ping -uroot --silent',capture=True,timeout=command_budget())
+    manager_id=sample('manager lookup',cid,'nyxguard-manager',timeout=command_budget())
+    sample('nginx acceptance',docker,'exec',manager_id,'nginx','-t',capture=True,timeout=command_budget())
+    log('Services are healthy; database and Nginx checks passed.')
+    return
+  except PollFailure as error:
+   last_failure=str(error)
+   diagnostic('readiness-command-retry',category='service polling',reason=last_failure)
+   log('Readiness poll will retry within the startup budget: '+last_failure)
   time.sleep(min(2,max(0,deadline-time.monotonic())))
- raise RuntimeError('Service readiness exceeded its bounded startup budget')
+ raise RuntimeError('Service readiness exceeded its bounded startup budget'+('; last failure: '+last_failure if last_failure else ''))
 
 # Restrict comparison to durable user configuration and history. Runtime counters,
 # migration bookkeeping, retention and notification dispatch are not corruption.

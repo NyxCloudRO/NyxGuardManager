@@ -16,7 +16,7 @@ class HostFixture(unittest.TestCase):
   self.original={name:(self.root/name).read_bytes() for name in ('.env','docker-compose.yml','vault.key')}
   self.current='5.0.0';self.calls=[]
   for name in ('database','data','certificates'):(self.root/name).mkdir()
-  self.services={'db':{'Id':'db','Mounts':[{'Destination':'/var/lib/mysql','Type':'volume','Source':str(self.root/'database'),'Name':'fixture_database'}]},
+  self.services={'db':{'Id':'db','Image':'fixture-db-image','Mounts':[{'Destination':'/var/lib/mysql','Type':'volume','Source':str(self.root/'database'),'Name':'fixture_database'}]},
    'nyxguard-manager':{'Id':'nyxguard-manager','Mounts':[
     {'Destination':'/data','Type':'volume','Source':str(self.root/'data'),'Name':'fixture_data'},
     {'Destination':'/etc/letsencrypt','Type':'volume','Source':str(self.root/'certificates'),'Name':'fixture_certificates'},

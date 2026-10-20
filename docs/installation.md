@@ -46,3 +46,9 @@ apt-get install -y ca-certificates curl
 Ordinary sudo users prefix both commands with `sudo`. Then use the [root or sudo one-line command](../README.md#installation). To review the script before executing it, download it with `curl -fsSL https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/install.sh -o /tmp/nyxguard-install.sh`, inspect it, then run `bash /tmp/nyxguard-install.sh` as root (or `sudo bash /tmp/nyxguard-install.sh`). Manual Docker Compose installation remains in the [README](../README.md#docker-deployment).
 
 Current installation and update commands, storage identities and version pinning are documented in [application lifecycle](application-lifecycle.md).
+
+### Readiness command retries
+
+The host updater retries temporary Docker lookup, inspection and acceptance-command failures within the existing bounded readiness window. Each command retains its independent timeout. Diagnostics identify the command category without recording credentials or command arguments. Confirmed service exits and startup failures still trigger rollback.
+
+Set `NYXGUARD_READINESS_TIMEOUT_SECONDS` to an integer between 1 and 1800 to set the global readiness deadline. The target startup policy still enforces its idle limits; health, application readiness, database and Nginx acceptance remain required. Backups and rollback are unchanged.
