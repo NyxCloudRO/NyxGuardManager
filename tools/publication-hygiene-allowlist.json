@@ -34,5 +34,11 @@
     "rule": "private-home",
     "lineSHA256": "bc1abe87ba6919af9a1a5c1f04697446e49978868d7ee3ed38be93bd5ec7eefb",
     "reason": "Generic detection regex syntax; no operator path is embedded."
+  },
+  {
+    "path": "release-source/5.0.14/task3/tests/inventory.test.mjs",
+    "rule": "private-address",
+    "lineSHA256": "118d73cb0b0ea7ab851205d1726ac59072f16d6d867d57ad3364330e00b30b3f",
+    "reason": "Isolated synthetic policy filtering unit test. Literal RFC1918 deny CIDR and query substring test ordering; no real deployment host data."
   }
 ]

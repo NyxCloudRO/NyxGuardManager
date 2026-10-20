@@ -1,0 +1,43 @@
+import {r as React,j as jsx,M as Modal,p as get,w as del,NyxModuleTabKeys} from './NYX_MAIN';
+import {requestConfirmation} from './NYX_CONFIRM';
+const text=(id)=>window.NyxI18n.message('blocked.'+id);
+const h=jsx.jsx,hs=jsx.jsxs;
+const reasons=['ip','country','automatic','automatic_bot','automatic_ddos','automatic_sqli','automatic_authfail','restriction'];
+function useLocale(){const[locale,set]=React.useState(window.NyxI18n.locale);React.useEffect(()=>{const o=new MutationObserver(()=>set(window.NyxI18n.locale));o.observe(document.documentElement,{attributes:true,attributeFilter:['lang']});return()=>o.disconnect();},[]);return locale;}
+export function BlockedTabs({active,onChange}){useLocale();return hs('div',{'data-nyx-module-tabs':true,className:'nyx-blocked-tabs',onKeyDown:NyxModuleTabKeys,children:['ip','country','blocked'].map(key=>h('button',{type:'button','aria-pressed':active===key,onClick:()=>onChange(key),children:key==='blocked'?text('title'):window.NyxI18n.message(key==='ip'?'nyxguard.rules.ip-range':'nyxguard.rules.country')},key))});}
+export function BlockedRequests({active}){
+ const locale=useLocale(),[hours,H]=React.useState(24),[search,S]=React.useState(''),[debounced,D]=React.useState(''),[country,C]=React.useState(''),[reason,R]=React.useState(''),[sort,O]=React.useState('latest'),[page,P]=React.useState(1),[data,B]=React.useState(null),[error,E]=React.useState(false),[loading,L]=React.useState(false),[detail,V]=React.useState(null),[refresh,F]=React.useState(0);
+ const request=React.useRef(0),mounted=React.useRef(true);
+ React.useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;request.current++;};},[]);
+ React.useEffect(()=>{const t=setTimeout(()=>D(search.trim()),400);return()=>clearTimeout(t);},[search]);
+ React.useEffect(()=>P(1),[hours,debounced,country,reason,sort]);
+ React.useEffect(()=>{
+  if(!active)return;let alive=true,fetching=false;B(null);
+  const load=async()=>{if(fetching)return;fetching=true;const id=++request.current;L(true);try{const params=new URLSearchParams({hours:String(hours),search:debounced,country,reason,sort,page:String(page)});const result=await get({url:'nyxguard/blocked-requests?'+params});if(alive&&id===request.current){B(result);E(false);if(result.groups&&page>Math.ceil(result.groups/result.pageSize))P(1);}}catch{if(alive&&id===request.current)E(true);}finally{fetching=false;if(alive&&id===request.current)L(false);}};
+  load();const timer=setInterval(load,5000);return()=>{alive=false;clearInterval(timer);request.current++;};
+ },[active,hours,debounced,country,reason,sort,page,refresh]);
+ const number=n=>new Intl.NumberFormat(locale).format(n||0),date=sec=>new Intl.DateTimeFormat(locale,{dateStyle:'short',timeStyle:'medium'}).format(new Date(sec*1000));
+ const countryName=code=>{if(!code)return text('unknown');try{return new Intl.DisplayNames([locale],{type:'region'}).of(code);}catch{return code;}};
+ const reset=()=>{S('');D('');C('');R('');O('latest');P(1);};
+ const remove=()=>requestConfirmation({title:text('delete'),message:text('delete-confirm'),action:text('delete'),cancelLabel:text('cancel'),reducesProtection:false,errorMessage:text('delete-error'),onConfirm:async()=>{try{await del({url:'nyxguard/blocked-requests'});request.current++;if(mounted.current){B(null);V(null);P(1);F(v=>v+1);}}catch{throw Error(text('delete-error'));}}});
+ const totals=data?.totals||{},busy=loading&&!data;
+ return hs('section',{'data-blocked-requests':true,hidden:!active,'aria-busy':loading,children:[
+ hs('div',{className:'nyx-blocked-heading',children:[h('h3',{children:text('title')}),hs('div',{className:'nyx-blocked-period',role:'group','aria-label':text('period'),children:[24,168,720].map(value=>h('button',{type:'button','aria-pressed':hours===value,onClick:()=>{H(value);P(1);},children:text('period-'+value)},value))})]}),
+ h('p',{className:'nyx-blocked-scope',children:text('scope')}),
+ hs('div',{className:'nyx-blocked-stats',children:[['requests',totals.requests],['sources',totals.sources],['applications',totals.applications]].map(([label,n])=>hs('span',{children:[h('strong',{children:data?number(n):'—'}),' ',text(label)]},label))}),
+ hs('div',{className:'nyx-blocked-filters',children:[
+ h('input',{type:'search',value:search,onChange:e=>S(e.target.value),maxLength:120,placeholder:text('search'),'aria-label':text('search')}),
+ hs('select',{value:country,'aria-label':text('country'),onChange:e=>{C(e.target.value);P(1);},children:[h('option',{value:'',children:text('all-countries')}),...[...new Set([...(data?.countries||[]),...(country?[country==='unknown'?'':country]:[])])].map(cc=>h('option',{value:cc||'unknown',children:countryName(cc)},cc||'unknown'))]}),
+ hs('select',{value:reason,'aria-label':text('reason'),onChange:e=>{R(e.target.value);P(1);},children:[h('option',{value:'',children:text('all-reasons')}),...reasons.map(r=>h('option',{value:r,children:text('reason-'+r)},r))]}),
+ hs('select',{value:sort,'aria-label':text('sort'),onChange:e=>{O(e.target.value);P(1);},children:[h('option',{value:'latest',children:text('latest')}),h('option',{value:'requests',children:text('most-requests')})]}),
+ h('button',{type:'button',onClick:reset,disabled:!search&&!country&&!reason&&sort==='latest',children:text('reset')}),
+ h('button',{type:'button',onClick:()=>F(v=>v+1),disabled:loading,children:text('refresh')}),
+ window.NyxGuardCapabilities.canMutate('nyxguard')&&h('button',{type:'button',className:'nyx-blocked-clear',onClick:remove,children:text('delete')})]}),
+ error&&h('div',{role:'alert',className:'nyx-blocked-warning',children:text('error')}),
+ data&&(data.health.partial||data.health.stale||data.health.pending||data.health.status==='error')&&h('p',{role:'status',className:'nyx-blocked-warning',children:data.health.pending?text('pending'):data.health.stale||data.health.status==='error'?text('stale'):text('partial')}),
+ data?.reasons.length>0&&h('div',{className:'nyx-blocked-reasons',children:data.reasons.map(r=>h('span',{children:text('reason-'+r.reason)+': '+number(r.requests)},r.reason))}),
+ hs('div',{className:'nyx-blocked-table-wrap',children:[hs('table',{className:'nyx-blocked-table',children:[h('thead',{children:hs('tr',{children:['source','application','reason','requests','last','details'].map(id=>h('th',{scope:'col',children:text(id)},id))})}),h('tbody',{children:busy?h('tr',{children:h('td',{colSpan:6,children:text('loading')})}):!data?.items.length?h('tr',{children:h('td',{colSpan:6,className:'nyx-blocked-empty',children:error?text('error'):search||country||reason?text('no-match'):text('empty')})}):data.items.map((row,i)=>hs('tr',{children:[hs('td',{children:[h('span',{className:'nyx-blocked-ip',children:row.ip}),h('small',{children:countryName(row.country)})]}),hs('td',{children:[h('span',{children:row.appName||row.host||text('unknown-application')}),row.host!==row.appName&&h('small',{children:row.host})]}),h('td',{children:text('reason-'+row.reason)}),h('td',{className:'nyx-blocked-count',children:number(row.requests)}),h('td',{children:date(row.lastSeen)}),h('td',{children:h('button',{type:'button',onClick:()=>V(row),'aria-label':text('details')+' '+row.ip,children:text('details')})})]},JSON.stringify([row.ip,row.appId,row.host,row.policy,row.country])))})]})]}),
+ data&&hs('div',{className:'nyx-blocked-pagination',children:[h('span',{children:text('groups')+': '+number(data.groups)}),h('button',{type:'button',disabled:page<=1||loading,onClick:()=>P(v=>v-1),children:text('previous')}),h('span',{children:number(page)+' / '+number(Math.max(1,Math.ceil(data.groups/data.pageSize)))}),h('button',{type:'button',disabled:page*data.pageSize>=data.groups||loading,onClick:()=>P(v=>v+1),children:text('next')})]}),
+ detail&&hs(Modal,{show:true,onHide:()=>V(null),centered:true,animation:false,className:'nyx-blocked-detail',children:[h(Modal.Header,{closeButton:true,children:h(Modal.Title,{children:text('details')})}),h(Modal.Body,{children:h('dl',{children:[['source',detail.ip],['country',countryName(detail.country)],['application',detail.appName||text('unknown-application')],['domain',detail.host],['reason',text('reason-'+detail.reason)],['requests',number(detail.requests)],['first',date(detail.firstSeen)],['last',date(detail.lastSeen)],['rule',detail.policy.id?String(detail.policy.id):text('ambiguous')],['match',detail.policy.match||'—'],['note',detail.policy.note||'—'],['status','403']].map(([key,value])=>hs('div',{children:[h('dt',{children:text(key)}),h('dd',{children:value})]},key))})}),h(Modal.Footer,{children:h('button',{type:'button',className:'btn btn-sm btn-secondary',onClick:()=>V(null),children:text('close')})})]})
+ ]});
+}

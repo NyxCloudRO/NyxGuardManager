@@ -1,0 +1,4 @@
+FROM nyxguardmanager:5.0.14-security-final
+COPY final/integrations.js /app/internal/integrations.js
+RUN node --check /app/internal/integrations.js
+LABEL nyxguard.metrics.auto-ban-provenance="native-rule-origin"

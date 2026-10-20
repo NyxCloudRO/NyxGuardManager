@@ -1,0 +1,9 @@
+FROM nyxguardmanager:5.0.14-rc@sha256:9373bdb794b01d68b0d33364cd0cca462a99d0efd90e31a84a49841f12da7a5b AS build
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y libpcre3-dev libssl-dev zlib1g-dev patch
+COPY final/security/vendor /vendor
+COPY final/security/build-nginx.py /build-nginx.py
+RUN --mount=type=tmpfs,target=/build python3 /build-nginx.py
+FROM nyxguardmanager:5.0.14-rc@sha256:9373bdb794b01d68b0d33364cd0cca462a99d0efd90e31a84a49841f12da7a5b
+COPY --from=build /patched-nginx /usr/sbin/nginx
+COPY final/security/vendor/cumulative-manifest.json final/security/vendor/upstream-manifest.json /app/security-provenance/
+LABEL nyxguard.security.nginx-backport="official-advisories-through-1.30.6;preserved-openresty-1.27.1.2;20261019"

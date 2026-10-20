@@ -1,0 +1,159 @@
+{
+  "version": "5.0.14",
+  "publication_status": "QUALIFIED_RELEASE_ARTIFACT",
+  "security": "PASS within recorded supported scope",
+  "baseline_manifest": "sha256:45dddd0453fc8f13c080d6d870d5e4c62fcd786a6148b40f173eb62b83e9e3b4",
+  "candidate_manifest": "sha256:a6b853d2d259d66e6f258dd81797b99bc88ce6aafc4483f3c63f7923a9d843f0",
+  "candidate_config": "sha256:ce22614fd7bd9058cf19243f3b1492dd24a1a371ddb316fb15ac32df1859ade9",
+  "platforms": [
+    "linux/amd64"
+  ],
+  "packages": [
+    {
+      "package": "libexpat1",
+      "version": "2.5.0-1+deb12u4+nyxguard1",
+      "deb": "libexpat1_2.5.0-1+deb12u4+nyxguard1_amd64.deb",
+      "sha256": "11099e05ca7955eadd9077bd3603bdd8ecacca865180f3f7d59fcbe94c44bd52",
+      "changed_runtime_files": {
+        "/lib/x86_64-linux-gnu/libexpat.so.1.8.10": "5ae6b89542df43d98d8bb89d47bffb24a02aa0b466080765f7e0b055826e3cae",
+        "/usr/lib/x86_64-linux-gnu/libexpatw.so.1.8.10": "cf89090a1f36224d411548c7557b5321b88f0f72f1ab5a34bd3d5ed3f6740e2c"
+      },
+      "unchanged_packages_bumped_for_exact_python_dependencies": false
+    },
+    {
+      "package": "libtasn1-6",
+      "version": "4.19.0-2+deb12u1+nyxguard1",
+      "deb": "libtasn1-6_4.19.0-2+deb12u1+nyxguard1_amd64.deb",
+      "sha256": "aef962a15dc2399e5d54e78089ad0cddee820e2dfb9dcaf2fea2b44b0eeff64c",
+      "changed_runtime_files": {
+        "/usr/lib/x86_64-linux-gnu/libtasn1.so.6.6.3": "cc9593756fcb0b9cfad3d530f1961b09f42244b6383cf227f698cbb4923d3068"
+      },
+      "unchanged_packages_bumped_for_exact_python_dependencies": false
+    },
+    {
+      "package": "libldap-2.5-0",
+      "version": "2.5.13+dfsg-5+nyxguard1",
+      "deb": "libldap-2.5-0_2.5.13+dfsg-5+nyxguard1_amd64.deb",
+      "sha256": "f3649033cc4e578381c10969beb75d6092e7ed1032d0e6739be8f7ab22981963",
+      "changed_runtime_files": {
+        "/usr/lib/x86_64-linux-gnu/libldap-2.5.so.0.1.8": "6c6ec899f9ae3bc5ef49cfd9e4e542e06b497cfdec6bfa5ac38ddc0f4e5c85c4"
+      },
+      "unchanged_packages_bumped_for_exact_python_dependencies": false
+    },
+    {
+      "package": "libssl3",
+      "version": "3.0.22-1~deb12u1+nyxguard1",
+      "deb": "libssl3_3.0.22-1~deb12u1+nyxguard1_amd64.deb",
+      "sha256": "f16883bf4803191754fc35b3bcb03f8de7f7ec9ed982e5508280fec46d5d3e28",
+      "changed_runtime_files": {
+        "/usr/lib/x86_64-linux-gnu/libssl.so.3": "5318a04810144df9d1663ad364791a1760b653e6b24d9215c0da6121d79ba4eb"
+      },
+      "unchanged_packages_bumped_for_exact_python_dependencies": false
+    },
+    {
+      "package": "gzip",
+      "version": "1.12-1+nyxguard1",
+      "deb": "gzip_1.12-1+nyxguard1_amd64.deb",
+      "sha256": "a7ecfd0255557b585f3a9a474d66adca29eef7aefe335b1f8e99f88ba877d5c7",
+      "changed_runtime_files": {
+        "/bin/gzip": "bdbabb8f2349718d4d291ff2828ecab8b884f0f65ed9c505f9899d9ef61a55a6"
+      },
+      "unchanged_packages_bumped_for_exact_python_dependencies": false
+    },
+    {
+      "package": "python3.11-minimal",
+      "version": "3.11.2-6+deb12u9+nyxguard1",
+      "deb": "python3.11-minimal_3.11.2-6+deb12u9+nyxguard1_amd64.deb",
+      "sha256": "d75a6195861c9c2990d33fc272262e24f454b11b74b2f71ca3bfb8ba01a5e719",
+      "changed_runtime_files": {
+        "/usr/bin/python3.11": "af390b7db585c7dc2f13be3cfe61f3adba45bfe9286d7b65ee49979ea0fb5cd9"
+      },
+      "unchanged_packages_bumped_for_exact_python_dependencies": false
+    },
+    {
+      "package": "python3.11",
+      "version": "3.11.2-6+deb12u9+nyxguard1",
+      "deb": "python3.11_3.11.2-6+deb12u9+nyxguard1_amd64.deb",
+      "sha256": "6e4501419d94b9feaaa2cad59a585d51412df6e2313878baf1f54c395f25fdb4",
+      "changed_runtime_files": {},
+      "unchanged_packages_bumped_for_exact_python_dependencies": true
+    },
+    {
+      "package": "libpython3.11-minimal",
+      "version": "3.11.2-6+deb12u9+nyxguard1",
+      "deb": "libpython3.11-minimal_3.11.2-6+deb12u9+nyxguard1_amd64.deb",
+      "sha256": "8aa148893bc867d1348cb42e8f61963df9671db18669f6fdd46202d6903865fe",
+      "changed_runtime_files": {},
+      "unchanged_packages_bumped_for_exact_python_dependencies": true
+    },
+    {
+      "package": "libpython3.11-stdlib",
+      "version": "3.11.2-6+deb12u9+nyxguard1",
+      "deb": "libpython3.11-stdlib_3.11.2-6+deb12u9+nyxguard1_amd64.deb",
+      "sha256": "9dcb7940c447b23b12148ee3a82d1a28c9a33f22cb2411342e26d7b80c08b9ee",
+      "changed_runtime_files": {},
+      "unchanged_packages_bumped_for_exact_python_dependencies": true
+    }
+  ],
+  "abi": [
+    {
+      "component": "expat",
+      "old_count": 71,
+      "new_count": 72,
+      "removed": [],
+      "added": [
+        "XML_SetHashSalt16Bytes"
+      ],
+      "old_soname": "libexpat.so.1",
+      "new_soname": "libexpat.so.1"
+    },
+    {
+      "component": "expatw",
+      "old_count": 71,
+      "new_count": 72,
+      "removed": [],
+      "added": [
+        "XML_SetHashSalt16Bytes"
+      ],
+      "old_soname": "libexpatw.so.1",
+      "new_soname": "libexpatw.so.1"
+    },
+    {
+      "component": "tasn1",
+      "old_count": 43,
+      "new_count": 43,
+      "removed": [],
+      "added": [],
+      "old_soname": "libtasn1.so.6",
+      "new_soname": "libtasn1.so.6"
+    },
+    {
+      "component": "ldap",
+      "old_count": 569,
+      "new_count": 569,
+      "removed": [],
+      "added": [],
+      "old_soname": "libldap-2.5.so.0",
+      "new_soname": "libldap-2.5.so.0"
+    },
+    {
+      "component": "ssl",
+      "old_count": 519,
+      "new_count": 519,
+      "removed": [],
+      "added": [],
+      "old_soname": "libssl.so.3",
+      "new_soname": "libssl.so.3"
+    },
+    {
+      "component": "python",
+      "old_count": 1697,
+      "new_count": 1697,
+      "removed": [],
+      "added": [],
+      "old_soname": null,
+      "new_soname": null
+    }
+  ],
+  "scope": "The original qualified libstdc++, glibc, curl, Nginx and all first-party application bytes are retained. The complete ACL implementation and caller corrections are bound in ../acl-callers-20261020/runtime-binding.json."
+}

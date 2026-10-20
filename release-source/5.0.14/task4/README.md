@@ -1,0 +1,23 @@
+# NyxGuard Manager 5.0.14 — Task 4 (DEV candidate)
+
+Build from the accepted Task 3 image with `docker build -f task4/Dockerfile -t nyxguardmanager:5.0.14-task4-candidate .` from release-source/5.0.14. Exact backend prerequisites and the accepted Task 3 source/asset hashes are checked before patching. Nothing is published.
+
+The native Traffic Rules module gains IP / Range, Country and Blocked Requests navigation. The two native rule forms/tables and mutations are retained. Their compact controls share the existing 36px input rhythm; navigation uses native Task 3 styling and the Settings 16px content separation. The new view uses React Intl, all six catalogs, theme tokens, native modal and confirmation infrastructure.
+
+## Capture and safety
+
+Only actual final HTTP 403 denials at the existing IP/country return branches carry the observation marker. IP geo/per-host attribution is compiled alongside the existing active snapshot; `rule_origin` identifies automatic bans. Ambiguous equivalent prefixes or simultaneous global/per-host restrictions produce an honest generic IP restriction. Country overrides IP in the protected branch exactly as before. Expired compiled metadata is excluded and reported. No original detector, threshold, ban lifecycle, allow override or enforcement order changes.
+
+The log-phase Lua hook performs protected, bounded shared-memory aggregation; no file, network or DB operations. It records only time, the established `$remote_addr`, static Proxy Host ID, host, GeoIP country and compiled rule metadata. It never reads URLs, headers, cookies or request bodies. Credential-like administrator notes are suppressed. A private 0700 runtime directory contains the Unix collector socket; no TCP collector endpoint exists.
+
+Queue: 16MB, maximum 4096 groups, no forcible eviction; known drops and excluded observations are counted. Native manager drains at most 256 closed second groups per poll, once per second with no overlapping polls. Cumulative snapshots merge by maximum into minute vectors; retry/ack failures do not inflate occurrence totals. The queue survives graceful Nginx reloads; a cold restart can lose pending observations and is visibly disclosed. It is not a promise of complete traffic coverage.
+
+Storage: two dedicated tables, native Aria conventions, additive migrations `20261016000000_blocked_requests.js` and `20261016000001_blocked_request_groups.js`; release schema 48. Retention is 30 days (with a boundary-minute overlap), maximum 500,000 minute/dimension groups. Storage saturation is disclosed; new groups are excluded until capacity returns. A canonical grouping key and time index avoid wide metadata sorts; grouping uses compact binary keys and a statement-scoped 128MiB temporary-table limit (no global database setting changes); reads serialize with ingestion/deletion and at most two monitoring reads may wait/run. Query totals count occurrences, including exact partial-minute boundaries, with consistent filters and UTC second windows.
+
+Deletion requires the existing `nyxguard:update` boundary, persists a new generation and recoverable intent first, drains/discards prior generations, clears only the new history table, and uses the native audit writer with correlation deduplication. Aria provides no cross-table transaction guarantee; interrupted intents resume idempotently. Native backup export/import include both tables; a shared local maintenance lock prevents collection/deletion races, and restore rotates the queue generation. Older same-version backups without the new state initialize an empty state safely. Restoring an explicitly selected backup intentionally restores its saved history; ordinary deletion never rebuilds from attack logs.
+
+## Visibility limits
+
+Covers mapped Proxy Host HTTP denials from compiled IP/CIDR denies, protected-host country denies, and existing automatic bans. It excludes initial detections, rate-limit responses, upstream HTTP 403s, internal subrequests, access-portal bypass paths, unknown hosts, pre-HTTP network drops and TLS failures. Geography is unknown without installed GeoIP; arbitrary country headers are not reported as validated geography. Existing country enforcement's header policy is preserved. Existing Threat Activity may independently process deny logs using its inherited historical-cause logic; the new collector neither sources nor writes those records.
+
+No production, licensing or publication changes. Task 3's unresolved licensing evidence issue remains independent and unresolved. Private acceptance evidence is maintained under `[private operator evidence excluded from distribution]`.

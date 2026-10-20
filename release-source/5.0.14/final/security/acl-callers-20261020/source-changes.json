@@ -1,0 +1,20 @@
+[
+  {
+    "source": "sources/coreutils-9.1/src/copy.c",
+    "sha256": "34c46f70414054ab2b4eb3f3ba22f38e02a9be06ce2704c1ef0ff9b89359203e",
+    "patch": "coreutils-pinned-acl.patch",
+    "patch_sha256": "a310b82fd02c20b55b88d3343b744991b129a5c1d11d3125de9666340a00ac31"
+  },
+  {
+    "source": "sources/tar-1.34+dfsg/src/extract.c",
+    "sha256": "41652955e10758feb21b812794e9c4e38ca53203d44bff09a7816fd5ab548cec",
+    "patch": "tar-extract-pinned-acl.patch",
+    "patch_sha256": "1ae571291448640f93542bb3faabf85fc235305b417d0078c583af54275c64dd"
+  },
+  {
+    "source": "sources/tar-1.34+dfsg/src/xattrs.c",
+    "sha256": "5cf852c0d02b6fe1e09b074f43002ff2288921e858ba4839e851bbee3f42b106",
+    "patch": "tar-xattrs-pinned-acl.patch",
+    "patch_sha256": "53423a74e2422d41a195e5473928fe3c60ce857dd4b7840c0d6177be7cb6a65e"
+  }
+]

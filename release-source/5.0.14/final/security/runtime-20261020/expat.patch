@@ -1,0 +1,211 @@
+--- a/lib/xmlparse.c
++++ b/lib/xmlparse.c
+@@ -596,7 +596,7 @@
+ 
+ static XML_Char *copyString(const XML_Char *s, XML_Parser parser);
+ 
+-static unsigned long generate_hash_secret_salt(XML_Parser parser);
++static struct sipkey generate_hash_secret_salt(void);
+ static XML_Bool startParsing(XML_Parser parser);
+ 
+ static XML_Parser parserCreate(const XML_Char *encodingName,
+@@ -758,7 +758,8 @@
+   XML_Bool m_useForeignDTD;
+   enum XML_ParamEntityParsing m_paramEntityParsing;
+ #endif
+-  unsigned long m_hash_secret_salt;
++  struct sipkey m_hash_secret_salt_128;
++  XML_Bool m_hash_secret_salt_set;
+ #ifdef XML_DTD
+   ACCOUNTING m_accounting;
+   MALLOC_TRACKER m_alloc_tracker;
+@@ -1155,19 +1156,19 @@
+ 
+ #endif /* ! defined(HAVE_ARC4RANDOM_BUF) && ! defined(HAVE_ARC4RANDOM) */
+ 
+-static unsigned long
+-ENTROPY_DEBUG(const char *label, unsigned long entropy) {
++static struct sipkey
++ENTROPY_DEBUG(const char *label, struct sipkey entropy) {
+   if (getDebugLevel("EXPAT_ENTROPY_DEBUG", 0) >= 1u) {
+-    fprintf(stderr, "expat: Entropy: %s --> 0x%0*lx (%lu bytes)\n", label,
+-            (int)sizeof(entropy) * 2, entropy, (unsigned long)sizeof(entropy));
++    fprintf(stderr, "expat: Entropy: %s --> [0x%016llx, 0x%016llx] (16 bytes)\n",
++            label, (unsigned long long)entropy.k[0],
++            (unsigned long long)entropy.k[1]);
+   }
+   return entropy;
+ }
+ 
+-static unsigned long
+-generate_hash_secret_salt(XML_Parser parser) {
+-  unsigned long entropy;
+-  (void)parser;
++static struct sipkey
++generate_hash_secret_salt(void) {
++  struct sipkey entropy;
+ 
+   /* "Failproof" high quality providers: */
+ #if defined(HAVE_ARC4RANDOM_BUF)
+@@ -1195,23 +1196,18 @@
+   /* .. and self-made low quality for backup: */
+ 
+   /* Process ID is 0 bits entropy if attacker has local access */
+-  entropy = gather_time_entropy() ^ getpid();
++  entropy.k[0] = 0;
++  entropy.k[1] = gather_time_entropy() ^ getpid();
+ 
+   /* Factors are 2^31-1 and 2^61-1 (Mersenne primes M31 and M61) */
+   if (sizeof(unsigned long) == 4) {
+-    return ENTROPY_DEBUG("fallback(4)", entropy * 2147483647);
++    entropy.k[1] *= 2147483647;
++    return ENTROPY_DEBUG("fallback(4)", entropy);
+   } else {
+-    return ENTROPY_DEBUG("fallback(8)",
+-                         entropy * (unsigned long)2305843009213693951ULL);
++    entropy.k[1] *= 2305843009213693951ULL;
++    return ENTROPY_DEBUG("fallback(8)", entropy);
+   }
+ #endif
+-}
+-
+-static unsigned long
+-get_hash_secret_salt(XML_Parser parser) {
+-  if (parser->m_parentParser != NULL)
+-    return get_hash_secret_salt(parser->m_parentParser);
+-  return parser->m_hash_secret_salt;
+ }
+ 
+ static void
+@@ -1316,8 +1312,10 @@
+ static XML_Bool /* only valid for root parser */
+ startParsing(XML_Parser parser) {
+   /* hash functions must be initialized before setContext() is called */
+-  if (parser->m_hash_secret_salt == 0)
+-    parser->m_hash_secret_salt = generate_hash_secret_salt(parser);
++  if (parser->m_hash_secret_salt_set != XML_TRUE) {
++    parser->m_hash_secret_salt_128 = generate_hash_secret_salt();
++    parser->m_hash_secret_salt_set = XML_TRUE;
++  }
+   if (parser->m_ns) {
+     /* implicit context only set for root parser, since child
+        parsers (i.e. external entity parsers) will inherit it
+@@ -1610,7 +1608,9 @@
+   parser->m_useForeignDTD = XML_FALSE;
+   parser->m_paramEntityParsing = XML_PARAM_ENTITY_PARSING_NEVER;
+ #endif
+-  parser->m_hash_secret_salt = 0;
++  parser->m_hash_secret_salt_128.k[0] = 0;
++  parser->m_hash_secret_salt_128.k[1] = 0;
++  parser->m_hash_secret_salt_set = XML_FALSE;
+ 
+ #ifdef XML_DTD
+   memset(&parser->m_accounting, 0, sizeof(ACCOUNTING));
+@@ -1777,7 +1777,8 @@
+      from hash tables associated with either parser without us having
+      to worry which hash secrets each table has.
+   */
+-  unsigned long oldhash_secret_salt;
++  struct sipkey oldhash_secret_salt_128;
++  XML_Bool oldhash_secret_salt_set;
+   XML_Bool oldReparseDeferralEnabled;
+ 
+   /* Validate the oldParser parameter before we pull everything out of it */
+@@ -1823,7 +1824,8 @@
+      from hash tables associated with either parser without us having
+      to worry which hash secrets each table has.
+   */
+-  oldhash_secret_salt = parser->m_hash_secret_salt;
++  oldhash_secret_salt_128 = parser->m_hash_secret_salt_128;
++  oldhash_secret_salt_set = parser->m_hash_secret_salt_set;
+   oldReparseDeferralEnabled = parser->m_reparseDeferralEnabled;
+ 
+ #ifdef XML_DTD
+@@ -1878,7 +1880,8 @@
+     parser->m_externalEntityRefHandlerArg = oldExternalEntityRefHandlerArg;
+   parser->m_defaultExpandInternalEntities = oldDefaultExpandInternalEntities;
+   parser->m_ns_triplets = oldns_triplets;
+-  parser->m_hash_secret_salt = oldhash_secret_salt;
++  parser->m_hash_secret_salt_128 = oldhash_secret_salt_128;
++  parser->m_hash_secret_salt_set = oldhash_secret_salt_set;
+   parser->m_reparseDeferralEnabled = oldReparseDeferralEnabled;
+   parser->m_parentParser = oldParser;
+ #ifdef XML_DTD
+@@ -2331,8 +2334,27 @@
+   /* block after XML_Parse()/XML_ParseBuffer() has been called */
+   if (parserBusy(parser))
+     return 0;
+-  parser->m_hash_secret_salt = hash_salt;
++  parser->m_hash_secret_salt_128.k[0] = 0;
++  parser->m_hash_secret_salt_128.k[1] = hash_salt;
++  if (hash_salt != 0) {
++    parser->m_hash_secret_salt_set = XML_TRUE;
++    ENTROPY_DEBUG("explicit(legacy)", parser->m_hash_secret_salt_128);
++  }
+   return 1;
++}
++
++XML_Bool XMLCALL
++XML_SetHashSalt16Bytes(XML_Parser parser, const uint8_t entropy[16]) {
++  if (parser == NULL || entropy == NULL)
++    return XML_FALSE;
++  while (parser->m_parentParser != NULL)
++    parser = parser->m_parentParser;
++  if (parserBusy(parser))
++    return XML_FALSE;
++  sip_tokey(&parser->m_hash_secret_salt_128, entropy);
++  parser->m_hash_secret_salt_set = XML_TRUE;
++  ENTROPY_DEBUG("explicit(16)", parser->m_hash_secret_salt_128);
++  return XML_TRUE;
+ }
+ 
+ enum XML_Status XMLCALL
+@@ -2482,6 +2504,11 @@
+     /* fall through */
+   default:
+     parser->m_parsingStatus.parsing = XML_PARSING;
++  }
++
++  if (len > EXPAT_SAFE_PTR_DIFF(parser->m_bufferLim, parser->m_bufferEnd)) {
++    parser->m_errorCode = XML_ERROR_INVALID_ARGUMENT;
++    return XML_STATUS_ERROR;
+   }
+ 
+   // Detect and avoid integer overflow
+@@ -8020,8 +8047,9 @@
+ 
+ static void
+ copy_salt_to_sipkey(XML_Parser parser, struct sipkey *key) {
+-  key->k[0] = 0;
+-  key->k[1] = get_hash_secret_salt(parser);
++  while (parser->m_parentParser != NULL)
++    parser = parser->m_parentParser;
++  *key = parser->m_hash_secret_salt_128;
+ }
+ 
+ static unsigned long FASTCALL
+--- a/lib/expat.h
++++ b/lib/expat.h
+@@ -919,6 +919,11 @@
+ XMLPARSEAPI(int)
+ XML_SetHashSalt(XML_Parser parser, unsigned long hash_salt);
+ 
++/* Compatible backport of the upstream 16-byte hash-salt API. */
++#define NYXGUARD_EXPAT_HASH_SALT_16_BYTES 1
++XMLPARSEAPI(XML_Bool)
++XML_SetHashSalt16Bytes(XML_Parser parser, const uint8_t entropy[16]);
++
+ /* If XML_Parse or XML_ParseBuffer have returned XML_STATUS_ERROR, then
+    XML_GetErrorCode returns information about the error.
+ */
+--- a/expat_config.h.cmake
++++ b/expat_config.h.cmake
+@@ -101,7 +101,7 @@
+ #endif
+ 
+ /* Define to make parameter entity parsing functionality available. */
+-#cmakedefine XML_DTD
++#cmakedefine XML_DTD 1
+ 
+ /* Define to make XML Namespaces functionality available. */
+ #cmakedefine XML_NS

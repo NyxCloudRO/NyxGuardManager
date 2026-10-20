@@ -1,0 +1,10 @@
+[
+  {
+    "file": "python3.11-CVE-2026-11972-7f0dc59c9a70f8f3b4da33d7c4a2ba552a7acc21.patch",
+    "sha256": "5203fafe333f2cf8467abc2f8eaa94c47cf3d8bd50676da247f9c44acc739f16"
+  },
+  {
+    "file": "gcc-12-CVE-2026-102010-aaa8351f4d2e636f9680a1f0a8ebc2f0a60611e6.patch",
+    "sha256": "6bd11207cafce8e595a83726936f5ecc29906fa2e8426076b91a46813997327c"
+  }
+]

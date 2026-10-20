@@ -1,0 +1,18 @@
+{
+  "baseApplication": "sha256:9373bdb794b01d68b0d33364cd0cca462a99d0efd90e31a84a49841f12da7a5b",
+  "nginxEngine": "sha256:16caa96fd78bbef6e57e5d80da298027d498246fc67402a5337aaaf71907d846",
+  "nginxPatchSha256": "a17753e2f27dcedb445630d231f711040db90b5883802a41b86c8f8709146e28",
+  "files": {
+    "package.json": "45929b80693bab12b5d757a1d644bddac62531f15cd1fa663cb353715ba5a188",
+    "package-lock.json": "b73aa768331721d587fb81368621d42b99c9b6b688c5939b696a3d6777f3deba",
+    "cache.tgz": "d75e1e6a11587954da5e2f0e2b5c4b397a16d28cc2f7bdf64e9027fc2fe593ee",
+    "packages/libc6_2.36-9+deb12u14+nyxguard1_amd64.deb": "5eda1efabd3c62bd58a660aa0ebaf2dc501d2cf264038c9b96820255afda8d2a",
+    "packages/libc6-dev_2.36-9+deb12u14+nyxguard1_amd64.deb": "46a155d2a72172796aa57c320762e7531a45fe806338c8133f940730e41ddc9d",
+    "packages/libstdc++-12-dev_12.2.0-14+deb12u1+nyxguard1_amd64.deb": "c49a1a3c90d15e1f591494983868b75cc12013be86ff2b4fdaac9b10c9250cc4",
+    "packages/libpython3.11-stdlib_3.11.2-6+deb12u9+nyxguard1_amd64.deb": "146fcb87ed1cb9ff061ad3313b7e19b51712da181b7b91669c4439817811535a",
+    "packages/libc-bin_2.36-9+deb12u14+nyxguard1_amd64.deb": "a2b29b77be5a817c809043a9f111ce5997d5603169971f6ae0fe1c80cfb2ca3f",
+    "packages/libc-dev-bin_2.36-9+deb12u14+nyxguard1_amd64.deb": "109fbe75d51f6acc0abc8be3805dfe945866ad69c32516980cebc72a89a57401"
+  },
+  "curlCompatibilityFixSha256": "fc4108afc85e73054fe942be8bafed2afd1e4712062b7b015b51ed4ab25198ed",
+  "runtimePreservation": "No accepted frontend, migrations, app business logic, module set or protocol removed."
+}

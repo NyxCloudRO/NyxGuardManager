@@ -1,0 +1,16 @@
+FROM nyxguardmanager:5.0.14-hardened-candidate AS accepted
+FROM node:22-bookworm-slim AS dependencies
+WORKDIR /work
+COPY --from=accepted /app/node_modules ./node_modules
+COPY final/security/package.json final/security/package-lock.json ./
+RUN npm install --force --ignore-scripts --omit=dev --no-audit --no-fund \
+ && node -e 'for(const [n,v]of Object.entries({"basic-ftp":"6.2.3","path-to-regexp":"8.4.2","ip-address":"10.7.4","tar":"7.5.22"})){if(JSON.parse(require("fs").readFileSync("/work/node_modules/"+n+"/package.json")).version!==v)throw Error(n+" upgrade missing")}' \
+ && node -e 'require("bcrypt").hashSync("native-compatibility-fixture",4);new (require("better-sqlite3"))(":memory:").close()'
+FROM accepted
+# npm is a build tool; the supported Manager has no runtime npm execution workflow.
+RUN python3 -c 'import pathlib,shutil;shutil.rmtree("/app/node_modules");shutil.rmtree("/usr/lib/node_modules/npm");[(p.unlink()) for p in [pathlib.Path("/usr/bin/npm"),pathlib.Path("/usr/bin/npx")] if p.exists() or p.is_symlink()]'
+COPY --from=dependencies /work/node_modules /app/node_modules
+COPY --from=dependencies /work/package.json /app/package.json
+COPY --from=dependencies /work/package-lock.json /app/package-lock.json
+COPY final/security/db.js /app/db.js
+LABEL nyxguard.security.dependencies="locked-runtime-tree;no-runtime-npm"

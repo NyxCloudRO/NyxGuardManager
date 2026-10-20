@@ -1,0 +1,72 @@
+[
+  {
+    "file": "openresty-1.27.1.2.tar.gz",
+    "url": "https://openresty.org/download/openresty-1.27.1.2.tar.gz",
+    "sha256": "74f076f7e364b2a99a6c5f9bb531c27610c78985abe956b442b192a2295f7548"
+  },
+  {
+    "file": "ea47fabf55e2bc9192ddc27f52486b4e58d5e007.patch",
+    "url": "https://github.com/nginx/nginx/commit/ea47fabf55e2bc9192ddc27f52486b4e58d5e007.patch",
+    "sha256": "7869bcc22e70a4821846d091823dd0696825484f4e5a7be43292276cc23d067a"
+  },
+  {
+    "file": "7ac67898bdfed2140a1bedcda252074cca11f494.patch",
+    "url": "https://github.com/nginx/nginx/commit/7ac67898bdfed2140a1bedcda252074cca11f494.patch",
+    "sha256": "2c163bf707213c13852c1dd24febc52e1f1e6b0e01bcb6d65ad0ea238b15dcaa"
+  },
+  {
+    "file": "78950bdcd443830bde00f6844dba3033c18862b1.patch",
+    "url": "https://github.com/nginx/nginx/commit/78950bdcd443830bde00f6844dba3033c18862b1.patch",
+    "sha256": "47c66c483df686a06aa501eaa7395c72ae71b95cbbf3adb203b0fe83e66448a7"
+  },
+  {
+    "file": "326b17b0038321c29252e79bf4c53d4773fcb8b5.patch",
+    "url": "https://github.com/nginx/nginx/commit/326b17b0038321c29252e79bf4c53d4773fcb8b5.patch",
+    "sha256": "1c630cde62db1fdf2dd2637e70e1576378a6cbfefd0a04992c50b473d98c76a2"
+  },
+  {
+    "file": "97e40e59b7b4ad6aa36f54ce4f1e64d1e98f24cb.patch",
+    "url": "https://github.com/nginx/nginx/commit/97e40e59b7b4ad6aa36f54ce4f1e64d1e98f24cb.patch",
+    "sha256": "72101dcc0a7892492af5000cf038ce905d63dd16e23df1a38ff62e80e32d5815"
+  },
+  {
+    "file": "b99f804ad38a60ceb07bc429598d5b2c4e70e336.patch",
+    "url": "https://github.com/nginx/nginx/commit/b99f804ad38a60ceb07bc429598d5b2c4e70e336.patch",
+    "sha256": "1c23daf9ffd1f7a4a0ebf6dcb124f2fa973d4611b61a580245bb773268347a5b"
+  },
+  {
+    "file": "784fa05025cb8cd0c770f99bc79d2794b9f85b6e.patch",
+    "url": "https://github.com/nginx/nginx/commit/784fa05025cb8cd0c770f99bc79d2794b9f85b6e.patch",
+    "sha256": "016cab07bf64d55a3f16b9923e48ccc680aa981b304c9c0b49154b8b633f0848"
+  },
+  {
+    "file": "6df8054cb21b4e5e857b4489e623a79575c2ab8e.patch",
+    "url": "https://github.com/nginx/nginx/commit/6df8054cb21b4e5e857b4489e623a79575c2ab8e.patch",
+    "sha256": "44d5e68b86296e6a20cb6eb1995071c38ea4d944c5b6296d18dfe43f90ff7aba"
+  },
+  {
+    "file": "524977e7c534e87e5b55739fa74601c9f1102686.patch",
+    "url": "https://github.com/nginx/nginx/commit/524977e7c534e87e5b55739fa74601c9f1102686.patch",
+    "sha256": "4550ff1c4c019c6b80127a3e986979e52c788b03fd8e2b8c6df4f9e4566f96db"
+  },
+  {
+    "file": "nyxguard-openresty-map-capture-backport.patch",
+    "sha256": "d9aa31c0f46f9652ddf2236725fdd1ec75202e9b3688babe80941a7c0e6e6abb",
+    "derivedFrom": [
+      "ea47fabf55e2bc9192ddc27f52486b4e58d5e007.patch",
+      "7ac67898bdfed2140a1bedcda252074cca11f494.patch",
+      "78950bdcd443830bde00f6844dba3033c18862b1.patch",
+      "326b17b0038321c29252e79bf4c53d4773fcb8b5.patch",
+      "97e40e59b7b4ad6aa36f54ce4f1e64d1e98f24cb.patch",
+      "b99f804ad38a60ceb07bc429598d5b2c4e70e336.patch",
+      "784fa05025cb8cd0c770f99bc79d2794b9f85b6e.patch",
+      "6df8054cb21b4e5e857b4489e623a79575c2ab8e.patch",
+      "524977e7c534e87e5b55739fa74601c9f1102686.patch"
+    ],
+    "adaptations": "Preserve OpenResty escape_non_ascii log helper argument; apply custom gRPC header length hunk to 1.27 location. All upstream bounds checks retained. Preserve OpenResty connect_timeout field when adding upstream response_received reset.",
+    "additionalFixes": [
+      "CVE-2026-1642",
+      "CVE-2026-42945"
+    ]
+  }
+]

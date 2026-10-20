@@ -1,0 +1,8 @@
+FROM nyxguardmanager:5.0.14-release-candidate AS build
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y libpcre3-dev libssl-dev zlib1g-dev patch
+COPY final/security/vendor /vendor
+COPY final/security/build-nginx.py /build-nginx.py
+RUN --mount=type=tmpfs,target=/build python3 /build-nginx.py
+FROM nyxguardmanager:5.0.14-release-candidate
+COPY --from=build /patched-nginx /usr/sbin/nginx
+LABEL nyxguard.security.nginx-backport="CVE-2026-42533;CVE-2026-1642;CVE-2026-42945;upstream-nine-commit-backport"

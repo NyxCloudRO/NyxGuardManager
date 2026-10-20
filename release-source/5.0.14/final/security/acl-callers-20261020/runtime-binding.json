@@ -1,0 +1,61 @@
+{
+  "version": "5.0.14",
+  "platforms": [
+    "linux/amd64"
+  ],
+  "image_manifest": "sha256:a6b853d2d259d66e6f258dd81797b99bc88ce6aafc4483f3c63f7923a9d843f0",
+  "image_configuration": "sha256:ce22614fd7bd9058cf19243f3b1492dd24a1a371ddb316fb15ac32df1859ade9",
+  "packages": [
+    {
+      "package": "coreutils",
+      "version": "9.1-1+nyxguard1",
+      "deb": "coreutils_9.1-1+nyxguard1_amd64.deb",
+      "sha256": "aadd26cd76f3108a870b3bc791f541152dd11278ceabb804c480abbfdf5f29be",
+      "changed_runtime_files": {
+        "/bin/cp": "280a8b4678a696ca55985f7ff3e7e9f204fd8411e7cd74d401557dbfce1f8d2b",
+        "/bin/mv": "8c070dd92d8a9a9bccff78d413372fa7c48abbe7acfacc92b7be2dbc82b9a344"
+      },
+      "note": "ACL 2.4 implementation retains existing SONAME, legacy installed filename and all old exports; caller packages retain other payloads."
+    },
+    {
+      "package": "tar",
+      "version": "1.34+dfsg-1.2+deb12u1+nyxguard1",
+      "deb": "tar_1.34+dfsg-1.2+deb12u1+nyxguard1_amd64.deb",
+      "sha256": "4a513133aabce37dd87a4e26d97544baf10547f0e8c051257164df0f89026289",
+      "changed_runtime_files": {
+        "/bin/tar": "9421acaf875d42e4a82fef8cc47da286aac5e442f43ca9d1fe6c4eb0c3f4a133"
+      },
+      "note": "ACL 2.4 implementation retains existing SONAME, legacy installed filename and all old exports; caller packages retain other payloads."
+    },
+    {
+      "package": "libacl1",
+      "version": "2.4.0-0nyxguard1",
+      "deb": "libacl1_2.4.0-0nyxguard1_amd64.deb",
+      "sha256": "9459979387e6325bc58c28751dfe5202b330812e8cf9c376394576caba8f9ec7",
+      "changed_runtime_files": {
+        "/usr/lib/x86_64-linux-gnu/libacl.so.1.1.2301": "acc396e5c12c356b2ab41665ddd7c534c2854a743a3a640d3d8dd95cd7329c37"
+      },
+      "note": "ACL 2.4 implementation retains existing SONAME, legacy installed filename and all old exports; caller packages retain other payloads."
+    }
+  ],
+  "source_files": {
+    "BUILD.md": "6742550b259d4af6f8b8d2e4c06a19a56658c8187baea893d0fca81f964be084",
+    "acl-2.4.0.tar.xz": "e661131456d2708a01c614a0f400e11d7d1bfaeb6f3e74b75bb980b72f0161a3",
+    "coreutils/src/copy.c": "34c46f70414054ab2b4eb3f3ba22f38e02a9be06ce2704c1ef0ff9b89359203e",
+    "package-callers.py": "291d581124b60b28c5689716270bec642fb3f8d02478987a12dc67635abcdd98",
+    "package-manifest.json": "4bafbe0e630209c8d4dd6d25109446e0a3c444b54822264df50820f8c70ba6f9",
+    "patches/coreutils-pinned-acl.patch": "a310b82fd02c20b55b88d3343b744991b129a5c1d11d3125de9666340a00ac31",
+    "patches/tar-extract-pinned-acl.patch": "1ae571291448640f93542bb3faabf85fc235305b417d0078c583af54275c64dd",
+    "patches/tar-xattrs-pinned-acl.patch": "53423a74e2422d41a195e5473928fe3c60ce857dd4b7840c0d6177be7cb6a65e",
+    "source-changes.json": "76d1a85938cb0bb7d68c325a9efb1e863e71ad0d5ca7ceb55eed106575959d5e",
+    "source-inputs.json": "b2db9410e179e1e8f50b77fc3d717f6bf9e15e55f72313abadc6ff91754254a6",
+    "tar/src/extract.c": "41652955e10758feb21b812794e9c4e38ca53203d44bff09a7816fd5ab548cec",
+    "tar/src/xattrs.c": "5cf852c0d02b6fe1e09b074f43002ff2288921e858ba4839e851bbee3f42b106",
+    "tar/src/xattrs.h": "dfa19f2c392c72c3845c071e7e4078ca4670bf2bad4d6b534d56fb44962c891a"
+  },
+  "acl_source_archive_sha256": "e661131456d2708a01c614a0f400e11d7d1bfaeb6f3e74b75bb980b72f0161a3",
+  "compatibility": "PASS within recorded supported scope",
+  "legacy_library_api_semantics": "Retained; caller object binding is required for safety across substituted pathname ancestors.",
+  "upstream_suite_limitation": "13 PASS, 2 XFAIL; 1 unavailable-block-device errno mismatch under container policy. No unconditional full upstream-suite pass.",
+  "application_files_changed": 0
+}

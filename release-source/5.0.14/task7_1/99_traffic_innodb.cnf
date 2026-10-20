@@ -1,0 +1,5 @@
+[mysqld]
+# Required for atomic traffic counter/cursor commits. Other tables stay unchanged.
+skip-innodb=0
+innodb=ON
+innodb_flush_log_at_trx_commit=1

@@ -1,0 +1,8 @@
+FROM nyxguardmanager:5.0.14-rc@sha256:9373bdb794b01d68b0d33364cd0cca462a99d0efd90e31a84a49841f12da7a5b AS build
+RUN apt-get update
+COPY final/security/leaf-vendor /vendor
+COPY final/security/build-leaf.py /build-leaf.py
+WORKDIR /work
+RUN python3 /build-leaf.py
+FROM scratch AS packages
+COPY --from=build /out/ /

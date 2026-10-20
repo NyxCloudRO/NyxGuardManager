@@ -30,7 +30,7 @@ for command in ['install.sh','update.sh']:
  require('https://raw.githubusercontent.com/NyxCloudRO/NyxGuardManager/main/'+command+' | sudo bash' in readme,f'Canonical sudo {command} instruction missing')
 files=git('ls-files').splitlines()
 for name in files:
- if pathlib.PurePosixPath(name).name=='Dockerfile':
+ if pathlib.PurePosixPath(name).name=='Dockerfile' or pathlib.PurePosixPath(name).name.startswith('Dockerfile.'):
   p=ROOT/name
   for line in p.read_text().splitlines():
    if line.startswith('FROM ') and 'nyxguardmanager:' in line and not 'nyxmael/' in line:warnings.append(f'{name}: historical build requires a documented local base image; retain pending reproducibility review')
@@ -40,6 +40,11 @@ for name in files:
     if '$' in source or source.startswith(('http:','https:')):continue
     if source=='sanitized-rootfs.tar' and (p.parent/'build-release.py').exists():continue
     candidates=[ROOT/source,p.parent/source]
+    # Versioned overlay builds use their version directory as the context,
+    # including Dockerfiles nested under task/final/security directories.
+    parts=pathlib.PurePosixPath(name).parts
+    if len(parts)>2 and parts[0]=='release-source':
+     candidates.append(ROOT/parts[0]/parts[1]/source)
     require(any(x.exists() or list(x.parent.glob(x.name)) for x in candidates),f'{name}: missing build input {source}')
  if name.endswith('.md') and (ROOT/name).exists():
   text=(ROOT/name).read_text()

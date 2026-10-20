@@ -1,0 +1,24 @@
+# Optional adapter only. Join the existing Manager network; monitoring remains external.
+services:
+  metrics-adapter:
+    image: nyxmael/nyxguardmanager:5.0.14
+    entrypoint: ["node", "/adapter.mjs"]
+    restart: unless-stopped
+    read_only: true
+    user: "1000:1000"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 128m
+    cpus: 0.25
+    ports:
+      - "${NYXGUARD_MONITORING_BIND_IP:?Set a private bind address}:9444:9444"
+    environment:
+      NYXGUARD_NATIVE_METRICS_URL: "http://nyxguard-manager:3000/api/integrations/metrics"
+    volumes:
+      - ./adapter.mjs:/adapter.mjs:ro
+      - ${NYXGUARD_MONITORING_CONFIG_DIR:?Set protected TLS/token directory}:/config:ro
+    networks: [manager]
+networks:
+  manager:
+    external: true
+    name: ${NYXGUARD_MANAGER_NETWORK:?Set the Manager Docker network name}

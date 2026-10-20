@@ -1,0 +1,39 @@
+/* Use the native Settings 16px navigation-to-content rhythm. Shared Task 3 tabs own
+   padding, borders, typography and active state; do not compete with those rules. */
+html[data-app-theme] [data-task2-rules] .nyx-blocked-tabs{margin:0 0 16px}
+[data-blocked-requests][hidden],[data-task2-rules] [hidden]{display:none!important}
+[data-blocked-requests]{color:var(--app-text-primary);font-size:13px;min-width:0}
+.nyx-blocked-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.nyx-blocked-heading h3{font-size:16px;margin:0}
+[data-blocked-requests] button,[data-blocked-requests] input,[data-blocked-requests] select{font:inherit;color:var(--app-text-primary);border:1px solid var(--app-border);border-radius:8px;background:var(--app-surface-2);min-height:34px;padding:6px 9px}
+[data-blocked-requests] button:not(:disabled){cursor:pointer}[data-blocked-requests] button:disabled{opacity:.5}
+[data-blocked-requests] button:focus-visible,[data-blocked-requests] input:focus-visible,[data-blocked-requests] select:focus-visible,.nyx-blocked-tabs button:focus-visible{outline:2px solid var(--app-primary);outline-offset:2px}
+.nyx-blocked-period{display:flex;gap:4px}.nyx-blocked-period button[aria-pressed=true]{color:var(--app-primary);border-color:var(--app-primary);background:color-mix(in srgb,var(--app-primary) 12%,var(--app-surface-2))}
+.nyx-blocked-scope{margin:8px 0 12px;color:var(--app-text-secondary);font-size:12px}.nyx-blocked-stats{display:flex;gap:24px;flex-wrap:wrap;margin:0 0 14px}.nyx-blocked-stats strong{font-size:19px;font-variant-numeric:tabular-nums;color:var(--app-primary)}
+.nyx-blocked-filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px}.nyx-blocked-filters input{flex:1 1 230px;min-width:180px}.nyx-blocked-filters select{max-width:220px;min-width:130px}.nyx-blocked-clear{margin-left:auto;color:var(--app-danger,var(--app-text-primary))!important}
+.nyx-blocked-reasons{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--app-text-secondary);margin:0 0 10px}.nyx-blocked-warning{font-size:12px;padding:7px 9px;border-left:2px solid var(--app-primary);background:var(--app-surface-2);margin:0 0 10px}
+.nyx-blocked-table-wrap{max-width:100%;overflow-x:auto}.nyx-blocked-table{table-layout:fixed;width:100%;border-collapse:collapse}.nyx-blocked-table th{color:var(--app-text-secondary);font-size:12px;font-weight:600;text-align:left}.nyx-blocked-table th,.nyx-blocked-table td{padding:10px 8px;border-bottom:1px solid var(--app-border);vertical-align:middle;overflow-wrap:anywhere}.nyx-blocked-table th:nth-child(1){width:19%}.nyx-blocked-table th:nth-child(2){width:23%}.nyx-blocked-table th:nth-child(3){width:18%}.nyx-blocked-table th:nth-child(4){width:12%}.nyx-blocked-table th:nth-child(5){width:15%}.nyx-blocked-table th:nth-child(6){width:13%}.nyx-blocked-table small{display:block;color:var(--app-text-secondary);font-size:11px;margin-top:3px}.nyx-blocked-ip{font-family:var(--tblr-font-monospace,monospace)}.nyx-blocked-count{font-variant-numeric:tabular-nums}.nyx-blocked-empty{text-align:center;padding:28px!important;color:var(--app-text-secondary)}
+.nyx-blocked-pagination{display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:12px 0 0}.nyx-blocked-pagination>span:first-child{margin-right:auto;color:var(--app-text-secondary)}
+.nyx-blocked-detail .modal-dialog{max-width:560px}.nyx-blocked-detail .modal-body{padding:16px 20px}.nyx-blocked-detail dl{margin:0}.nyx-blocked-detail dl>div{display:grid;grid-template-columns:140px 1fr;gap:12px;margin:0 0 9px}.nyx-blocked-detail dt{font-size:12px;color:var(--app-text-secondary);font-weight:500}.nyx-blocked-detail dd{margin:0;overflow-wrap:anywhere;font-size:13px}
+
+/* Task 4 visual addendum: retain the existing six-column native form and table.
+   Align the original controls to its existing 36px input rhythm. */
+html[data-app-theme] [data-task4-rule-builder] .nyx-rule-type-context{display:flex;align-items:center;font-size:13px;line-height:20px;color:var(--app-text-secondary)}
+html[data-app-theme] [data-task4-rule-builder] :is(._pillBtn_1qmfz_124,._pillActiveBtn_1qmfz_125){min-height:36px;padding:7px 12px;border-radius:8px;border:1px solid var(--app-border);font-size:13px;line-height:20px;font-weight:600;background:var(--app-surface-2);color:var(--app-text-secondary);box-shadow:none;animation:none}
+html[data-app-theme] [data-task4-rule-builder] ._pillActiveBtn_1qmfz_125{color:var(--app-text-primary);border-color:color-mix(in srgb,var(--app-primary) 55%,var(--app-border));background:color-mix(in srgb,var(--app-primary) 20%,var(--app-surface-2))}
+html[data-app-theme] [data-task4-rule-builder] :is(._pillBtn_1qmfz_124,._pillActiveBtn_1qmfz_125):focus-visible{outline:2px solid var(--app-primary);outline-offset:2px}
+html[data-app-theme] [data-task4-rule-builder] [class$=-control]{height:36px;min-height:36px;border-radius:8px;font-size:13px}
+html[data-app-theme] [data-task4-rule-builder] ._input_1qmfz_140{font-size:13px;border-radius:8px}
+html[data-app-theme] [data-task4-rule-builder] ._primary_1qmfz_215{min-height:36px;font-size:12px;line-height:20px;padding:7px 12px;border-radius:8px;text-transform:none}
+html[data-app-theme] [data-task2-rules] ._filterInput_1qmfz_246{height:34px;font-size:13px}
+
+/* Preserve native columns/actions while allowing IPv6 and dates to wrap at the
+   existing narrow viewport. The table no longer pushes its action column offscreen. */
+html[data-app-theme] [data-task2-rules] ._rulesTable_1qmfz_179{width:100%;min-width:0;table-layout:fixed}
+html[data-app-theme] [data-task2-rules] ._rulesTable_1qmfz_179 :is(td,th){overflow-wrap:anywhere;white-space:normal}
+html[data-app-theme] [data-task2-rules] ._rulesTable_1qmfz_179 :is(th,td):nth-child(1){width:16%}
+html[data-app-theme] [data-task2-rules] ._rulesTable_1qmfz_179 :is(th,td):nth-child(2){width:11%}
+html[data-app-theme] [data-task2-rules] ._rulesTable_1qmfz_179 :is(th,td):nth-child(3){width:22%}
+html[data-app-theme] [data-task2-rules] ._rulesTable_1qmfz_179 :is(th,td):nth-child(4){width:20%}
+html[data-app-theme] [data-task2-rules] ._rulesTable_1qmfz_179 :is(th,td):nth-child(5){width:16%}
+html[data-app-theme] [data-task2-rules] ._rulesTable_1qmfz_179 :is(th,td):nth-child(6){width:15%}
+html[data-app-theme] [data-task2-rules] .nyx-rule-note{max-width:100%}

@@ -1,0 +1,21 @@
+--- a/unlzh.c
++++ b/unlzh.c
+@@ -242,6 +242,7 @@
+         c = getbits(CBIT);
+         for (i = 0; i < NC; i++) c_len[i] = 0;
+         for (i = 0; i < 4096; i++) c_table[i] = c;
++
+     } else {
+         i = 0;
+         while (i < n) {
+@@ -314,6 +315,10 @@
+ 
+ local void huf_decode_start()
+ {
++    /* Upstream e7378c2: clear shared LZW state before any LZH table read. */
++    memzero (left, (2 * NC - 1) * sizeof *left);
++    memzero (right, (2 * NC - 1) * sizeof *right);
++
+     init_getbits();  blocksize = 0;
+ }
+ 

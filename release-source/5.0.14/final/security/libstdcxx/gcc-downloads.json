@@ -1,0 +1,17 @@
+[
+  {
+    "url": "https://deb.debian.org/debian/pool/main/g/gcc-12/gcc-12_12.2.0-14+deb12u1.debian.tar.xz",
+    "sha256": "59f7f7763a0c355e3f27ff9e7ac80d06382b29939361a87e7b139226bfe7402e",
+    "file": "gcc-12_12.2.0-14+deb12u1.debian.tar.xz"
+  },
+  {
+    "url": "https://deb.debian.org/debian/pool/main/g/gcc-12/gcc-12_12.2.0-14+deb12u1.dsc",
+    "sha256": "3aed0b189189c744dc9f4b74798a51d3e512ea85e492568db788a927c88e20ba",
+    "file": "gcc-12_12.2.0-14+deb12u1.dsc"
+  },
+  {
+    "url": "https://deb.debian.org/debian/pool/main/g/gcc-12/gcc-12_12.2.0.orig.tar.gz",
+    "sha256": "b8298be16aeeb96a889c6afed0a8e2241b47452e89cc81fe65ea849d5c740fcb",
+    "file": "gcc-12_12.2.0.orig.tar.gz"
+  }
+]

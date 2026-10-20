@@ -1,0 +1,66 @@
+[
+  {
+    "package": "logrotate",
+    "version": "3.21.0-1",
+    "files": [
+      {
+        "file": "logrotate_3.21.0.orig.tar.gz",
+        "sha256": "1680947a9431de1aaa629fedde358696ff49a808ae903feecf996682949e3cff",
+        "url": "https://deb.debian.org/debian/pool/main/l/logrotate/logrotate_3.21.0.orig.tar.gz"
+      },
+      {
+        "file": "logrotate_3.21.0-1.debian.tar.xz",
+        "sha256": "0b3d414f1e133596f8a71c555977a7d54083371a84d76da7cd2e99055006839e",
+        "url": "https://deb.debian.org/debian/pool/main/l/logrotate/logrotate_3.21.0-1.debian.tar.xz"
+      }
+    ]
+  },
+  {
+    "package": "sed",
+    "version": "4.9-1+deb12u1",
+    "files": [
+      {
+        "file": "sed_4.9.orig.tar.xz",
+        "sha256": "6e226b732e1cd739464ad6862bd1a1aba42d7982922da7a53519631d24975181",
+        "url": "https://deb.debian.org/debian/pool/main/s/sed/sed_4.9.orig.tar.xz"
+      },
+      {
+        "file": "sed_4.9-1+deb12u1.debian.tar.xz",
+        "sha256": "4346634a4c0b3977bf6a6b6d27f187fb203f547dda8267bb8a42d1323487f6f0",
+        "url": "https://deb.debian.org/debian/pool/main/s/sed/sed_4.9-1+deb12u1.debian.tar.xz"
+      }
+    ]
+  },
+  {
+    "package": "tar",
+    "version": "1.34+dfsg-1.2+deb12u1",
+    "files": [
+      {
+        "file": "tar_1.34+dfsg.orig.tar.xz",
+        "sha256": "7d57029540cb928394defb3b377b3531237c947e795b51aa8acac0c5ba0e4844",
+        "url": "https://deb.debian.org/debian/pool/main/t/tar/tar_1.34+dfsg.orig.tar.xz"
+      },
+      {
+        "file": "tar_1.34+dfsg-1.2+deb12u1.debian.tar.xz",
+        "sha256": "e7cdc112e6810a0827b6081f6a4115eb630679a5f3d7cceffbc236d6b8d46d69",
+        "url": "https://deb.debian.org/debian/pool/main/t/tar/tar_1.34+dfsg-1.2+deb12u1.debian.tar.xz"
+      }
+    ]
+  },
+  {
+    "package": "coreutils",
+    "version": "9.1-1",
+    "files": [
+      {
+        "file": "coreutils_9.1.orig.tar.xz",
+        "sha256": "61a1f410d78ba7e7f37a5a4f50e6d1320aca33375484a3255eddf17a38580423",
+        "url": "https://deb.debian.org/debian/pool/main/c/coreutils/coreutils_9.1.orig.tar.xz"
+      },
+      {
+        "file": "coreutils_9.1-1.debian.tar.xz",
+        "sha256": "45d4ae88d933a7d713ef038943e818a2488e759b6196a409788744cbc6df1832",
+        "url": "https://deb.debian.org/debian/pool/main/c/coreutils/coreutils_9.1-1.debian.tar.xz"
+      }
+    ]
+  }
+]

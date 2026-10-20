@@ -1,0 +1,96 @@
+/* Task 3 presentation: native AppPage shell and dashboard surfaces are unchanged.
+   Settings and Identity share only the explicitly marked navigation bar. */
+html[data-app-theme] [data-nyx-module-tabs] {--nyx-tab-idle:color-mix(in srgb,var(--app-text-primary) 3%,var(--app-surface-2));--nyx-tab-edge:color-mix(in srgb,var(--app-border) 55%,transparent);--nyx-tab-selected:color-mix(in srgb,var(--app-primary) 22%,var(--app-surface-2));display:flex;align-items:stretch;flex-wrap:wrap;gap:5px;padding:5px;margin:0;background:color-mix(in srgb,var(--app-background) 65%,var(--app-surface-2));border:1px solid var(--app-border);border-radius:10px;box-shadow:inset 0 1px 3px color-mix(in srgb,var(--app-background) 55%,transparent)}
+html[data-app-theme] [data-nyx-module-tabs]>:is(a,button) {display:flex;align-items:center;justify-content:center;min-width:0;max-width:100%;padding:9px 14px;margin:0;border:1px solid var(--nyx-tab-edge);border-bottom:3px solid transparent;border-radius:6px;background:var(--nyx-tab-idle);color:var(--app-text-secondary);opacity:1;font-size:13px;font-weight:600;line-height:1.4;text-decoration:none;white-space:normal;text-align:center;cursor:pointer}
+html[data-app-theme] [data-nyx-module-tabs]>:is([aria-current=page],[aria-pressed=true]) {background:var(--nyx-tab-selected);border-color:color-mix(in srgb,var(--app-primary) 35%,var(--app-border));border-bottom-color:var(--app-primary);color:var(--app-text-primary);font-weight:700;box-shadow:inset 0 1px 0 color-mix(in srgb,var(--app-text-primary) 10%,transparent),0 1px 2px color-mix(in srgb,var(--app-background) 40%,transparent)}
+html[data-app-theme] [data-nyx-module-tabs]>:is(a,button):hover {background:color-mix(in srgb,var(--app-primary) 12%,var(--app-surface-2));color:var(--app-text-primary);border-color:color-mix(in srgb,var(--app-primary) 45%,var(--app-border));border-bottom-color:transparent}
+html[data-app-theme] [data-nyx-module-tabs]>:is([aria-current=page],[aria-pressed=true]):hover {background:var(--nyx-tab-selected);border-bottom-color:var(--app-primary)}
+html[data-app-theme] [data-nyx-module-tabs]>:is(a,button):focus-visible {outline:2px solid var(--app-primary)!important;outline-offset:1px;color:var(--app-text-primary)}
+/* One native inner dashboard contains the module header, tabs and active content.
+   Selected legacy lists contribute content, without a third dashboard frame. */
+html[data-app-theme] .nyx-dashboard.nyx-identity {gap:12px!important;min-width:0}
+.nyx-identity-header h1 {margin:0 0 5px;font-size:22px}
+.nyx-identity-header p {margin:0}
+.nyx-identity-content {min-width:0}
+html[data-app-theme] .nyx-identity-content .nyx-dashboard {background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:0!important;margin:0!important;gap:12px!important;min-width:0}
+html[data-app-theme] .nyx-identity-content .nyx-dashboard::before,html[data-app-theme] .nyx-identity-content .nyx-dashboard::after {content:none!important;display:none!important}
+html[data-app-theme] .nyx-identity-content .nyx-dashboard-body {gap:12px!important;min-width:0}
+.nyx-identity-content .nyx-dashboard-title-wrap {display:none}
+/* Normal flow exclusively: dedicated right-aligned action row, then the toolbar. */
+html[data-app-theme] .nyx-identity-content .nyx-dashboard-header {padding:0!important;margin:0!important;min-width:0}
+html[data-app-theme] .nyx-identity-content .nyx-dashboard-header-row {justify-content:flex-end!important;align-items:center!important;gap:8px!important;min-width:0}
+html[data-app-theme] .nyx-identity-content .nyx-dashboard-actions {margin-left:auto!important}
+html[data-app-theme] .nyx-identity-content .nyx-page-toolbar {gap:10px!important}
+/* Complete-inventory filters, independent of mutation permissions. */
+html[data-app-theme] .nyx-inventory-toolbar {display:flex;align-items:flex-end;flex-wrap:wrap;gap:8px;padding:0;margin:0;color:var(--app-text-primary);min-width:0}
+html[data-app-theme] .nyx-inventory-toolbar .nyx-inventory-search {display:flex;align-items:center;gap:8px;flex:1 1 260px;min-width:210px;height:34px;margin:0;padding:0 10px;border:1px solid var(--app-border)!important;border-radius:7px!important;background:var(--app-surface-2)!important}
+.nyx-inventory-search svg {flex:none;color:var(--app-text-secondary)}
+.nyx-inventory-search input {color:var(--app-text-primary);background:transparent;border:0;outline:none;width:100%;min-width:0;font-size:13px;height:32px}
+.nyx-inventory-search input::placeholder {color:var(--app-text-secondary);opacity:1}
+.nyx-inventory-filter {display:flex;flex-direction:column;gap:4px;margin:0;flex:0 1 125px;min-width:115px;font-size:11px;color:var(--app-text-secondary)}
+.nyx-inventory-filter select {font:inherit;font-size:12px;color:var(--app-text-primary);height:34px;padding:4px 26px 4px 8px;background:var(--app-surface-2);border:1px solid var(--app-border);border-radius:7px;width:100%}
+.nyx-inventory-filter option {color:var(--app-text-primary);background:var(--app-surface-2)}
+.nyx-inventory-reset {height:34px;min-height:34px!important;font-size:12px;padding:4px 10px!important}
+.nyx-inventory-count {font-size:12px;color:var(--app-text-secondary);white-space:nowrap;padding-bottom:8px;margin-left:auto}
+.nyx-inventory-no-results {flex-basis:100%;font-size:13px;margin:0;padding:8px 0;color:var(--app-text-secondary)}
+.nyx-inventory-search:focus-within,.nyx-inventory-toolbar :is(select,button):focus-visible {outline:2px solid var(--app-primary);outline-offset:2px}
+/* Static statistics use semantic descriptions and values, never button styling.
+   Totals/filtered counts appear once in the result count. Subtotals follow filters. */
+.nyx-inventory-summary {display:flex;flex-wrap:wrap;align-items:baseline;gap:12px 24px;flex-basis:100%;margin:0;padding:8px 0 0;border:0;color:var(--app-text-secondary);font-size:12px}
+.nyx-inventory-summary>div {display:flex;align-items:baseline;gap:8px;background:none;border:0;box-shadow:none;padding:0}
+.nyx-inventory-summary dt {font-weight:400;margin:0}
+.nyx-inventory-summary dd {color:var(--app-text-primary);font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;margin:0}
+/* Native table boundaries and portal menus retain their behavior. */
+html[data-app-theme] .nyx-identity-content .nyx-dashboard-table {border-radius:10px!important;border:1px solid var(--app-border)!important;background:transparent!important;box-shadow:none!important;overflow:visible!important}
+html[data-app-theme] .nyx-identity-content .nyx-dashboard-table table {margin:0!important;border-radius:10px;overflow:hidden}
+.nyx-identity-content :is(.nyx-modern-table td,.table td) {padding-block:10px}
+/* Wrap prose at word boundaries; only identifiers may break within a token. */
+.nyx-identity-content .nyx-modern-table td {overflow-wrap:normal}
+html[data-app-theme] .nyx-identity-content .status {white-space:nowrap}
+html[data-app-theme] .nyx-identity-content .nyx-cert-expiry-cell {width:auto;min-width:0;max-width:none;white-space:normal;overflow:visible;text-overflow:clip}
+.nyx-identity-content .nyx-modern-primary .flex-fill {min-width:0}
+.nyx-identity-content .nyx-modern-primary .badge {max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.4}
+/* Native account columns reserve readable identity text and intact status labels.
+   The existing responsive table owns necessary scrolling below laptop widths. */
+html[data-app-theme] .nyx-identity-accounts .table {min-width:660px}
+html[data-app-theme] .nyx-identity-accounts .table td:nth-child(2) {min-width:9rem;overflow-wrap:normal}
+html[data-app-theme] .nyx-identity-accounts .table td:nth-child(3) {min-width:10rem}
+html[data-app-theme] .nyx-identity-accounts .table :is(td:nth-child(3),td:nth-child(4))>.badge {max-width:100%;white-space:normal;overflow-wrap:anywhere;display:inline-block;line-height:1.4}
+html[data-app-theme] .nyx-identity-accounts .table td:nth-child(4)>.badge {max-width:10rem}
+.nyx-identity-content .badge {font-size:11px;padding:4px 6px;border-radius:5px}
+html[data-app-theme] .nyx-identity-content .nyx-modern-empty {min-height:130px!important;padding:24px 16px!important}
+/* Native modal scroll/focus/permission contracts remain unchanged. */
+html[data-app-theme] :is(.nyx-management-access-list,.nyx-management-certificate-http,.nyx-management-certificate-dns,.nyx-management-certificate-custom,.nyx-management-user,.nyx-management-permissions,.nyx-management-password) .modal-dialog {max-width:min(780px,calc(100vw - 32px))}
+html[data-app-theme] .nyx-management-access-list .card-body {padding:16px 20px}
+html[data-app-theme] .nyx-management-access-list .nav-tabs {gap:4px;flex-wrap:wrap}
+html[data-app-theme] .nyx-management-access-list .nav-link {padding:9px 12px;font-size:13px}
+html[data-app-theme] .nyx-management-access-list :is(.input-group,.row) {align-items:center}
+html[data-app-theme] .nyx-management-access-list :is(input:not([type=checkbox]),select) {min-height:34px;font-size:13px}
+html[data-app-theme] .nyx-management-access-list .my-3 h3 {font-size:14px;padding-block:6px!important}
+html[data-app-theme] .nyx-management-access-list .nyx-policy-authorizations>.row {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 34px;gap:10px;margin:0 0 10px!important;align-items:center}
+html[data-app-theme] .nyx-management-access-list .nyx-policy-authorizations>.row>[class*=col-] {width:auto;padding:0}
+html[data-app-theme] .nyx-management-access-list .nyx-policy-rules>.nyx-policy-rule {display:grid;grid-template-columns:minmax(0,1fr) 34px;gap:10px;margin:0 0 10px!important}
+html[data-app-theme] .nyx-management-access-list .nyx-policy-rules>.nyx-policy-rule>[class*=col-] {width:auto;padding:0}
+html[data-app-theme] .nyx-management-access-list .nyx-policy-rules .input-group {display:flex;gap:0;margin:0!important;flex-wrap:nowrap}
+html[data-app-theme] .nyx-management-access-list .nyx-policy-rules .input-group-select {flex:0 0 110px}
+html[data-app-theme] .nyx-management-access-list .nyx-policy-rules .input-group input {min-width:0}
+html[data-app-theme] .nyx-management-access-list :is(.nyx-policy-authorizations,.nyx-policy-rules) .btn-ghost {width:34px;height:34px;min-height:34px}
+html[data-app-theme] .nyx-management-modal .form-label {font-size:12px;margin-bottom:5px}
+html[data-app-theme] .nyx-management-modal .form-control {font-size:13px}
+@media(max-width:1100px){html[data-app-theme] [data-nyx-module-tabs]>:is(a,button){padding:9px 11px}.nyx-inventory-search{flex-basis:100%!important}.nyx-inventory-filter{flex:1 1 115px}}
+/* Settings spacing contract: header, shared navigation, introduction, content.
+   All six native panels and the existing VPN extension inherit this rhythm. */
+html[data-app-theme] [data-nyx-settings-page]>[data-nyx-module-tabs] {margin:14px 0 16px}
+html[data-app-theme] [data-nyx-settings-page]>[class*=_headerRow_] {display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:0}
+html[data-app-theme] [data-nyx-settings-page] .nyx-settings-version-actions {display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-left:auto}
+html[data-app-theme] [data-nyx-settings-page] [class*=_versionTag_] {margin:0;padding:6px 10px;font-size:12px;line-height:20px}
+html[data-app-theme] [data-nyx-settings-page] [data-nyx-settings-intro] {margin:0 0 14px!important;line-height:1.5}
+html[data-app-theme] [data-nyx-settings-page] [data-nyx-notification-header] {gap:12px;margin-bottom:14px}
+html[data-app-theme] [data-nyx-settings-page] [data-nyx-notification-header] [data-nyx-settings-intro] {margin:0!important}
+html[data-app-theme] [data-nyx-settings-page].nyx-vpn-mode [data-nyx-module-tabs]>.nyx-vpn-tab-active {background:var(--nyx-tab-selected)!important;border-color:color-mix(in srgb,var(--app-primary) 35%,var(--app-border))!important;border-bottom-color:var(--app-primary)!important;color:var(--app-text-primary)!important;font-weight:700;opacity:1!important}
+html[data-app-theme] [data-nyx-settings-page].nyx-vpn-mode [data-nyx-module-tabs]>button:not(.nyx-vpn-tab) {font-weight:600;color:var(--app-text-secondary);opacity:1!important;background:var(--nyx-tab-idle)!important;border-color:var(--nyx-tab-edge)!important;border-bottom-color:transparent!important;box-shadow:none}
+/* Suppress the inherited Premium Nyx button sweep only in these management areas.
+   Keep the certificate dropdown's genuine caret as a static, inline indicator. */
+html[data-app-theme] :is(.nyx-identity,[data-task2-proxy],.nyx-management-access-list,.nyx-management-user,.nyx-management-permissions,.nyx-management-password,.nyx-management-set-password,.nyx-management-certificate-http,.nyx-management-certificate-dns,.nyx-management-certificate-custom,.nyx-management-certificate-details,.nyx-management-certificate-renew,.nyx-proxy-wizard) .btn::before,
+html[data-app-theme] :is(.nyx-identity,[data-task2-proxy],.nyx-management-access-list,.nyx-management-user,.nyx-management-permissions,.nyx-management-password,.nyx-management-set-password,.nyx-management-certificate-http,.nyx-management-certificate-dns,.nyx-management-certificate-custom,.nyx-management-certificate-details,.nyx-management-certificate-renew,.nyx-proxy-wizard) .btn::after {content:none!important;background:none!important;animation:none!important;transition:none!important;transform:none!important}
+html[data-app-theme] :is(.nyx-identity,[data-task2-proxy]) .nyx-dashboard-actions .dropdown-toggle:not(.btn-action)::after {content:""!important;position:static!important;inset:auto!important;display:inline-block;align-self:center;width:.36em;height:.36em;margin:0 0 0 .5em;border:0;border-bottom:1px solid currentColor;border-left:1px solid currentColor;background:none!important;transform:rotate(-45deg)!important;animation:none!important;transition:none!important;opacity:1;pointer-events:none}

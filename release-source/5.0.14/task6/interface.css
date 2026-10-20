@@ -1,0 +1,20 @@
+/* The existing Settings classes own every card, grid, heading and input token.
+   These selectors only size/align the reused floating selector and its portal. */
+[data-nyx-interface] .nyx-interface-control { width:100%;max-width:320px; }
+[data-nyx-interface] .nyx-interface-trigger { display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:start;cursor:pointer;background:transparent; }
+[data-nyx-interface] .nyx-interface-value { min-width:0; }
+[data-nyx-interface] .nyx-interface-chevron { flex:none; }
+.nyx-interface-options { overflow:auto;z-index:1000; }
+.nyx-interface-options .nyx-interface-option { width:100%;text-align:start; }
+
+/* Keep the native theme menu tokens while ensuring readable selected options. */
+.nyx-interface-options .nyx-interface-option.active,
+.nyx-interface-options .nyx-interface-option:active {
+ color:var(--app-text-primary);
+ background:var(--app-dropdown-hover);
+ font-weight:600;
+}
+.nyx-interface-options .nyx-interface-option:focus-visible {
+ outline:2px solid var(--app-primary);
+ outline-offset:-2px;
+}
