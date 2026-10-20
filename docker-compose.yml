@@ -1,7 +1,7 @@
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:5.0.15
+    image: nyxmael/nyxguardmanager:5.0.16
     restart: unless-stopped
     ports:
       - "80:80"
