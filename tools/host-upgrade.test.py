@@ -270,7 +270,7 @@ class ApplyingRecovery(unittest.TestCase):
    'baseline':self.baseline,'volume_names':['fixture_database','fixture_data'],
    'hashes':{str(file.relative_to(self.backup)):runner['sha'](file) for file in self.backup.rglob('*') if file.is_file()}}
   (self.state/'pending.json').write_text(json.dumps(self.m))
-  self.containers={'db':{'Mounts':[{'Type':'volume','Name':'fixture_database','Destination':'/var/lib/mysql'}]},
+  self.containers={'db':{'Id':'db','Mounts':[{'Type':'volume','Name':'fixture_database','Destination':'/var/lib/mysql'}]},
    'nyxguard-manager':{'Mounts':[{'Type':'volume','Name':'fixture_data','Destination':'/data'},
     {'Type':'bind','Source':str(self.root/'vault.key'),'Destination':'/run/nyxguard-licensing/vault.key'}]}}
   self.health=lambda manifest:None
