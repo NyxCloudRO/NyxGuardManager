@@ -24,8 +24,6 @@ Cold or changing historical scans can still take seconds; favorable synthetic wa
 
 Schema remains 49. VPN Agent remains independently versioned at 5.0.2. Existing licensing, security runtime and persistent-data formats are retained. Production deployment and post-deployment validation are separate operator actions.
 
-# Changelog
-
 ## 5.0.14 — 2026-10-20
 
 NyxGuard Manager 5.0.14 brings the development cycle's access controls, interface refinements and monitoring corrections together. Administrators gain a dedicated read-only NyxAgent experience, clearer policy navigation, more reliable traffic collection and alerts, and a portable monitoring setup. The release retains the six supported languages, twelve themes, existing licensing model and independently versioned VPN Agent.
