@@ -1,7 +1,7 @@
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:5.0.16
+    image: nyxmael/nyxguardmanager:5.0.17
     restart: unless-stopped
     ports:
       - "80:80"
@@ -30,6 +30,7 @@ services:
       - "${DOCKER_SOCK_GID:?Set DOCKER_SOCK_GID to the numeric GID of /var/run/docker.sock}"
     volumes:
       - nyxguard_data:/data
+      - ./.maintenance/run:/run/nyxguard-storage:ro
       - nyxguard_letsencrypt:/etc/letsencrypt
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/localtime:/etc/localtime:ro

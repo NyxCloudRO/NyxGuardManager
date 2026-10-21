@@ -1,6 +1,6 @@
 # Public host updater
 
-Current Manager release: **5.0.16**, compatible VPN Agent **5.0.2**, schema **49**. The self-contained `update.sh` supports the published 5.0.0–5.0.12 source/schema policy, verifies a cold backup, and replaces application code using existing Compose services and storage. It does not download handover helpers. See [application lifecycle](../docs/application-lifecycle.md).
+Current Manager release: **5.0.17**, compatible VPN Agent **5.0.2**, schema **49**. The self-contained `update.sh` supports the published 5.0.0–5.0.12 source/schema policy, verifies a cold backup, and replaces application code using existing Compose services and storage. It does not download handover helpers. See [application lifecycle](../docs/application-lifecycle.md).
 
 
 ## Historical adapter and runtime provenance through 5.0.9

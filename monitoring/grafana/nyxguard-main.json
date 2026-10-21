@@ -1,0 +1,4484 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "NyxGuard Manager 5.0.17 \u2014 seven elapsed-duration presets, exact retained observations and explicit unverified coverage.",
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "title": "1D",
+      "type": "link",
+      "url": "d/${__dashboard.uid}?from=now-24h&to=now",
+      "keepTime": false,
+      "includeVars": true,
+      "targetBlank": false
+    },
+    {
+      "title": "2D",
+      "type": "link",
+      "url": "d/${__dashboard.uid}?from=now-48h&to=now",
+      "keepTime": false,
+      "includeVars": true,
+      "targetBlank": false
+    },
+    {
+      "title": "7D",
+      "type": "link",
+      "url": "d/${__dashboard.uid}?from=now-168h&to=now",
+      "keepTime": false,
+      "includeVars": true,
+      "targetBlank": false
+    },
+    {
+      "title": "14D",
+      "type": "link",
+      "url": "d/${__dashboard.uid}?from=now-336h&to=now",
+      "keepTime": false,
+      "includeVars": true,
+      "targetBlank": false
+    },
+    {
+      "title": "30D",
+      "type": "link",
+      "url": "d/${__dashboard.uid}?from=now-720h&to=now",
+      "keepTime": false,
+      "includeVars": true,
+      "targetBlank": false
+    },
+    {
+      "title": "60D",
+      "type": "link",
+      "url": "d/${__dashboard.uid}?from=now-1440h&to=now",
+      "keepTime": false,
+      "includeVars": true,
+      "targetBlank": false
+    },
+    {
+      "title": "90D",
+      "type": "link",
+      "url": "d/${__dashboard.uid}?from=now-2160h&to=now",
+      "keepTime": false,
+      "includeVars": true,
+      "targetBlank": false
+    }
+  ],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "panels": [],
+      "title": "Security Overview \u2014 snapshots at selected end",
+      "type": "row",
+      "description": " Current inventory and rolling event gauges are observed snapshots. The time picker selects sample history; the global duration selects retained event observations. Legacy traffic history is unverified."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#1F60C4",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(nyxguard_proxy_hosts_total{job=\"$application_job\",instance=\"$application_instance\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Proxy Hosts",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#1F60C4",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(nyxguard_protected_hosts_total{job=\"$application_job\",instance=\"$application_instance\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "WAF Protected",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 200
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "((nyxguard_attacks_window_total{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Attacks \u00b7 ${matched_window}",
+      "type": "stat",
+      "description": "Global duration must exactly match 1D, 2D, 7D, 14D, 30D, 60D or 90D. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 20
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 12,
+        "y": 1
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(nyxguard_active_bans_total{job=\"$application_job\",instance=\"$application_instance\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "legendFormat": ""
+        }
+      ],
+      "title": "Active IP deny rules",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#1F60C4",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(nyxguard_ssl_certs_total{job=\"$application_job\",instance=\"$application_instance\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "SSL Certificates (snapshot)",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#1F60C4",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      },
+      "id": 54,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(nyxguard_blocked_countries_total{job=\"$application_job\",instance=\"$application_instance\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Blocked Countries",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "id": 9,
+      "panels": [],
+      "title": "Attack Breakdown \u2014 observed rolling windows; incomplete history",
+      "type": "row",
+      "description": " Current inventory and rolling event gauges are observed snapshots. The time picker selects sample history; the global duration selects retained event observations. Legacy traffic history is unverified."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 200
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 0,
+        "y": 7
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "((nyxguard_attacks_total{job=\"$application_job\",instance=\"$application_instance\",type=\"bot\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Bot \u00b7 ${matched_window}",
+      "type": "stat",
+      "description": "Global duration must exactly match 1D, 2D, 7D, 14D, 30D, 60D or 90D. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 30
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 4,
+        "y": 7
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "((nyxguard_attacks_total{job=\"$application_job\",instance=\"$application_instance\",type=\"ddos\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "DDoS \u00b7 ${matched_window}",
+      "type": "stat",
+      "description": "Global duration must exactly match 1D, 2D, 7D, 14D, 30D, 60D or 90D. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 3
+              },
+              {
+                "color": "red",
+                "value": 15
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 8,
+        "y": 7
+      },
+      "id": 12,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "((nyxguard_attacks_total{job=\"$application_job\",instance=\"$application_instance\",type=\"sqli\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "SQLi \u00b7 ${matched_window}",
+      "type": "stat",
+      "description": "Global duration must exactly match 1D, 2D, 7D, 14D, 30D, 60D or 90D. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "none",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 0,
+        "y": 10
+      },
+      "id": 55,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(nyxguard_waf_rule_blocks_observed{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from}))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "legendFormat": ""
+        }
+      ],
+      "title": "WAF rule blocks \u2014 ${matched_window}",
+      "type": "stat",
+      "description": "Exact retained native enforcement observations in the selected elapsed duration ending at the published closed UTC cutoff. Continuity is unverified; missing or stale sources are unavailable."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 20
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 4,
+        "y": 10
+      },
+      "id": 56,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "((nyxguard_country_denies_observed{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "legendFormat": ""
+        }
+      ],
+      "title": "Country denials \u00b7 ${matched_window}",
+      "type": "stat",
+      "description": "Global duration must exactly match 1D, 2D, 7D, 14D, 30D, 60D or 90D. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history. Country observations retain at most 30d, so a 90d value is partial."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "none",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 8,
+        "y": 10
+      },
+      "id": 16,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(nyxguard_access_portal_security_rejections_observed{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from}))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "legendFormat": ""
+        }
+      ],
+      "title": "Access Portal Security Rejections \u2014 ${matched_window}",
+      "type": "stat",
+      "description": "Exact retained native enforcement observations in the selected elapsed duration ending at the published closed UTC cutoff. Continuity is unverified; missing or stale sources are unavailable."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 20
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 12,
+        "y": 7
+      },
+      "id": 57,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "((nyxguard_auto_bans_total{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "legendFormat": ""
+        }
+      ],
+      "title": "Auto-bans \u00b7 ${matched_window}",
+      "type": "stat",
+      "description": "Global duration must exactly match 1D, 2D, 7D, 14D, 30D, 60D or 90D. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 16,
+        "y": 7
+      },
+      "id": 58,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "((nyxguard_unique_attacking_ips{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Attackers \u00b7 ${matched_window}",
+      "type": "stat",
+      "description": "Global duration must exactly match 1D, 2D, 7D, 14D, 30D, 60D or 90D. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 200
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 20,
+        "y": 7
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(nyxguard_attacks_window_total{job=\"$application_job\",instance=\"$application_instance\",window=\"24h\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Observed attacks \u2014 fixed 24h",
+      "type": "stat",
+      "description": "Intentional fixed rolling reference at the selected end. Does not follow the global duration. Retained observations may be incomplete; historical end requires a fresh stored sample."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 500
+              },
+              {
+                "color": "red",
+                "value": 2000
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 12,
+        "y": 10
+      },
+      "id": 17,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(nyxguard_attacks_window_total{job=\"$application_job\",instance=\"$application_instance\",window=\"30d\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Observed attacks \u2014 fixed 30d",
+      "type": "stat",
+      "description": "Intentional fixed rolling reference at the selected end. Does not follow the global duration. Retained observations may be incomplete; historical end requires a fresh stored sample."
+    },
+    {
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 16,
+        "y": 10
+      },
+      "id": 18,
+      "options": {
+        "mode": "markdown",
+        "content": "**Coverage unverified.**"
+      },
+      "title": "Window / coverage",
+      "type": "text",
+      "description": "Seven elapsed-day presets; exact counts of retained observations only. The cutoff is the previous closed UTC five-minute boundary, not a verified committed collector watermark. Coverage remains unverified; retention, deletions and collector gaps can shorten history. Current-state panels are snapshots. External Prometheus sample retention is independent."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 200
+              },
+              {
+                "color": "red",
+                "value": 1000
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 20,
+        "y": 10
+      },
+      "id": 15,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "((nyxguard_attacks_window_total{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from}))) / on(window) group_left() (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "legendFormat": "Daily average",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Avg/day \u00b7 ${matched_window}",
+      "type": "stat",
+      "description": "Global duration must exactly match 1D, 2D, 7D, 14D, 30D, 60D or 90D. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history. Daily figure is the observed retained count divided by the supported window duration; it is not a completeness estimate."
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 21,
+      "panels": [],
+      "title": "Top Attackers & Targets",
+      "type": "row",
+      "description": " Current inventory and rolling event gauges are observed snapshots. The time picker selects sample history; the global duration selects retained event observations. Legacy traffic history is unverified."
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
+      "id": 24,
+      "panels": [],
+      "title": "Applications WAF Status",
+      "type": "row",
+      "description": " Current inventory and rolling event gauges are observed snapshots. The time picker selects sample history; the global duration selects retained event observations. Legacy traffic history is unverified."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "index": 1,
+                  "text": "Unprotected"
+                },
+                "1": {
+                  "index": 0,
+                  "text": "Protected"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 14,
+        "x": 0,
+        "y": 24
+      },
+      "id": 25,
+      "options": {
+        "displayMode": "basic",
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "showUnfilled": true,
+        "valueMode": "color",
+        "text": {
+          "valueSize": 14
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(nyxguard_app_waf_enabled{job=\"$application_job\",instance=\"$application_instance\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "legendFormat": "{{app}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Per-App WAF Protection",
+      "type": "bargauge",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 2,
+        "x": 14,
+        "y": 24
+      },
+      "id": 26,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(nyxguard_ip_rules_total{job=\"$application_job\",instance=\"$application_instance\",action=\"allow\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "IP Allow Rules",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 2,
+        "x": 16,
+        "y": 24
+      },
+      "id": 27,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(nyxguard_ip_rules_total{job=\"$application_job\",instance=\"$application_instance\",action=\"deny\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "IP Deny Rules",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 18,
+        "y": 24
+      },
+      "id": 28,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(nyxguard_country_rules_total{job=\"$application_job\",instance=\"$application_instance\",action=\"allow\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Country Allow Rules",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 20
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 21,
+        "y": 24
+      },
+      "id": 29,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(nyxguard_country_rules_total{job=\"$application_job\",instance=\"$application_instance\",action=\"deny\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Country Deny Rules",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 5,
+        "x": 14,
+        "y": 27
+      },
+      "id": 30,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(nyxguard_waf_rules_total{job=\"$application_job\",instance=\"$application_instance\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "WAF Rules Total",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 5,
+        "x": 19,
+        "y": 27
+      },
+      "id": 31,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(nyxguard_waf_rules_enabled{job=\"$application_job\",instance=\"$application_instance\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "WAF Rules Enabled",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 46
+      },
+      "id": 32,
+      "panels": [],
+      "title": "System Metrics \u2014 Production Manager",
+      "type": "row",
+      "description": " Current inventory and rolling event gauges are observed snapshots. The time picker selects sample history; the global duration selects retained event observations. Legacy traffic history is unverified."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 60
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          },
+          "unit": "percent",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 0,
+        "y": 47
+      },
+      "id": 33,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {
+          "valueSize": 14
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "100 - (avg by(instance) (rate(node_cpu_seconds_total{mode=\"idle\",job=\"$node_job\",instance=\"$application_instance\"}[2m])) * 100)",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "CPU Usage",
+      "type": "gauge",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 4,
+        "y": 47
+      },
+      "id": 34,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {
+          "valueSize": 14
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(1 - (node_memory_MemAvailable_bytes{job=\"$node_job\",instance=\"$application_instance\"} / node_memory_MemTotal_bytes{job=\"$node_job\",instance=\"$application_instance\"})) * 100",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "RAM Usage",
+      "type": "gauge",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 75
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 8,
+        "y": 47
+      },
+      "id": 35,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {
+          "valueSize": 14
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(1 - (node_filesystem_avail_bytes{job=\"$node_job\",instance=\"$application_instance\",mountpoint=\"/\"} / node_filesystem_size_bytes{job=\"$node_job\",instance=\"$application_instance\",mountpoint=\"/\"})) * 100",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Disk Usage (/)",
+      "type": "gauge",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bytes",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 12,
+        "y": 47
+      },
+      "id": 36,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "node_memory_MemTotal_bytes{job=\"$node_job\",instance=\"$application_instance\"}",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "RAM Total",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1073741824
+              },
+              {
+                "color": "red",
+                "value": 536870912
+              }
+            ]
+          },
+          "unit": "bytes",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 15,
+        "y": 47
+      },
+      "id": 37,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "node_memory_MemAvailable_bytes{job=\"$node_job\",instance=\"$application_instance\"}",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "RAM Available",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 18,
+        "y": 47
+      },
+      "id": 38,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "node_time_seconds{job=\"$node_job\",instance=\"$application_instance\"} - node_boot_time_seconds{job=\"$node_job\",instance=\"$application_instance\"}",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "System Uptime",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 2
+              },
+              {
+                "color": "red",
+                "value": 8
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 21,
+        "y": 47
+      },
+      "id": 39,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "node_load1{job=\"$node_job\",instance=\"$application_instance\"}",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Load Avg (1m)",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 10,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "always",
+            "spanNulls": false,
+            "pointSize": 3
+          },
+          "mappings": [],
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 52
+      },
+      "id": 40,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\",job=\"$node_job\",instance=\"$application_instance\"}[$__rate_interval])) * 100)",
+          "instant": false,
+          "legendFormat": "CPU Used %",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(avg(rate(node_cpu_seconds_total{mode=\"iowait\",job=\"$node_job\",instance=\"$application_instance\"}[$__rate_interval])) * 100)",
+          "instant": false,
+          "legendFormat": "IO Wait %",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(avg(rate(node_cpu_seconds_total{mode=\"system\",job=\"$node_job\",instance=\"$application_instance\"}[$__rate_interval])) * 100)",
+          "instant": false,
+          "legendFormat": "System %",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "CPU Usage Over Time",
+      "type": "timeseries",
+      "description": "Follows the global time interval. Missing scrapes remain gaps; these samples do not prove complete event history. Rates apply only to node-exporter cumulative counters where already configured.",
+      "maxDataPoints": 2880
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 10,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "always",
+            "spanNulls": false,
+            "pointSize": 3
+          },
+          "mappings": [],
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 52
+      },
+      "id": 41,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "node_memory_MemTotal_bytes{job=\"$node_job\",instance=\"$application_instance\"} - node_memory_MemAvailable_bytes{job=\"$node_job\",instance=\"$application_instance\"}",
+          "instant": false,
+          "legendFormat": "Used RAM",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "node_memory_MemAvailable_bytes{job=\"$node_job\",instance=\"$application_instance\"}",
+          "instant": false,
+          "legendFormat": "Available RAM",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "node_memory_Buffers_bytes{job=\"$node_job\",instance=\"$application_instance\"} + node_memory_Cached_bytes{job=\"$node_job\",instance=\"$application_instance\"}",
+          "instant": false,
+          "legendFormat": "Buffers+Cache",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Memory Usage Over Time",
+      "type": "timeseries",
+      "description": "Follows the global time interval. Missing scrapes remain gaps; these samples do not prove complete event history. Rates apply only to node-exporter cumulative counters where already configured.",
+      "maxDataPoints": 2880
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 5,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "always",
+            "spanNulls": false,
+            "pointSize": 3
+          },
+          "mappings": [],
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 60
+      },
+      "id": 42,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "rate(node_network_receive_bytes_total{job=\"$node_job\",instance=\"$application_instance\",device!~\"lo|veth.*|docker.*|br-.*\"}[$__rate_interval])",
+          "instant": false,
+          "legendFormat": "Inbound",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "rate(node_network_transmit_bytes_total{job=\"$node_job\",instance=\"$application_instance\",device!~\"lo|veth.*|docker.*|br-.*\"}[$__rate_interval])",
+          "instant": false,
+          "legendFormat": "Outbound",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Network Throughput (host interfaces)",
+      "type": "timeseries",
+      "description": "Follows the global time interval. Missing scrapes remain gaps; these samples do not prove complete event history. Rates apply only to node-exporter cumulative counters where already configured.",
+      "maxDataPoints": 2880
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 5,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "always",
+            "spanNulls": false,
+            "pointSize": 3
+          },
+          "mappings": [],
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 60
+      },
+      "id": 43,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(node_disk_read_bytes_total{job=\"$node_job\",instance=\"$application_instance\",device!~\"loop.*|ram.*\"}[$__rate_interval]))",
+          "instant": false,
+          "legendFormat": "Read",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(node_disk_written_bytes_total{job=\"$node_job\",instance=\"$application_instance\",device!~\"loop.*|ram.*\"}[$__rate_interval]))",
+          "instant": false,
+          "legendFormat": "Write",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Disk I/O",
+      "type": "timeseries",
+      "description": "Follows the global time interval. Missing scrapes remain gaps; these samples do not prove complete event history. Rates apply only to node-exporter cumulative counters where already configured.",
+      "maxDataPoints": 2880
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 3
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 6,
+        "x": 12,
+        "y": 50
+      },
+      "id": 44,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(nyxguard_ssl_certs_expiring_soon{job=\"$application_job\",instance=\"$application_instance\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "legendFormat": ""
+        }
+      ],
+      "title": "SSL expiry in next 30d",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 6,
+        "x": 18,
+        "y": 50
+      },
+      "id": 45,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(nyxguard_users_total{job=\"$application_job\",instance=\"$application_instance\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Users",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 68
+      },
+      "id": 46,
+      "panels": [],
+      "title": "Historical Trends",
+      "type": "row",
+      "description": " Current inventory and rolling event gauges are observed snapshots. The time picker selects sample history; the global duration selects retained event observations. Legacy traffic history is unverified."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 10,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "always",
+            "spanNulls": false,
+            "pointSize": 3
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 69
+      },
+      "id": 47,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "nyxguard_attacks_window_total{job=\"$application_job\",instance=\"$application_instance\",window=\"24h\"}",
+          "instant": false,
+          "legendFormat": "24h total",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "nyxguard_attacks_window_total{job=\"$application_job\",instance=\"$application_instance\",window=\"7d\"}",
+          "instant": false,
+          "legendFormat": "7d total",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Observed rolling attack totals (gauges)",
+      "type": "timeseries",
+      "description": "Follows the global time interval. Missing scrapes remain gaps; these samples do not prove complete event history. Rolling gauges sampled over time; do not sum or apply increase() to obtain event totals.",
+      "maxDataPoints": 2880
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 10,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "always",
+            "spanNulls": false,
+            "pointSize": 3
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 69
+      },
+      "id": 48,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "nyxguard_proxy_hosts_total{job=\"$application_job\",instance=\"$application_instance\"}",
+          "instant": false,
+          "legendFormat": "Total Hosts",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "nyxguard_protected_hosts_total{job=\"$application_job\",instance=\"$application_instance\"}",
+          "instant": false,
+          "legendFormat": "WAF Protected",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Proxy Hosts & WAF Protection",
+      "type": "timeseries",
+      "description": "Follows the global time interval. Missing scrapes remain gaps; these samples do not prove complete event history. Rates apply only to node-exporter cumulative counters where already configured.",
+      "maxDataPoints": 2880
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 77
+      },
+      "id": 49,
+      "panels": [],
+      "title": "NyxGuard Protection Settings",
+      "type": "row",
+      "description": " Current inventory and rolling event gauges are observed snapshots. The time picker selects sample history; the global duration selects retained event observations. Legacy traffic history is unverified."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "OFF"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "ON"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 0,
+        "y": 78
+      },
+      "id": 50,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(nyxguard_setting_bot_defense_enabled{job=\"$application_job\",instance=\"$application_instance\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Bot Defense",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "OFF"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "ON"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 6,
+        "y": 78
+      },
+      "id": 51,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(nyxguard_setting_ddos_enabled{job=\"$application_job\",instance=\"$application_instance\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "DDoS Shield",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "OFF"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "ON"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 12,
+        "y": 78
+      },
+      "id": 52,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(nyxguard_setting_sqli_enabled{job=\"$application_job\",instance=\"$application_instance\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "SQLi Shield",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "DISABLED"
+                },
+                "1": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "ENABLED"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "Unavailable"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 18,
+        "y": 78
+      },
+      "id": 53,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(nyxguard_setting_auth_bypass_enabled{job=\"$application_job\",instance=\"$application_instance\"}) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Administrator-enabled portal bypass (current)",
+      "type": "stat",
+      "description": "State/resource snapshot at the selected end. For a live range ending now this is the latest observation. An older absolute end shows state observed then, when retained; this is not an event count over the selected interval."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "noValue": "Unavailable",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "semi-dark-blue",
+                "value": null
+              },
+              {
+                "color": "semi-dark-orange",
+                "value": 10
+              },
+              {
+                "color": "semi-dark-red",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 15
+      },
+      "id": 59,
+      "options": {
+        "displayMode": "gradient",
+        "minVizHeight": 18,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "text": {
+          "titleSize": 12,
+          "valueSize": 14
+        },
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(topk(20,(nyxguard_attacks_by_ip{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from}))))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "instant": true,
+          "legendFormat": "{{ip}} ({{type}})",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Top attacking IPs \u2014 ${matched_window}",
+      "type": "bargauge",
+      "description": "Global duration must exactly match 1D, 2D, 7D, 14D, 30D, 60D or 90D. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "noValue": "Unavailable",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "semi-dark-green",
+                "value": null
+              },
+              {
+                "color": "semi-dark-orange",
+                "value": 20
+              },
+              {
+                "color": "semi-dark-red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 15
+      },
+      "id": 60,
+      "options": {
+        "displayMode": "gradient",
+        "minVizHeight": 18,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "text": {
+          "titleSize": 12,
+          "valueSize": 14
+        },
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(topk(20,(nyxguard_app_status_4xx_total{job=\"$application_job\",instance=\"$application_instance\"} and on(window) ((nyxguard_traffic_window_end_seconds{job=\"$application_job\",instance=\"$application_instance\"} - on(window) nyxguard_traffic_window_start_seconds{job=\"$application_job\",instance=\"$application_instance\"}) * 1000 == (${__to} - ${__from}))) + (nyxguard_app_status_5xx_total{job=\"$application_job\",instance=\"$application_instance\"} and on(window) ((nyxguard_traffic_window_end_seconds{job=\"$application_job\",instance=\"$application_instance\"} - on(window) nyxguard_traffic_window_start_seconds{job=\"$application_job\",instance=\"$application_instance\"}) * 1000 == (${__to} - ${__from}))))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "legendFormat": "{{app}}"
+        }
+      ],
+      "title": "Observed HTTP 4xx/5xx by app \u2014 ${traffic_window}",
+      "type": "bargauge",
+      "description": "Global duration must exactly match 1h, 24h, 2d, 7d, 14d, 30d, 60d, 90d or 180d. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history. Traffic interval is aligned to closed UTC five-minute buckets; end may precede the selected end by up to five minutes plus scrape/generation delay. Exported history completeness is 0 (unverified)."
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
+      "id": 61,
+      "title": "Per-App Traffic \u2014 closed UTC buckets; coverage unverified",
+      "type": "row",
+      "description": " Current inventory and rolling event gauges are observed snapshots. The time picker selects sample history; the global duration selects retained event observations. Legacy traffic history is unverified."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "noValue": "Unavailable",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "semi-dark-blue",
+                "value": null
+              },
+              {
+                "color": "semi-dark-green",
+                "value": 100
+              },
+              {
+                "color": "semi-dark-orange",
+                "value": 10000
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 31
+      },
+      "id": 62,
+      "options": {
+        "displayMode": "gradient",
+        "minVizHeight": 18,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "text": {
+          "titleSize": 12,
+          "valueSize": 14
+        },
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(sort_desc((nyxguard_app_requests_total{job=\"$application_job\",instance=\"$application_instance\"} and on(window) ((nyxguard_traffic_window_end_seconds{job=\"$application_job\",instance=\"$application_instance\"} - on(window) nyxguard_traffic_window_start_seconds{job=\"$application_job\",instance=\"$application_instance\"}) * 1000 == (${__to} - ${__from}))))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "legendFormat": "{{app}}"
+        }
+      ],
+      "title": "Observed requests per app \u2014 ${traffic_window}",
+      "type": "bargauge",
+      "description": "Global duration must exactly match 1h, 24h, 2d, 7d, 14d, 30d, 60d, 90d or 180d. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history. Traffic interval is aligned to closed UTC five-minute buckets; end may precede the selected end by up to five minutes plus scrape/generation delay. Exported history completeness is 0 (unverified)."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "noValue": "Unavailable",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "semi-dark-purple",
+                "value": null
+              },
+              {
+                "color": "semi-dark-blue",
+                "value": 1048576
+              },
+              {
+                "color": "semi-dark-orange",
+                "value": 1073741824
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 31
+      },
+      "id": 63,
+      "options": {
+        "displayMode": "gradient",
+        "minVizHeight": 18,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "text": {
+          "titleSize": 12,
+          "valueSize": 14
+        },
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(sort_desc((nyxguard_app_bytes_out_total{job=\"$application_job\",instance=\"$application_instance\"} and on(window) ((nyxguard_traffic_window_end_seconds{job=\"$application_job\",instance=\"$application_instance\"} - on(window) nyxguard_traffic_window_start_seconds{job=\"$application_job\",instance=\"$application_instance\"}) * 1000 == (${__to} - ${__from}))))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "legendFormat": "{{app}}"
+        }
+      ],
+      "title": "Observed traffic out \u2014 ${traffic_window}",
+      "type": "bargauge",
+      "description": "Global duration must exactly match 1h, 24h, 2d, 7d, 14d, 30d, 60d, 90d or 180d. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history. Traffic interval is aligned to closed UTC five-minute buckets; end may precede the selected end by up to five minutes plus scrape/generation delay. Exported history completeness is 0 (unverified)."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "noValue": "Unavailable",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 39
+      },
+      "id": 64,
+      "options": {
+        "displayMode": "gradient",
+        "minVizHeight": 18,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "text": {
+          "titleSize": 12,
+          "valueSize": 14
+        },
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(sort_desc((nyxguard_app_status_4xx_total{job=\"$application_job\",instance=\"$application_instance\"} and on(window) ((nyxguard_traffic_window_end_seconds{job=\"$application_job\",instance=\"$application_instance\"} - on(window) nyxguard_traffic_window_start_seconds{job=\"$application_job\",instance=\"$application_instance\"}) * 1000 == (${__to} - ${__from}))))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "legendFormat": "{{app}}"
+        }
+      ],
+      "title": "Observed HTTP 4xx per app \u2014 ${traffic_window}",
+      "type": "bargauge",
+      "description": "Global duration must exactly match 1h, 24h, 2d, 7d, 14d, 30d, 60d, 90d or 180d. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history. Traffic interval is aligned to closed UTC five-minute buckets; end may precede the selected end by up to five minutes plus scrape/generation delay. Exported history completeness is 0 (unverified)."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "Unavailable",
+                  "color": "gray"
+                }
+              }
+            }
+          ],
+          "noValue": "Unavailable",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 39
+      },
+      "id": 65,
+      "options": {
+        "displayMode": "gradient",
+        "minVizHeight": 18,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "text": {
+          "titleSize": 12,
+          "valueSize": 14
+        },
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(sort_desc((nyxguard_app_status_5xx_total{job=\"$application_job\",instance=\"$application_instance\"} and on(window) ((nyxguard_traffic_window_end_seconds{job=\"$application_job\",instance=\"$application_instance\"} - on(window) nyxguard_traffic_window_start_seconds{job=\"$application_job\",instance=\"$application_instance\"}) * 1000 == (${__to} - ${__from}))))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "instant": true,
+          "range": false,
+          "editorMode": "code",
+          "legendFormat": "{{app}}"
+        }
+      ],
+      "title": "Observed HTTP 5xx per app \u2014 ${traffic_window}",
+      "type": "bargauge",
+      "description": "Global duration must exactly match 1h, 24h, 2d, 7d, 14d, 30d, 60d, 90d or 180d. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history. Traffic interval is aligned to closed UTC five-minute buckets; end may precede the selected end by up to five minutes plus scrape/generation delay. Exported history completeness is 0 (unverified)."
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "tags": [
+    "nyxguard",
+    "5.0.17"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "label": "Prometheus",
+        "query": "prometheus",
+        "current": {},
+        "options": []
+      },
+      {
+        "name": "application_job",
+        "type": "constant",
+        "query": "nyxguard",
+        "current": {
+          "text": "nyxguard",
+          "value": "nyxguard"
+        },
+        "hide": 0
+      },
+      {
+        "name": "application_instance",
+        "type": "query",
+        "label": "Manager instance",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "query": "label_values(nyxguard_metrics_contract_version{job=\"$application_job\"}, instance)",
+        "refresh": 1,
+        "includeAll": false,
+        "multi": false,
+        "current": {},
+        "options": []
+      },
+      {
+        "name": "node_job",
+        "type": "constant",
+        "query": "node_exporter",
+        "current": {
+          "text": "node_exporter",
+          "value": "node_exporter"
+        },
+        "hide": 0
+      },
+      {
+        "name": "matched_window",
+        "label": "Matched global duration",
+        "type": "query",
+        "hide": 2,
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "query_result((label_replace((vector((${__to} - ${__from})) == 86400000), \"matched\", \"24h\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 172800000), \"matched\", \"2d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 604800000), \"matched\", \"7d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 1209600000), \"matched\", \"14d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 2592000000), \"matched\", \"30d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 5184000000), \"matched\", \"60d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 7776000000), \"matched\", \"90d\", \"\", \"\")) or (label_replace(vector(0), \"matched\", \"unsupported\", \"\", \"\") unless on() (label_replace((vector((${__to} - ${__from})) == 86400000), \"matched\", \"24h\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 172800000), \"matched\", \"2d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 604800000), \"matched\", \"7d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 1209600000), \"matched\", \"14d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 2592000000), \"matched\", \"30d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 5184000000), \"matched\", \"60d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 7776000000), \"matched\", \"90d\", \"\", \"\"))))",
+        "query": {
+          "query": "query_result((label_replace((vector((${__to} - ${__from})) == 86400000), \"matched\", \"24h\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 172800000), \"matched\", \"2d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 604800000), \"matched\", \"7d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 1209600000), \"matched\", \"14d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 2592000000), \"matched\", \"30d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 5184000000), \"matched\", \"60d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 7776000000), \"matched\", \"90d\", \"\", \"\")) or (label_replace(vector(0), \"matched\", \"unsupported\", \"\", \"\") unless on() (label_replace((vector((${__to} - ${__from})) == 86400000), \"matched\", \"24h\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 172800000), \"matched\", \"2d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 604800000), \"matched\", \"7d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 1209600000), \"matched\", \"14d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 2592000000), \"matched\", \"30d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 5184000000), \"matched\", \"60d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 7776000000), \"matched\", \"90d\", \"\", \"\"))))",
+          "refId": "StandardVariableQuery"
+        },
+        "regex": "/matched=\"([^\"]+)\"/",
+        "refresh": 2,
+        "sort": 0,
+        "multi": false,
+        "allowCustomValue": false,
+        "includeAll": false,
+        "skipUrlSync": true,
+        "current": {
+          "text": "loading",
+          "value": "loading"
+        },
+        "options": []
+      },
+      {
+        "name": "traffic_window",
+        "label": "Matched traffic duration",
+        "type": "query",
+        "hide": 2,
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "query_result((label_replace((vector((${__to} - ${__from})) == 3600000), \"matched\", \"1h\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 86400000), \"matched\", \"24h\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 172800000), \"matched\", \"2d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 604800000), \"matched\", \"7d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 1209600000), \"matched\", \"14d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 2592000000), \"matched\", \"30d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 5184000000), \"matched\", \"60d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 7776000000), \"matched\", \"90d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 15552000000), \"matched\", \"180d\", \"\", \"\")) or (label_replace(vector(0), \"matched\", \"unsupported\", \"\", \"\") unless on() (label_replace((vector((${__to} - ${__from})) == 3600000), \"matched\", \"1h\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 86400000), \"matched\", \"24h\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 172800000), \"matched\", \"2d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 604800000), \"matched\", \"7d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 1209600000), \"matched\", \"14d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 2592000000), \"matched\", \"30d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 5184000000), \"matched\", \"60d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 7776000000), \"matched\", \"90d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 15552000000), \"matched\", \"180d\", \"\", \"\"))))",
+        "query": {
+          "query": "query_result((label_replace((vector((${__to} - ${__from})) == 3600000), \"matched\", \"1h\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 86400000), \"matched\", \"24h\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 172800000), \"matched\", \"2d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 604800000), \"matched\", \"7d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 1209600000), \"matched\", \"14d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 2592000000), \"matched\", \"30d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 5184000000), \"matched\", \"60d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 7776000000), \"matched\", \"90d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 15552000000), \"matched\", \"180d\", \"\", \"\")) or (label_replace(vector(0), \"matched\", \"unsupported\", \"\", \"\") unless on() (label_replace((vector((${__to} - ${__from})) == 3600000), \"matched\", \"1h\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 86400000), \"matched\", \"24h\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 172800000), \"matched\", \"2d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 604800000), \"matched\", \"7d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 1209600000), \"matched\", \"14d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 2592000000), \"matched\", \"30d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 5184000000), \"matched\", \"60d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 7776000000), \"matched\", \"90d\", \"\", \"\") or label_replace((vector((${__to} - ${__from})) == 15552000000), \"matched\", \"180d\", \"\", \"\"))))",
+          "refId": "StandardVariableQuery"
+        },
+        "regex": "/matched=\"([^\"]+)\"/",
+        "refresh": 2,
+        "sort": 0,
+        "multi": false,
+        "allowCustomValue": false,
+        "includeAll": false,
+        "skipUrlSync": true,
+        "current": {
+          "text": "loading",
+          "value": "loading"
+        },
+        "options": []
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "NyxGuard Manager",
+  "uid": "nyxguard-main",
+  "version": 0
+}

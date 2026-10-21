@@ -1,0 +1,20 @@
+{
+  "debianVersion": "20250419~deb12u2",
+  "certifiVersion": "2026.10.19",
+  "advisories": [
+    "https://github.com/certifi/python-certifi/security/advisories/GHSA-6q48-6c7w-9gw2",
+    "https://tracker.debian.org/pkg/ca-certificates"
+  ],
+  "downloads": [
+    {
+      "filename": "ca-certificates_20250419~deb12u2_all.deb",
+      "url": "https://deb.debian.org/debian-security/pool/updates/main/c/ca-certificates/ca-certificates_20250419~deb12u2_all.deb",
+      "sha256": "b9f76b5271a7ac373fd5e7e1b5b826a71ddd702b42a0d104955ecb1acfffc94b"
+    },
+    {
+      "filename": "certifi-2026.10.19-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/c4/51/29046e48f693c54e5b7412216d447a1d8362c9653148d98c02cdf65fa733/certifi-2026.10.19-py3-none-any.whl",
+      "sha256": "42d35340cc5b9ba78e818ddbff0c5b1c2b779de448a340fd1b989f5fa8670e1b"
+    }
+  ]
+}

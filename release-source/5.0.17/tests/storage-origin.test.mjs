@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {storageOriginAllowed} from '../storage-api.mjs';
+const req=(origin,site,host='manager.example.test')=>({protocol:'https',headers:{...(origin?{origin}:{}),...(site?{'sec-fetch-site':site}:{})},get:()=>host});
+assert(storageOriginAllowed(req('https://manager.example.test:8443','same-origin')));
+assert(storageOriginAllowed(req('https://manager.example.test',undefined)));
+assert(storageOriginAllowed(req(undefined,undefined)));
+assert(!storageOriginAllowed(req('https://other.example.test','same-origin')));
+assert(!storageOriginAllowed(req('https://manager.example.test','cross-site')));
+assert(!storageOriginAllowed(req('https://manager.example.test','same-site')));
+assert(!storageOriginAllowed(req('http://manager.example.test','same-origin')));
+assert(!storageOriginAllowed(req('null','same-origin')));
+assert(!storageOriginAllowed(req('https://user:password@manager.example.test','same-origin')));
+assert(!storageOriginAllowed(req('https://manager.example.test:8443',undefined)));
+console.log('PASS same-origin browser proxy-port handling and cross-origin rejection');
