@@ -157,28 +157,37 @@ class Storage:
      for v in ('current','target'):
       if not re.fullmatch(r'\d+\.\d+\.\d+',manifest.get(v,'')):raise Refused('Invalid backup version')
      rollback=read_json(fd,'rollback-compose.json')
-     images={svc.get('image')for svc in rollback.get('services',{}).values()}
-     if not images or any(not IMAGE.fullmatch(i or '')for i in images):raise Refused('Recovery image identity is unverified')
-     # Protect every retained backup's dependencies; conservative and bounded.
+     services=rollback.get('services',{});images=set();legacy=False
+     if not services:raise Refused('Missing recovery image references')
+     for service,definition in services.items():
+      reference=definition.get('image')
+      if IMAGE.fullmatch(reference or ''):images.add(reference)
+      elif service=='db' and reference=='jc21/mariadb-aria:latest':
+       # Older official updaters pinned Manager/Agent but retained this database
+       # tag. It cannot qualify as the immediate immutable recovery set. Its
+       # known Manager/Agent dependencies still remain protected while retained.
+       legacy=True
+      else:raise Refused('Recovery image identity is unverified')
      protected_images.update(images);recovery_images.update(images)
      if verify_hashes:verify(fd,manifest,members)
-     row.update(sourceVersion=manifest['current'],targetVersion=manifest['target'],result=result.get('result'),status='verified' if verify_hashes else 'manifest',reason='protected_recovery',allocatedBytes=sum(os.stat(p,dir_fd=fd,follow_symlinks=False).st_blocks*512 for p in os.listdir(fd) if not stat.S_ISDIR(os.stat(p,dir_fd=fd,follow_symlinks=False).st_mode)))
+     row.update(sourceVersion=manifest['current'],targetVersion=manifest['target'],result=result.get('result'),status='legacy_manifest' if legacy else ('verified' if verify_hashes else 'manifest'),reason='protected_recovery',allocatedBytes=sum(os.stat(p,dir_fd=fd,follow_symlinks=False).st_blocks*512 for p in os.listdir(fd) if not stat.S_ISDIR(os.stat(p,dir_fd=fd,follow_symlinks=False).st_mode)))
      # Include nested payload allocation without trusting client paths.
      row['allocatedBytes']=sum(self.member_blocks(fd,p)for p in members)
-     records[row['id']]={'name':name,'members':members,'manifest':manifest,'result':result,'images':images,'row':row}
+     records[row['id']]={'name':name,'members':members,'manifest':manifest,'result':result,'images':images,'legacy':legacy,'row':row}
     finally:os.close(fd)
    except (OSError,ValueError,KeyError,TypeError,Refused):pass
    backups.append(row)
   version=manager['Config'].get('Labels',{}).get('org.opencontainers.image.version')
-  candidates=[r for r in records.values() if r['result'].get('result')=='success' and r['result'].get('to')==version and r['manifest']['target']==version]
+  candidates=[r for r in records.values() if r['result'].get('result')=='success' and r['result'].get('to')==version and r['manifest']['target']==version and not r['legacy']]
   protected=max(candidates,key=lambda r:r['name']) if candidates else None
-  recovery_ok=protected is not None and len(records)==len(backups)
+  recovery_ok=protected is not None
   # Validate the recovery path before authorizing any deletion.
   if verify_hashes and protected:
    if not all(self.image_exists(i)for i in protected['images']):recovery_ok=False
   for r in records.values():
    eligible=recovery_ok and r is not protected and r['result'].get('result') in ('success','rolled_back')
    r['row'].update(eligible=eligible,reason='eligible' if eligible else ('protected_recovery' if r is protected else 'recovery_unverified'))
+  image_cleanup_safe=recovery_ok and len(records)==len(backups)
   images=[]
   all_images=self.api('GET','/images/json?all=0')
   # Disk accounting is optional: a slow/unavailable daemon size query must
@@ -189,15 +198,16 @@ class Storage:
    except (OSError,ValueError,Refused):self.size_cache={};self.size_cache_at=time.monotonic()
   sizes=self.size_cache
   for image in all_images:
-   tags=image.get('RepoTags')or[];ident=image['Id']
+   tags=sorted(image.get('RepoTags')or[]);ident=image['Id']
    if not IMAGE.fullmatch(ident) or not (any(t.rsplit(':',1)[0] in REPOS for t in tags) or ident in deployment_images or ident in recovery_images):continue
    # Any unrelated alias makes deletion of this shared identity ineligible.
    owned=all(t.rsplit(':',1)[0] in REPOS for t in tags)
-   ref=[c.get('Names',[])for c in containers if c['ImageID']==ident]
-   row={'type':'image','id':self.token('image',ident),'name':', '.join(tags),'imageId':ident,'sizeBytes':image.get('Size'),'reclaimableBytes':None,'references':ref,'eligible':recovery_ok and owned and ident not in protected_images,'reason':'referenced' if ref else ('protected_recovery' if ident in protected_images else ('eligible' if recovery_ok and owned else 'recovery_unverified'))}
+   ref=sorted(sorted(c.get('Names',[]))for c in containers if c['ImageID']==ident)
+   row={'type':'image','id':self.token('image',ident),'name':', '.join(tags),'imageId':ident,'sizeBytes':image.get('Size'),'reclaimableBytes':None,'references':ref,'eligible':image_cleanup_safe and owned and ident not in protected_images,'reason':'referenced' if ref else ('protected_recovery' if ident in protected_images else ('eligible' if image_cleanup_safe and owned else 'recovery_unverified'))}
    size=sizes.get(ident,{})
    if isinstance(size.get('SharedSize'),int) and size['SharedSize']>=0:row['reclaimableBytes']=max(0,size.get('Size',0)-size['SharedSize'])
    images.append(row);records[row['id']]={'image':ident,'row':row}
+  images.sort(key=lambda row:row['imageId'])
   if len(images)>500:raise Refused('Image inventory limit exceeded; manual review required')
   revision=hashlib.sha256(json.dumps({'backups':backups,'images':images,'members':{k:r.get('members')for k,r in records.items()},'manager':manager['Id'],'containers':sorted((c['Id'],c['ImageID'],c.get('State'))for c in containers)},sort_keys=True).encode()).hexdigest()
   return {'backups':backups,'images':images,'recoveryVerified':recovery_ok and verify_hashes,'recoveryIdentified':recovery_ok,'revision':revision},records

@@ -63,13 +63,13 @@ class Tests(unittest.TestCase):
   with self.assertRaises(mod.Refused):self.delete(plan['plan'])
   self.assertTrue(old.exists())
  def test_corruption_link_and_legacy_fail_closed(self):
-  old,latest=self.prepare();(old/'0.tar').unlink();(old/'0.tar').symlink_to('/etc/passwd');self.assertFalse(any(r['eligible']for r in self.inventory()['backups']))
+  old,latest=self.prepare();(old/'0.tar').unlink();(old/'0.tar').symlink_to('/etc/passwd');self.assertFalse(self.inventory()['backups'][0]['eligible'])
   with self.assertRaises(mod.Refused):self.preview([self.inventory()['backups'][0]['id']])
  def test_checksum_corruption_refuses_preview(self):
   old,_=self.prepare();(old/'0.tar').write_bytes(b'wrong');r=self.inventory()['backups'][0]
   with self.assertRaises(mod.Refused):self.preview([r['id']])
  def test_hardlinks_refused(self):
-  old,_=self.prepare();os.link(old/'0.tar',self.root/'outside');self.assertFalse(any(r['eligible']for r in self.inventory()['backups']))
+  old,_=self.prepare();os.link(old/'0.tar',self.root/'outside');self.assertFalse(self.inventory()['backups'][0]['eligible'])
  def test_size_accounting_unavailable_keeps_inventory(self):
   self.prepare();base=self.service.api
   def unavailable(method,path):
@@ -86,6 +86,17 @@ class Tests(unittest.TestCase):
   self.service.api=local;i=self.inventory();row=next(r for r in i['images']if r['imageId']==A);self.assertFalse(row['eligible'])
  def test_bounded_audit_rotation(self):
   (self.root/'storage-audit.jsonl').write_bytes(b'x'*(1024*1024+1));self.service.audit({'action':'fixture','result':'success'});self.assertTrue((self.root/'storage-audit.jsonl.1').exists());self.assertLess((self.root/'storage-audit.jsonl').stat().st_size,1000)
+ def test_engine_order_does_not_invalidate_plan(self):
+  self.prepare();base=self.service.api;counter=[0]
+  def reorder(method,path):
+   result=base(method,path)
+   if path=='/images/json?all=0':
+    counter[0]+=1
+    if counter[0]%2:result.reverse()
+   return result
+  self.service.api=reorder;r=self.inventory()['backups'][0];plan=self.preview([r['id']]);self.assertEqual(self.delete(plan['plan'])['outcomes'][0]['result'],'deleted')
+ def test_legacy_database_tag_does_not_block_historical_cleanup(self):
+  old,_=self.prepare();rollback={'services':{'nyxguard-manager':{'image':B},'db':{'image':'jc21/mariadb-aria:latest'}}};(old/'rollback-compose.json').write_text(json.dumps(rollback));manifest=json.loads((old/'manifest.json').read_text());manifest['hashes']['rollback-compose.json']=hashlib.sha256((old/'rollback-compose.json').read_bytes()).hexdigest();(old/'manifest.json').write_text(json.dumps(manifest));row=self.inventory()['backups'][0];self.assertTrue(row['eligible']);self.assertEqual(row['status'],'legacy_manifest');self.delete(self.preview([row['id']])['plan']);self.assertFalse(old.exists())
  def test_identity_change_install_root(self):
   self.prepare();saved=self.root.with_name(self.root.name+'-replaced');self.root.rename(saved);self.root.mkdir()
   try:

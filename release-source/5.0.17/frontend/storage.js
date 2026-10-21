@@ -11,8 +11,9 @@ export function StorageManagement(){
  const [inventory,setInventory]=React.useState(null),[busy,setBusy]=React.useState(false),[error,setError]=React.useState(''),[selected,setSelected]=React.useState([]),[review,setReview]=React.useState(null),[outcome,setOutcome]=React.useState(null),[sort,setSort]=React.useState('date');
  async function refresh(){setBusy(true);setError('');try{const value=await api('inventory');setInventory(value);setSelected([]);setReview(null)}catch{setError(t('failed'))}finally{setBusy(false)}}
  React.useEffect(()=>{if(allowed)refresh()},[allowed]);
+ React.useEffect(()=>{if(review)document.querySelector('.nyx-storage-review')?.scrollIntoView({block:'nearest',behavior:'smooth'})},[review]);
  const toggle=id=>{setReview(null);setSelected(old=>old.includes(id)?old.filter(i=>i!==id):[...old,id])};
- async function preview(){setBusy(true);setError('');try{setReview(await api('preview',{ids:selected}))}catch{setError(t('failed'));setReview(null)}finally{setBusy(false)}}
+ async function preview(ids=selected){setSelected(ids);setBusy(true);setError('');try{setReview(await api('preview',{ids}))}catch{setError(t('failed'));setReview(null)}finally{setBusy(false)}}
  async function confirm(){await requestDecision({title:t('confirm'),message:t('irreversible'),action:t('delete'),destructive:true,errorMessage:t('failed'),pendingLabel:t('working'),onConfirm:async()=>{setBusy(true);try{const out=await api('delete',{plan:review.plan});setOutcome(out);await refresh()}finally{setBusy(false);setReview(null)}}});}
  function rowView(row,type){
   const pairs=[t('name'),row.name,t('integrity'),t(row.status||'unknown')];
@@ -21,12 +22,12 @@ export function StorageManagement(){
   const details=h('details',null,h('summary',{'aria-label':t('details')+' '+row.name},t('details')),h('dl',null,...pairs.map((text,index)=>h(index%2?'dd':'dt',{key:index},text))));
   const select=h('input',{type:'checkbox',checked:selected.includes(row.id),disabled:busy||!row.eligible,'aria-label':t('select')+' '+row.name,title:reason(row),onChange:()=>toggle(row.id)});
   const name=h(React.Fragment,null,h('span',{className:'nyx-storage-name',title:row.name},type==='backup'?date(row.name):row.name.split(', ')[0]),h('small',null,type==='backup'?(row.sourceVersion||'—')+' → '+(row.targetVersion||'—'):row.imageId.slice(0,19)+(row.name.split(', ').length>1?' · +'+(row.name.split(', ').length-1):'')));
-  return h('tr',{key:row.id},h('td',null,select),h('td',null,name),h('td',null,bytes(type==='backup'?row.allocatedBytes:row.sizeBytes)),h('td',null,h('span',{className:row.eligible?'nyx-storage-eligible':'nyx-storage-protected'},reason(row))),h('td',null,details));
+  return h('tr',{key:row.id},h('td',null,select),h('td',null,name),h('td',null,bytes(type==='backup'?row.allocatedBytes:row.sizeBytes)),h('td',null,h('span',{className:row.eligible?'nyx-storage-eligible':'nyx-storage-protected'},reason(row))),h('td',null,details),h('td',null,h('button',{type:'button',className:'nyx-storage-delete',disabled:busy||!allowed||!row.eligible,title:row.eligible?t('review'):reason(row),'aria-label':t('delete')+' '+row.name,onClick:()=>preview([row.id]),'data-nyx-action':'destructive'},h('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.7,'aria-hidden':true},h('path',{d:'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7'})))));
  }
  function table(type,rows){
   const sorted=[...rows].sort((a,b)=>sort==='name'?a.name.localeCompare(b.name):b.name.localeCompare(a.name));
   const title=t(type==='backup'?'backups':'images');
-  const header=h('thead',null,h('tr',null,...[t('select'),t(type==='backup'?'dateVersion':'image'),t('size'),t('status'),t('details')].map((text,index)=>h('th',{key:index},text))));
+  const header=h('thead',null,h('tr',null,...[t('select'),t(type==='backup'?'dateVersion':'image'),t('size'),t('status'),t('details'),t('delete')].map((text,index)=>h('th',{key:index},text))));
   const body=h('tbody',null,...sorted.map(row=>rowView(row,type)));
   return h('section',{className:'nyx-storage-section','data-storage-section':type},h('header',null,h('h3',null,title),h('span',{className:'nyx-storage-count'},rows.length)),h('div',{className:'nyx-storage-scroll',tabIndex:0,'aria-label':title},h('table',null,header,body)),!rows.length?h('p',{className:'nyx-storage-empty'},busy?t('loading'):t('empty')):null);
  }
@@ -34,7 +35,7 @@ export function StorageManagement(){
  !allowed?h('p',null,t('adminOnly')):null,error?h('p',{role:'alert',className:'nyx-storage-error'},error):null,inventory?.available===false?h('p',{role:'status'},t('unavailable')):null,
  table('backup',inventory?.backups||[]),table('image',inventory?.images||[]),h('p',{className:'nyx-storage-note'},t('accounting')),
  inventory&&!inventory.recoveryIdentified?h('p',{className:'nyx-storage-note'},t('recovery_unverified')):null,
- selected.length?h('div',{className:'nyx-storage-actions'},h('span',null,t('selected')+': '+selected.length),h('button',{className:'btn btn-sm',type:'button',disabled:busy,onClick:preview},t('review'))):null,
+ h('div',{className:'nyx-storage-actions'},h('span',null,t('selected')+': '+selected.length),h('button',{className:'btn btn-sm',type:'button',disabled:busy||!allowed||selected.length===0,onClick:()=>preview()},t('review'))),
  review?h('section',{className:'nyx-storage-review','aria-label':t('review')},h('h4',null,t('review')),h('ul',null,...review.resources.map(row=>h('li',{key:row.id},row.name+' — '+t(row.type==='backup'?'backups':'images')+' · '+reason(row)+' · '+bytes(row.type==='backup'?row.allocatedBytes:row.reclaimableBytes)))),h('p',null,t('planNote')),h('button',{className:'btn btn-sm',type:'button',disabled:busy,onClick:confirm,'data-nyx-action':'destructive'},t('confirm'))):null,
  outcome?h('div',{role:'status',className:'nyx-storage-outcome'},t('result')+': '+outcome.outcomes.map(r=>t(r.result)).join(', '),h('p',null,t('measured')+': '+bytes(outcome.outcomes.reduce((sum,r)=>sum+(r.filesystemFreeDeltaBytes||0),0)))):null);
 }
