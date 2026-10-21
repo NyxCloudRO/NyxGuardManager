@@ -4,7 +4,7 @@ import {storageText as t} from './storage-i18n.js';
 const h=React.createElement;
 async function api(action,body){const res=await fetch('/api/settings/storage/'+action,{method:action==='inventory'?'GET':'POST',headers:{Authorization:'Bearer '+auth.token?.token,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});if(!res.ok)throw Error(t('failed'));return res.json();}
 const bytes=n=>n==null?t('unknown'):new Intl.NumberFormat(window.NyxI18n.locale,{maximumFractionDigits:1}).format(n/1048576)+' MiB';
-const reason=r=>t(r.eligible?'eligible':r.reason||'manual_review');
+const reason=r=>t(r.eligible?'eligible':r.reason==='recovery_unverified'?'recovery_unverified_short':r.reason||'manual_review');
 function date(name){const m=/backup-(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/.exec(name);return m?new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`).toLocaleString(window.NyxI18n.locale):name;}
 export function StorageManagement(){
  const {data:user}=useUser('me'),allowed=user?.roles?.includes('admin')&&!user.roles.includes('nyxagent');
@@ -20,7 +20,7 @@ export function StorageManagement(){
   else pairs.push(t('result'),t(row.result||'unknown'));
   const details=h('details',null,h('summary',{'aria-label':t('details')+' '+row.name},t('details')),h('dl',null,...pairs.map((text,index)=>h(index%2?'dd':'dt',{key:index},text))));
   const select=h('input',{type:'checkbox',checked:selected.includes(row.id),disabled:busy||!row.eligible,'aria-label':t('select')+' '+row.name,title:reason(row),onChange:()=>toggle(row.id)});
-  const name=h(React.Fragment,null,h('span',{className:'nyx-storage-name'},type==='backup'?date(row.name):row.name),h('small',null,type==='backup'?(row.sourceVersion||'—')+' → '+(row.targetVersion||'—'):row.imageId.slice(0,19)));
+  const name=h(React.Fragment,null,h('span',{className:'nyx-storage-name',title:row.name},type==='backup'?date(row.name):row.name.split(', ')[0]),h('small',null,type==='backup'?(row.sourceVersion||'—')+' → '+(row.targetVersion||'—'):row.imageId.slice(0,19)+(row.name.split(', ').length>1?' · +'+(row.name.split(', ').length-1):'')));
   return h('tr',{key:row.id},h('td',null,select),h('td',null,name),h('td',null,bytes(type==='backup'?row.allocatedBytes:row.sizeBytes)),h('td',null,h('span',{className:row.eligible?'nyx-storage-eligible':'nyx-storage-protected'},reason(row))),h('td',null,details));
  }
  function table(type,rows){

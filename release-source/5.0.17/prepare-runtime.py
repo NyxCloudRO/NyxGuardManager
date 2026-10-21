@@ -26,6 +26,11 @@ needle='e.jsx("span",{children:e.jsx(s,{id:"settings.grafana.step6"})}),'
 patch(settings,needle,needle+'e.jsx("p",{style:{fontSize:12,lineHeight:1.5},children:storageText("historyNote")}),')
 # The shipped dashboard has 58 entries: 8 rows, 49 data panels and 1 coverage guide.
 s=main.read_text();pattern=re.compile(r'("settings.grafana.overview-body":)"(?:[^"\\]|\\.)*"');texts=json.loads((context/'wizard-messages.json').read_text());langs=['de','en','es','fr','it','ro','en'];index=iter(langs);s,n=pattern.subn(lambda m:m[1]+json.dumps(texts[next(index)]['overview'],ensure_ascii=False),s);assert n==7,n;main.write_text(s)
+# Generated historical acceptance summaries have no runtime references.
+# Keep private acceptance evidence outside the publicly served frontend.
+for name in ['task3-validation.json','task4-validation.json','task5-validation.json','task6-validation.json']:
+ p=f/name
+ if p.exists():p.unlink()
 # Rename the entire frontend dependency graph atomically for this release.
 mapping={p.name:'asset-517-'+hashlib.sha256(p.name.encode()).hexdigest()[:16]+p.suffix for p in assets.iterdir() if p.suffix in ['.js','.css']};pattern=re.compile('|'.join(re.escape(n) for n in sorted(mapping,key=len,reverse=True)))
 for p in list(f.rglob('*')):
