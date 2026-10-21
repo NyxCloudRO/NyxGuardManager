@@ -5,6 +5,18 @@ export function storageRequest(body){return new Promise((resolve,reject)=>{
   let data='';res.setEncoding('utf8');res.on('data',chunk=>{data+=chunk;if(data.length>2*1024*1024)req.destroy(Error('Storage response exceeds limit'))});res.on('error',reject);res.on('end',()=>{try{const result=JSON.parse(data);if(res.statusCode!==200){const e=Error(result.error||'Storage operation refused');e.status=409;reject(e)}else resolve(result)}catch(e){reject(e)}});
  });req.setTimeout(120000,()=>req.destroy(Error('Storage verification timed out')));req.on('error',reject);req.end(payload);
 });}
+export function storageOriginAllowed(req){
+ const site=req.headers['sec-fetch-site'];
+ if(site&&!['same-origin','none'].includes(site))return false;
+ if(!req.headers.origin)return true;
+ try{
+  const origin=new URL(req.headers.origin),external=new URL(`${req.protocol}://${req.get('host')}`);
+  if(origin.username||origin.password||origin.hostname!==external.hostname||origin.protocol!==external.protocol)return false;
+  // The existing Nginx proxy preserves the hostname but can omit the external
+  // port. Browsers supply this forbidden-to-script header for actual origins.
+  return origin.port===external.port||site==='same-origin';
+ }catch{return false;}
+}
 export function registerStorage(router,{jwtdecode,audit,userModel,PermissionError}){
  for(const [method,path,action] of [['get','/storage/inventory','inventory'],['post','/storage/preview','preview'],['post','/storage/delete','delete']]){
   router[method](path,jwtdecode(),async(req,res,next)=>{let actor=0;try{
@@ -15,7 +27,7 @@ export function registerStorage(router,{jwtdecode,audit,userModel,PermissionErro
     // Existing auth uses explicit Bearer headers. Cross-site ambient-cookie
     // requests cannot mutate; keep browser origin checking as a second boundary.
     if(!/^Bearer [^\s]+$/i.test(req.headers.authorization||''))throw new PermissionError('Permission Denied');
-    if(req.headers.origin&&req.headers.origin!==`${req.protocol}://${req.get('host')}`)throw new PermissionError('Permission Denied');
+    if(!storageOriginAllowed(req))throw new PermissionError('Permission Denied');
    }
    const data=action==='inventory'?{action,actor}:action==='preview'?{action,actor,ids:req.body?.ids}:{action,actor,plan:req.body?.plan};
    const out=await storageRequest(data);
