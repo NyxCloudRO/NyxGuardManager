@@ -9,3 +9,5 @@ Settings → Backup & Restore preserves Configuration Export/Import and adds com
 Database schema 49 and VPN Agent 5.0.2 are unchanged. Publication does not upgrade production or alter external Prometheus/Grafana installations. External 90-day sample retention requires independent storage planning and does not restore expired history.
 
 Configured support entitlements now refresh automatically after backend startup, with bounded retries for temporary network failures. The License page updates authority reachability automatically. Existing activation identity, vault keys, signature validation and offline-grace rules are preserved.
+
+Password-encrypted configuration backups retain their existing scrypt/AES-GCM format and work factor. The key-derivation memory allowance is now explicit, asynchronous and limited to one concurrent job, fixing the inherited export/import failure without increasing the Node heap limit.

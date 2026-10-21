@@ -9,6 +9,10 @@ p=root/'routes/settings.js';s=p.read_text();s="import {registerStorage} from '..
 p=root/'routes/settings.js';s=p.read_text();start=s.index('const BACKUP_ENCRYPTION_ALGO =');end=s.index('const router =',start);s=s[:start]+s[end:]
 s=s.replace('import crypto from "crypto";',"import {encryptBackup,decryptBackup} from '../internal/backup-crypto.mjs';")
 s=s.replace('passphrase ? encryptBackup(jsonString, passphrase) : jsonString','passphrase ? await encryptBackup(jsonString, passphrase) : jsonString').replace('const { parsed: payload } = decryptBackup(raw, passphrase);','const { parsed: payload } = await decryptBackup(raw, passphrase);');p.write_text(s)
+p=root/'routes/settings.js';s=p.read_text();s="import {restoreConfiguration,publicBackupTable} from '../internal/configuration-restore.mjs';\n"+s
+s=s.replace('!BACKUP_EXCLUDE_TABLES.has(name)','!BACKUP_EXCLUDE_TABLES.has(name) && publicBackupTable(name)')
+start=s.index('\t\t\tawait blockedMaintenance(()=>knex.transaction(async (trx) => {');end=s.index('\n\n\t\t\tres.status(200).send({',start)
+s=s[:start]+"\t\t\tawait blockedMaintenance(()=>restoreConfiguration(knex,backupTables,tableNames),{restore:true});"+s[end:];p.write_text(s)
 p=root/'internal/audit-policy.mjs';patch(p,"'count']);","'count','reclaimed_bytes']);")
 # Startup reachability checks and bounded retries run independently of page loads.
 p=root/'routes/professional-support.js'
