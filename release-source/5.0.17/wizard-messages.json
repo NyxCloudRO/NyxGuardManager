@@ -1,0 +1,44 @@
+{
+  "en": {
+    "tokenLabel": "Integration token",
+    "tokenHelp": "Paste the full token saved at creation or rotation. It stays in this form only. Existing tokens are not changed.",
+    "overview": "Official dashboard v5.0.17: 58 entries (8 groups, 49 data panels and a coverage guide), covering retained attacks and enforcement, per-app traffic, protection settings and optional host metrics.",
+    "upgradeNote": "Existing dashboard: export a backup and keep customizations first. Import v5.0.17 into a copy or explicitly update UID nyxguard-main after review. Select the existing datasource; external provisioning files must be updated by their administrator.",
+    "historyNote": "Use 1D, 2D, 7D, 14D, 30D, 60D or 90D. Counts are exact retained observations through a closed UTC cutoff; coverage is unverified. Prometheus sample retention is separate and may default to fewer than 90 days. A 100-day setting is optional after storage planning. Preserve the existing TSDB and configuration; expired data cannot be reconstructed."
+  },
+  "ro": {
+    "tokenLabel": "Token de integrare",
+    "tokenHelp": "Lipește tokenul complet salvat la creare sau rotire. Rămâne doar în formular. Tokenurile existente nu sunt schimbate.",
+    "overview": "Panou oficial v5.0.17: 58 de elemente (8 grupuri, 49 de panouri de date și un ghid de acoperire), cu atacuri și aplicări reținute, trafic pe aplicație, protecție și metrici opționale ale gazdei.",
+    "upgradeNote": "Panou existent: exportă o copie și păstrează personalizările. Importă v5.0.17 separat sau actualizează explicit UID nyxguard-main după verificare. Selectează sursa de date existentă; administratorul actualizează fișierele externe de provizionare.",
+    "historyNote": "Folosește 1D, 2D, 7D, 14D, 30D, 60D sau 90D. Numărătorile sunt observații reținute exacte până la limita UTC închisă; acoperirea este neverificată. Retenția eșantioanelor Prometheus este separată și poate fi sub 90 de zile. Setarea de 100 de zile este opțională după planificarea spațiului. Păstrează TSDB și configurația; datele expirate nu pot fi reconstruite."
+  },
+  "de": {
+    "tokenLabel": "Integrationstoken",
+    "tokenHelp": "Fügen Sie das bei Erstellung oder Rotation gespeicherte vollständige Token ein. Es bleibt nur in diesem Formular. Bestehende Tokens bleiben unverändert.",
+    "overview": "Offizielles Dashboard v5.0.17: 58 Einträge (8 Gruppen, 49 Datenpanels und ein Abdeckungshinweis) für gespeicherte Angriffe, Durchsetzung, App-Traffic, Schutz und optionale Host-Metriken.",
+    "upgradeNote": "Bestehendes Dashboard: zuerst exportieren und Anpassungen bewahren. v5.0.17 als Kopie importieren oder UID nyxguard-main nach Prüfung ausdrücklich aktualisieren. Bestehende Datenquelle wählen; externe Bereitstellungsdateien aktualisiert der Administrator.",
+    "historyNote": "1D, 2D, 7D, 14D, 30D, 60D oder 90D verwenden. Exakte gespeicherte Beobachtungen enden an einer geschlossenen UTC-Grenze; Vollständigkeit ist ungeprüft. Prometheus-Sample-Aufbewahrung ist unabhängig und kann unter 90 Tagen liegen. 100 Tage sind nach Speicherplanung optional. TSDB und Konfiguration bewahren; abgelaufene Daten sind nicht rekonstruierbar."
+  },
+  "es": {
+    "tokenLabel": "Token de integración",
+    "tokenHelp": "Pegue el token completo guardado al crearlo o rotarlo. Solo permanece en este formulario. Los tokens existentes no cambian.",
+    "overview": "Panel oficial v5.0.17: 58 elementos (8 grupos, 49 paneles de datos y una guía de cobertura), con ataques y decisiones retenidos, tráfico por aplicación, protección y métricas opcionales del host.",
+    "upgradeNote": "Panel existente: exporte una copia y conserve las personalizaciones. Importe v5.0.17 en una copia o actualice explícitamente UID nyxguard-main tras revisarlo. Seleccione la fuente de datos existente; el administrador actualiza los archivos externos de aprovisionamiento.",
+    "historyNote": "Use 1D, 2D, 7D, 14D, 30D, 60D o 90D. Los recuentos son observaciones retenidas exactas hasta un límite UTC cerrado; la cobertura no está verificada. La retención de muestras Prometheus es independiente y puede ser inferior a 90 días. 100 días es opcional tras planificar el almacenamiento. Conserve TSDB y configuración; los datos caducados no se pueden reconstruir."
+  },
+  "fr": {
+    "tokenLabel": "Jeton d’intégration",
+    "tokenHelp": "Collez le jeton complet enregistré à sa création ou rotation. Il reste uniquement dans ce formulaire. Les jetons existants restent inchangés.",
+    "overview": "Tableau officiel v5.0.17 : 58 éléments (8 groupes, 49 panneaux de données et un guide de couverture), avec attaques et décisions conservées, trafic par application, protection et métriques hôte facultatives.",
+    "upgradeNote": "Tableau existant : exportez une copie et préservez les personnalisations. Importez v5.0.17 dans une copie ou mettez explicitement à jour UID nyxguard-main après revue. Sélectionnez la source existante ; l’administrateur actualise les fichiers de provisionnement externes.",
+    "historyNote": "Utilisez 1D, 2D, 7D, 14D, 30D, 60D ou 90D. Les comptes sont des observations conservées exactes jusqu’à une borne UTC fermée ; la couverture reste non vérifiée. La rétention des échantillons Prometheus est indépendante et peut être inférieure à 90 jours. 100 jours est facultatif après dimensionnement du stockage. Préservez TSDB et configuration ; les données expirées ne sont pas récupérables."
+  },
+  "it": {
+    "tokenLabel": "Token di integrazione",
+    "tokenHelp": "Incolla il token completo salvato alla creazione o rotazione. Rimane solo nel modulo. I token esistenti non cambiano.",
+    "overview": "Dashboard ufficiale v5.0.17: 58 elementi (8 gruppi, 49 pannelli dati e una guida alla copertura), con attacchi e decisioni conservati, traffico per app, protezione e metriche host facoltative.",
+    "upgradeNote": "Dashboard esistente: esporta una copia e conserva le personalizzazioni. Importa v5.0.17 in una copia oppure aggiorna esplicitamente UID nyxguard-main dopo la verifica. Scegli la sorgente dati esistente; l’amministratore aggiorna i file di provisioning esterni.",
+    "historyNote": "Usa 1D, 2D, 7D, 14D, 30D, 60D o 90D. I conteggi sono osservazioni conservate esatte fino a un limite UTC chiuso; la copertura non è verificata. La conservazione dei campioni Prometheus è separata e può essere inferiore a 90 giorni. 100 giorni è facoltativo dopo la pianificazione dello spazio. Conserva TSDB e configurazione; i dati scaduti non sono ricostruibili."
+  }
+}

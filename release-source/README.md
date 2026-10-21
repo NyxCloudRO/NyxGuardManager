@@ -1,6 +1,6 @@
 # Release source map
 
-Current Manager release: **5.0.16**, compatible VPN Agent **5.0.2**, schema **49**. The [5.0.13 build](5.0.13/README.md) layers asserted corrective patches on immutable public 5.0.12; the compatible Agent adds full-tunnel routing and response-path protection. The host updater is self-contained and preserves existing MariaDB and storage. Versioned directories retain historical build and regression inputs.
+Current Manager release: **5.0.17**, compatible VPN Agent **5.0.2**, schema **49**. The [5.0.13 build](5.0.13/README.md) layers asserted corrective patches on immutable public 5.0.12; the compatible Agent adds full-tunnel routing and response-path protection. The host updater is self-contained and preserves existing MariaDB and storage. Versioned directories retain historical build and regression inputs.
 
 
 `release-source/` contains the versioned build inputs, asserted compiled

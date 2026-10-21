@@ -499,6 +499,17 @@ main() {
   ensure_vault_key
 
   write_compose_file "${image_ref}" "${vpn_agent_ref}"
+  if version_at_least "${selected_tag}" "5.0.17"; then
+    install -d -m 700 "${INSTALL_DIR}/.maintenance"
+    install -d -m 755 "${INSTALL_DIR}/.maintenance/run"
+    python3 - "${INSTALL_DIR}" <<'NYX_STORAGE_MOUNT'
+import pathlib,sys
+p=pathlib.Path(sys.argv[1])/"docker-compose.yml"
+s=p.read_text();needle="      - nyxguard_data:/data"
+assert s.count(needle)==1
+p.write_text(s.replace(needle,needle+"\n      - "+sys.argv[1]+"/.maintenance/run:/run/nyxguard-storage:ro"))
+NYX_STORAGE_MOUNT
+  fi
   write_version_file "${selected_tag}"
 
 
@@ -520,6 +531,14 @@ main() {
   [[ "$ready" == 1 ]] || { echo 'ERROR: Manager/database readiness failed.' >&2; return 1; }
   docker exec "${INSTANCE}-manager" nginx -t >/dev/null 2>&1
   install_systemd_unit "${vpn_enabled}"
+  if version_at_least "${selected_tag}" "5.0.17"; then
+    local storage_installer
+    storage_installer="$(mktemp)"
+    chmod 700 "${storage_installer}"
+    docker cp "${INSTANCE}-manager:/app/internal/install-storage-host.py" "${storage_installer}"
+    python3 "${storage_installer}" "${INSTALL_DIR}" "${INSTANCE}-manager"
+    rm -f "${storage_installer}"
+  fi
 
   local host_ip
   host_ip="$(hostname -I 2>/dev/null | awk '{print $1}')"

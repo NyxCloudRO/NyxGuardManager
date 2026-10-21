@@ -443,7 +443,7 @@ def main():
  volume_names=set();storage=[];files=[str(ROOT/'docker-compose.yml'),str(ROOT/'.env')]
  if (ROOT/'.version').exists():files.append(str(ROOT/'.version'))
  if (ROOT/'docker-compose.vpn.yml').exists():files.append(str(ROOT/'docker-compose.vpn.yml'))
- skip={'/var/run/docker.sock','/etc/localtime','/host/proc/net/arp'}
+ skip={'/run/nyxguard-storage','/var/run/docker.sock','/etc/localtime','/host/proc/net/arp'}
  vault=None
  for c in cs:
   for mt in c['Mounts']:
@@ -576,6 +576,16 @@ def main():
   if not accepted and not os.environ.get('NYXGUARD_CANDIDATE_IMAGE'):raise RuntimeError('Official image has no verified registry digest')
   accepted=accepted or image['Id']
   new=json.loads(json.dumps(cfg));new['services']['nyxguard-manager']['image']=accepted
+  if semver(target)>=(5,0,17):
+   maintenance=ROOT/'.maintenance'
+   if maintenance.is_symlink():raise RuntimeError('Maintenance directory must not be a symlink')
+   maintenance.mkdir(mode=0o700,exist_ok=True)
+   socket_dir=maintenance/'run'
+   if socket_dir.is_symlink():raise RuntimeError('Maintenance socket directory must not be a symlink')
+   socket_dir.mkdir(mode=0o755,exist_ok=True)
+   volumes=new['services']['nyxguard-manager'].setdefault('volumes',[])
+   volumes[:]=[v for v in volumes if not (isinstance(v,dict)and v.get('target')=='/run/nyxguard-storage')]
+   volumes.append({'type':'bind','source':str(socket_dir),'target':'/run/nyxguard-storage','read_only':True})
   if 'vpn-client-agent' in new['services']:new['services']['vpn-client-agent']['image']=agent_ref or 'nyxmael/nyxguardmanager-vpn-agent:'+policy['agent']
   for k in ('NPM_BUILD_VERSION','NPM_BUILD_COMMIT','NPM_BUILD_DATE'):new['services']['nyxguard-manager'].get('environment',{}).pop(k,None)
   database=inspect(m['database_id'])
@@ -606,6 +616,11 @@ def main():
   if sha(pathlib.Path(vault))!=m['hashes']['files/'+str(files.index(vault))]:raise RuntimeError('Licensing vault key changed')
   atom(ROOT/'.version',target+'\n')
   atom(backup/'result.json',json.dumps({'result':'success','from':current,'to':target,'image':accepted,'database_container_preserved':not m.get('database_reconfigured',False),'volumes_preserved':True}))
+
+  if semver(target)>=(5,0,17):
+   installer=ROOT/'.maintenance'/'install-storage-host.py'
+   docker('cp',cid('nyxguard-manager')+':/app/internal/install-storage-host.py',str(installer))
+   run(['python3',str(installer),str(ROOT),cid('nyxguard-manager')])
   pending.unlink();log('Upgrade successful: '+current+' -> '+target+'. Persistent storage preserved; database engine prerequisites verified.')
   log('Verified Manager image: '+accepted)
  except BaseException as primary:

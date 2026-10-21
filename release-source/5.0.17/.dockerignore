@@ -1,0 +1,15 @@
+*
+!Dockerfile
+!integrations.js
+!historical-bands.mjs
+!traffic-ingestion.mjs
+!storage-api.mjs
+!storage-host.py
+!install-storage-host.py
+!frontend/
+!frontend/*.js
+!frontend/*.css
+!grafana-dashboard.json
+!prepare-runtime.py
+!wizard-messages.json
+!RELEASE-NOTES.md

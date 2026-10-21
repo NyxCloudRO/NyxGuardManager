@@ -7,7 +7,7 @@
 <p align="center">A self-hosted reverse proxy with application protection, traffic intelligence,<br />WireGuard access and operational diagnostics.</p>
 
 <p align="center">
-  <a href="release-source/5.0.16/RELEASE-NOTES.md"><img src="https://img.shields.io/badge/version-5.0.16-00c8e8?style=flat-square" alt="Manager 5.0.16" /></a>
+  <a href="release-source/5.0.17/RELEASE-NOTES.md"><img src="https://img.shields.io/badge/version-5.0.17-00c8e8?style=flat-square" alt="Manager 5.0.17" /></a>
   <a href="https://hub.docker.com/r/nyxmael/nyxguardmanager"><img src="https://img.shields.io/docker/pulls/nyxmael/nyxguardmanager?color=00c8e8&amp;style=flat-square" alt="Docker pulls" /></a>
   <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-NMPLA-5279b8?style=flat-square" alt="NMPLA license" /></a>
 </p>
@@ -23,9 +23,9 @@
 
 Manage HTTPS applications, certificates, access policies, traffic and remote VPN sites from one interface. Configuration, certificates and operational history stay on your infrastructure.
 
-**NyxGuard Manager 5.0.16** uses a conventional host-managed Docker update: replace application code, reuse persistent storage, run versioned migrations, and verify readiness. The existing database image and volume are preserved; when required, the updater recreates the database service with persistent InnoDB prerequisites for transactional traffic collection. Manager uses **VPN Agent 5.0.2** and **schema 49**.
+**NyxGuard Manager 5.0.17** uses a conventional host-managed Docker update: replace application code, reuse persistent storage, run versioned migrations, and verify readiness. The existing database image and volume are preserved; when required, the updater recreates the database service with persistent InnoDB prerequisites for transactional traffic collection. Manager uses **VPN Agent 5.0.2** and **schema 49**.
 
-[Read the release notes](release-source/5.0.16/RELEASE-NOTES.md) · [Browse the changelog](CHANGELOG.md) · [Monitoring setup](docs/monitoring.md) · [Schema 49 upgrade](docs/upgrade-5.0.14.md)
+[Read the release notes](release-source/5.0.17/RELEASE-NOTES.md) · [Browse the changelog](CHANGELOG.md) · [Monitoring setup](docs/monitoring.md) · [Schema 49 upgrade](docs/upgrade-5.0.14.md)
 
 <a id="quick-install"></a>
 
@@ -132,13 +132,13 @@ HTTP-01 certificates need public inbound TCP 80. DNS challenges need the provide
 <details>
 <summary>Manual Docker Compose installation</summary>
 
-For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.16 uses VPN Agent 5.0.2. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
+For a **fresh installation**, create `/opt/nyxguardmanager`, then save this as `docker-compose.yml`. Manager 5.0.17 uses VPN Agent 5.0.2. Manager readiness comes from its image; do not replace it with an HTTP-only healthcheck.
 
 ```yaml
 services:
   nyxguard-manager:
     container_name: nyxguard-manager
-    image: nyxmael/nyxguardmanager:5.0.16
+    image: nyxmael/nyxguardmanager:5.0.17
     restart: unless-stopped
     ports:
       - "80:80"
