@@ -3,7 +3,7 @@
 The installer supplies the fixed installation root and Manager UID. The application
 gets only this Unix socket; no additional Docker socket or host directory access.
 """
-import contextlib,fcntl,hashlib,hmac,http.client,http.server,json,os,pathlib,re,secrets,socket,socketserver,stat,struct,sys,time
+import contextlib,fcntl,hashlib,hmac,http.client,http.server,json,os,pathlib,re,secrets,socket,socketserver,stat,struct,sys,time,threading
 MAX_JSON=1024*1024
 BACKUP=re.compile(r'backup-[0-9]{8}T[0-9]{6}Z\Z')
 IMAGE=re.compile(r'sha256:[0-9a-f]{64}\Z')
@@ -92,10 +92,28 @@ def remove_tree(fd,device,members,prefix=''):
    os.unlink(name,dir_fd=fd)
 class Storage:
  def __init__(self,root,project,uid,api=engine):
-  self.root=str(pathlib.Path(root).absolute());self.project=project;self.uid=uid;self.api=api;self.key=secrets.token_bytes(32);self.plans={};self.size_cache={};self.size_cache_at=0
+  self.root=str(pathlib.Path(root).absolute());self.project=project;self.uid=uid;self.api=api;self.key=secrets.token_bytes(32);self.plans={};self.size_cache={};self.size_cache_at=0;self.size_graph=None;self.size_lock=threading.Lock();self.size_busy=False
   self.rootfd=checked_dir(self.root);self.statefd=None
  def close(self):os.close(self.rootfd)
  def token(self,kind,raw):return hmac.new(self.key,(kind+':'+raw).encode(),hashlib.sha256).hexdigest()
+ def accounting(self,graph):
+  # Optional layer accounting must never hold the maintenance/updater locks or
+  # delay the authoritative resource list. One bounded worker, at most once
+  # per five minutes, asks only for images (never volume/container scans).
+  with self.size_lock:
+   sizes=dict(self.size_cache) if self.size_graph==graph else {}
+   if not self.size_busy and time.monotonic()-self.size_cache_at>300:
+    self.size_busy=True;self.size_cache_at=time.monotonic()
+    def update():
+     try:
+      disk=self.api('GET','/system/df?type=image')
+      value={i['Id']:{'Size':i.get('Size'),'SharedSize':i.get('SharedSize')}for i in disk.get('Images',[])}
+      with self.size_lock:self.size_cache=value;self.size_graph=graph
+     except (OSError,ValueError,Refused):pass
+     finally:
+      with self.size_lock:self.size_busy=False
+    threading.Thread(target=update,name='storage-image-accounting',daemon=True).start()
+   return sizes
  def deployment(self):
   containers=self.api('GET','/containers/json?all=1')
   managers=[c for c in containers if c.get('Labels',{}).get('com.docker.compose.project')==self.project and c.get('Labels',{}).get('com.docker.compose.service')=='nyxguard-manager']
@@ -179,6 +197,8 @@ class Storage:
    except (OSError,ValueError,KeyError,TypeError,Refused):pass
    backups.append(row)
   version=manager['Config'].get('Labels',{}).get('org.opencontainers.image.version')
+  # DEV/RC builds use the same recovery schema as their stable version family.
+  if isinstance(version,str):version=re.sub(r'-(?:dev|rc)\.[0-9]+$','',version)
   candidates=[r for r in records.values() if r['result'].get('result')=='success' and r['result'].get('to')==version and r['manifest']['target']==version and not r['legacy']]
   protected=max(candidates,key=lambda r:r['name']) if candidates else None
   recovery_ok=protected is not None
@@ -191,13 +211,7 @@ class Storage:
   image_cleanup_safe=recovery_ok and len(records)==len(backups)
   images=[]
   all_images=self.api('GET','/images/json?all=0')
-  # Disk accounting is optional: a slow/unavailable daemon size query must
-  # never turn an otherwise valid inventory into an empty or failed source.
-  if time.monotonic()-self.size_cache_at>60:
-   try:
-    disk=self.api('GET','/system/df');self.size_cache={i['Id']:{'Size':i.get('Size'),'SharedSize':i.get('SharedSize')}for i in disk.get('Images',[])};self.size_cache_at=time.monotonic()
-   except (OSError,ValueError,Refused):self.size_cache={};self.size_cache_at=time.monotonic()
-  sizes=self.size_cache
+  sizes=self.accounting(tuple(sorted(i['Id']for i in all_images)))
   for image in all_images:
    tags=sorted(image.get('RepoTags')or[]);ident=image['Id']
    if not IMAGE.fullmatch(ident) or not (any(t.rsplit(':',1)[0] in REPOS for t in tags) or ident in deployment_images or ident in recovery_images):continue
@@ -210,7 +224,9 @@ class Storage:
    images.append(row);records[row['id']]={'image':ident,'row':row}
   images.sort(key=lambda row:row['imageId'])
   if len(images)>500:raise Refused('Image inventory limit exceeded; manual review required')
-  revision=hashlib.sha256(json.dumps({'backups':backups,'images':images,'members':{k:r.get('members')for k,r in records.items()},'manager':manager['Id'],'containers':sorted((c['Id'],c['ImageID'],c.get('State'))for c in containers)},sort_keys=True).encode()).hexdigest()
+  # Optional display estimates changing cannot invalidate a safe reviewed plan.
+  revision_images=[{k:v for k,v in row.items()if k!='reclaimableBytes'}for row in images]
+  revision=hashlib.sha256(json.dumps({'backups':backups,'images':revision_images,'members':{k:r.get('members')for k,r in records.items()},'manager':manager['Id'],'containers':sorted((c['Id'],c['ImageID'],c.get('State'))for c in containers)},sort_keys=True).encode()).hexdigest()
   return {'backups':backups,'images':images,'recoveryVerified':recovery_ok and verify_hashes,'recoveryIdentified':recovery_ok,'revision':revision},records
  def member_blocks(self,fd,name):
   f=open_member(fd,name)

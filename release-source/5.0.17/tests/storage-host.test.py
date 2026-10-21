@@ -1,4 +1,4 @@
-import importlib.util,pathlib,tempfile,json,hashlib,os,fcntl,unittest
+import importlib.util,pathlib,tempfile,json,hashlib,os,fcntl,unittest,threading,time
 spec=importlib.util.spec_from_file_location('storage',pathlib.Path(__file__).parents[1]/'storage-host.py');mod=importlib.util.module_from_spec(spec);spec.loader.exec_module(mod)
 A='sha256:'+'1'*64;B='sha256:'+'2'*64;C='sha256:'+'3'*64
 class Tests(unittest.TestCase):
@@ -14,7 +14,7 @@ class Tests(unittest.TestCase):
   if path.startswith('/containers/'):return self.manager
   images=[{'Id':v,'RepoTags':['nyxmael/nyxguardmanager:'+tag],'Size':1000}for v,tag in [(A,'5.0.17'),(B,'5.0.16'),(C,'5.0.14')]]
   if path=='/images/json?all=0':return [i for i in images if i['Id']not in self.removed]
-  if path=='/system/df':return {'Images':[dict(i,SharedSize=800)for i in images]}
+  if path=='/system/df?type=image':return {'Images':[dict(i,SharedSize=800)for i in images]}
   if method=='GET' and path.startswith('/images/'):return {'Id':path.split('/')[2]}
   if method=='DELETE':self.removed.append(path.split('/')[2].split('?')[0]);return [{'Deleted':self.removed[-1]}]
   raise AssertionError((method,path))
@@ -32,7 +32,7 @@ class Tests(unittest.TestCase):
   old,latest=self.prepare();i=self.inventory();r=next(r for r in i['backups']if r['name']==old.name);plan=self.preview([r['id']]);out=self.delete(plan['plan']);self.assertEqual(out['outcomes'][0]['result'],'deleted');self.assertFalse(old.exists());self.assertTrue(latest.exists());self.assertTrue((self.root/'storage-audit.jsonl').exists())
   with self.assertRaises(mod.Refused):self.delete(plan['plan'])
  def test_active_and_recovery_images_protected(self):
-  self.prepare();i=self.inventory();self.assertFalse(next(r for r in i['images']if r['imageId']==A)['eligible']);self.assertFalse(next(r for r in i['images']if r['imageId']==B)['eligible']);r=next(r for r in i['images']if r['imageId']==C);self.assertTrue(r['eligible']);self.assertEqual(r['reclaimableBytes'],200);self.delete(self.preview([r['id']])['plan']);self.assertEqual(self.removed,[C])
+  self.prepare();self.service.size_graph=tuple(sorted([A,B,C]));self.service.size_cache={v:{'Size':1000,'SharedSize':800}for v in [A,B,C]};self.service.size_cache_at=time.monotonic();i=self.inventory();self.assertFalse(next(r for r in i['images']if r['imageId']==A)['eligible']);self.assertFalse(next(r for r in i['images']if r['imageId']==B)['eligible']);r=next(r for r in i['images']if r['imageId']==C);self.assertTrue(r['eligible']);self.assertEqual(r['reclaimableBytes'],200);self.delete(self.preview([r['id']])['plan']);self.assertEqual(self.removed,[C])
  def test_retained_stopped_container_protected(self):
   self.prepare();self.containers.append({'Id':'b'*64,'ImageID':C,'State':'exited','Names':['/retained']});self.assertFalse(next(r for r in self.inventory()['images']if r['imageId']==C)['eligible'])
  def test_protected_backup_cannot_be_selected(self):
@@ -73,9 +73,26 @@ class Tests(unittest.TestCase):
  def test_size_accounting_unavailable_keeps_inventory(self):
   self.prepare();base=self.service.api
   def unavailable(method,path):
-   if path=='/system/df':raise TimeoutError('fixture engine accounting unavailable')
+   if path=='/system/df?type=image':raise TimeoutError('fixture engine accounting unavailable')
    return base(method,path)
   self.service.api=unavailable;i=self.inventory();self.assertEqual(len(i['backups']),2);self.assertEqual(len(i['images']),3);self.assertTrue(all(r['reclaimableBytes']is None for r in i['images']))
+ def test_slow_accounting_never_blocks_inventory_or_updater_lock(self):
+  self.prepare();base=self.service.api;started=threading.Event();release=threading.Event();calls=[]
+  def slow(method,path):
+   if path.startswith('/system/df'):
+    calls.append(path);started.set();release.wait(5)
+   return base(method,path)
+  self.service.api=slow
+  try:
+   before=time.monotonic();i=self.inventory();self.assertLess(time.monotonic()-before,1);self.assertEqual(len(i['backups']),2);self.assertTrue(started.wait(1))
+   with open(self.state/'lock','a')as f:fcntl.flock(f,fcntl.LOCK_EX|fcntl.LOCK_NB)
+   self.inventory();self.assertEqual(calls,['/system/df?type=image'])
+  finally:release.set()
+ def test_accounting_update_does_not_invalidate_review(self):
+  self.prepare();self.service.size_cache_at=time.monotonic();r=self.inventory()['backups'][0];plan=self.preview([r['id']]);self.service.size_graph=tuple(sorted([A,B,C]));self.service.size_cache={C:{'Size':1000,'SharedSize':800}}
+  self.assertEqual(self.delete(plan['plan'])['outcomes'][0]['result'],'deleted')
+ def test_prerelease_identifies_stable_family_recovery(self):
+  self.prepare();self.manager['Config']['Labels']['org.opencontainers.image.version']='5.0.17-dev.1';self.assertTrue(self.inventory()['recoveryIdentified'])
  def test_local_current_image_still_visible_and_protected(self):
   self.prepare();base=self.service.api
   def local(method,path):
