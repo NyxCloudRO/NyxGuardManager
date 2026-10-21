@@ -1,6 +1,10 @@
 FROM nyxmael/nyxguardmanager@sha256:53766660a361893d6315628a8ce21667b42250a381447bdc9c1ccd738326c7ed
 ARG BUILD_REVISION
 ARG APP_VERSION=5.0.17
+COPY trust-store-update.py trust-store-inputs.json /tmp/nyxguard-trust/
+RUN python3 /tmp/nyxguard-trust/trust-store-update.py && rm -r /tmp/nyxguard-trust
+# Use the patched system CA bundle instead of Node's embedded pre-incident roots.
+ENV NODE_OPTIONS=--use-openssl-ca
 ENV NPM_BUILD_VERSION=${APP_VERSION} NPM_BUILD_COMMIT=${BUILD_REVISION} NYXGUARD_SOURCE_REVISION=${BUILD_REVISION} NPM_BUILD_DATE=2026-10-21
 COPY integrations.js historical-bands.mjs license-refresh.mjs backup-crypto.mjs configuration-restore.mjs traffic-ingestion.mjs storage-api.mjs storage-host.py install-storage-host.py /app/internal/
 COPY frontend/ /app/frontend/assets/

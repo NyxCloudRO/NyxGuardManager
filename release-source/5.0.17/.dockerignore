@@ -1,5 +1,7 @@
 *
 !Dockerfile
+!trust-store-update.py
+!trust-store-inputs.json
 !integrations.js
 !historical-bands.mjs
 !license-refresh.mjs
