@@ -92,7 +92,7 @@ def remove_tree(fd,device,members,prefix=''):
    os.unlink(name,dir_fd=fd)
 class Storage:
  def __init__(self,root,project,uid,api=engine):
-  self.root=str(pathlib.Path(root).absolute());self.project=project;self.uid=uid;self.api=api;self.key=secrets.token_bytes(32);self.plans={}
+  self.root=str(pathlib.Path(root).absolute());self.project=project;self.uid=uid;self.api=api;self.key=secrets.token_bytes(32);self.plans={};self.size_cache={};self.size_cache_at=0
   self.rootfd=checked_dir(self.root);self.statefd=None
  def close(self):os.close(self.rootfd)
  def token(self,kind,raw):return hmac.new(self.key,(kind+':'+raw).encode(),hashlib.sha256).hexdigest()
@@ -137,7 +137,8 @@ class Storage:
    if state is not None:os.close(state)
    for f in locks:os.close(f)
  def inventory_locked(self,containers,manager,data,verify_hashes=False):
-  backups=[];protected_images=set(c['ImageID']for c in containers);records={};state=self.statefd
+  backups=[];protected_images=set(c['ImageID']for c in containers);recovery_images=set();records={};state=self.statefd;member_count=0
+  deployment_images={c['ImageID']for c in containers if c.get('Labels',{}).get('com.docker.compose.project')==self.project and c.get('Labels',{}).get('com.docker.compose.service')in ('nyxguard-manager','vpn-client-agent')}
   names=sorted(n for n in os.listdir(state) if BACKUP.fullmatch(n))
   if len(names)>500:raise Refused('Backup inventory limit exceeded; manual review required')
   # Do not cross even a same-device bind mount under updater storage.
@@ -149,7 +150,9 @@ class Storage:
    try:
     fd=checked_dir(name,state)
     try:
-     members=tree(fd,os.fstat(state).st_dev);manifest=read_json(fd,'manifest.json');result=read_json(fd,'result.json')
+     members=tree(fd,os.fstat(state).st_dev);member_count+=len(members)
+     if member_count>20000:raise Refused('Combined backup member limit exceeded')
+     manifest=read_json(fd,'manifest.json');result=read_json(fd,'result.json')
      if manifest.get('backup')!=base+name:raise Refused('Backup storage identity differs')
      for v in ('current','target'):
       if not re.fullmatch(r'\d+\.\d+\.\d+',manifest.get(v,'')):raise Refused('Invalid backup version')
@@ -157,7 +160,7 @@ class Storage:
      images={svc.get('image')for svc in rollback.get('services',{}).values()}
      if not images or any(not IMAGE.fullmatch(i or '')for i in images):raise Refused('Recovery image identity is unverified')
      # Protect every retained backup's dependencies; conservative and bounded.
-     protected_images.update(images)
+     protected_images.update(images);recovery_images.update(images)
      if verify_hashes:verify(fd,manifest,members)
      row.update(sourceVersion=manifest['current'],targetVersion=manifest['target'],result=result.get('result'),status='verified' if verify_hashes else 'manifest',reason='protected_recovery',allocatedBytes=sum(os.stat(p,dir_fd=fd,follow_symlinks=False).st_blocks*512 for p in os.listdir(fd) if not stat.S_ISDIR(os.stat(p,dir_fd=fd,follow_symlinks=False).st_mode)))
      # Include nested payload allocation without trusting client paths.
@@ -178,11 +181,16 @@ class Storage:
    r['row'].update(eligible=eligible,reason='eligible' if eligible else ('protected_recovery' if r is protected else 'recovery_unverified'))
   images=[]
   all_images=self.api('GET','/images/json?all=0')
-  disk=self.api('GET','/system/df')
-  sizes={i['Id']:i for i in disk.get('Images',[])}
+  # Disk accounting is optional: a slow/unavailable daemon size query must
+  # never turn an otherwise valid inventory into an empty or failed source.
+  if time.monotonic()-self.size_cache_at>60:
+   try:
+    disk=self.api('GET','/system/df');self.size_cache={i['Id']:{'Size':i.get('Size'),'SharedSize':i.get('SharedSize')}for i in disk.get('Images',[])};self.size_cache_at=time.monotonic()
+   except (OSError,ValueError,Refused):self.size_cache={};self.size_cache_at=time.monotonic()
+  sizes=self.size_cache
   for image in all_images:
    tags=image.get('RepoTags')or[];ident=image['Id']
-   if not IMAGE.fullmatch(ident) or not any(t.rsplit(':',1)[0] in REPOS for t in tags):continue
+   if not IMAGE.fullmatch(ident) or not (any(t.rsplit(':',1)[0] in REPOS for t in tags) or ident in deployment_images or ident in recovery_images):continue
    # Any unrelated alias makes deletion of this shared identity ineligible.
    owned=all(t.rsplit(':',1)[0] in REPOS for t in tags)
    ref=[c.get('Names',[])for c in containers if c['ImageID']==ident]
@@ -190,6 +198,7 @@ class Storage:
    size=sizes.get(ident,{})
    if isinstance(size.get('SharedSize'),int) and size['SharedSize']>=0:row['reclaimableBytes']=max(0,size.get('Size',0)-size['SharedSize'])
    images.append(row);records[row['id']]={'image':ident,'row':row}
+  if len(images)>500:raise Refused('Image inventory limit exceeded; manual review required')
   revision=hashlib.sha256(json.dumps({'backups':backups,'images':images,'members':{k:r.get('members')for k,r in records.items()},'manager':manager['Id'],'containers':sorted((c['Id'],c['ImageID'],c.get('State'))for c in containers)},sort_keys=True).encode()).hexdigest()
   return {'backups':backups,'images':images,'recoveryVerified':recovery_ok and verify_hashes,'recoveryIdentified':recovery_ok,'revision':revision},records
  def member_blocks(self,fd,name):
@@ -204,8 +213,16 @@ class Storage:
   try:
    st=os.fstat(f)
    if not stat.S_ISREG(st.st_mode) or st.st_nlink!=1 or st.st_uid!=0:raise Refused('Audit destination is untrusted')
+   if st.st_size>1024*1024:
+    os.close(f);f=None
+    for index in range(5,0,-1):
+     source='storage-audit.jsonl'+('.'+str(index-1)if index>1 else '')
+     try:os.rename(source,'storage-audit.jsonl.'+str(index),src_dir_fd=self.rootfd,dst_dir_fd=self.rootfd)
+     except FileNotFoundError:pass
+    f=os.open('storage-audit.jsonl',os.O_WRONLY|os.O_APPEND|os.O_CREAT|os.O_NOFOLLOW,0o600,dir_fd=self.rootfd)
    os.write(f,(json.dumps(event,separators=(',',':'))+'\n').encode());os.fsync(f)
-  finally:os.close(f)
+  finally:
+   if f is not None:os.close(f)
  def operation(self,body):
   action=body.get('action');actor=body.get('actor')
   if action not in ('inventory','preview','delete') or not isinstance(actor,int) or actor<=0:raise Refused('Invalid maintenance request')
@@ -225,7 +242,11 @@ class Storage:
    for ident in plan['ids']:
     r=records[ident];row=r['row'];out={'actor':actor,'resource':ident,'type':row['type'],'action':'delete','result':'started'}
     self.audit(out) # No destruction if the durable intent cannot be recorded.
-    before=os.statvfs(self.root);before_free=before.f_bavail*before.f_frsize
+    accounting_path=self.root
+    if row['type']=='image':
+     try:accounting_path=self.api('GET','/info')['DockerRootDir']
+     except (OSError,ValueError,KeyError,Refused):accounting_path=None
+    before=os.statvfs(accounting_path)if accounting_path else None;before_free=before.f_bavail*before.f_frsize if before else None
     try:
      if not row['eligible']:raise Refused('Resource became protected')
      if row['type']=='backup':
@@ -240,7 +261,7 @@ class Storage:
       current=self.api('GET','/containers/json?all=1')
       if any(c['ImageID']==r['image']for c in current):raise Refused('Image gained a container reference')
       self.api('DELETE','/images/'+r['image']+'?force=0&noprune=1')
-     after=os.statvfs(self.root);out.update(result='deleted',filesystemFreeDeltaBytes=after.f_bavail*after.f_frsize-before_free)
+     after=os.statvfs(accounting_path)if accounting_path else None;out.update(result='deleted',filesystemFreeDeltaBytes=after.f_bavail*after.f_frsize-before_free if after else None)
     except (OSError,ValueError,Refused) as error:out.update(result='failed',error=type(error).__name__)
     self.audit(out);outcomes.append(out)
    return {'outcomes':outcomes,'accounting':'Observed filesystem free-space delta; concurrent writes and Docker data-root filesystem may differ. Logical image size is not freed space.'}

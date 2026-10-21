@@ -9,6 +9,7 @@ class Tests(unittest.TestCase):
   self.service=mod.Storage(str(self.root),'fixture',0,self.api)
  def tearDown(self):self.service.close();self.tmp.cleanup()
  def api(self,method,path):
+  if path=='/info':return {'DockerRootDir':str(self.root)}
   if path=='/containers/json?all=1':return self.containers
   if path.startswith('/containers/'):return self.manager
   images=[{'Id':v,'RepoTags':['nyxmael/nyxguardmanager:'+tag],'Size':1000}for v,tag in [(A,'5.0.17'),(B,'5.0.16'),(C,'5.0.14')]]
@@ -69,6 +70,22 @@ class Tests(unittest.TestCase):
   with self.assertRaises(mod.Refused):self.preview([r['id']])
  def test_hardlinks_refused(self):
   old,_=self.prepare();os.link(old/'0.tar',self.root/'outside');self.assertFalse(any(r['eligible']for r in self.inventory()['backups']))
+ def test_size_accounting_unavailable_keeps_inventory(self):
+  self.prepare();base=self.service.api
+  def unavailable(method,path):
+   if path=='/system/df':raise TimeoutError('fixture engine accounting unavailable')
+   return base(method,path)
+  self.service.api=unavailable;i=self.inventory();self.assertEqual(len(i['backups']),2);self.assertEqual(len(i['images']),3);self.assertTrue(all(r['reclaimableBytes']is None for r in i['images']))
+ def test_local_current_image_still_visible_and_protected(self):
+  self.prepare();base=self.service.api
+  def local(method,path):
+   result=base(method,path)
+   if path=='/images/json?all=0':
+    result[0]['RepoTags']=['local-development:5.0.17']
+   return result
+  self.service.api=local;i=self.inventory();row=next(r for r in i['images']if r['imageId']==A);self.assertFalse(row['eligible'])
+ def test_bounded_audit_rotation(self):
+  (self.root/'storage-audit.jsonl').write_bytes(b'x'*(1024*1024+1));self.service.audit({'action':'fixture','result':'success'});self.assertTrue((self.root/'storage-audit.jsonl.1').exists());self.assertLess((self.root/'storage-audit.jsonl').stat().st_size,1000)
  def test_identity_change_install_root(self):
   self.prepare();saved=self.root.with_name(self.root.name+'-replaced');self.root.rename(saved);self.root.mkdir()
   try:

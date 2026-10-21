@@ -312,7 +312,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "((nyxguard_attacks_window_total{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_monitoring_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "expr": "((nyxguard_attacks_window_total{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
           "instant": true,
           "range": false,
           "refId": "A"
@@ -656,7 +656,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "((nyxguard_attacks_total{job=\"$application_job\",instance=\"$application_instance\",type=\"bot\"} and on(window) (nyxguard_monitoring_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "expr": "((nyxguard_attacks_total{job=\"$application_job\",instance=\"$application_instance\",type=\"bot\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
           "instant": true,
           "range": false,
           "refId": "A"
@@ -742,7 +742,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "((nyxguard_attacks_total{job=\"$application_job\",instance=\"$application_instance\",type=\"ddos\"} and on(window) (nyxguard_monitoring_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "expr": "((nyxguard_attacks_total{job=\"$application_job\",instance=\"$application_instance\",type=\"ddos\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
           "instant": true,
           "range": false,
           "refId": "A"
@@ -828,7 +828,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "((nyxguard_attacks_total{job=\"$application_job\",instance=\"$application_instance\",type=\"sqli\"} and on(window) (nyxguard_monitoring_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "expr": "((nyxguard_attacks_total{job=\"$application_job\",instance=\"$application_instance\",type=\"sqli\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
           "instant": true,
           "range": false,
           "refId": "A"
@@ -899,7 +899,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "(nyxguard_waf_rule_blocks_observed{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_monitoring_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from}))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "expr": "(nyxguard_waf_rule_blocks_observed{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from}))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -987,7 +987,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "((nyxguard_country_denies_observed{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_monitoring_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "expr": "((nyxguard_country_denies_observed{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -1063,7 +1063,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "(nyxguard_access_portal_security_rejections_observed{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_monitoring_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from}))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "expr": "(nyxguard_access_portal_security_rejections_observed{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from}))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -1151,7 +1151,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "((nyxguard_auto_bans_total{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_monitoring_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "expr": "((nyxguard_auto_bans_total{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -1242,7 +1242,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "((nyxguard_unique_attacking_ips{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_monitoring_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "expr": "((nyxguard_unique_attacking_ips{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
           "instant": true,
           "range": false,
           "refId": "A"
@@ -1516,7 +1516,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "((nyxguard_attacks_window_total{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_monitoring_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from}))) / on(window) group_left() (nyxguard_monitoring_window_days{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_monitoring_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "expr": "((nyxguard_attacks_window_total{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from}))) / on(window) group_left() (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from})))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
           "instant": true,
           "legendFormat": "Daily average",
           "range": false,
@@ -3896,7 +3896,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "(topk(20,(nyxguard_attacks_by_ip{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_monitoring_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from}))))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
+          "expr": "(topk(20,(nyxguard_attacks_by_ip{job=\"$application_job\",instance=\"$application_instance\"} and on(window) (nyxguard_history_window_days{job=\"$application_job\",instance=\"$application_instance\"} * 86400000 == (${__to} - ${__from}))))) and on(job,instance) ((up{job=\"$application_job\",instance=\"$application_instance\"} == 1) and on(job,instance) ((time() - timestamp(up{job=\"$application_job\",instance=\"$application_instance\"})) < 90) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) >= 0) and on(job,instance) ((time() - nyxguard_metrics_generated_timestamp_seconds{job=\"$application_job\",instance=\"$application_instance\"}) < 90))",
           "instant": true,
           "legendFormat": "{{ip}} ({{type}})",
           "range": false,

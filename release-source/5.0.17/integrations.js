@@ -122,7 +122,7 @@ export async function collectMetrics(knex){
 }
 async function collectMetricsUncached(knex) {
  const lines=[],families=new Set();let failures=0;const now=Date.now(),cutoff=closedCutoff(now);
- const source=(family,up)=>{push('nyxguard_history_source_up','Historical source query succeeded in this generation','gauge',[{labels:{family},value:up?1:0}]);if(up){push('nyxguard_history_evaluation_cutoff_seconds','Closed UTC evaluation boundary; not a committed collector watermark','gauge',[{labels:{family},value:cutoff/1000}]);for(const {label,hours} of HISTORY_WINDOWS){push('nyxguard_history_interval_start_seconds','Requested observation interval start inclusive','gauge',[{labels:{family,window:label},value:cutoff/1000-hours*3600}]);push('nyxguard_history_complete','Continuity is unverified; exact retained observations only','gauge',[{labels:{family,window:label},value:0}]);}}};
+ const source=(family,up)=>{push('nyxguard_history_committed_cutoff_available','No durable ingestion watermark is established for this source','gauge',[{labels:{family},value:0}]);push('nyxguard_history_ingestion_freshness_available','Ingestion freshness is not inferred from a closed evaluation boundary','gauge',[{labels:{family},value:0}]);push('nyxguard_history_source_up','Historical source query succeeded in this generation','gauge',[{labels:{family},value:up?1:0}]);if(up){push('nyxguard_history_evaluation_cutoff_seconds','Closed UTC evaluation boundary; not a committed collector watermark','gauge',[{labels:{family},value:cutoff/1000}]);for(const {label,hours} of HISTORY_WINDOWS){push('nyxguard_history_interval_start_seconds','Requested observation interval start inclusive','gauge',[{labels:{family,window:label},value:cutoff/1000-hours*3600}]);push('nyxguard_history_complete','Continuity is unverified; exact retained observations only','gauge',[{labels:{family,window:label},value:0}]);}}};
  const escapeLabel=v=>String(v).replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/"/g,'\\"');
  const push=(name,help,type,samples)=>{
   if(!families.has(name)){lines.push(`# HELP ${name} ${help}`,`# TYPE ${name} ${type}`);families.add(name);}
@@ -394,7 +394,7 @@ async function collectMetricsUncached(knex) {
   for(const {label,n} of rows)push('nyxguard_access_portal_security_rejections_observed','Retained signature or cross-scope portal rejections; excludes missing, expired and login events','gauge',[{labels:{window:label},value:n}]);
   source('portal',true);
  }catch{failures++;source('portal',false);}
- for(const {label,hours} of HISTORY_WINDOWS)push('nyxguard_monitoring_window_days','Supported fixed elapsed observation duration in days','gauge',[{labels:{window:label},value:hours/24}]);
+ for(const {label,hours} of HISTORY_WINDOWS)push('nyxguard_history_window_days','Supported fixed elapsed observation duration in days','gauge',[{labels:{window:label},value:hours/24}]);
  const states=await knex('nyxguard_traffic_state').select('integrity');
  let gaps=0,rejected=0,missing=0;for(const row of states){const m=JSON.parse(row.integrity||'{}');gaps+=m.gaps||0;rejected+=m.rejected||0;missing+=m.missing?1:0;}
  push('nyxguard_metrics_contract_version','Validated metric semantics contract version','gauge',[{value:1}]);
