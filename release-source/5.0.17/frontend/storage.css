@@ -4,3 +4,4 @@
 @media(max-width:1000px){.nyx-storage-name{max-width:210px}}
 
 .nyx-storage-delete{min-width:25px;padding:3px!important;line-height:1;display:inline-flex;align-items:center;justify-content:center}.nyx-storage-delete:disabled{opacity:.35}.nyx-storage th:last-child,.nyx-storage td:last-child{width:32px;text-align:center}
+.nyx-storage-advanced{margin-top:8px;font-size:11px}.nyx-storage-advanced>summary{cursor:pointer;font-weight:600}.nyx-storage-advanced>label,.nyx-storage-containers label{display:flex;align-items:flex-start;gap:7px;margin:7px 0;line-height:1.5}.nyx-storage-advanced input,.nyx-storage-containers input{flex-shrink:0;margin-top:2px}.nyx-storage-advanced p{margin:6px 0;line-height:1.5;max-width:850px}.nyx-storage-containers{max-width:300px;overflow-wrap:anywhere}.nyx-storage-warning{font-weight:600}

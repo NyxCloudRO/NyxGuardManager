@@ -3,7 +3,7 @@ spec=importlib.util.spec_from_file_location('storage',pathlib.Path(__file__).par
 A='sha256:'+'1'*64;B='sha256:'+'2'*64;C='sha256:'+'3'*64
 class Tests(unittest.TestCase):
  def setUp(self):
-  self.tmp=tempfile.TemporaryDirectory();self.root=pathlib.Path(self.tmp.name);self.state=self.root/'.upgrade';self.state.mkdir(mode=0o700);self.data=self.root/'data';self.data.mkdir();(self.data/'.nyx-update.lock').touch();self.removed=[]
+  self.tmp=tempfile.TemporaryDirectory();self.root=pathlib.Path(self.tmp.name);self.state=self.root/'.upgrade';self.state.mkdir(mode=0o700);self.data=self.root/'data';self.data.mkdir();(self.data/'.nyx-update.lock').touch();self.removed=[];self.removed_containers=[]
   self.containers=[{'Id':'a'*64,'ImageID':A,'State':'running','Names':['/fixture-manager'],'Labels':{'com.docker.compose.project':'fixture','com.docker.compose.service':'nyxguard-manager'}}]
   self.manager={'Id':'a'*64,'Config':{'Labels':{'com.docker.compose.project.working_dir':str(self.root),'org.opencontainers.image.version':'5.0.17'}},'Mounts':[{'Destination':'/data','Source':str(self.data)}]}
   self.service=mod.Storage(str(self.root),'fixture',0,self.api)
@@ -11,7 +11,12 @@ class Tests(unittest.TestCase):
  def api(self,method,path):
   if path=='/info':return {'DockerRootDir':str(self.root)}
   if path=='/containers/json?all=1':return self.containers
-  if path.startswith('/containers/'):return self.manager
+  if path.startswith('/containers/'):
+   ident=path.split('/')[2].split('?')[0]
+   if method=='DELETE':
+    self.assertTrue(path.endswith('?force=0&v=0'));self.removed_containers.append(ident);self.containers=[c for c in self.containers if c['Id']!=ident];return None
+   if ident==self.manager['Id']:return self.manager
+   c=next(c for c in self.containers if c['Id']==ident);return {'Id':ident,'State':{'Status':c['State'],'Running':c['State']=='running'},'Config':{'Labels':c.get('Labels',{})}}
   images=[{'Id':v,'RepoTags':['nyxmael/nyxguardmanager:'+tag],'Size':1000}for v,tag in [(A,'5.0.17'),(B,'5.0.16'),(C,'5.0.14')]]
   if path==mod.IMAGE_LIST:return [i for i in images if i['Id']not in self.removed]
   if path=='/system/df?type=image':return {'Images':[dict(i,SharedSize=800)for i in images]}
@@ -134,4 +139,38 @@ class Tests(unittest.TestCase):
   old,_=self.prepare();r=self.inventory()['backups'][0];plan=self.preview([r['id']]);(self.root/'storage-audit.jsonl').symlink_to('/dev/null')
   with self.assertRaises(OSError):self.delete(plan['plan'])
   self.assertTrue(old.exists());self.assertEqual(self.removed,[])
+ def override(self,ids,container_ids=None):return self.service.operation({'action':'preview','actor':1,'ids':ids,'externalRecovery':True,'containerIds':container_ids or []})
+ def test_external_backup_override_can_remove_entire_local_recovery_set(self):
+  old,latest=self.prepare();ids=[r['id']for r in self.inventory()['backups']];plan=self.override(ids);self.assertTrue(plan['externalRecovery']);self.assertFalse(plan['recoveryVerified']);self.assertTrue(all(r['status']=='manifest_unchecked'for r in plan['resources']));out=self.delete(plan['plan']);self.assertEqual([r['result']for r in out['outcomes']],['deleted','deleted']);self.assertFalse(old.exists());self.assertFalse(latest.exists());self.assertTrue(all(r['externalRecovery']for r in out['outcomes']))
+ def test_external_backup_override_accepts_unverified_manifest_but_not_links(self):
+  old,_=self.prepare();(old/'manifest.json').write_text('{broken');row=self.inventory()['backups'][0];self.assertFalse(row['eligible']);self.assertTrue(row['externalEligible']);self.assertEqual(self.delete(self.override([row['id']])['plan'])['outcomes'][0]['result'],'deleted')
+  linked=self.state/'backup-20261019T110000Z';linked.mkdir(mode=0o700);(linked/'payload').symlink_to('/etc/passwd');row=next(r for r in self.inventory()['backups']if r['name']==linked.name);self.assertFalse(row['externalEligible'])
+  with self.assertRaises(mod.Refused):self.override([row['id']])
+ def test_external_override_needs_no_local_recovery_and_keeps_running_images(self):
+  i=self.inventory();row=next(r for r in i['images']if r['imageId']==C);self.assertFalse(row['eligible']);self.assertTrue(row['externalEligible']);self.delete(self.override([row['id']])['plan']);self.assertEqual(self.removed,[C])
+  with self.assertRaises(mod.Refused):self.override([next(r for r in i['images']if r['imageId']==A)['id']])
+ def test_external_override_releases_unused_rollback_image_aliases(self):
+  self.prepare();base=self.service.api
+  def aliases(method,path):
+   value=base(method,path)
+   if path==mod.IMAGE_LIST:next(r for r in value if r['Id']==B)['RepoTags']=['nyxguard-accepted-local:5.0.16']
+   return value
+  self.service.api=aliases;row=next(r for r in self.inventory()['images']if r['imageId']==B);self.assertFalse(row['eligible']);self.delete(self.override([row['id']])['plan']);self.assertEqual(self.removed,[B])
+ def test_explicit_stopped_container_selection_preserves_volumes(self):
+  self.containers.append({'Id':'b'*64,'ImageID':C,'State':'exited','Names':['/selected-stopped']});row=next(r for r in self.inventory()['images']if r['imageId']==C);cid=row['containers'][0]['id'];self.assertTrue(row['externalEligible'])
+  with self.assertRaises(mod.Refused):self.override([row['id']])
+  plan=self.override([row['id']],[cid]);self.assertEqual([r['type']for r in plan['resources']],['container','image']);out=self.delete(plan['plan']);self.assertEqual(self.removed_containers,['b'*64]);self.assertEqual(self.removed,[C]);self.assertTrue(out['outcomes'][0]['volumesPreserved'])
+ def test_override_cannot_select_unrelated_container_or_current_stopped_agent(self):
+  self.containers.append({'Id':'b'*64,'ImageID':C,'State':'exited','Names':['/current-agent'],'Labels':{'com.docker.compose.project':'fixture','com.docker.compose.service':'vpn-client-agent'}});row=next(r for r in self.inventory()['images']if r['imageId']==C);self.assertFalse(row['externalEligible'])
+  with self.assertRaises(mod.Refused):self.override([row['id']],[row['containers'][0]['id']])
+  with self.assertRaises(mod.Refused):self.override([next(r for r in self.inventory()['images']if r['imageId']==B)['id']],['f'*64])
+ def test_container_start_after_review_aborts_override(self):
+  c={'Id':'b'*64,'ImageID':C,'State':'exited','Names':['/selected-stopped']};self.containers.append(c);row=next(r for r in self.inventory()['images']if r['imageId']==C);plan=self.override([row['id']],[row['containers'][0]['id']]);c['State']='running'
+  with self.assertRaises(mod.Refused):self.delete(plan['plan'])
+  self.assertEqual(self.removed_containers,[]);self.assertEqual(self.removed,[])
+ def test_override_still_refuses_active_upgrade_and_requires_boolean(self):
+  row=next(r for r in self.inventory()['images']if r['imageId']==C);(self.state/'pending.json').write_text('{}')
+  with self.assertRaises(mod.Refused):self.override([row['id']])
+  (self.state/'pending.json').unlink()
+  with self.assertRaises(mod.Refused):self.service.operation({'action':'preview','actor':1,'ids':[row['id']],'externalRecovery':'yes'})
 if __name__=='__main__':unittest.main()

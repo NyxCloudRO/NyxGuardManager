@@ -29,9 +29,9 @@ export function registerStorage(router,{jwtdecode,audit,userModel,PermissionErro
     if(!/^Bearer [^\s]+$/i.test(req.headers.authorization||''))throw new PermissionError('Permission Denied');
     if(!storageOriginAllowed(req))throw new PermissionError('Permission Denied');
    }
-   const data=action==='inventory'?{action,actor}:action==='preview'?{action,actor,ids:req.body?.ids}:{action,actor,plan:req.body?.plan};
+   const data=action==='inventory'?{action,actor}:action==='preview'?{action,actor,ids:req.body?.ids,externalRecovery:req.body?.externalRecovery??false,containerIds:req.body?.containerIds??[]}:{action,actor,plan:req.body?.plan};
    const out=await storageRequest(data);
-   if(action==='delete')for(const result of out.outcomes)await audit.add(access,{action:'delete',object_type:'storage-cleanup',object_id:0,result:result.result==='deleted'?'success':'failed',meta:{resource:'/storage/'+result.resource,result:result.result,reason_code:result.error||'cleanup_complete',...(Number.isSafeInteger(result.filesystemFreeDeltaBytes)?{reclaimed_bytes:result.filesystemFreeDeltaBytes}:{})}});
+   if(action==='delete')for(const result of out.outcomes)await audit.add(access,{action:'delete',object_type:'storage-cleanup',object_id:0,result:result.result==='deleted'?'success':'failed',meta:{resource:'/storage/'+result.resource,result:result.result,reason_code:result.error||(result.externalRecovery?'external_backup_override':'cleanup_complete'),...(Number.isSafeInteger(result.filesystemFreeDeltaBytes)?{reclaimed_bytes:result.filesystemFreeDeltaBytes}:{})}});
    res.json(out);
   }catch(error){if(action!=='inventory'&&actor){try{await audit.add(res.locals.access,{action:'failed',object_type:'storage-cleanup',object_id:0,result:'denied',meta:{reason_code:'storage_'+action+'_refused',result:'refused'}})}catch{}}
    if(['ENOENT','ECONNREFUSED'].includes(error.code)&&action==='inventory')return res.json({backups:[],images:[],available:false,reason:'host_maintenance_unavailable'});

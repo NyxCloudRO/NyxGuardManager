@@ -11,3 +11,7 @@ Database schema 49 and VPN Agent 5.0.2 are unchanged. Publication does not upgra
 Configured support entitlements now refresh automatically after backend startup, with bounded retries for temporary network failures. The License page updates authority reachability automatically. Existing activation identity, vault keys, signature validation and offline-grace rules are preserved.
 
 Password-encrypted configuration backups retain their existing scrypt/AES-GCM format and work factor. The key-derivation memory allowance is now explicit, asynchronous and limited to one concurrent job, fixing the inherited export/import failure without increasing the Node heap limit.
+
+Administrators with an external VM backup can explicitly waive local rollback retention, remove all eligible updater backups and unused recovery images, and select stopped containers that hold obsolete images. Review names each resource; volumes are preserved and running/current containers remain protected. Default cleanup safeguards remain enabled.
+
+Configuration restore normalizes exported UTC timestamps and validates rows before replacing MariaDB/Aria tables atomically. Failed staging leaves the current configuration intact. Existing installation licensing identity and migration state are retained. Custom database dependencies or unfinished restore staging require review before replacement.

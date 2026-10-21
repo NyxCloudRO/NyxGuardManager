@@ -157,7 +157,10 @@ class Storage:
    self.statefd=None
    if state is not None:os.close(state)
    for f in locks:os.close(f)
- def inventory_locked(self,containers,manager,data,verify_hashes=False):
+ def current_container(self,c):
+  labels=c.get('Labels',{})
+  return labels.get('com.docker.compose.project')==self.project and labels.get('com.docker.compose.service')in ('nyxguard-manager','vpn-client-agent','db')
+ def inventory_locked(self,containers,manager,data,verify_hashes=False,external_recovery=False):
   backups=[];protected_images=set(c['ImageID']for c in containers);recovery_images=set();records={};state=self.statefd;member_count=0
   deployment_images={c['ImageID']for c in containers if c.get('Labels',{}).get('com.docker.compose.project')==self.project and c.get('Labels',{}).get('com.docker.compose.service')in ('nyxguard-manager','vpn-client-agent')}
   names=sorted(n for n in os.listdir(state) if BACKUP.fullmatch(n))
@@ -167,12 +170,14 @@ class Storage:
   base=self.root+'/.upgrade/'
   if any(line.split()[4].replace('\\040',' ').startswith(base)for line in mount_text.splitlines()):raise Refused('Mounted updater content requires manual review')
   for name in names:
-   row={'type':'backup','name':name,'id':self.token('backup',name),'eligible':False,'status':'unverifiable','reason':'manual_review','allocatedBytes':None,'sourceVersion':None,'targetVersion':None,'result':None,'date':name[7:]}
+   row={'type':'backup','name':name,'id':self.token('backup',name),'eligible':False,'externalEligible':False,'status':'unverifiable','reason':'manual_review','allocatedBytes':None,'sourceVersion':None,'targetVersion':None,'result':None,'date':name[7:]}
    try:
     fd=checked_dir(name,state)
     try:
      members=tree(fd,os.fstat(state).st_dev);member_count+=len(members)
      if member_count>20000:raise Refused('Combined backup member limit exceeded')
+     row.update(externalEligible=True,allocatedBytes=sum(self.member_blocks(fd,p)for p in members))
+     records[row['id']]={'name':name,'members':members,'manifest':None,'result':{},'images':set(),'legacy':True,'known':False,'row':row}
      manifest=read_json(fd,'manifest.json');result=read_json(fd,'result.json')
      if manifest.get('backup')!=base+name:raise Refused('Backup storage identity differs')
      for v in ('current','target'):
@@ -190,28 +195,30 @@ class Storage:
        legacy=True
       else:raise Refused('Recovery image identity is unverified')
      protected_images.update(images);recovery_images.update(images)
-     if verify_hashes:verify(fd,manifest,members)
-     row.update(sourceVersion=manifest['current'],targetVersion=manifest['target'],result=result.get('result'),status='legacy_manifest' if legacy else ('verified' if verify_hashes else 'manifest'),reason='protected_recovery',allocatedBytes=sum(os.stat(p,dir_fd=fd,follow_symlinks=False).st_blocks*512 for p in os.listdir(fd) if not stat.S_ISDIR(os.stat(p,dir_fd=fd,follow_symlinks=False).st_mode)))
+     if verify_hashes and not external_recovery:verify(fd,manifest,members)
+     row.update(sourceVersion=manifest['current'],targetVersion=manifest['target'],result=result.get('result'),status='manifest_unchecked' if external_recovery else 'legacy_manifest' if legacy else ('verified' if verify_hashes else 'manifest'),reason='protected_recovery',allocatedBytes=sum(os.stat(p,dir_fd=fd,follow_symlinks=False).st_blocks*512 for p in os.listdir(fd) if not stat.S_ISDIR(os.stat(p,dir_fd=fd,follow_symlinks=False).st_mode)))
      # Include nested payload allocation without trusting client paths.
      row['allocatedBytes']=sum(self.member_blocks(fd,p)for p in members)
      manifest={key:manifest.get(key)for key in ['current','target','backup','hashes']}
-     records[row['id']]={'name':name,'members':members,'manifest':manifest,'result':result,'images':images,'legacy':legacy,'row':row}
+     records[row['id']]={'name':name,'members':members,'manifest':manifest,'result':result,'images':images,'legacy':legacy,'known':True,'row':row}
     finally:os.close(fd)
    except (OSError,ValueError,KeyError,TypeError,Refused):pass
    backups.append(row)
   version=manager['Config'].get('Labels',{}).get('org.opencontainers.image.version')
   # DEV/RC builds use the same recovery schema as their stable version family.
   if isinstance(version,str):version=re.sub(r'-(?:dev|rc)\.[0-9]+$','',version)
-  candidates=[r for r in records.values() if r['result'].get('result')=='success' and r['result'].get('to')==version and r['manifest']['target']==version and not r['legacy']]
+  candidates=[r for r in records.values() if r['known'] and r['result'].get('result')=='success' and r['result'].get('to')==version and r['manifest']['target']==version and not r['legacy']]
   protected=max(candidates,key=lambda r:r['name']) if candidates else None
   recovery_ok=protected is not None
   # Validate the recovery path before authorizing any deletion.
-  if verify_hashes and protected:
+  if verify_hashes and protected and not external_recovery:
    if not all(self.image_exists(i)for i in protected['images']):recovery_ok=False
   for r in records.values():
-   eligible=recovery_ok and r is not protected and r['result'].get('result') in ('success','rolled_back')
+   eligible=r['known'] and recovery_ok and r is not protected and r['result'].get('result') in ('success','rolled_back')
+   if external_recovery:
+    r['row'].update(eligible=r['row']['externalEligible'],reason='external_backup_override');continue
    r['row'].update(eligible=eligible,reason='eligible' if eligible else ('protected_recovery' if r is protected else 'recovery_unverified'))
-  image_cleanup_safe=recovery_ok and len(records)==len(backups)
+  image_cleanup_safe=recovery_ok and len(records)==len(backups) and all(r['known']for r in records.values())
   images=[]
   # Listing every unrelated local image is costly on the containerd image store.
   # Ask for the supported repositories, then inspect immutable local deployment
@@ -228,13 +235,20 @@ class Storage:
    # Any unrelated alias makes deletion of this shared identity ineligible.
    owned=all(t.rsplit(':',1)[0] in REPOS for t in tags)
    ref=sorted(sorted(c.get('Names',[]))for c in containers if c['ImageID']==ident)
+   refs=[]
+   for c in sorted((c for c in containers if c['ImageID']==ident),key=lambda c:c['Id']):
+    removable=c.get('State')in ('exited','created','dead') and not self.current_container(c) and re.fullmatch(r'[0-9a-f]{64}',c['Id'])is not None
+    cr={'type':'container','id':self.token('container',c['Id']),'name':', '.join(sorted(c.get('Names',[]))),'state':c.get('State'),'canRemove':removable,'eligible':external_recovery and removable,'reason':'external_backup_override' if removable else 'running_or_current','volumesPreserved':True}
+    refs.append(cr)
+    if removable:records[cr['id']]={'container':c['Id'],'image':ident,'row':cr}
    created=image.get('Created')
    if isinstance(created,str):
     try:
      stamp=datetime.fromisoformat(created.replace('Z','+00:00'));created=stamp.replace(tzinfo=stamp.tzinfo or timezone.utc).timestamp()
     except ValueError:created=0
    if not isinstance(created,(int,float)):created=0
-   row={'type':'image','id':self.token('image',ident),'name':', '.join(tags),'imageId':ident,'createdAt':created,'sizeBytes':image.get('Size'),'reclaimableBytes':None,'references':ref,'eligible':image_cleanup_safe and owned and ident not in protected_images,'reason':'referenced' if ref else ('protected_recovery' if ident in protected_images else ('eligible' if image_cleanup_safe and owned else 'recovery_unverified'))}
+   external_ok=all(c['canRemove']for c in refs) and ident not in deployment_images
+   row={'type':'image','id':self.token('image',ident),'name':', '.join(tags),'imageId':ident,'createdAt':created,'sizeBytes':image.get('Size'),'reclaimableBytes':None,'references':ref,'containers':refs,'externalEligible':external_ok,'eligible':external_ok if external_recovery else image_cleanup_safe and owned and ident not in protected_images,'reason':'running_or_current' if external_recovery and not external_ok else 'external_backup_override' if external_recovery else 'referenced' if ref else ('protected_recovery' if ident in protected_images else ('eligible' if image_cleanup_safe and owned else 'recovery_unverified'))}
    size=sizes.get(ident,{})
    if isinstance(size.get('SharedSize'),int) and size['SharedSize']>=0:row['reclaimableBytes']=max(0,size.get('Size',0)-size['SharedSize'])
    images.append(row);records[row['id']]={'image':ident,'row':row}
@@ -243,7 +257,7 @@ class Storage:
   # Optional display estimates changing cannot invalidate a safe reviewed plan.
   revision_images=[{k:v for k,v in row.items()if k!='reclaimableBytes'}for row in images]
   revision=hashlib.sha256(json.dumps({'backups':backups,'images':revision_images,'members':{k:r.get('members')for k,r in records.items()},'manager':manager['Id'],'containers':sorted((c['Id'],c['ImageID'],c.get('State'))for c in containers)},sort_keys=True).encode()).hexdigest()
-  return {'backups':backups,'images':images,'recoveryVerified':recovery_ok and verify_hashes,'recoveryIdentified':recovery_ok,'revision':revision},records
+  return {'backups':backups,'images':images,'recoveryVerified':recovery_ok and verify_hashes and not external_recovery,'recoveryIdentified':recovery_ok,'revision':revision},records
  def member_blocks(self,fd,name):
   f=open_member(fd,name)
   try:return os.fstat(f).st_blocks*512
@@ -269,24 +283,34 @@ class Storage:
  def operation(self,body):
   action=body.get('action');actor=body.get('actor')
   if action not in ('inventory','preview','delete') or not isinstance(actor,int) or actor<=0:raise Refused('Invalid maintenance request')
+  plan=None;external=body.get('externalRecovery',False)
+  if not isinstance(external,bool):raise Refused('Invalid recovery confirmation')
+  if action=='delete':
+   plan=self.plans.pop(body.get('plan',''),None)
+   if not plan or plan['actor']!=actor or plan['expires']<time.monotonic():raise Refused('Cleanup plan expired or unknown')
+   external=plan.get('externalRecovery',False)
   with self.locked() as (containers,manager,data):
-   inventory,records=self.inventory_locked(containers,manager,data,verify_hashes=action!='inventory')
+   inventory,records=self.inventory_locked(containers,manager,data,verify_hashes=action!='inventory',external_recovery=external if action!='inventory'else False)
    if action=='inventory':return inventory
    if action=='preview':
     ids=body.get('ids')
-    if not isinstance(ids,list) or not 0<len(ids)<=100 or len(set(ids))!=len(ids) or any(i not in records or not records[i]['row']['eligible']for i in ids):raise Refused('Selection is ineligible or unknown')
+    if not isinstance(ids,list) or not 0<len(ids)<=100 or len(set(ids))!=len(ids) or any(i not in records or records[i]['row']['type']not in ('backup','image') or not records[i]['row']['eligible']for i in ids):raise Refused('Selection is ineligible or unknown')
+    container_ids=body.get('containerIds',[])
+    if not isinstance(container_ids,list) or len(container_ids)>100 or len(set(container_ids))!=len(container_ids) or (container_ids and not external):raise Refused('Invalid stopped-container selection')
+    required={c['id']for i in ids if records[i]['row']['type']=='image' for c in records[i]['row']['containers']}
+    if set(container_ids)!=required or any(i not in records or not records[i]['row']['eligible']for i in container_ids):raise Refused('Explicitly select every stopped container required by the reviewed images')
     plan=secrets.token_hex(32);self.plans={k:v for k,v in self.plans.items() if v['expires']>time.monotonic() and v['actor']!=actor}
     if len(self.plans)>=32:raise Refused('Too many pending cleanup plans')
-    self.plans[plan]={'actor':actor,'ids':ids,'revision':inventory['revision'],'expires':time.monotonic()+120}
-    return {'plan':plan,'resources':[records[i]['row']for i in ids],'expiresIn':120,'recoveryVerified':True}
-   plan=self.plans.pop(body.get('plan',''),None)
-   if not plan or plan['actor']!=actor or plan['expires']<time.monotonic() or plan['revision']!=inventory['revision']:raise Refused('Cleanup plan expired or inventory changed')
+    resources=container_ids+ids
+    self.plans[plan]={'actor':actor,'ids':resources,'revision':inventory['revision'],'expires':time.monotonic()+120,'externalRecovery':external}
+    return {'plan':plan,'resources':[records[i]['row']for i in resources],'expiresIn':120,'recoveryVerified':inventory['recoveryVerified'],'externalRecovery':external,'volumesPreserved':True}
+   if plan['revision']!=inventory['revision']:raise Refused('Cleanup inventory changed')
    outcomes=[]
    for ident in plan['ids']:
-    r=records[ident];row=r['row'];out={'actor':actor,'resource':ident,'type':row['type'],'action':'delete','result':'started'}
+    r=records[ident];row=r['row'];out={'actor':actor,'resource':ident,'type':row['type'],'action':'delete','result':'started','externalRecovery':external}
     self.audit(out) # No destruction if the durable intent cannot be recorded.
     accounting_path=self.root
-    if row['type']=='image':
+    if row['type']in ('image','container'):
      try:accounting_path=self.api('GET','/info')['DockerRootDir']
      except (OSError,ValueError,KeyError,Refused):accounting_path=None
     before=os.statvfs(accounting_path)if accounting_path else None;before_free=before.f_bavail*before.f_frsize if before else None
@@ -296,9 +320,15 @@ class Storage:
       fd=checked_dir(r['name'],self.statefd)
       try:
        if tree(fd,os.fstat(self.statefd).st_dev)!=r['members']:raise Refused('Backup identity changed')
-       verify(fd,r['manifest'],r['members']);remove_tree(fd,os.fstat(self.statefd).st_dev,r['members'])
+       if not external:verify(fd,r['manifest'],r['members'])
+       remove_tree(fd,os.fstat(self.statefd).st_dev,r['members'])
       finally:os.close(fd)
       os.rmdir(r['name'],dir_fd=self.statefd);os.fsync(self.statefd)
+     elif row['type']=='container':
+      current=self.api('GET','/containers/'+r['container']+'/json')
+      if current.get('Id')!=r['container'] or current.get('State',{}).get('Status')not in ('exited','created','dead') or current.get('State',{}).get('Running') or self.current_container({'Labels':current.get('Config',{}).get('Labels',{})}):raise Refused('Container is running or required by the current deployment')
+      self.api('DELETE','/containers/'+r['container']+'?force=0&v=0')
+      out['volumesPreserved']=True
      else:
       # Engine rejects running AND stopped container dependencies; never force.
       current=self.api('GET','/containers/json?all=1')
