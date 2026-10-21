@@ -25,3 +25,7 @@ jobs:
           python3 tools/publication-hygiene.py --package "$RUNNER_TEMP/public-source.tar"
       - name: Publication scanner regression checks
         run: python3 tools/publication-hygiene.test.py
+      - name: Host updater startup and readiness regression checks
+        run: |
+          python3 tests/updater-preparation.test.py
+          python3 tests/updater-readiness.test.py
