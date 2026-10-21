@@ -44,6 +44,7 @@ needle='e.jsx("span",{children:e.jsx(s,{id:"settings.grafana.step6"})}),'
 patch(settings,needle,needle+'e.jsx("p",{style:{fontSize:12,lineHeight:1.5},children:storageText("historyNote")}),')
 # Preserve integration discovery and prefill the detected name without exposing its token.
 patch(settings,'l=(h,m)=>{navigator.clipboard.writeText(h)', 'activeIntegration=(d.data??[]).find(item=>item.enabled),l=(h,m)=>{navigator.clipboard.writeText(h)')
+patch(settings,'!g&&e.jsx("div",{style:{marginTop:6,padding:"6px 10px",background:"rgba(239,68,68,0.12)"','!g&&!activeIntegration&&e.jsx("div",{style:{marginTop:6,padding:"6px 10px",background:"rgba(239,68,68,0.12)"')
 needle='e.jsx("small",{children:storageText("tokenHelp")})'
 patch(settings,needle,'e.jsx("small",{children:(activeIntegration?.name?activeIntegration.name+" · ":"")+storageText("tokenHelp")})')
 settings.write_text(settings.read_text().replace('node_exporter_prod','node_exporter'))
