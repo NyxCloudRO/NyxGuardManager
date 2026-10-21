@@ -1,19 +1,42 @@
 # NyxGuard Manager v5.0.17
 
-Seven historical presets (1D, 2D, 7D, 14D, 30D, 60D and 90D) share non-overlapping source-band aggregation, exact trailing distinct-IP counts and bounded SQL ranking. Existing 1h/180d traffic windows, metric aliases, token authentication, single-flight cache and 250 MiB Node heap remain supported. Observation intervals use a common closed UTC five-minute evaluation cutoff. This is not a verified ingestion watermark: coverage remains unverified, retained observations can be shorter than the requested interval, and expired/deleted events cannot be reconstructed. Configured retention policies and the schema remain unchanged.
+A focused release introducing improved historical monitoring, safer storage management and additional reliability improvements.
 
-The official portable Grafana dashboard preserves its UID and all 58 entry IDs. A single global historical duration replaces the independent rolling-window selector; current-state and fixed reference panels remain explicit. Existing dashboard customizations require an intentional import/update. The existing Grafana wizard retains self-signed TLS compatibility and now accepts the saved one-time integration token without placing masked previews in generated configurations. Monitoring remains optional.
+## What's New
 
-Settings → Backup & Restore preserves Configuration Export/Import and adds compact upgrade-backup and Docker-image inventory, review and confirmation. A constrained local host broker handles fixed inventory and deletion operations; no additional general Docker socket or host-directory access is given to the Manager. Official host installation/update provisions this broker. Unavailable host management or unverifiable recovery state disables cleanup. Every confirmed deletion rechecks updater locks, resource identities, container references and recovery dependencies. Docker logical image sizes differ from uniquely reclaimable storage; free-space deltas can be affected by concurrent activity. No volumes or build caches are removed.
+**Historical Monitoring**
 
-Database schema 49 and VPN Agent 5.0.2 are unchanged. Publication does not upgrade production or alter external Prometheus/Grafana installations. External 90-day sample retention requires independent storage planning and does not restore expired history.
+- Seven historical presets: 1D, 2D, 7D, 14D, 30D, 60D and 90D.
+- Optimized historical aggregation with bounded resource usage.
+- Clearer reporting of retained observations and data availability.
 
-Configured support entitlements now refresh automatically after backend startup, with bounded retries for temporary network failures. The License page updates authority reachability automatically. Existing activation identity, vault keys, signature validation and offline-grace rules are preserved.
+**Grafana Integration**
 
-Password-encrypted configuration backups retain their existing scrypt/AES-GCM format and work factor. The key-derivation memory allowance is now explicit, asynchronous and limited to one concurrent job, fixing the inherited export/import failure without increasing the Node heap limit.
+- Updated official Grafana dashboard with one historical time selector.
+- Existing dashboards and supported monitoring configurations remain compatible.
+- Existing integration token management and self-signed TLS support preserved.
 
-Administrators with an external VM backup can explicitly waive local rollback retention, remove all eligible updater backups and unused recovery images, and select stopped containers that hold obsolete images. Review names each resource; volumes are preserved and running/current containers remain protected. Default cleanup safeguards remain enabled.
+**Backup & Storage Management**
 
-Configuration restore normalizes exported UTC timestamps and validates rows before replacing MariaDB/Aria tables atomically. Failed staging leaves the current configuration intact. Existing installation licensing identity and migration state are retained. Custom database dependencies or unfinished restore staging require review before replacement.
+- Compact Upgrade Backups and Docker Image Management sections in Settings → Backup & Restore.
+- Review and remove eligible obsolete backups and images, with an explicit external-backup override for local rollback resources and selected stopped containers.
+- Running containers and the current deployment remain protected; volumes are preserved.
 
-Trust stores remove the compromised emSign ECC Root CA - G3 following GHSA-6q48-6c7w-9gw2 and Debian DLA-4845-1. The image pins certifi 2026.10.19 for Certbot and its startup seed, and ca-certificates 20250419~deb12u2. Node uses that patched system trust store. Native binaries, the 250 MiB Node heap, existing self-signed monitoring instructions and explicit custom CA configuration are preserved.
+**Reliability**
+
+- Automatic licensing and support-entitlement refresh after startup.
+- Faster storage inventory loading and improved configuration import/export and restore validation.
+- Additional runtime and trust-store security maintenance.
+
+## Compatibility
+
+- Database schema: 49 (unchanged).
+- VPN Agent: 5.0.2 (unchanged).
+- Existing configuration, licensing, integration tokens and persistent data remain preserved.
+
+## Important Notes
+
+- Historical statistics depend on retained data and source coverage; complete coverage is not verified and expired data cannot be reconstructed.
+- External Prometheus retention is managed separately.
+- Import the updated Grafana dashboard explicitly; existing dashboards are not replaced automatically.
+- Public image publication does not automatically upgrade production.
