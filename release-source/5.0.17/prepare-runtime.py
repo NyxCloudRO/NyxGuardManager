@@ -7,6 +7,16 @@ def patch(p,old,new,count=1):
 p=root/'routes/settings.js';s=p.read_text();s="import {registerStorage} from '../internal/storage-api.mjs';\nimport storageAudit from '../internal/audit-log.js';\nimport storageUser from '../models/user.js';\nimport storageErrors from '../lib/error.js';\n"+s;s=s.replace('export default router;',"registerStorage(router,{jwtdecode,audit:storageAudit,userModel:storageUser,PermissionError:storageErrors.PermissionError});\nexport default router;");p.write_text(s)
 # Existing sanitized audit context remains authoritative. Add bounded storage accounting.
 p=root/'internal/audit-policy.mjs';patch(p,"'count']);","'count','reclaimed_bytes']);")
+# Startup reachability checks and bounded retries run independently of page loads.
+p=root/'routes/professional-support.js'
+s=p.read_text();start=s.index('const timer = setInterval(async () => {');end=s.index('timer.unref();',start)+len('timer.unref();')
+s="import {startLicenseRefresh} from '../internal/license-refresh.mjs';\n"+s[:start]+'''startLicenseRefresh({getClient:()=>client(true),onError:error=>recordFailure(db(),safeLicensingFailure(error),{component:"Licensing / Support",operation:"Scheduled entitlement refresh"})});'''+s[end:];p.write_text(s)
+# Manual and scheduled refreshes share one request and cannot race store writes.
+p=root/'internal/nyxcloud-licensing/client.mjs';patch(p,'\tasync refresh() {','''\trefresh() {
+        if (!this.refreshInFlight) this.refreshInFlight = this.refreshOnce().finally(() => { this.refreshInFlight = null; });
+        return this.refreshInFlight;
+    }
+    async refreshOnce() {''')
 for name in ['package.json','package-lock.json']:
  p=root/name;d=json.loads(p.read_text());d['version']=version
  if name=='package-lock.json':d['packages']['']['version']=version
@@ -31,6 +41,38 @@ needle='e.jsx("small",{children:storageText("tokenHelp")})'
 patch(settings,needle,'e.jsx("small",{children:(activeIntegration?.name?activeIntegration.name+" · ":"")+storageText("tokenHelp")})')
 settings.write_text(settings.read_text().replace('node_exporter_prod','node_exporter'))
 main.write_text(main.read_text().replace('node_exporter_prod','node_exporter'))
+# Update visible license status without rerendering or clearing entered forms.
+p=assets/'asset-516-8e466cc4db479905.js'
+patch(p,'function statusFields(parent, status) {','function statusFields(parent, status, watch = true) {')
+needle='''    parent.append(grid);
+  }
+
+  async function performAction'''
+patch(p,needle,'''    parent.append(grid);
+    if (watch && status.authority?.configured) {
+      let currentGrid = grid;
+      async function poll() {
+        if (!currentGrid.isConnected) return;
+        let delay = 10000;
+        try {
+          if (document.visibilityState !== "hidden") {
+            const fresh = await request("/api/professional-support/status");
+            if (!currentGrid.isConnected) return;
+            latestStatus = fresh;
+            const holder = document.createElement("div");
+            statusFields(holder, fresh, false);
+            const replacement = holder.firstElementChild;
+            currentGrid.replaceWith(replacement); currentGrid = replacement;
+            delay = fresh.authority?.state === "NOT_CHECKED" ? 2000 : fresh.authority?.state === "UNAVAILABLE" ? 10000 : 60000;
+          }
+        } catch {}
+        if (currentGrid.isConnected) setTimeout(poll, delay);
+      }
+      setTimeout(poll, status.authority.state === "NOT_CHECKED" ? 2000 : 10000);
+    }
+  }
+
+  async function performAction''')
 # The shipped dashboard has 58 entries: 8 rows, 49 data panels and 1 coverage guide.
 s=main.read_text();pattern=re.compile(r'("settings.grafana.overview-body":)"(?:[^"\\]|\\.)*"');texts=json.loads((context/'wizard-messages.json').read_text());langs=['de','en','es','fr','it','ro','en'];index=iter(langs);s,n=pattern.subn(lambda m:m[1]+json.dumps(texts[next(index)]['overview'],ensure_ascii=False),s);assert n==7,n;main.write_text(s)
 # Generated historical acceptance summaries have no runtime references.

@@ -2,6 +2,7 @@
 !Dockerfile
 !integrations.js
 !historical-bands.mjs
+!license-refresh.mjs
 !traffic-ingestion.mjs
 !storage-api.mjs
 !storage-host.py
