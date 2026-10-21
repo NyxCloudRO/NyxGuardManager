@@ -6,6 +6,9 @@ def patch(p,old,new,count=1):
  s=p.read_text();assert s.count(old)==count,(str(p),old[:70],s.count(old));p.write_text(s.replace(old,new))
 p=root/'routes/settings.js';s=p.read_text();s="import {registerStorage} from '../internal/storage-api.mjs';\nimport storageAudit from '../internal/audit-log.js';\nimport storageUser from '../models/user.js';\nimport storageErrors from '../lib/error.js';\n"+s;s=s.replace('export default router;',"registerStorage(router,{jwtdecode,audit:storageAudit,userModel:storageUser,PermissionError:storageErrors.PermissionError});\nexport default router;");p.write_text(s)
 # Existing sanitized audit context remains authoritative. Add bounded storage accounting.
+p=root/'routes/settings.js';s=p.read_text();start=s.index('const BACKUP_ENCRYPTION_ALGO =');end=s.index('const router =',start);s=s[:start]+s[end:]
+s=s.replace('import crypto from "crypto";',"import {encryptBackup,decryptBackup} from '../internal/backup-crypto.mjs';")
+s=s.replace('passphrase ? encryptBackup(jsonString, passphrase) : jsonString','passphrase ? await encryptBackup(jsonString, passphrase) : jsonString').replace('const { parsed: payload } = decryptBackup(raw, passphrase);','const { parsed: payload } = await decryptBackup(raw, passphrase);');p.write_text(s)
 p=root/'internal/audit-policy.mjs';patch(p,"'count']);","'count','reclaimed_bytes']);")
 # Startup reachability checks and bounded retries run independently of page loads.
 p=root/'routes/professional-support.js'

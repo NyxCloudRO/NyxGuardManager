@@ -3,6 +3,7 @@
 !integrations.js
 !historical-bands.mjs
 !license-refresh.mjs
+!backup-crypto.mjs
 !traffic-ingestion.mjs
 !storage-api.mjs
 !storage-host.py
