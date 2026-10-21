@@ -13,7 +13,7 @@ class Tests(unittest.TestCase):
   if path=='/containers/json?all=1':return self.containers
   if path.startswith('/containers/'):return self.manager
   images=[{'Id':v,'RepoTags':['nyxmael/nyxguardmanager:'+tag],'Size':1000}for v,tag in [(A,'5.0.17'),(B,'5.0.16'),(C,'5.0.14')]]
-  if path=='/images/json?all=0':return [i for i in images if i['Id']not in self.removed]
+  if path==mod.IMAGE_LIST:return [i for i in images if i['Id']not in self.removed]
   if path=='/system/df?type=image':return {'Images':[dict(i,SharedSize=800)for i in images]}
   if method=='GET' and path.startswith('/images/'):return {'Id':path.split('/')[2]}
   if method=='DELETE':self.removed.append(path.split('/')[2].split('?')[0]);return [{'Deleted':self.removed[-1]}]
@@ -97,7 +97,7 @@ class Tests(unittest.TestCase):
   self.prepare();base=self.service.api
   def local(method,path):
    result=base(method,path)
-   if path=='/images/json?all=0':
+   if path==mod.IMAGE_LIST:
     result[0]['RepoTags']=['local-development:5.0.17']
    return result
   self.service.api=local;i=self.inventory();row=next(r for r in i['images']if r['imageId']==A);self.assertFalse(row['eligible'])
@@ -107,7 +107,7 @@ class Tests(unittest.TestCase):
   self.prepare();base=self.service.api;counter=[0]
   def reorder(method,path):
    result=base(method,path)
-   if path=='/images/json?all=0':
+   if path==mod.IMAGE_LIST:
     counter[0]+=1
     if counter[0]%2:result.reverse()
    return result

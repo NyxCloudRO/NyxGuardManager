@@ -4,10 +4,12 @@ The installer supplies the fixed installation root and Manager UID. The applicat
 gets only this Unix socket; no additional Docker socket or host directory access.
 """
 import contextlib,fcntl,hashlib,hmac,http.client,http.server,json,os,pathlib,re,secrets,socket,socketserver,stat,struct,sys,time,threading
+from urllib.parse import urlencode
 MAX_JSON=1024*1024
 BACKUP=re.compile(r'backup-[0-9]{8}T[0-9]{6}Z\Z')
 IMAGE=re.compile(r'sha256:[0-9a-f]{64}\Z')
 REPOS={'nyxmael/nyxguardmanager','nyxmael/nyxguardmanager-vpn-agent'}
+IMAGE_LIST='/images/json?'+urlencode({'all':'0','filters':json.dumps({'reference':[r+':*'for r in sorted(REPOS)]})})
 class Refused(RuntimeError):pass
 class DockerConnection(http.client.HTTPConnection):
  def connect(self):
@@ -210,7 +212,14 @@ class Storage:
    r['row'].update(eligible=eligible,reason='eligible' if eligible else ('protected_recovery' if r is protected else 'recovery_unverified'))
   image_cleanup_safe=recovery_ok and len(records)==len(backups)
   images=[]
-  all_images=self.api('GET','/images/json?all=0')
+  # Listing every unrelated local image is costly on the containerd image store.
+  # Ask for the supported repositories, then inspect immutable local deployment
+  # and recovery identities directly so untagged/local builds remain visible.
+  all_images=self.api('GET',IMAGE_LIST)
+  listed={i['Id']for i in all_images}
+  for ident in sorted((deployment_images|recovery_images)-listed):
+   try:all_images.append(self.api('GET','/images/'+ident+'/json'))
+   except (OSError,ValueError,Refused):pass
   sizes=self.accounting(tuple(sorted(i['Id']for i in all_images)))
   for image in all_images:
    tags=sorted(image.get('RepoTags')or[]);ident=image['Id']
