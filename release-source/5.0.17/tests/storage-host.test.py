@@ -119,4 +119,19 @@ class Tests(unittest.TestCase):
   try:
    with self.assertRaises(mod.Refused):self.inventory()
   finally:self.root.rmdir();saved.rename(self.root)
+ def test_new_stopped_container_invalidates_review_before_deletion(self):
+  self.prepare();r=next(r for r in self.inventory()['images']if r['imageId']==C);plan=self.preview([r['id']]);self.containers.append({'Id':'b'*64,'ImageID':C,'State':'exited','Names':['/retained-after-review']})
+  with self.assertRaises(mod.Refused):self.delete(plan['plan'])
+  self.assertEqual(self.removed,[])
+ def test_partial_engine_failure_reports_and_audits_each_outcome(self):
+  old,latest=self.prepare();i=self.inventory();backup=i['backups'][0];image=next(r for r in i['images']if r['imageId']==C);plan=self.preview([backup['id'],image['id']]);base=self.service.api
+  def refusing(method,path):
+   if method=='DELETE':raise mod.Refused('Controlled engine refusal')
+   return base(method,path)
+  self.service.api=refusing;out=self.delete(plan['plan']);self.assertEqual([r['result']for r in out['outcomes']],['deleted','failed']);self.assertFalse(old.exists());self.assertTrue(latest.exists());self.assertEqual(self.removed,[])
+  events=[json.loads(line)for line in(self.root/'storage-audit.jsonl').read_text().splitlines()];self.assertEqual([e['result']for e in events],['started','deleted','started','failed'])
+ def test_audit_failure_prevents_destruction(self):
+  old,_=self.prepare();r=self.inventory()['backups'][0];plan=self.preview([r['id']]);(self.root/'storage-audit.jsonl').symlink_to('/dev/null')
+  with self.assertRaises(OSError):self.delete(plan['plan'])
+  self.assertTrue(old.exists());self.assertEqual(self.removed,[])
 if __name__=='__main__':unittest.main()

@@ -5,6 +5,7 @@ gets only this Unix socket; no additional Docker socket or host directory access
 """
 import contextlib,fcntl,hashlib,hmac,http.client,http.server,json,os,pathlib,re,secrets,socket,socketserver,stat,struct,sys,time,threading
 from urllib.parse import urlencode
+from datetime import datetime,timezone
 MAX_JSON=1024*1024
 BACKUP=re.compile(r'backup-[0-9]{8}T[0-9]{6}Z\Z')
 IMAGE=re.compile(r'sha256:[0-9a-f]{64}\Z')
@@ -104,7 +105,7 @@ class Storage:
   # per five minutes, asks only for images (never volume/container scans).
   with self.size_lock:
    sizes=dict(self.size_cache) if self.size_graph==graph else {}
-   if not self.size_busy and time.monotonic()-self.size_cache_at>300:
+   if not self.size_busy and (self.size_cache_at==0 or time.monotonic()-self.size_cache_at>300):
     self.size_busy=True;self.size_cache_at=time.monotonic()
     def update():
      try:
@@ -227,7 +228,13 @@ class Storage:
    # Any unrelated alias makes deletion of this shared identity ineligible.
    owned=all(t.rsplit(':',1)[0] in REPOS for t in tags)
    ref=sorted(sorted(c.get('Names',[]))for c in containers if c['ImageID']==ident)
-   row={'type':'image','id':self.token('image',ident),'name':', '.join(tags),'imageId':ident,'sizeBytes':image.get('Size'),'reclaimableBytes':None,'references':ref,'eligible':image_cleanup_safe and owned and ident not in protected_images,'reason':'referenced' if ref else ('protected_recovery' if ident in protected_images else ('eligible' if image_cleanup_safe and owned else 'recovery_unverified'))}
+   created=image.get('Created')
+   if isinstance(created,str):
+    try:
+     stamp=datetime.fromisoformat(created.replace('Z','+00:00'));created=stamp.replace(tzinfo=stamp.tzinfo or timezone.utc).timestamp()
+    except ValueError:created=0
+   if not isinstance(created,(int,float)):created=0
+   row={'type':'image','id':self.token('image',ident),'name':', '.join(tags),'imageId':ident,'createdAt':created,'sizeBytes':image.get('Size'),'reclaimableBytes':None,'references':ref,'eligible':image_cleanup_safe and owned and ident not in protected_images,'reason':'referenced' if ref else ('protected_recovery' if ident in protected_images else ('eligible' if image_cleanup_safe and owned else 'recovery_unverified'))}
    size=sizes.get(ident,{})
    if isinstance(size.get('SharedSize'),int) and size['SharedSize']>=0:row['reclaimableBytes']=max(0,size.get('Size',0)-size['SharedSize'])
    images.append(row);records[row['id']]={'image':ident,'row':row}

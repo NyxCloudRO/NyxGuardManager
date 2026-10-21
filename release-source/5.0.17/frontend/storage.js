@@ -25,7 +25,7 @@ export function StorageManagement(){
   return h('tr',{key:row.id},h('td',null,select),h('td',null,name),h('td',null,bytes(type==='backup'?row.allocatedBytes:row.sizeBytes)),h('td',null,h('span',{className:row.eligible?'nyx-storage-eligible':'nyx-storage-protected'},reason(row))),h('td',null,details),h('td',null,h('button',{type:'button',className:'nyx-storage-delete',disabled:busy||!allowed||!row.eligible,title:row.eligible?t('review'):reason(row),'aria-label':t('delete')+' '+row.name,onClick:()=>preview([row.id]),'data-nyx-action':'destructive'},h('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.7,'aria-hidden':true},h('path',{d:'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7'})))));
  }
  function table(type,rows){
-  const sorted=[...rows].sort((a,b)=>sort==='name'?a.name.localeCompare(b.name):b.name.localeCompare(a.name));
+  const sorted=[...rows].sort((a,b)=>sort==='name'?a.name.localeCompare(b.name):type==='image'?(b.createdAt||0)-(a.createdAt||0)||b.imageId.localeCompare(a.imageId):b.name.localeCompare(a.name));
   const title=t(type==='backup'?'backups':'images');
   const header=h('thead',null,h('tr',null,...[t('select'),t(type==='backup'?'dateVersion':'image'),t('size'),t('status'),t('details'),t('delete')].map((text,index)=>h('th',{key:index},text))));
   const body=h('tbody',null,...sorted.map(row=>rowView(row,type)));
