@@ -1433,8 +1433,8 @@
       },
       "id": 18,
       "options": {
-        "mode": "html",
-        "content": "**1D \u00b7 2D \u00b7 7D \u00b7 14D \u00b7 30D \u00b7 60D \u00b7 90D** \u2014 select the global time range. Counts describe retained observations through the closed UTC cutoff; full coverage is unverified. Missing/stale sources show unavailable. Traffic also preserves 1h/180d. Current-state panels are snapshots."
+        "mode": "markdown",
+        "content": "**Coverage unverified.**\n\nRetained observations only."
       },
       "title": "Window / coverage",
       "type": "text",
@@ -3994,7 +3994,7 @@
       ],
       "title": "Observed HTTP 4xx/5xx by app \u2014 ${traffic_window}",
       "type": "bargauge",
-      "description": "Global duration must exactly match 1h, 24h, 7d, 30d, 90d or 180d. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history. Traffic interval is aligned to closed UTC five-minute buckets; end may precede the selected end by up to five minutes plus scrape/generation delay. Exported history completeness is 0 (unverified)."
+      "description": "Global duration must exactly match 1h, 24h, 2d, 7d, 14d, 30d, 60d, 90d or 180d. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history. Traffic interval is aligned to closed UTC five-minute buckets; end may precede the selected end by up to five minutes plus scrape/generation delay. Exported history completeness is 0 (unverified)."
     },
     {
       "collapsed": false,
@@ -4099,7 +4099,7 @@
       ],
       "title": "Observed requests per app \u2014 ${traffic_window}",
       "type": "bargauge",
-      "description": "Global duration must exactly match 1h, 24h, 7d, 30d, 90d or 180d. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history. Traffic interval is aligned to closed UTC five-minute buckets; end may precede the selected end by up to five minutes plus scrape/generation delay. Exported history completeness is 0 (unverified)."
+      "description": "Global duration must exactly match 1h, 24h, 2d, 7d, 14d, 30d, 60d, 90d or 180d. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history. Traffic interval is aligned to closed UTC five-minute buckets; end may precede the selected end by up to five minutes plus scrape/generation delay. Exported history completeness is 0 (unverified)."
     },
     {
       "datasource": {
@@ -4187,7 +4187,7 @@
       ],
       "title": "Observed traffic out \u2014 ${traffic_window}",
       "type": "bargauge",
-      "description": "Global duration must exactly match 1h, 24h, 7d, 30d, 90d or 180d. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history. Traffic interval is aligned to closed UTC five-minute buckets; end may precede the selected end by up to five minutes plus scrape/generation delay. Exported history completeness is 0 (unverified)."
+      "description": "Global duration must exactly match 1h, 24h, 2d, 7d, 14d, 30d, 60d, 90d or 180d. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history. Traffic interval is aligned to closed UTC five-minute buckets; end may precede the selected end by up to five minutes plus scrape/generation delay. Exported history completeness is 0 (unverified)."
     },
     {
       "datasource": {
@@ -4275,7 +4275,7 @@
       ],
       "title": "Observed HTTP 4xx per app \u2014 ${traffic_window}",
       "type": "bargauge",
-      "description": "Global duration must exactly match 1h, 24h, 7d, 30d, 90d or 180d. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history. Traffic interval is aligned to closed UTC five-minute buckets; end may precede the selected end by up to five minutes plus scrape/generation delay. Exported history completeness is 0 (unverified)."
+      "description": "Global duration must exactly match 1h, 24h, 2d, 7d, 14d, 30d, 60d, 90d or 180d. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history. Traffic interval is aligned to closed UTC five-minute buckets; end may precede the selected end by up to five minutes plus scrape/generation delay. Exported history completeness is 0 (unverified)."
     },
     {
       "datasource": {
@@ -4363,7 +4363,7 @@
       ],
       "title": "Observed HTTP 5xx per app \u2014 ${traffic_window}",
       "type": "bargauge",
-      "description": "Global duration must exactly match 1h, 24h, 7d, 30d, 90d or 180d. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history. Traffic interval is aligned to closed UTC five-minute buckets; end may precede the selected end by up to five minutes plus scrape/generation delay. Exported history completeness is 0 (unverified)."
+      "description": "Global duration must exactly match 1h, 24h, 2d, 7d, 14d, 30d, 60d, 90d or 180d. Value is a retained rolling observation at the last healthy generation before the selected end, not a complete arbitrary-period total. No interpolation, summation or extrapolation. Unsupported duration or absent/stale/failed scrape returns no value. Retention may truncate history. Traffic interval is aligned to closed UTC five-minute buckets; end may precede the selected end by up to five minutes plus scrape/generation delay. Exported history completeness is 0 (unverified)."
     }
   ],
   "refresh": "1m",
