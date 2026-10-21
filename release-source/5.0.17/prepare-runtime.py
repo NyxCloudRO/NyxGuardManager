@@ -1,5 +1,5 @@
 from pathlib import Path
-import hashlib,json,os,re
+import hashlib,json,os,re,subprocess
 root=Path('/app');revision=os.environ['BUILD_REVISION'];context=Path('/tmp/nyx517')
 def patch(p,old,new,count=1):
  s=p.read_text();assert s.count(old)==count,(str(p),old[:70],s.count(old));p.write_text(s.replace(old,new))
@@ -35,3 +35,7 @@ for old,new in mapping.items():(assets/old).rename(assets/new)
 p=f/'index.html';s=p.read_text().replace('</head>','<link rel="stylesheet" href="/assets/'+mapping['storage.css']+'">\n</head>');p.write_text(s)
 p=f/'nyxguard-build.json';d=json.loads(p.read_text());d.update(version='5.0.17',sourceRevision=revision,task='historical-analytics-storage',assets={p.name:hashlib.sha256(p.read_bytes()).hexdigest()for p in sorted(assets.iterdir())if p.is_file()});p.write_text(json.dumps(d,indent=2)+'\n')
 p=root/'CHANGELOG_PUBLIC.md';p.write_text((context/'RELEASE-NOTES.md').read_text()+'\n'+p.read_text())
+
+# Parse every shipped module under the actual /app ESM package contract.
+for module in assets.glob("*.js"):
+ subprocess.run(["node","--check",str(module)],check=True,stdout=subprocess.DEVNULL)
