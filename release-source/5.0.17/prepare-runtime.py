@@ -39,7 +39,7 @@ for name in ['task3-validation.json','task4-validation.json','task5-validation.j
  p=f/name
  if p.exists():p.unlink()
 # Rename the entire frontend dependency graph atomically for this release.
-mapping={p.name:'asset-517-'+hashlib.sha256((p.name+'\0'+revision).encode()).hexdigest()[:16]+p.suffix for p in assets.iterdir() if p.suffix in ['.js','.css']};pattern=re.compile('|'.join(re.escape(n) for n in sorted(mapping,key=len,reverse=True)))
+mapping={p.name:'asset-517-'+hashlib.sha256((p.name+'\0'+revision+'\0'+version).encode()).hexdigest()[:16]+p.suffix for p in assets.iterdir() if p.suffix in ['.js','.css']};pattern=re.compile('|'.join(re.escape(n) for n in sorted(mapping,key=len,reverse=True)))
 for p in list(f.rglob('*')):
  if not p.is_file() or p.suffix not in ['.js','.css','.html']:continue
  p.write_text(pattern.sub(lambda m:mapping[m[0]],p.read_text()).replace('5.0.16',version))
