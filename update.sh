@@ -149,7 +149,7 @@ def health(m,readiness=None):
   except (RuntimeError,ValueError,subprocess.TimeoutExpired) as error:
    reason=failure_reason(error) if not isinstance(error,ValueError) else 'Invalid command response'
    raise PollFailure(category+': '+reason) from None
- last_work=None;work_at=started;attempts=set();progress=None;manager_ready_at=None
+ last_work=None;work_at=started;attempts=set();progress=None;manager_ready_at=None;received_progress=False
  def command_budget(limit=10):
   remaining=deadline-time.monotonic()
   if remaining<=0:raise RuntimeError('Service readiness exceeded its bounded startup budget')
@@ -175,6 +175,7 @@ def health(m,readiness=None):
      diagnostic('readiness-command-retry',category='startup progress',reason=failure_reason(error) if not isinstance(error,ValueError) else 'Invalid command response')
     last_sample=now
     if readiness and progress:
+     received_progress=True
      if progress['attempt']:attempts.add(progress['attempt'])
      if len(attempts)>=3:raise RuntimeError('Manager startup repeatedly restarted; inspect the preserved readiness diagnostic')
      if progress['failed']:raise RuntimeError('Manager startup reported failure during '+progress['phase'])
@@ -184,8 +185,15 @@ def health(m,readiness=None):
      if not progress['complete']:
       idle=readiness['migrationIdleMs'] if progress['phase'].startswith('migration') else readiness['startupIdleMs']
       if (now-work_at)*1000>idle:raise RuntimeError('Manager startup stopped completing work during '+progress['phase'])
-   if readiness and not progress and (now-started)*1000>readiness['startupIdleMs']:
-    raise RuntimeError('Manager has not provided valid startup progress within the initialization limit')
+   # The backend creates its progress file only after S6 preparation, including
+   # reconciliation of persisted Certbot packages. Before the first valid sample,
+   # keep the existing bounded readiness deadline; a backend idle watchdog cannot
+   # measure work before that backend exists. Once observed, lost progress must
+   # not earn another container-preparation window.
+   if readiness and not progress and received_progress:
+    idle=readiness['migrationIdleMs'] if last_work[1].startswith('migration') else readiness['startupIdleMs']
+    if (now-work_at)*1000>idle:
+     raise RuntimeError('Manager startup progress became unavailable after application initialization began')
    if readiness and good:
     try:docker('exec',manager['Id'],'node','/app/internal/readiness-probe.mjs',capture=True,timeout=command_budget(6))
     except (RuntimeError,subprocess.TimeoutExpired) as error:
@@ -197,7 +205,8 @@ def health(m,readiness=None):
     if not good and now-manager_ready_at>120:raise RuntimeError('Application initialization completed, but service/readiness acceptance still fails')
    if now-last_report>=15:
     safe_progress={k:v for k,v in progress.items() if k!='attempt'} if progress else None
-    diagnostic('readiness',services=statuses,progress=safe_progress,budgetSeconds=int(deadline-started))
+    startup_stage='application-startup' if received_progress else 'container-preparation'
+    diagnostic('readiness',services=statuses,progress=safe_progress,startupStage=startup_stage,budgetSeconds=int(deadline-started))
     log('Service health: '+', '.join(svc+' '+v['state']+'/'+v['health'] for svc,v in statuses.items()))
     if progress:
      message='Startup operation: '+progress['phase']
@@ -205,6 +214,8 @@ def health(m,readiness=None):
      if progress['total']>0 and progress['units']<=progress['total']:
       message+='; completed work '+str(progress['units'])+'/'+str(progress['total'])+' ('+format(progress['units']*100/progress['total'],'.1f')+'%)'
      log(message)
+    elif readiness:
+     log('Startup operation: '+('application progress temporarily unavailable' if received_progress else 'container preparation; waiting for backend startup progress')+'; bounded readiness checks remain active')
     last_report=now
    if good:
     database_id=sample('database lookup',cid,'db',timeout=command_budget())
@@ -218,6 +229,8 @@ def health(m,readiness=None):
    diagnostic('readiness-command-retry',category='service polling',reason=last_failure)
    log('Readiness poll will retry within the startup budget: '+last_failure)
   time.sleep(min(2,max(0,deadline-time.monotonic())))
+ if readiness and not received_progress and not last_failure:
+  raise RuntimeError('Manager has not provided valid startup progress within the bounded container-initialization budget')
  raise RuntimeError('Service readiness exceeded its bounded startup budget'+('; last failure: '+last_failure if last_failure else ''))
 
 # Restrict comparison to durable user configuration and history. Runtime counters,
