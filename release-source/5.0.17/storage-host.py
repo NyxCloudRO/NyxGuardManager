@@ -173,6 +173,7 @@ class Storage:
      row.update(sourceVersion=manifest['current'],targetVersion=manifest['target'],result=result.get('result'),status='legacy_manifest' if legacy else ('verified' if verify_hashes else 'manifest'),reason='protected_recovery',allocatedBytes=sum(os.stat(p,dir_fd=fd,follow_symlinks=False).st_blocks*512 for p in os.listdir(fd) if not stat.S_ISDIR(os.stat(p,dir_fd=fd,follow_symlinks=False).st_mode)))
      # Include nested payload allocation without trusting client paths.
      row['allocatedBytes']=sum(self.member_blocks(fd,p)for p in members)
+     manifest={key:manifest.get(key)for key in ['current','target','backup','hashes']}
      records[row['id']]={'name':name,'members':members,'manifest':manifest,'result':result,'images':images,'legacy':legacy,'row':row}
     finally:os.close(fd)
    except (OSError,ValueError,KeyError,TypeError,Refused):pass
@@ -242,7 +243,7 @@ class Storage:
    if action=='preview':
     ids=body.get('ids')
     if not isinstance(ids,list) or not 0<len(ids)<=100 or len(set(ids))!=len(ids) or any(i not in records or not records[i]['row']['eligible']for i in ids):raise Refused('Selection is ineligible or unknown')
-    plan=secrets.token_hex(32);self.plans={k:v for k,v in self.plans.items() if v['expires']>time.monotonic()}
+    plan=secrets.token_hex(32);self.plans={k:v for k,v in self.plans.items() if v['expires']>time.monotonic() and v['actor']!=actor}
     if len(self.plans)>=32:raise Refused('Too many pending cleanup plans')
     self.plans[plan]={'actor':actor,'ids':ids,'revision':inventory['revision'],'expires':time.monotonic()+120}
     return {'plan':plan,'resources':[records[i]['row']for i in ids],'expiresIn':120,'recoveryVerified':True}
@@ -272,7 +273,7 @@ class Storage:
       if any(c['ImageID']==r['image']for c in current):raise Refused('Image gained a container reference')
       self.api('DELETE','/images/'+r['image']+'?force=0&noprune=1')
      after=os.statvfs(accounting_path)if accounting_path else None;out.update(result='deleted',filesystemFreeDeltaBytes=after.f_bavail*after.f_frsize-before_free if after else None)
-    except (OSError,ValueError,Refused) as error:out.update(result='failed',error=type(error).__name__)
+    except (OSError,ValueError,Refused) as error:out.update(result='failed',error=type(error).__name__,reason=str(error)if isinstance(error,Refused)else 'filesystem_or_engine_error')
     self.audit(out);outcomes.append(out)
    return {'outcomes':outcomes,'accounting':'Observed filesystem free-space delta; concurrent writes and Docker data-root filesystem may differ. Logical image size is not freed space.'}
 class Server(socketserver.UnixStreamServer):pass

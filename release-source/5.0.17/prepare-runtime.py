@@ -24,6 +24,12 @@ needle='e.jsxs("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"
 patch(settings,needle,'e.jsx("p",{style:{fontSize:12,lineHeight:1.5},children:storageText("upgradeNote")}),'+needle)
 needle='e.jsx("span",{children:e.jsx(s,{id:"settings.grafana.step6"})}),'
 patch(settings,needle,needle+'e.jsx("p",{style:{fontSize:12,lineHeight:1.5},children:storageText("historyNote")}),')
+# Preserve integration discovery and prefill the detected name without exposing its token.
+patch(settings,'l=(h,m)=>{navigator.clipboard.writeText(h)', 'activeIntegration=(d.data??[]).find(item=>item.enabled),l=(h,m)=>{navigator.clipboard.writeText(h)')
+needle='e.jsx("small",{children:storageText("tokenHelp")})'
+patch(settings,needle,'e.jsx("small",{children:(activeIntegration?.name?activeIntegration.name+" · ":"")+storageText("tokenHelp")})')
+settings.write_text(settings.read_text().replace('node_exporter_prod','node_exporter'))
+main.write_text(main.read_text().replace('node_exporter_prod','node_exporter'))
 # The shipped dashboard has 58 entries: 8 rows, 49 data panels and 1 coverage guide.
 s=main.read_text();pattern=re.compile(r'("settings.grafana.overview-body":)"(?:[^"\\]|\\.)*"');texts=json.loads((context/'wizard-messages.json').read_text());langs=['de','en','es','fr','it','ro','en'];index=iter(langs);s,n=pattern.subn(lambda m:m[1]+json.dumps(texts[next(index)]['overview'],ensure_ascii=False),s);assert n==7,n;main.write_text(s)
 # Generated historical acceptance summaries have no runtime references.
