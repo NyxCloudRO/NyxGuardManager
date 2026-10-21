@@ -1434,7 +1434,7 @@
       "id": 18,
       "options": {
         "mode": "markdown",
-        "content": "**Coverage unverified.**\n\nRetained observations only."
+        "content": "**Coverage unverified.**"
       },
       "title": "Window / coverage",
       "type": "text",
