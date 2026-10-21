@@ -10,7 +10,7 @@
     {
       "title": "1D",
       "type": "link",
-      "url": "d/nyxguard-main?from=now-24h&to=now",
+      "url": "d/${__dashboard.uid}?from=now-24h&to=now",
       "keepTime": false,
       "includeVars": true,
       "targetBlank": false
@@ -18,7 +18,7 @@
     {
       "title": "2D",
       "type": "link",
-      "url": "d/nyxguard-main?from=now-48h&to=now",
+      "url": "d/${__dashboard.uid}?from=now-48h&to=now",
       "keepTime": false,
       "includeVars": true,
       "targetBlank": false
@@ -26,7 +26,7 @@
     {
       "title": "7D",
       "type": "link",
-      "url": "d/nyxguard-main?from=now-168h&to=now",
+      "url": "d/${__dashboard.uid}?from=now-168h&to=now",
       "keepTime": false,
       "includeVars": true,
       "targetBlank": false
@@ -34,7 +34,7 @@
     {
       "title": "14D",
       "type": "link",
-      "url": "d/nyxguard-main?from=now-336h&to=now",
+      "url": "d/${__dashboard.uid}?from=now-336h&to=now",
       "keepTime": false,
       "includeVars": true,
       "targetBlank": false
@@ -42,7 +42,7 @@
     {
       "title": "30D",
       "type": "link",
-      "url": "d/nyxguard-main?from=now-720h&to=now",
+      "url": "d/${__dashboard.uid}?from=now-720h&to=now",
       "keepTime": false,
       "includeVars": true,
       "targetBlank": false
@@ -50,7 +50,7 @@
     {
       "title": "60D",
       "type": "link",
-      "url": "d/nyxguard-main?from=now-1440h&to=now",
+      "url": "d/${__dashboard.uid}?from=now-1440h&to=now",
       "keepTime": false,
       "includeVars": true,
       "targetBlank": false
@@ -58,7 +58,7 @@
     {
       "title": "90D",
       "type": "link",
-      "url": "d/nyxguard-main?from=now-2160h&to=now",
+      "url": "d/${__dashboard.uid}?from=now-2160h&to=now",
       "keepTime": false,
       "includeVars": true,
       "targetBlank": false
@@ -4480,5 +4480,5 @@
   "timezone": "browser",
   "title": "NyxGuard Manager",
   "uid": "nyxguard-main",
-  "version": 49
+  "version": 0
 }
