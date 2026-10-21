@@ -1,14 +1,15 @@
 from pathlib import Path
 import hashlib,json,os,re,subprocess
-root=Path('/app');revision=os.environ['BUILD_REVISION'];context=Path('/tmp/nyx517')
+root=Path('/app');revision=os.environ['BUILD_REVISION'];context=Path('/tmp/nyx517');version=os.environ.get('APP_VERSION','5.0.17')
+assert re.fullmatch(r'5\.0\.17(?:-(?:dev|rc)\.[0-9]+)?',version), 'Unsupported candidate version'
 def patch(p,old,new,count=1):
  s=p.read_text();assert s.count(old)==count,(str(p),old[:70],s.count(old));p.write_text(s.replace(old,new))
 p=root/'routes/settings.js';s=p.read_text();s="import {registerStorage} from '../internal/storage-api.mjs';\nimport storageAudit from '../internal/audit-log.js';\nimport storageUser from '../models/user.js';\nimport storageErrors from '../lib/error.js';\n"+s;s=s.replace('export default router;',"registerStorage(router,{jwtdecode,audit:storageAudit,userModel:storageUser,PermissionError:storageErrors.PermissionError});\nexport default router;");p.write_text(s)
 # Existing sanitized audit context remains authoritative. Add bounded storage accounting.
 p=root/'internal/audit-policy.mjs';patch(p,"'count']);","'count','reclaimed_bytes']);")
 for name in ['package.json','package-lock.json']:
- p=root/name;d=json.loads(p.read_text());d['version']='5.0.17'
- if name=='package-lock.json':d['packages']['']['version']='5.0.17'
+ p=root/name;d=json.loads(p.read_text());d['version']=version
+ if name=='package-lock.json':d['packages']['']['version']=version
  p.write_text(json.dumps(d,indent=2)+'\n')
 p=root/'internal/release-policy.json';d=json.loads(p.read_text());d['version']='5.0.17';d['sources']['5.0.16']=49;p.write_text(json.dumps(d,indent=2)+'\n')
 f=root/'frontend';assets=f/'assets';settings=assets/'asset-516-51813bc65f6b1453.js';main=assets/'asset-516-11b20a5b9bc407e6.js'
@@ -41,10 +42,10 @@ for name in ['task3-validation.json','task4-validation.json','task5-validation.j
 mapping={p.name:'asset-517-'+hashlib.sha256((p.name+'\0'+revision).encode()).hexdigest()[:16]+p.suffix for p in assets.iterdir() if p.suffix in ['.js','.css']};pattern=re.compile('|'.join(re.escape(n) for n in sorted(mapping,key=len,reverse=True)))
 for p in list(f.rglob('*')):
  if not p.is_file() or p.suffix not in ['.js','.css','.html']:continue
- p.write_text(pattern.sub(lambda m:mapping[m[0]],p.read_text()).replace('5.0.16','5.0.17'))
+ p.write_text(pattern.sub(lambda m:mapping[m[0]],p.read_text()).replace('5.0.16',version))
 for old,new in mapping.items():(assets/old).rename(assets/new)
 p=f/'index.html';s=p.read_text().replace('</head>','<link rel="stylesheet" href="/assets/'+mapping['storage.css']+'">\n</head>');p.write_text(s)
-p=f/'nyxguard-build.json';d=json.loads(p.read_text());d.update(version='5.0.17',sourceRevision=revision,task='historical-analytics-storage',assets={p.name:hashlib.sha256(p.read_bytes()).hexdigest()for p in sorted(assets.iterdir())if p.is_file()});p.write_text(json.dumps(d,indent=2)+'\n')
+p=f/'nyxguard-build.json';d=json.loads(p.read_text());d.update(version=version,sourceRevision=revision,task='historical-analytics-storage',assets={p.name:hashlib.sha256(p.read_bytes()).hexdigest()for p in sorted(assets.iterdir())if p.is_file()});p.write_text(json.dumps(d,indent=2)+'\n')
 p=root/'CHANGELOG_PUBLIC.md';p.write_text((context/'RELEASE-NOTES.md').read_text()+'\n'+p.read_text())
 
 # Parse every shipped module under the actual /app ESM package contract.
